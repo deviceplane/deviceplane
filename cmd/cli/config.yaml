@@ -1,0 +1,8 @@
+containers:
+  josh2:
+    image: ubuntu
+    command: [ sleep, infinity ]
+
+  josh3:
+    image: ubuntu
+    command: [ sleep, 999999 ]
