@@ -1,0 +1,3 @@
+FROM ubuntu
+COPY ./dist/controller /usr/bin/controller
+CMD ["controller"]

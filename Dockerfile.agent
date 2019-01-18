@@ -1,0 +1,3 @@
+FROM ubuntu
+COPY ./dist/agent /usr/bin/agent
+CMD ["agent"]
