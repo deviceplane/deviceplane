@@ -42,6 +42,7 @@ func NewService(
 	s.router.HandleFunc("/{project}/applications", s.createApplication).Methods("POST")
 	s.router.HandleFunc("/{project}/applications/{id}", s.createProject).Methods("GET")
 
+	s.router.HandleFunc("/{project}/applications/{application}/releases/latest", s.getLatestRelease).Methods("GET")
 	s.router.HandleFunc("/{project}/applications/{application}/releases", s.createRelease).Methods("POST")
 
 	s.router.HandleFunc("/{project}/bundle", s.getBundle).Methods("GET")
@@ -101,6 +102,20 @@ func (s *Service) createApplication(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(application)
+}
+
+func (s *Service) getLatestRelease(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	applicationID := vars["application"]
+
+	release, err := s.releases.GetLatestRelease(r.Context(), applicationID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(release)
 }
 
 func (s *Service) createRelease(w http.ResponseWriter, r *http.Request) {

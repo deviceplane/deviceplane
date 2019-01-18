@@ -51,6 +51,14 @@ func (c *Client) CreateApplication(ctx context.Context, projectID string) (*mode
 	return &application, nil
 }
 
+func (c *Client) GetLatestRelease(ctx context.Context, projectID, applicationID string) (*models.Release, error) {
+	var release models.Release
+	if err := c.get(ctx, &release, projectID, applicationsURL, applicationID, releasesURL, "latest"); err != nil {
+		return nil, err
+	}
+	return &release, nil
+}
+
 func (c *Client) CreateRelease(ctx context.Context, projectID, applicationID, config string) (*models.Release, error) {
 	var release models.Release
 	if err := c.post(ctx, models.CreateRelease{
