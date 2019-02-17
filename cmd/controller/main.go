@@ -34,7 +34,7 @@ func main() {
 
 	store := mysql_store.NewStore(db)
 
-	svc := service.NewService(store, store, store, store, store)
+	svc := service.NewService(store, store, store, store, store, store, store)
 	server := &http.Server{
 		Addr:    config.Addr,
 		Handler: svc,

@@ -9,6 +9,8 @@ begin;
 create table if not exists users (
   id varchar(32) not null,
   created_at timestamp not null default current_timestamp,
+  email varchar(255) not null,
+  password_hash varchar(255) not null,
 
   primary key (id)
 );
@@ -20,6 +22,8 @@ create table if not exists users (
 create table if not exists access_keys (
   id varchar(32) not null,
   created_at timestamp not null default current_timestamp,
+  user_id varchar(32) not null,
+  hash varchar(255) not null,
 
   primary key (id)
 );
@@ -31,6 +35,7 @@ create table if not exists access_keys (
 create table if not exists projects (
   id varchar(32) not null,
   created_at timestamp not null default current_timestamp,
+  name varchar(100) not null,
 
   primary key (id)
 );
@@ -42,7 +47,7 @@ create table if not exists projects (
 create table if not exists memberships (
   user_id varchar(32) not null,
   project_id varchar(32) not null,
-  type longtext not null,
+  level enum ('admin', 'write', 'read') not null,
 
   primary key (user_id, project_id)
 );
@@ -65,6 +70,7 @@ create table if not exists devices (
 create table if not exists applications (
   id varchar(32) not null,
   project_id varchar(32) not null,
+  name varchar(100) not null,
 
   primary key (id)
 );
