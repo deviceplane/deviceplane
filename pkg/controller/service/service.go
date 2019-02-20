@@ -43,6 +43,8 @@ func NewService(
 		router:       mux.NewRouter(),
 	}
 
+	s.router.HandleFunc("/health", s.health).Methods("GET")
+
 	s.router.HandleFunc("/users/{user}/memberships", s.withUserAuth(s.listMembershipsByUser)).Methods("GET")
 
 	s.router.HandleFunc("/projects", s.withUserAuth(s.createProject)).Methods("POST")
@@ -67,6 +69,10 @@ func NewService(
 
 func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
+}
+
+func (s *Service) health(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) withUserAuth(handler func(http.ResponseWriter, *http.Request, string)) func(http.ResponseWriter, *http.Request) {
