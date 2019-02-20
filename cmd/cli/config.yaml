@@ -1,8 +1,4 @@
 containers:
-  josh2:
-    image: ubuntu
+  josh:
+    image: resin/rpi-raspbian
     command: [ sleep, infinity ]
-
-  josh3:
-    image: ubuntu
-    command: [ sleep, 999999 ]

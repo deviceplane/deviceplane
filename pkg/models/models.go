@@ -47,6 +47,10 @@ type Release struct {
 	Config        string    `json:"config"`
 }
 
+type CreateRelease struct {
+	Config string `json:"config"`
+}
+
 type Bundle struct {
 	ID           string                        `json:"id"`
 	Applications []ApplicationAndLatestRelease `json:"applications"`

@@ -34,14 +34,4 @@ func main() {
 	agent := agent.NewAgent(client, engine, config.Project)
 
 	fmt.Println(agent.Run())
-
-	/*err = agent.Reconcile(context.Background(), spec.Application{
-		Containers: map[string]spec.Container{
-			"josh": {
-				Image:   "ubuntu",
-				Command: []string{"sleep", "infinity"},
-			},
-		},
-	})
-	fmt.Println(err)*/
 }
