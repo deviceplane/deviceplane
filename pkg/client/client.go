@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	defaultURL      = "http://api.deviceplane.io"
 	projectsURL     = "projects"
 	applicationsURL = "applications"
 	releasesURL     = "releases"
@@ -18,11 +19,16 @@ const (
 )
 
 type Client struct {
-	url        string
-	httpClient *http.Client
+	url         string
+	accessToken string
+	httpClient  *http.Client
 }
 
-func NewClient(url string, httpClient *http.Client) *Client {
+func NewClient(accessToken string, httpClient *http.Client) *Client {
+	return NewCustomClient(defaultURL, accessToken, httpClient)
+}
+
+func NewCustomClient(url, accessToken string, httpClient *http.Client) *Client {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
@@ -30,8 +36,9 @@ func NewClient(url string, httpClient *http.Client) *Client {
 		url = url[:len(url)-1]
 	}
 	return &Client{
-		url:        url,
-		httpClient: httpClient,
+		url:         url,
+		accessToken: accessToken,
+		httpClient:  httpClient,
 	}
 }
 
@@ -45,7 +52,7 @@ func (c *Client) CreateProject(ctx context.Context) (*models.Project, error) {
 
 func (c *Client) CreateApplication(ctx context.Context, projectID string) (*models.Application, error) {
 	var application models.Application
-	if err := c.post(ctx, struct{}{}, &application, projectID, applicationsURL); err != nil {
+	if err := c.post(ctx, struct{}{}, &application, projectsURL, projectID, applicationsURL); err != nil {
 		return nil, err
 	}
 	return &application, nil
@@ -53,7 +60,7 @@ func (c *Client) CreateApplication(ctx context.Context, projectID string) (*mode
 
 func (c *Client) GetLatestRelease(ctx context.Context, projectID, applicationID string) (*models.Release, error) {
 	var release models.Release
-	if err := c.get(ctx, &release, projectID, applicationsURL, applicationID, releasesURL, "latest"); err != nil {
+	if err := c.get(ctx, &release, projectsURL, projectID, applicationsURL, applicationID, releasesURL, "latest"); err != nil {
 		return nil, err
 	}
 	return &release, nil
@@ -63,7 +70,7 @@ func (c *Client) CreateRelease(ctx context.Context, projectID, applicationID, co
 	var release models.Release
 	if err := c.post(ctx, models.CreateRelease{
 		Config: config,
-	}, &release, projectID, applicationsURL, applicationID, releasesURL); err != nil {
+	}, &release, projectsURL, projectID, applicationsURL, applicationID, releasesURL); err != nil {
 		return nil, err
 	}
 	return &release, nil
@@ -71,6 +78,7 @@ func (c *Client) CreateRelease(ctx context.Context, projectID, applicationID, co
 
 func (c *Client) GetBundle(ctx context.Context, projectID string) (*models.Bundle, error) {
 	var bundle models.Bundle
+	// TODO
 	if err := c.get(ctx, &bundle, projectID, bundleURL); err != nil {
 		return nil, err
 	}
@@ -78,7 +86,14 @@ func (c *Client) GetBundle(ctx context.Context, projectID string) (*models.Bundl
 }
 
 func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {
-	resp, err := c.httpClient.Get(c.getURL(s...))
+	req, err := http.NewRequest("GET", c.getURL(s...), nil)
+	if err != nil {
+		return err
+	}
+
+	req.SetBasicAuth(c.accessToken, "")
+
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -94,7 +109,14 @@ func (c *Client) post(ctx context.Context, in, out interface{}, s ...string) err
 	}
 	reader := bytes.NewReader(reqBytes)
 
-	resp, err := c.httpClient.Post(c.getURL(s...), "application/json", reader)
+	req, err := http.NewRequest("POST", c.getURL(s...), reader)
+	if err != nil {
+		return err
+	}
+
+	req.SetBasicAuth(c.accessToken, "")
+
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
 	}

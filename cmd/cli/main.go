@@ -14,8 +14,7 @@ func main() {
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:  "url",
-			Value: "http://0.0.0.0:8080",
+			Name: "access-token",
 		},
 	}
 

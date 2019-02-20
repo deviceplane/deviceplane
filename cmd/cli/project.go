@@ -15,9 +15,9 @@ var project = cli.Command{
 		{
 			Name: "create",
 			Action: func(c *cli.Context) error {
-				url := c.GlobalString("url")
+				accessToken := c.GlobalString("access-token")
 
-				client := client.NewClient(url, nil)
+				client := client.NewClient(accessToken, nil)
 
 				project, err := client.CreateProject(context.TODO())
 				if err != nil {

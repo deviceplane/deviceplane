@@ -28,8 +28,8 @@ var release = cli.Command{
 				},
 			},
 			Action: func(c *cli.Context) error {
-				url := c.GlobalString("url")
-				client := client.NewClient(url, nil)
+				accessToken := c.GlobalString("access-token")
+				client := client.NewClient(accessToken, nil)
 
 				projectID := c.String("project")
 				applicationID := c.String("application")
