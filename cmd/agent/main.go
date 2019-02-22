@@ -18,7 +18,7 @@ var config struct {
 }
 
 func init() {
-	config.Controller = "http://0.0.0.0:8080"
+	config.Controller = "https://api.deviceplane.io"
 }
 
 func main() {
