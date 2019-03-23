@@ -9,6 +9,9 @@ controller:
 controller-image: controller
 	docker build -t deviceplane/deviceplane:${version} -f Dockerfile.controller .
 
+push-controller-image: controller-image
+	docker push deviceplane/deviceplane:${version}
+
 agent:
 	GOOS=linux GOARCH=arm go build -o ./dist/agent ./cmd/agent
 
