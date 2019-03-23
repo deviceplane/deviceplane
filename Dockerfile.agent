@@ -1,3 +1,3 @@
-FROM resin/rpi-raspbian
+FROM scratch
 COPY ./dist/agent /usr/bin/agent
 CMD ["agent"]
