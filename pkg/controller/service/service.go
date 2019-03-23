@@ -5,45 +5,74 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
+
+	"github.com/segmentio/ksuid"
 
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
+	"github.com/deviceplane/deviceplane/pkg/email"
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/gorilla/mux"
 )
 
+const (
+	sessionCookie = "dp_sess"
+)
+
 type Service struct {
-	users        store.Users
-	accessKeys   store.AccessKeys
-	projects     store.Projects
-	memberships  store.Memberships
-	devices      store.Devices
-	applications store.Applications
-	releases     store.Releases
-	router       *mux.Router
+	users                    store.Users
+	registrationTokens       store.RegistrationTokens
+	accessKeys               store.AccessKeys
+	sessions                 store.Sessions
+	projects                 store.Projects
+	memberships              store.Memberships
+	devices                  store.Devices
+	deviceRegistrationTokens store.DeviceRegistrationTokens
+	deviceAccessKeys         store.DeviceAccessKeys
+	applications             store.Applications
+	releases                 store.Releases
+	email                    email.Interface
+	router                   *mux.Router
 }
 
 func NewService(
 	users store.Users,
+	registrationTokens store.RegistrationTokens,
+	sessions store.Sessions,
 	accessKeys store.AccessKeys,
 	projects store.Projects,
 	memberships store.Memberships,
 	devices store.Devices,
+	deviceRegistrationTokens store.DeviceRegistrationTokens,
+	deviceAccessKeys store.DeviceAccessKeys,
 	applications store.Applications,
 	releases store.Releases,
+	email email.Interface,
 ) *Service {
 	s := &Service{
-		users:        users,
-		accessKeys:   accessKeys,
-		projects:     projects,
-		memberships:  memberships,
-		devices:      devices,
-		applications: applications,
-		releases:     releases,
-		router:       mux.NewRouter(),
+		users:                    users,
+		registrationTokens:       registrationTokens,
+		sessions:                 sessions,
+		accessKeys:               accessKeys,
+		projects:                 projects,
+		memberships:              memberships,
+		devices:                  devices,
+		deviceRegistrationTokens: deviceRegistrationTokens,
+		deviceAccessKeys:         deviceAccessKeys,
+		applications:             applications,
+		releases:                 releases,
+		email:                    email,
+		router:                   mux.NewRouter(),
 	}
 
 	s.router.HandleFunc("/health", s.health).Methods("GET")
+
+	s.router.HandleFunc("/register", s.register).Methods("POST")
+	s.router.HandleFunc("/completeregistration", s.confirmRegistration).Methods("POST")
+	s.router.HandleFunc("/login", s.login).Methods("POST")
+	s.router.HandleFunc("/logout", s.logout).Methods("POST")
+	s.router.HandleFunc("/me", s.withUserAuth(s.me)).Methods("GET")
 
 	s.router.HandleFunc("/users/{user}/memberships", s.withUserAuth(s.listMembershipsByUser)).Methods("GET")
 
@@ -58,11 +87,16 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/applications", s.validateMembershipLevel("read", s.listApplications)).Methods("GET")
 
 	s.router.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateMembershipLevel("write", s.createRelease)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/applications/{application}/releases/{id}", s.validateMembershipLevel("read", s.getRelease)).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/applications/{application}/releases/latest", s.validateMembershipLevel("read", s.getLatestRelease)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/applications/{application}/releases/{id}", s.validateMembershipLevel("read", s.getRelease)).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateMembershipLevel("read", s.listReleases)).Methods("GET")
 
-	s.router.HandleFunc("/{project}/bundle", s.getBundle).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/devices", s.validateMembershipLevel("read", s.listDevices)).Methods("GET")
+
+	s.router.HandleFunc("/projects/{project}/deviceregistrationtokens", s.validateMembershipLevel("write", s.createDeviceRegistrationToken)).Methods("POST")
+
+	s.router.HandleFunc("/projects/{project}/devices/register", s.registerDevice).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/bundle", s.getBundle).Methods("GET")
 
 	return s
 }
@@ -77,25 +111,68 @@ func (s *Service) health(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) withUserAuth(handler func(http.ResponseWriter, *http.Request, string)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accessKeyValue, _, _ := r.BasicAuth()
-		if accessKeyValue == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
+		var userID string
 
-		accessKey, err := s.accessKeys.ValidateAccessKey(r.Context(), hash(accessKeyValue))
-		if err != nil {
-			log.WithError(err).Error("validate access key")
+		sessionValue, err := r.Cookie(sessionCookie)
+
+		switch err {
+		case nil:
+			session, err := s.sessions.ValidateSession(r.Context(), hash(sessionValue.Value))
+			if err == store.ErrSessionNotFound {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			} else if err != nil {
+				log.WithError(err).Error("validate session")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			userID = session.UserID
+		case http.ErrNoCookie:
+			accessKeyValue, _, _ := r.BasicAuth()
+			if accessKeyValue == "" {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			accessKey, err := s.accessKeys.ValidateAccessKey(r.Context(), hash(accessKeyValue))
+			if err == store.ErrAccessKeyNotFound {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			} else if err != nil {
+				log.WithError(err).Error("validate access key")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			userID = accessKey.UserID
+		default:
+			log.WithError(err).Error("get session cookie")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		if accessKey == nil {
+		if userID == "" {
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
 
-		handler(w, r, accessKey.UserID)
+		user, err := s.users.GetUser(r.Context(), userID)
+		if err == store.ErrUserNotFound {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		} else if err != nil {
+			log.WithError(err).Error("get user")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if !user.RegistrationCompleted {
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+
+		handler(w, r, userID)
 	}
 }
 
@@ -142,6 +219,172 @@ func (s *Service) validateMembershipLevel(requiredLevel string, handler func(htt
 
 		handler(w, r, projectID, userID)
 	})
+}
+
+func (s *Service) register(w http.ResponseWriter, r *http.Request) {
+	var registerRequest struct {
+		Email     string `json:"email"`
+		Password  string `json:"password"`
+		FirstName string `json:"firstName"`
+		LastName  string `json:"lastName"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&registerRequest); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	user, err := s.users.CreateUser(r.Context(), registerRequest.Email, hash(registerRequest.Password),
+		registerRequest.FirstName, registerRequest.LastName)
+	if err != nil {
+		log.WithError(err).Error("create user")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	registrationTokenValue := ksuid.New().String()
+
+	if _, err := s.registrationTokens.CreateRegistrationToken(r.Context(), user.ID, hash(registrationTokenValue)); err != nil {
+		log.WithError(err).Error("create registration token")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	name := user.FirstName + " " + user.LastName
+
+	if err := s.email.Send(email.Request{
+		FromName:         "Device Plane",
+		FromAddress:      "noreply@deviceplane.io",
+		ToName:           name,
+		ToAddress:        user.Email,
+		Subject:          "Device Plane Registration Confirmaion",
+		PlainTextContent: "Please go to the following URL to complete registration. https://app.deviceplane.io/confirm/" + registrationTokenValue,
+		HTMLContent:      "Please go to the following URL to complete registration. https://app.deviceplane.io/confirm/" + registrationTokenValue,
+	}); err != nil {
+		log.WithError(err).Error("send registration email")
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Service) confirmRegistration(w http.ResponseWriter, r *http.Request) {
+	var confirmRegistrationRequest struct {
+		RegistrationTokenValue string `json:"registrationTokenValue"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&confirmRegistrationRequest); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	registrationToken, err := s.registrationTokens.ValidateRegistrationToken(r.Context(),
+		hash(confirmRegistrationRequest.RegistrationTokenValue))
+	if err != nil {
+		log.WithError(err).Error("validate registration token")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if _, err := s.users.MarkRegistrationCompleted(r.Context(), registrationToken.UserID); err != nil {
+		log.WithError(err).Error("mark registration completed")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	s.newSession(w, r, registrationToken.UserID)
+}
+
+func (s *Service) login(w http.ResponseWriter, r *http.Request) {
+	var loginRequest struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&loginRequest); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	user, err := s.users.ValidateUser(r.Context(), loginRequest.Email, hash(loginRequest.Password))
+	if err == store.ErrUserNotFound {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("validate user")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if !user.RegistrationCompleted {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	s.newSession(w, r, user.ID)
+}
+
+func (s *Service) newSession(w http.ResponseWriter, r *http.Request, userID string) {
+	sessionValue := ksuid.New().String()
+
+	if _, err := s.sessions.CreateSession(r.Context(), userID, hash(sessionValue)); err != nil {
+		log.WithError(err).Error("create session")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:  sessionCookie,
+		Value: sessionValue,
+
+		Domain:  "localhost",
+		Expires: time.Now().AddDate(0, 1, 0),
+
+		// TODO
+		//Secure:   true,
+		HttpOnly: true,
+	})
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Service) logout(w http.ResponseWriter, r *http.Request) {
+	sessionValue, err := r.Cookie(sessionCookie)
+
+	switch err {
+	case nil:
+		session, err := s.sessions.ValidateSession(r.Context(), hash(sessionValue.Value))
+		if err == store.ErrSessionNotFound {
+			w.WriteHeader(http.StatusForbidden)
+			return
+		} else if err != nil {
+			log.WithError(err).Error("validate session")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if err := s.sessions.DeleteSession(r.Context(), session.ID); err != nil {
+			log.WithError(err).Error("delete session")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	case http.ErrNoCookie:
+		w.WriteHeader(http.StatusOK)
+		return
+	default:
+		log.WithError(err).Error("get session cookie")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Service) me(w http.ResponseWriter, r *http.Request, authenticatedUserID string) {
+	user, err := s.users.GetUser(r.Context(), authenticatedUserID)
+	if err != nil {
+		log.WithError(err).Error("get user")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(user)
 }
 
 func (s *Service) listMembershipsByUser(w http.ResponseWriter, r *http.Request, authenticatedUserID string) {
@@ -261,7 +504,7 @@ func (s *Service) getApplication(w http.ResponseWriter, r *http.Request, project
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	application, err := s.applications.GetApplication(r.Context(), id)
+	application, err := s.applications.GetApplication(r.Context(), id, projectID)
 	if err != nil {
 		log.WithError(err).Error("get application")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -284,6 +527,7 @@ func (s *Service) listApplications(w http.ResponseWriter, r *http.Request, proje
 	json.NewEncoder(w).Encode(applications)
 }
 
+// TOOD: this has a vulnerability!
 func (s *Service) createRelease(w http.ResponseWriter, r *http.Request, projectID, userID string) {
 	vars := mux.Vars(r)
 	applicationID := vars["application"]
@@ -296,7 +540,7 @@ func (s *Service) createRelease(w http.ResponseWriter, r *http.Request, projectI
 		return
 	}
 
-	release, err := s.releases.CreateRelease(r.Context(), applicationID, createReleaseRequest.Config)
+	release, err := s.releases.CreateRelease(r.Context(), projectID, applicationID, createReleaseRequest.Config)
 	if err != nil {
 		log.WithError(err).Error("create release")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -311,7 +555,7 @@ func (s *Service) getRelease(w http.ResponseWriter, r *http.Request, projectID, 
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	release, err := s.releases.GetRelease(r.Context(), id)
+	release, err := s.releases.GetRelease(r.Context(), id, projectID)
 	if err != nil {
 		log.WithError(err).Error("get release")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -326,7 +570,7 @@ func (s *Service) getLatestRelease(w http.ResponseWriter, r *http.Request, proje
 	vars := mux.Vars(r)
 	applicationID := vars["application"]
 
-	release, err := s.releases.GetLatestRelease(r.Context(), applicationID)
+	release, err := s.releases.GetLatestRelease(r.Context(), projectID, applicationID)
 	if err != nil {
 		log.WithError(err).Error("get latest release")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -341,7 +585,7 @@ func (s *Service) listReleases(w http.ResponseWriter, r *http.Request, projectID
 	vars := mux.Vars(r)
 	applicationID := vars["application"]
 
-	releases, err := s.releases.ListReleases(r.Context(), applicationID)
+	releases, err := s.releases.ListReleases(r.Context(), projectID, applicationID)
 	if err != nil {
 		log.WithError(err).Error("list releases")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -352,6 +596,83 @@ func (s *Service) listReleases(w http.ResponseWriter, r *http.Request, projectID
 	json.NewEncoder(w).Encode(releases)
 }
 
+func (s *Service) listDevices(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	devices, err := s.devices.ListDevices(r.Context(), projectID)
+	if err != nil {
+		log.WithError(err).Error("list devices")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(devices)
+}
+
+func (s *Service) createDeviceRegistrationToken(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	deviceRegistrationToken, err := s.deviceRegistrationTokens.CreateDeviceRegistrationToken(r.Context(), projectID)
+	if err != nil {
+		log.WithError(err).Error("create device registration token")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(deviceRegistrationToken)
+}
+
+// TODO: verify project ID
+func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	projectID := vars["project"]
+
+	var registerDeviceRequest models.RegisterDeviceRequest
+	if err := json.NewDecoder(r.Body).Decode(&registerDeviceRequest); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	deviceRegistrationToken, err := s.deviceRegistrationTokens.GetDeviceRegistrationToken(r.Context(), registerDeviceRequest.DeviceRegistrationTokenID, projectID)
+	if err != nil {
+		log.WithError(err).Error("get device registration token")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if deviceRegistrationToken.DeviceAccessKeyID != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	device, err := s.devices.CreateDevice(r.Context(), projectID)
+	if err != nil {
+		log.WithError(err).Error("create device")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	deviceAccessKeyValue := ksuid.New().String()
+
+	deviceAccessKey, err := s.deviceAccessKeys.CreateDeviceAccessKey(r.Context(), projectID, device.ID, hash(deviceAccessKeyValue))
+	if err != nil {
+		log.WithError(err).Error("create device access key")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if _, err = s.deviceRegistrationTokens.BindDeviceRegistrationToken(r.Context(), deviceRegistrationToken.ID, projectID, deviceAccessKey.ID); err != nil {
+		log.WithError(err).Error("bind device registration token")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(models.RegisterDeviceResponse{
+		DeviceID:             device.ID,
+		DeviceAccessKeyValue: deviceAccessKeyValue,
+	})
+}
+
+// TODO: per device and auth
 func (s *Service) getBundle(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	projectID := vars["project"]
@@ -366,8 +687,8 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i, application := range applications {
-		release, err := s.releases.GetLatestRelease(r.Context(), application.ID)
-		if err != nil {
+		release, err := s.releases.GetLatestRelease(r.Context(), projectID, application.ID)
+		if err != nil && err != store.ErrReleaseNotFound {
 			log.WithError(err).Error("get latest release")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -375,7 +696,7 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request) {
 
 		bundle.Applications = append(bundle.Applications, models.ApplicationAndLatestRelease{
 			Application:   applications[i],
-			LatestRelease: *release,
+			LatestRelease: release,
 		})
 	}
 

@@ -10,4 +10,4 @@ services:
       - MYSQL_PASSWORD=pass
       - MYSQL_DATABASE=deviceplane
     ports:
-      - "3313:3306"
+      - "3306:3306"

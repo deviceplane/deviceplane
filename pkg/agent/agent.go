@@ -9,45 +9,48 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/apex/log"
-	"github.com/deviceplane/deviceplane/pkg/client"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/deviceplane/deviceplane/pkg/spec"
 )
 
 type Agent struct {
-	client    *client.Client // TODO: interface
-	engine    engine.Engine
-	stateDir  string
-	projectID string
+	client   *Client // TODO: interface
+	engine   engine.Engine
+	stateDir string
 }
 
-func NewAgent(client *client.Client, engine engine.Engine, projectID string) *Agent {
+func NewAgent(client *Client, engine engine.Engine) *Agent {
 	return &Agent{
-		client:    client,
-		engine:    engine,
-		projectID: projectID,
+		client: client,
+		engine: engine,
 	}
 }
 
 func (a *Agent) Run() error {
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(time.Second)
 	for range ticker.C {
-		bundle, err := a.client.GetBundle(context.TODO(), a.projectID)
+		bundle, err := a.client.getBundle(context.TODO())
 		if err != nil {
 			log.WithError(err).Error("get bundle")
 			continue
 		}
 
-		var application spec.Application
-		if err := yaml.Unmarshal([]byte(bundle.Applications[0].LatestRelease.Config), &application); err != nil {
-			log.WithError(err).Error("unmarshal config")
-			continue
-		}
+		for _, application := range bundle.Applications {
+			if application.LatestRelease == nil {
+				continue
+			}
 
-		if err := a.Reconcile(context.TODO(), application); err != nil {
-			log.WithError(err).Error("unmarshal config")
-			continue
+			var applicationConfig spec.Application
+			if err := yaml.Unmarshal([]byte(application.LatestRelease.Config), &applicationConfig); err != nil {
+				log.WithError(err).Error("unmarshal config")
+				continue
+			}
+
+			if err := a.Reconcile(context.TODO(), applicationConfig); err != nil {
+				log.WithError(err).Error("reconcile")
+				continue
+			}
 		}
 	}
 

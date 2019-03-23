@@ -1,4 +1,4 @@
-package client
+package agent
 
 import (
 	"bytes"
@@ -11,19 +11,19 @@ import (
 )
 
 const (
-	projectsURL     = "projects"
-	applicationsURL = "applications"
-	releasesURL     = "releases"
-	bundleURL       = "bundle"
+	bundleURL = "bundle"
 )
 
 type Client struct {
 	url        string
-	accessKey  string
+	projectID  string
 	httpClient *http.Client
+
+	deviceID  string
+	accessKey string
 }
 
-func NewClient(url, accessKey string, httpClient *http.Client) *Client {
+func NewClient(url, projectID string, httpClient *http.Client) *Client {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
@@ -32,43 +32,53 @@ func NewClient(url, accessKey string, httpClient *http.Client) *Client {
 	}
 	return &Client{
 		url:        url,
-		accessKey:  accessKey,
+		projectID:  projectID,
 		httpClient: httpClient,
 	}
 }
 
-func (c *Client) CreateProject(ctx context.Context) (*models.Project, error) {
-	var project models.Project
-	if err := c.post(ctx, struct{}{}, &project, projectsURL); err != nil {
-		return nil, err
-	}
-	return &project, nil
+func (c *Client) SetDeviceID(deviceID string) {
+	c.deviceID = deviceID
 }
 
-func (c *Client) CreateApplication(ctx context.Context, projectID string) (*models.Application, error) {
-	var application models.Application
-	if err := c.post(ctx, struct{}{}, &application, projectsURL, projectID, applicationsURL); err != nil {
-		return nil, err
-	}
-	return &application, nil
+func (c *Client) SetAccessKey(accessKey string) {
+	c.accessKey = accessKey
 }
 
-func (c *Client) GetLatestRelease(ctx context.Context, projectID, applicationID string) (*models.Release, error) {
-	var release models.Release
-	if err := c.get(ctx, &release, projectsURL, projectID, applicationsURL, applicationID, releasesURL, "latest"); err != nil {
+func (c *Client) RegisterDevice(ctx context.Context, registrationToken string) (*models.RegisterDeviceResponse, error) {
+	reqBytes, err := json.Marshal(models.RegisterDeviceRequest{
+		DeviceRegistrationTokenID: registrationToken,
+	})
+	if err != nil {
 		return nil, err
 	}
-	return &release, nil
+	reader := bytes.NewReader(reqBytes)
+
+	req, err := http.NewRequest("POST", c.getURL("projects", c.projectID, "devices", "register"), reader)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var registerDeviceResponse models.RegisterDeviceResponse
+	if err := json.NewDecoder(resp.Body).Decode(&registerDeviceResponse); err != nil {
+		return nil, err
+	}
+
+	return &registerDeviceResponse, nil
 }
 
-func (c *Client) CreateRelease(ctx context.Context, projectID, applicationID, config string) (*models.Release, error) {
-	var release models.Release
-	if err := c.post(ctx, models.CreateRelease{
-		Config: config,
-	}, &release, projectsURL, projectID, applicationsURL, applicationID, releasesURL); err != nil {
+func (c *Client) getBundle(ctx context.Context) (*models.Bundle, error) {
+	var bundle models.Bundle
+	if err := c.get(ctx, &bundle, "projects", c.projectID, "devices", c.deviceID, "bundle"); err != nil {
 		return nil, err
 	}
-	return &release, nil
+	return &bundle, nil
 }
 
 func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {

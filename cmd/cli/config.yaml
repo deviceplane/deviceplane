@@ -1,4 +1,0 @@
-containers:
-  josh:
-    image: resin/rpi-raspbian
-    command: [ sleep, infinity ]

@@ -3,10 +3,27 @@ package models
 import "time"
 
 type User struct {
-	ID           string    `json:"id"`
-	CreatedAt    time.Time `json:"createdAt"`
-	Email        string    `json:"email"`
-	PasswordHash string    `json:"passwordHash"`
+	ID                    string    `json:"id"`
+	CreatedAt             time.Time `json:"createdAt"`
+	Email                 string    `json:"email"`
+	PasswordHash          string    `json:"passwordHash"`
+	FirstName             string    `json:"firstName"`
+	LastName              string    `json:"lastName"`
+	RegistrationCompleted bool      `json:"registrationCompleted"`
+}
+
+type RegistrationToken struct {
+	ID        string    `json:"id"`
+	UserID    string    `json:"userId"`
+	CreatedAt time.Time `json:"createdAt"`
+	Hash      string    `json:"hash"`
+}
+
+type Session struct {
+	ID        string    `json:"id"`
+	CreatedAt time.Time `json:"createdAt"`
+	UserID    string    `json:"userId"`
+	Hash      string    `json:"hash"`
 }
 
 type AccessKey struct {
@@ -30,25 +47,39 @@ type Membership struct {
 }
 
 type Device struct {
-	ID        string `json:"id"`
-	ProjectID string `json:"projectId"`
+	ID        string    `json:"id"`
+	CreatedAt time.Time `json:"createdAt"`
+	ProjectID string    `json:"projectId"`
+}
+
+type DeviceRegistrationToken struct {
+	ID                string    `json:"id"`
+	CreatedAt         time.Time `json:"createdAt"`
+	ProjectID         string    `json:"projectId"`
+	DeviceAccessKeyID *string   `json:"deviceAccessKeyId"`
+}
+
+type DeviceAccessKey struct {
+	ID        string    `json:"id"`
+	CreatedAt time.Time `json:"createdAt"`
+	ProjectID string    `json:"projectId"`
+	DeviceID  string    `json:"deviceId"`
+	Hash      string    `json:"hash"`
 }
 
 type Application struct {
-	ID        string `json:"id"`
-	ProjectID string `json:"projectId"`
-	Name      string `json:"name"`
+	ID        string    `json:"id"`
+	CreatedAt time.Time `json:"createdAt"`
+	ProjectID string    `json:"projectId"`
+	Name      string    `json:"name"`
 }
 
 type Release struct {
 	ID            string    `json:"id"`
 	CreatedAt     time.Time `json:"createdAt"`
+	ProjectID     string    `json:"projectId"`
 	ApplicationID string    `json:"applicationId"`
 	Config        string    `json:"config"`
-}
-
-type CreateRelease struct {
-	Config string `json:"config"`
 }
 
 type Bundle struct {
@@ -58,5 +89,5 @@ type Bundle struct {
 
 type ApplicationAndLatestRelease struct {
 	Application   Application `json:"application"`
-	LatestRelease Release     `json:"latestRelease"`
+	LatestRelease *Release    `json:"latestRelease"`
 }

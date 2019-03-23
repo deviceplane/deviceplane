@@ -1,0 +1,8 @@
+#!/bin/bash
+set -e
+
+curl -v -X POST http://0.0.0.0:8080/projects/prj/devices/register -d '
+{
+  "deviceRegistrationTokenId": "id"
+}
+'

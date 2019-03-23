@@ -4,14 +4,71 @@ const createUser = `
   insert into users (
     id,
     email,
-    password_hash
+    password_hash,
+    first_name,
+    last_name
+  )
+  values (?, ?, ?, ?, ?)
+`
+
+const getUser = `
+  select id, email, password_hash, first_name, last_name, registration_completed from users
+  where id = ?
+`
+
+const validateUser = `
+  select id, email, password_hash, first_name, last_name, registration_completed from users
+  where email = ? and password_hash = ?
+`
+
+const markRegistrationComplete = `
+  update users
+  set registration_completed = true
+  where id = ?
+`
+
+const createRegistrationToken = `
+  insert into registration_tokens (
+    id,
+    user_id,
+    hash
   )
   values (?, ?, ?)
 `
 
-const getUser = `
-  select id, email, password_hash from users
+const getRegistrationToken = `
+  select id, user_id, hash from registration_tokens
   where id = ?
+`
+
+const validateRegistrationToken = `
+  select id, user_id, hash from registration_tokens
+  where hash = ?
+`
+
+const createSession = `
+  insert into sessions (
+    id,
+    user_id,
+    hash
+  )
+  values (?, ?, ?)
+`
+
+const getSession = `
+  select id, user_id, hash from sessions
+  where id = ?
+`
+
+const validateSession = `
+  select id, user_id, hash from sessions
+  where hash = ?
+`
+
+const deleteSession = `
+  delete from sessions
+  where id = ?
+  limit 1
 `
 
 const createAccessKey = `
@@ -80,12 +137,51 @@ const createDevice = `
 
 const getDevice = `
   select id, project_id from devices
-  where id = ?
+  where id = ? and project_id = ?
 `
 
 const listDevices = `
   select id, project_id from devices
   where project_id = ?
+`
+
+const createDeviceRegistrationToken = `
+  insert into device_registration_tokens (
+    id,
+    project_id
+  )
+  values (?, ?)
+`
+
+const getDeviceRegistrationToken = `
+  select id, project_id, device_access_key_id from device_registration_tokens
+  where id = ? and project_id = ?
+`
+
+const bindDeviceRegistrationToken = `
+  update device_registration_tokens
+  set device_access_key_id = ?
+  where id = ? and project_id = ?
+`
+
+const createDeviceAccessKey = `
+  insert into device_access_keys (
+    id,
+    project_id,
+    device_id,
+    hash
+  )
+  values (?, ?, ?, ?)
+`
+
+const getDeviceAccessKey = `
+  select id, project_id, device_id, hash from device_access_keys
+  where id = ? and project_id = ?
+`
+
+const validateDeviceAccessKey = `
+  select id, user_id, hash from device_access_keys
+  where project_id = ? and hash = ?
 `
 
 const createApplication = `
@@ -99,7 +195,7 @@ const createApplication = `
 
 const getApplication = `
   select id, project_id, name from applications
-  where id = ?
+  where id = ? and project_id = ?
 `
 
 const listApplications = `
@@ -110,25 +206,26 @@ const listApplications = `
 const createRelease = `
   insert into releases (
     id,
+    project_id,
     application_id,
     config
   )
-  values (?, ?, ?)
+  values (?, ?, ?, ?)
 `
 
 const getRelease = `
-  select id, application_id, config from releases
-  where id = ?
+  select id, project_id, application_id, config from releases
+  where id = ? and project_id = ? and application_id = ?
 `
 
 const getLatestRelease = `
-  select id, application_id, config from releases
-  where application_id = ?
+  select id, project_id, application_id, config from releases
+  where project_id = ? and application_id = ?
   order by created_at desc
   limit 1
 `
 
 const listReleases = `
-  select id, application_id, config from releases
-  where application_id = ?
+  select id, project_id, application_id, config from releases
+  where project_id = ? and application_id = ?
 `

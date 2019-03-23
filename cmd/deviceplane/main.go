@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/urfave/cli"
@@ -14,7 +15,13 @@ func main() {
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name: "access-token",
+			Hidden: true,
+			Name:   "url",
+			Value:  "https://api.deviceplane.io",
+		},
+		cli.StringFlag{
+			Name:   "access-key",
+			EnvVar: "DEVICE_PLANE_ACCESS_KEY",
 		},
 	}
 
@@ -22,12 +29,11 @@ func main() {
 		project,
 		application,
 		edit,
-		register,
 		release,
 	}
 
-	err := app.Run(os.Args)
-	if err != nil {
-		panic(err)
+	if err := app.Run(os.Args); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }

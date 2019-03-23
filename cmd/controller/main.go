@@ -3,12 +3,17 @@ package main
 import (
 	"database/sql"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/deviceplane/deviceplane/pkg/controller/service"
+	sendgrid_email "github.com/deviceplane/deviceplane/pkg/email/sendgrid"
+
 	mysql_store "github.com/deviceplane/deviceplane/pkg/controller/store/mysql"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/gorilla/handlers"
 	"github.com/segmentio/conf"
+	"github.com/sendgrid/sendgrid-go"
 )
 
 var version = "dev"
@@ -17,11 +22,15 @@ var name = "deviceplane-controller"
 var config struct {
 	Addr         string `conf:"addr"`
 	MySQLPrimary string `conf:"mysql-primary"`
+	Domain       string `conf:"domain"`
+	AppDomain    string `conf:"app-domain"`
 }
 
 func init() {
 	config.Addr = ":8080"
-	config.MySQLPrimary = "user:pass@tcp(localhost:3313)/deviceplane?parseTime=true"
+	config.MySQLPrimary = "user:pass@tcp(localhost:3306)/deviceplane?parseTime=true"
+	config.Domain = "http://localhost:8080"
+	config.AppDomain = "http://localhost:3000"
 }
 
 func main() {
@@ -34,10 +43,19 @@ func main() {
 
 	store := mysql_store.NewStore(db)
 
-	svc := service.NewService(store, store, store, store, store, store, store)
+	sendgridClient := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
+	sendgridEmail := sendgrid_email.NewEmail(sendgridClient)
+
+	svc := service.NewService(store, store, store, store, store, store, store, store, store, store, store, sendgridEmail)
+
 	server := &http.Server{
-		Addr:    config.Addr,
-		Handler: svc,
+		Addr: config.Addr,
+		Handler: handlers.CORS(
+			handlers.AllowCredentials(),
+			handlers.AllowedHeaders([]string{"Content-Type"}),
+			handlers.AllowedMethods([]string{"GET", "POST"}),
+			handlers.AllowedOrigins([]string{config.AppDomain}),
+		)(svc),
 	}
 
 	if err := server.ListenAndServe(); err != nil {

@@ -21,7 +21,8 @@ var application = cli.Command{
 			},
 			Action: func(c *cli.Context) error {
 				url := c.GlobalString("url")
-				client := client.NewClient(url, nil)
+				accessKey := c.GlobalString("access-key")
+				client := client.NewClient(url, accessKey, nil)
 
 				projectID := c.String("project")
 

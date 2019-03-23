@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e
+
+mysql -h 127.0.0.1 -u user -ppass -P 3306

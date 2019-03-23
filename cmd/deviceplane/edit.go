@@ -22,15 +22,22 @@ var edit = cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) error {
-		accessToken := c.GlobalString("access-token")
-		client := client.NewClient(accessToken, nil)
+		url := c.GlobalString("url")
+		accessKey := c.GlobalString("access-key")
+		client := client.NewClient(url, accessKey, nil)
 
 		projectID := c.String("project")
 		applicationID := c.String("application")
 
 		release, err := client.GetLatestRelease(context.TODO(), projectID, applicationID)
 		if err != nil {
+			fmt.Println("h", err)
 			return err
+		}
+
+		var config string
+		if release != nil {
+			config = release.Config
 		}
 
 		tmpfile, err := ioutil.TempFile("", "")
@@ -39,7 +46,7 @@ var edit = cli.Command{
 		}
 		defer os.Remove(tmpfile.Name())
 
-		if _, err := tmpfile.Write([]byte(release.Config)); err != nil {
+		if _, err := tmpfile.Write([]byte(config)); err != nil {
 			return err
 		}
 
