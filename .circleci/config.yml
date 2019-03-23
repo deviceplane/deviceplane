@@ -21,11 +21,26 @@ jobs:
       - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
       - run: make push-controller-image
 
+  release-agent:
+    docker:
+      - image: circleci/golang:1.12
+    working_directory: /go/src/github.com/deviceplane/deviceplane
+    steps:
+      - checkout
+      - run: go get -v -t -d ./...
+      - setup_remote_docker
+      - run: curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
+      - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
+      - run: make push-agent-image
+
 workflows:
   version: 2
   jobs:
     jobs:
       - test
       - release-controller:
+          requires:
+            - test
+      - release-agent:
           requires:
             - test

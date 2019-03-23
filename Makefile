@@ -17,3 +17,6 @@ agent:
 
 agent-image: agent
 	docker build -t deviceplane/agent:${version} -f Dockerfile.agent .
+
+push-agent-image: agent-image
+	docker push deviceplane/agent:${version}
