@@ -20,17 +20,17 @@ var version = "dev"
 var name = "deviceplane-controller"
 
 var config struct {
-	Addr         string `conf:"addr"`
-	MySQLPrimary string `conf:"mysql-primary"`
-	Domain       string `conf:"domain"`
-	AppDomain    string `conf:"app-domain"`
+	Addr          string `conf:"addr"`
+	MySQLPrimary  string `conf:"mysql-primary"`
+	CookieDomain  string `conf:"cookie-domain"`
+	AllowedOrigin string `conf:"allowed-origin"`
 }
 
 func init() {
 	config.Addr = ":8080"
 	config.MySQLPrimary = "user:pass@tcp(localhost:3306)/deviceplane?parseTime=true"
-	config.Domain = "http://localhost:8080"
-	config.AppDomain = "http://localhost:3000"
+	config.CookieDomain = "localhost"
+	config.AllowedOrigin = "http://localhost:3000"
 }
 
 func main() {
@@ -46,7 +46,8 @@ func main() {
 	sendgridClient := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
 	sendgridEmail := sendgrid_email.NewEmail(sendgridClient)
 
-	svc := service.NewService(store, store, store, store, store, store, store, store, store, store, store, sendgridEmail)
+	svc := service.NewService(store, store, store, store, store, store, store,
+		store, store, store, store, sendgridEmail, config.CookieDomain)
 
 	server := &http.Server{
 		Addr: config.Addr,
@@ -54,7 +55,7 @@ func main() {
 			handlers.AllowCredentials(),
 			handlers.AllowedHeaders([]string{"Content-Type"}),
 			handlers.AllowedMethods([]string{"GET", "POST"}),
-			handlers.AllowedOrigins([]string{config.AppDomain}),
+			handlers.AllowedOrigins([]string{config.AllowedOrigin}),
 		)(svc),
 	}
 

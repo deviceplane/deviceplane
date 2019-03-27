@@ -34,6 +34,7 @@ type Service struct {
 	releases                 store.Releases
 	email                    email.Interface
 	router                   *mux.Router
+	cookieDomain             string
 }
 
 func NewService(
@@ -49,6 +50,7 @@ func NewService(
 	applications store.Applications,
 	releases store.Releases,
 	email email.Interface,
+	cookieDomain string,
 ) *Service {
 	s := &Service{
 		users:                    users,
@@ -63,6 +65,7 @@ func NewService(
 		applications:             applications,
 		releases:                 releases,
 		email:                    email,
+		cookieDomain:             cookieDomain,
 		router:                   mux.NewRouter(),
 	}
 
@@ -334,11 +337,10 @@ func (s *Service) newSession(w http.ResponseWriter, r *http.Request, userID stri
 		Name:  sessionCookie,
 		Value: sessionValue,
 
-		Domain:  "localhost",
+		Domain:  s.cookieDomain,
 		Expires: time.Now().AddDate(0, 1, 0),
 
-		// TODO
-		//Secure:   true,
+		Secure:   true,
 		HttpOnly: true,
 	})
 
