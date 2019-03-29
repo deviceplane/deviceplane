@@ -29,6 +29,7 @@ func main() {
 		project,
 		application,
 		edit,
+		deploy,
 		release,
 	}
 
