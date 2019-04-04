@@ -28,6 +28,7 @@ type Service struct {
 	projects                 store.Projects
 	memberships              store.Memberships
 	devices                  store.Devices
+	deviceLabels             store.DeviceLabels
 	deviceRegistrationTokens store.DeviceRegistrationTokens
 	deviceAccessKeys         store.DeviceAccessKeys
 	applications             store.Applications
@@ -45,6 +46,7 @@ func NewService(
 	projects store.Projects,
 	memberships store.Memberships,
 	devices store.Devices,
+	deviceLabels store.DeviceLabels,
 	deviceRegistrationTokens store.DeviceRegistrationTokens,
 	deviceAccessKeys store.DeviceAccessKeys,
 	applications store.Applications,
@@ -60,6 +62,7 @@ func NewService(
 		projects:                 projects,
 		memberships:              memberships,
 		devices:                  devices,
+		deviceLabels:             deviceLabels,
 		deviceRegistrationTokens: deviceRegistrationTokens,
 		deviceAccessKeys:         deviceAccessKeys,
 		applications:             applications,
@@ -94,7 +97,12 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/applications/{application}/releases/{id}", s.validateMembershipLevel("read", s.getRelease)).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateMembershipLevel("read", s.listReleases)).Methods("GET")
 
+	s.router.HandleFunc("/projects/{project}/devices/{id}", s.validateMembershipLevel("read", s.getDevice)).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/devices", s.validateMembershipLevel("read", s.listDevices)).Methods("GET")
+
+	s.router.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateMembershipLevel("write", s.setDeviceLabel)).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateMembershipLevel("read", s.getDeviceLabel)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateMembershipLevel("read", s.listDeviceLabels)).Methods("GET")
 
 	s.router.HandleFunc("/projects/{project}/deviceregistrationtokens", s.validateMembershipLevel("write", s.createDeviceRegistrationToken)).Methods("POST")
 
@@ -122,7 +130,7 @@ func (s *Service) withUserAuth(handler func(http.ResponseWriter, *http.Request, 
 		case nil:
 			session, err := s.sessions.ValidateSession(r.Context(), hash(sessionValue.Value))
 			if err == store.ErrSessionNotFound {
-				w.WriteHeader(http.StatusForbidden)
+				w.WriteHeader(http.StatusUnauthorized)
 				return
 			} else if err != nil {
 				log.WithError(err).Error("validate session")
@@ -134,13 +142,13 @@ func (s *Service) withUserAuth(handler func(http.ResponseWriter, *http.Request, 
 		case http.ErrNoCookie:
 			accessKeyValue, _, _ := r.BasicAuth()
 			if accessKeyValue == "" {
-				w.WriteHeader(http.StatusBadRequest)
+				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
 
 			accessKey, err := s.accessKeys.ValidateAccessKey(r.Context(), hash(accessKeyValue))
 			if err == store.ErrAccessKeyNotFound {
-				w.WriteHeader(http.StatusForbidden)
+				w.WriteHeader(http.StatusUnauthorized)
 				return
 			} else if err != nil {
 				log.WithError(err).Error("validate access key")
@@ -608,6 +616,78 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request, projectID,
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(devices)
+}
+
+func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	device, err := s.devices.GetDevice(r.Context(), id, projectID)
+	if err != nil {
+		log.WithError(err).Error("get device")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(device)
+}
+
+func (s *Service) setDeviceLabel(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	vars := mux.Vars(r)
+	deviceID := vars["device"]
+
+	var setDeviceLabelRequest struct {
+		Key      string `json:"key"`
+		DeviceID string `json:"deviceId"`
+		Value    string `json:"value"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&setDeviceLabelRequest); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	deviceLabel, err := s.deviceLabels.SetDeviceLabel(r.Context(), setDeviceLabelRequest.Key,
+		deviceID, projectID, setDeviceLabelRequest.Value)
+	if err != nil {
+		log.WithError(err).Error("set device label")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(deviceLabel)
+}
+
+func (s *Service) getDeviceLabel(w http.ResponseWriter, r *http.Request, projectID string, userID string) {
+	vars := mux.Vars(r)
+	deviceID := vars["device"]
+	key := vars["key"]
+
+	deviceLabel, err := s.deviceLabels.GetDeviceLabel(r.Context(), key, deviceID, projectID)
+	if err != nil {
+		log.WithError(err).Error("get device label")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(deviceLabel)
+}
+
+func (s *Service) listDeviceLabels(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	vars := mux.Vars(r)
+	deviceID := vars["device"]
+
+	deviceLabels, err := s.deviceLabels.ListDeviceLabels(r.Context(), deviceID, projectID)
+	if err != nil {
+		log.WithError(err).Error("list device labels")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(deviceLabels)
 }
 
 func (s *Service) createDeviceRegistrationToken(w http.ResponseWriter, r *http.Request, projectID, userID string) {

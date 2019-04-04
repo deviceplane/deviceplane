@@ -46,7 +46,7 @@ func main() {
 	sendgridClient := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
 	sendgridEmail := sendgrid_email.NewEmail(sendgridClient)
 
-	svc := service.NewService(store, store, store, store, store, store, store,
+	svc := service.NewService(store, store, store, store, store, store, store, store,
 		store, store, store, store, sendgridEmail, config.CookieDomain)
 
 	server := &http.Server{

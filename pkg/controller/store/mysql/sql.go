@@ -145,6 +145,27 @@ const listDevices = `
   where project_id = ?
 `
 
+const setDeviceLabel = `
+  insert into device_labels (
+    key,
+    device_id,
+    project_id,
+    value
+  )
+  values (?, ?, ?, ?)
+  on duplicate key update value = ?
+`
+
+const getDeviceLabel = `
+  select key, device_id, project_id, value from devices
+  where key = ? and device_id = ? and project_id = ?
+`
+
+const listDeviceLabels = `
+  select id, project_id from devices
+  where project_id = ?
+`
+
 const createDeviceRegistrationToken = `
   insert into device_registration_tokens (
     id,

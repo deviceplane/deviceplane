@@ -76,6 +76,7 @@ var (
 	_ store.Projects                 = &Store{}
 	_ store.Memberships              = &Store{}
 	_ store.Devices                  = &Store{}
+	_ store.DeviceLabels             = &Store{}
 	_ store.DeviceAccessKeys         = &Store{}
 	_ store.DeviceRegistrationTokens = &Store{}
 	_ store.Applications             = &Store{}
@@ -501,6 +502,71 @@ func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 	return &device, nil
 }
 
+func (s *Store) SetDeviceLabel(ctx context.Context, key, deviceID, projectID, value string) (*models.DeviceLabel, error) {
+	if _, err := s.db.ExecContext(
+		ctx,
+		setDeviceLabel,
+		key,
+		deviceID,
+		projectID,
+		value,
+		value,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetDeviceLabel(ctx, key, deviceID, projectID)
+}
+
+func (s *Store) GetDeviceLabel(ctx context.Context, key, deviceID, projectID string) (*models.DeviceLabel, error) {
+	deviceLabelRow := s.db.QueryRowContext(ctx, getDeviceLabel, key, deviceID, projectID)
+
+	deviceLabel, err := s.scanDeviceLabel(deviceLabelRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrDeviceLabelNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return deviceLabel, nil
+}
+
+func (s *Store) ListDeviceLabels(ctx context.Context, deviceID, projectID string) ([]models.DeviceLabel, error) {
+	deviceLabelRows, err := s.db.QueryContext(ctx, listDevices, deviceID, projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer deviceLabelRows.Close()
+
+	deviceLabels := make([]models.DeviceLabel, 0)
+	for deviceLabelRows.Next() {
+		deviceLabel, err := s.scanDeviceLabel(deviceLabelRows)
+		if err != nil {
+			return nil, err
+		}
+		deviceLabels = append(deviceLabels, *deviceLabel)
+	}
+
+	if err := deviceLabelRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return deviceLabels, nil
+}
+
+func (s *Store) scanDeviceLabel(scanner scanner) (*models.DeviceLabel, error) {
+	var deviceLabel models.DeviceLabel
+	if err := scanner.Scan(
+		&deviceLabel.Key,
+		&deviceLabel.DeviceID,
+		&deviceLabel.ProjectID,
+		&deviceLabel.Value,
+	); err != nil {
+		return nil, err
+	}
+	return &deviceLabel, nil
+}
+
 func (s *Store) CreateDeviceRegistrationToken(ctx context.Context, projectID string) (*models.DeviceRegistrationToken, error) {
 	id := newDeviceRegistrationTokenID()
 
@@ -721,7 +787,7 @@ func (s *Store) GetLatestRelease(ctx context.Context, projectID, applicationID s
 }
 
 func (s *Store) ListReleases(ctx context.Context, projectID, applicationID string) ([]models.Release, error) {
-	releaseRows, err := s.db.QueryContext(ctx, listReleases, applicationID)
+	releaseRows, err := s.db.QueryContext(ctx, listReleases, projectID, applicationID)
 	if err != nil {
 		return nil, errors.Wrap(err, "query releases")
 	}

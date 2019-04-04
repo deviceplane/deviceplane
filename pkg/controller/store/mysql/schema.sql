@@ -47,8 +47,7 @@ create table if not exists sessions (
 
   hash varchar(255) not null,
 
-  primary key (id),
-  unique(user_id)
+  primary key (id)
 );
 
 --
@@ -102,6 +101,17 @@ create table if not exists devices (
   project_id varchar(32) not null,
 
   primary key (id)
+);
+
+create table if not exists device_labels (
+  key varchar(100) not null,
+  device_id varchar(32) not null,
+  created_at timestamp not null default current_timestamp,
+  project_id varchar(32) not null,
+
+  value varchar(100) not null,
+
+  primary key (key, device_id)
 );
 
 --

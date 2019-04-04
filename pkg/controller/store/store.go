@@ -65,6 +65,14 @@ type Devices interface {
 
 var ErrDeviceNotFound = errors.New("device not found")
 
+type DeviceLabels interface {
+	SetDeviceLabel(ctx context.Context, key, deviceID, projectID, value string) (*models.DeviceLabel, error)
+	GetDeviceLabel(ctx context.Context, key, deviceID, projectID string) (*models.DeviceLabel, error)
+	ListDeviceLabels(ctx context.Context, deviceID, projectID string) ([]models.DeviceLabel, error)
+}
+
+var ErrDeviceLabelNotFound = errors.New("device label not found")
+
 type DeviceRegistrationTokens interface {
 	CreateDeviceRegistrationToken(ctx context.Context, projectID string) (*models.DeviceRegistrationToken, error)
 	GetDeviceRegistrationToken(ctx context.Context, id, projectID string) (*models.DeviceRegistrationToken, error)

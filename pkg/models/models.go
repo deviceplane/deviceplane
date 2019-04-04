@@ -52,6 +52,14 @@ type Device struct {
 	ProjectID string    `json:"projectId"`
 }
 
+type DeviceLabel struct {
+	Key       string    `json:"key"`
+	DeviceID  string    `json:"deviceId"`
+	CreatedAt time.Time `json:"createdAt"`
+	ProjectID string    `json:"projectId"`
+	Value     string    `json:"value"`
+}
+
 type DeviceRegistrationToken struct {
 	ID                string    `json:"id"`
 	CreatedAt         time.Time `json:"createdAt"`
