@@ -130,19 +130,26 @@ const listMembershipsByProject = `
 const createDevice = `
   insert into devices (
     id,
-    project_id
+    project_id,
+    name
   )
-  values (?, ?)
+  values (?, ?, ?)
 `
 
 const getDevice = `
-  select id, project_id from devices
+  select id, project_id, name, info from devices
   where id = ? and project_id = ?
 `
 
 const listDevices = `
-  select id, project_id from devices
+  select id, project_id, name, info from devices
   where project_id = ?
+`
+
+const setDeviceInfo = `
+  update devices
+  set info = ?
+  where id = ? and project_id = ?
 `
 
 const setDeviceLabel = `
@@ -201,7 +208,7 @@ const getDeviceAccessKey = `
 `
 
 const validateDeviceAccessKey = `
-  select id, user_id, hash from device_access_keys
+  select id, project_id, device_id, hash from device_access_keys
   where project_id = ? and hash = ?
 `
 

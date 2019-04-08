@@ -41,7 +41,7 @@ func main() {
 	}
 
 	client.SetDeviceID(registerDeviceResponse.DeviceID)
-	client.SetDeviceID(registerDeviceResponse.DeviceAccessKeyValue)
+	client.SetAccessKey(registerDeviceResponse.DeviceAccessKeyValue)
 
 	agent := agent.NewAgent(client, engine)
 	if err := agent.Run(); err != nil {

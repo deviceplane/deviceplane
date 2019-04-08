@@ -47,9 +47,11 @@ type Membership struct {
 }
 
 type Device struct {
-	ID        string    `json:"id"`
-	CreatedAt time.Time `json:"createdAt"`
-	ProjectID string    `json:"projectId"`
+	ID        string                 `json:"id"`
+	CreatedAt time.Time              `json:"createdAt"`
+	ProjectID string                 `json:"projectId"`
+	Name      string                 `json:"name"`
+	Info      map[string]interface{} `json:"info"`
 }
 
 type DeviceLabel struct {

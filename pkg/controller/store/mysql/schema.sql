@@ -100,6 +100,9 @@ create table if not exists devices (
   created_at timestamp not null default current_timestamp,
   project_id varchar(32) not null,
 
+  name varchar(100) not null,
+  info longtext not null,
+
   primary key (id)
 );
 

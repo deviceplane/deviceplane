@@ -107,7 +107,8 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/deviceregistrationtokens", s.validateMembershipLevel("write", s.createDeviceRegistrationToken)).Methods("POST")
 
 	s.router.HandleFunc("/projects/{project}/devices/register", s.registerDevice).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/bundle", s.getBundle).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/bundle", s.withDeviceAuth(s.getBundle)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/info", s.withDeviceAuth(s.setDeviceInfo)).Methods("POST")
 
 	return s
 }
@@ -702,6 +703,31 @@ func (s *Service) createDeviceRegistrationToken(w http.ResponseWriter, r *http.R
 	json.NewEncoder(w).Encode(deviceRegistrationToken)
 }
 
+func (s *Service) withDeviceAuth(handler func(http.ResponseWriter, *http.Request, string, string)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		projectID := vars["project"]
+
+		deviceAccessKeyValue, _, _ := r.BasicAuth()
+		if deviceAccessKeyValue == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		deviceAccessKey, err := s.deviceAccessKeys.ValidateDeviceAccessKey(r.Context(), projectID, hash(deviceAccessKeyValue))
+		if err == store.ErrDeviceAccessKeyNotFound {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		} else if err != nil {
+			log.WithError(err).Error("validate device access key")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		handler(w, r, projectID, deviceAccessKey.DeviceID)
+	}
+}
+
 // TODO: verify project ID
 func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -754,11 +780,7 @@ func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// TODO: per device and auth
-func (s *Service) getBundle(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	projectID := vars["project"]
-
+func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
 	var bundle models.Bundle
 
 	applications, err := s.applications.ListApplications(r.Context(), projectID)
@@ -784,6 +806,22 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(bundle)
+}
+
+func (s *Service) setDeviceInfo(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
+	var setDeviceInfoRequest models.SetDeviceInfoRequest
+	if err := json.NewDecoder(r.Body).Decode(&setDeviceInfoRequest); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if _, err := s.devices.SetDeviceInfo(r.Context(), deviceID, projectID, setDeviceInfoRequest.Info); err != nil {
+		log.WithError(err).Error("set device info")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func hash(s string) string {

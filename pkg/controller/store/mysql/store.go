@@ -3,10 +3,12 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/models"
+	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 )
@@ -442,12 +444,14 @@ func (s *Store) scanMembership(scanner scanner) (*models.Membership, error) {
 
 func (s *Store) CreateDevice(ctx context.Context, projectID string) (*models.Device, error) {
 	id := newDeviceID()
+	name := namesgenerator.GetRandomName(0)
 
 	if _, err := s.db.ExecContext(
 		ctx,
 		createDevice,
 		id,
 		projectID,
+		name,
 	); err != nil {
 		return nil, err
 	}
@@ -491,13 +495,41 @@ func (s *Store) ListDevices(ctx context.Context, projectID string) ([]models.Dev
 	return devices, nil
 }
 
+func (s *Store) SetDeviceInfo(ctx context.Context, id, projectID string, info map[string]interface{}) (*models.Device, error) {
+	infoBytes, err := json.Marshal(info)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		setDeviceInfo,
+		string(infoBytes),
+		id,
+		projectID,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetDevice(ctx, id, projectID)
+}
+
 func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 	var device models.Device
+	var infoString string
 	if err := scanner.Scan(
 		&device.ID,
 		&device.ProjectID,
+		&device.Name,
+		&infoString,
 	); err != nil {
 		return nil, err
+	}
+	device.Info = make(map[string]interface{})
+	if infoString != "" {
+		if err := json.Unmarshal([]byte(infoString), &device.Info); err != nil {
+			return nil, err
+		}
 	}
 	return &device, nil
 }
@@ -652,7 +684,7 @@ func (s *Store) GetDeviceAccessKey(ctx context.Context, id, projectID string) (*
 }
 
 func (s *Store) ValidateDeviceAccessKey(ctx context.Context, projectID, hash string) (*models.DeviceAccessKey, error) {
-	deviceAccessKeyRow := s.db.QueryRowContext(ctx, validateDeviceAccessKey, hash)
+	deviceAccessKeyRow := s.db.QueryRowContext(ctx, validateDeviceAccessKey, projectID, hash)
 
 	deviceAccessKey, err := s.scanDeviceAccessKey(deviceAccessKeyRow)
 	if err != nil && err != sql.ErrNoRows {
