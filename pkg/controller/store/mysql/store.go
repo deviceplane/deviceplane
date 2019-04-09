@@ -564,7 +564,7 @@ func (s *Store) GetDeviceLabel(ctx context.Context, key, deviceID, projectID str
 }
 
 func (s *Store) ListDeviceLabels(ctx context.Context, deviceID, projectID string) ([]models.DeviceLabel, error) {
-	deviceLabelRows, err := s.db.QueryContext(ctx, listDevices, deviceID, projectID)
+	deviceLabelRows, err := s.db.QueryContext(ctx, listDeviceLabels, deviceID, projectID)
 	if err != nil {
 		return nil, err
 	}

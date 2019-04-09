@@ -9,33 +9,34 @@ import (
 )
 
 type Application struct {
-	Containers map[string]Container `yaml:"containers"`
+	Services map[string]Service `yaml:"services"`
 }
 
-type Container struct {
+type Service struct {
 	Name       string            `yaml:"name"`
 	Image      string            `yaml:"image"`
 	Entrypoint []string          `yaml:"entrypoint"`
 	Command    []string          `yaml:"command"`
 	Labels     map[string]string `yaml:"labels"`
+	Scheduling string            `yaml:"scheduling"`
 }
 
-func (c Container) WithHash() Container {
+func (s Service) WithHash() Service {
 	// TODO
-	if c.Labels == nil {
-		c.Labels = make(map[string]string)
+	if s.Labels == nil {
+		s.Labels = make(map[string]string)
 	}
-	c.Labels[models.HashLabel] = c.Hash()
-	return c
+	s.Labels[models.HashLabel] = s.Hash()
+	return s
 }
 
-func (c Container) Hash() string {
+func (s Service) Hash() string {
 	var parts []string
 
-	parts = append(parts, c.Name)
-	parts = append(parts, c.Image)
-	parts = append(parts, c.Entrypoint...)
-	parts = append(parts, c.Command...)
+	parts = append(parts, s.Name)
+	parts = append(parts, s.Image)
+	parts = append(parts, s.Entrypoint...)
+	parts = append(parts, s.Command...)
 	// TODO: labels
 
 	return hash(parts)

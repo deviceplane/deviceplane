@@ -1,5 +1,7 @@
 package mysql
 
+import "fmt"
+
 const createUser = `
   insert into users (
     id,
@@ -152,26 +154,26 @@ const setDeviceInfo = `
   where id = ? and project_id = ?
 `
 
-const setDeviceLabel = `
+var setDeviceLabel = fmt.Sprintf(`
   insert into device_labels (
-    key,
+    %skey%s,
     device_id,
     project_id,
     value
   )
   values (?, ?, ?, ?)
   on duplicate key update value = ?
-`
+`, "`", "`")
 
-const getDeviceLabel = `
-  select key, device_id, project_id, value from devices
-  where key = ? and device_id = ? and project_id = ?
-`
+var getDeviceLabel = fmt.Sprintf(`
+  select %skey%s, device_id, project_id, value from device_labels
+  where %skey%s = ? and device_id = ? and project_id = ?
+`, "`", "`", "`", "`")
 
-const listDeviceLabels = `
-  select id, project_id from devices
-  where project_id = ?
-`
+var listDeviceLabels = fmt.Sprintf(`
+  select %skey%s, device_id, project_id, value from device_labels
+  where device_id = ? and project_id = ?
+`, "`", "`")
 
 const createDeviceRegistrationToken = `
   insert into device_registration_tokens (

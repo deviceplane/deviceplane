@@ -107,14 +107,14 @@ create table if not exists devices (
 );
 
 create table if not exists device_labels (
-  key varchar(100) not null,
+  `key` varchar(100) not null,
   device_id varchar(32) not null,
   created_at timestamp not null default current_timestamp,
   project_id varchar(32) not null,
 
   value varchar(100) not null,
 
-  primary key (key, device_id)
+  primary key (`key`, device_id)
 );
 
 --

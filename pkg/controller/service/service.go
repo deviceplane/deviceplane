@@ -7,9 +7,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/deviceplane/deviceplane/pkg/spec"
+	"gopkg.in/yaml.v2"
+
 	"github.com/segmentio/ksuid"
 
 	"github.com/apex/log"
+	"github.com/deviceplane/deviceplane/pkg/controller/scheduler"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/email"
 	"github.com/deviceplane/deviceplane/pkg/models"
@@ -639,9 +643,8 @@ func (s *Service) setDeviceLabel(w http.ResponseWriter, r *http.Request, project
 	deviceID := vars["device"]
 
 	var setDeviceLabelRequest struct {
-		Key      string `json:"key"`
-		DeviceID string `json:"deviceId"`
-		Value    string `json:"value"`
+		Key   string `json:"key"`
+		Value string `json:"value"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&setDeviceLabelRequest); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -790,6 +793,13 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, d
 		return
 	}
 
+	deviceLabels, err := s.deviceLabels.ListDeviceLabels(r.Context(), deviceID, projectID)
+	if err != nil {
+		log.WithError(err).Error("list device labels")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	for i, application := range applications {
 		release, err := s.releases.GetLatestRelease(r.Context(), projectID, application.ID)
 		if err != nil && err != store.ErrReleaseNotFound {
@@ -797,6 +807,27 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, d
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+
+		var applicationSpec spec.Application
+		if err = yaml.Unmarshal([]byte(release.Config), &applicationSpec); err != nil {
+			log.WithError(err).Error("invalid application spec")
+			continue
+		}
+
+		transformedApplicationSpec, err := scheduler.TransformSpec(applicationSpec, deviceLabels)
+		if err != nil {
+			log.WithError(err).Error("transform application spec")
+			continue
+		}
+
+		transformedApplicationSpecBytes, err := yaml.Marshal(transformedApplicationSpec)
+		if err != nil {
+			log.WithError(err).Error("marshal transformed application spec")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		release.Config = string(transformedApplicationSpecBytes)
 
 		bundle.Applications = append(bundle.Applications, models.ApplicationAndLatestRelease{
 			Application:   applications[i],
