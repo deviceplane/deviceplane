@@ -107,6 +107,7 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateMembershipLevel("write", s.setDeviceLabel)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateMembershipLevel("read", s.getDeviceLabel)).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateMembershipLevel("read", s.listDeviceLabels)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateMembershipLevel("write", s.deleteDeviceLabel)).Methods("DELETE")
 
 	s.router.HandleFunc("/projects/{project}/deviceregistrationtokens", s.validateMembershipLevel("write", s.createDeviceRegistrationToken)).Methods("POST")
 
@@ -692,6 +693,20 @@ func (s *Service) listDeviceLabels(w http.ResponseWriter, r *http.Request, proje
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(deviceLabels)
+}
+
+func (s *Service) deleteDeviceLabel(w http.ResponseWriter, r *http.Request, projectID string, userID string) {
+	vars := mux.Vars(r)
+	deviceID := vars["device"]
+	key := vars["key"]
+
+	if err := s.deviceLabels.DeleteDeviceLabel(r.Context(), key, deviceID, projectID); err != nil {
+		log.WithError(err).Error("delete device label")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) createDeviceRegistrationToken(w http.ResponseWriter, r *http.Request, projectID, userID string) {

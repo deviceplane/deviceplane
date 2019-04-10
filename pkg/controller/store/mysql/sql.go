@@ -175,6 +175,12 @@ var listDeviceLabels = fmt.Sprintf(`
   where device_id = ? and project_id = ?
 `, "`", "`")
 
+var deleteDeviceLabel = fmt.Sprintf(`
+  delete from device_labels
+  where %skey%s = ? and device_id = ? and project_id = ?
+  limit 1
+`, "`", "`")
+
 const createDeviceRegistrationToken = `
   insert into device_registration_tokens (
     id,

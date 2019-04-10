@@ -586,6 +586,20 @@ func (s *Store) ListDeviceLabels(ctx context.Context, deviceID, projectID string
 	return deviceLabels, nil
 }
 
+func (s *Store) DeleteDeviceLabel(ctx context.Context, key, deviceID, projectID string) error {
+	if _, err := s.db.ExecContext(
+		ctx,
+		deleteDeviceLabel,
+		key,
+		deviceID,
+		projectID,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *Store) scanDeviceLabel(scanner scanner) (*models.DeviceLabel, error) {
 	var deviceLabel models.DeviceLabel
 	if err := scanner.Scan(

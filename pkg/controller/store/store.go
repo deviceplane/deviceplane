@@ -70,6 +70,7 @@ type DeviceLabels interface {
 	SetDeviceLabel(ctx context.Context, key, deviceID, projectID, value string) (*models.DeviceLabel, error)
 	GetDeviceLabel(ctx context.Context, key, deviceID, projectID string) (*models.DeviceLabel, error)
 	ListDeviceLabels(ctx context.Context, deviceID, projectID string) ([]models.DeviceLabel, error)
+	DeleteDeviceLabel(ctx context.Context, key, deviceID, projectID string) error
 }
 
 var ErrDeviceLabelNotFound = errors.New("device label not found")
