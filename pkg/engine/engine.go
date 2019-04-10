@@ -7,7 +7,7 @@ import (
 )
 
 type Engine interface {
-	Create(context.Context, spec.Container) (*Instance, error)
+	Create(context.Context, spec.Service) (*Instance, error)
 	Start(context.Context, string) error
 	List(context.Context, map[string]bool, map[string]string) ([]Instance, error)
 	Stop(context.Context, string) error

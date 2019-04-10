@@ -6,5 +6,5 @@ import (
 
 type Instance struct {
 	ID string
-	spec.Container
+	spec.Service
 }

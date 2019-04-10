@@ -30,13 +30,13 @@ func NewEngine() (*Engine, error) {
 	}, nil
 }
 
-func (e *Engine) Create(ctx context.Context, c spec.Container) (*engine.Instance, error) {
+func (e *Engine) Create(ctx context.Context, s spec.Service) (*engine.Instance, error) {
 	resp, err := e.client.ContainerCreate(ctx, &container.Config{
-		Image:      c.Image,
-		Entrypoint: strslice.StrSlice(c.Entrypoint),
-		Cmd:        c.Command,
-		Labels:     c.Labels,
-	}, nil, nil, c.Name)
+		Image:      s.Image,
+		Entrypoint: strslice.StrSlice(s.Entrypoint),
+		Cmd:        s.Command,
+		Labels:     s.Labels,
+	}, nil, nil, s.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (e *Engine) Remove(ctx context.Context, id string) error {
 func convert(c types.Container) engine.Instance {
 	return engine.Instance{
 		ID: c.ID,
-		Container: spec.Container{
+		Service: spec.Service{
 			Labels: c.Labels,
 		},
 	}

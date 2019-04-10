@@ -59,25 +59,25 @@ func (a *Agent) Run() error {
 
 func (a *Agent) Reconcile(ctx context.Context, application spec.Application) error {
 	// TODO
-	for name, container := range application.Containers {
-		container.Name = name
-		application.Containers[name] = container
+	for name, service := range application.Services {
+		service.Name = name
+		application.Services[name] = service
 	}
 
 	wg := &sync.WaitGroup{}
 
 	wg.Add(1)
 	go func() {
-		if err := a.removeDanglingContainers(ctx, application); err != nil {
+		if err := a.removeDanglingServices(ctx, application); err != nil {
 			log.WithError(err).Error("remove dangling containers")
 		}
 		wg.Done()
 	}()
 
-	for _, container := range application.Containers {
+	for _, container := range application.Services {
 		wg.Add(1)
-		go func(container spec.Container) {
-			if err := a.reconcileContainer(ctx, application, container); err != nil {
+		go func(service spec.Service) {
+			if err := a.reconcileContainer(ctx, application, service); err != nil {
 				log.WithError(err).Error("reconcile container")
 			}
 			wg.Done()
@@ -89,7 +89,7 @@ func (a *Agent) Reconcile(ctx context.Context, application spec.Application) err
 	return nil
 }
 
-func (a *Agent) reconcileContainer(ctx context.Context, application spec.Application, container spec.Container) error {
+func (a *Agent) reconcileContainer(ctx context.Context, application spec.Application, container spec.Service) error {
 	instances, err := a.engine.List(ctx, nil, map[string]string{
 		models.HashLabel: container.Hash(),
 	})
@@ -115,9 +115,9 @@ func (a *Agent) reconcileContainer(ctx context.Context, application spec.Applica
 	return nil
 }
 
-func (a *Agent) removeDanglingContainers(ctx context.Context, application spec.Application) error {
+func (a *Agent) removeDanglingServices(ctx context.Context, application spec.Application) error {
 	expectedHashValues := make(map[string]bool)
-	for _, container := range application.Containers {
+	for _, container := range application.Services {
 		expectedHashValues[container.Hash()] = true
 	}
 
