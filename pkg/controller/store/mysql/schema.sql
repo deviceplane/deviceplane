@@ -33,7 +33,7 @@ create table if not exists registration_tokens (
 
   primary key (id),
   unique(user_id),
-  foreign key user_id(user_id)
+  foreign key registration_tokens_user_id(user_id)
   references users(id)
   on delete cascade
 );
@@ -51,7 +51,7 @@ create table if not exists sessions (
   hash varchar(255) not null,
 
   primary key (id),
-  foreign key user_id(user_id)
+  foreign key sessions_user_id(user_id)
   references users(id)
   on delete cascade
 );
@@ -68,7 +68,7 @@ create table if not exists access_keys (
   hash varchar(255) not null,
 
   primary key (id),
-  foreign key user_id(user_id)
+  foreign key access_keys_user_id(user_id)
   references users(id)
   on delete cascade
 );
@@ -98,10 +98,10 @@ create table if not exists memberships (
   level enum ('admin', 'write', 'read') not null,
 
   primary key (user_id, project_id),
-  foreign key user_id(user_id)
+  foreign key memberships_user_id(user_id)
   references users(id)
   on delete cascade,
-  foreign key project_id(project_id)
+  foreign key memberships_project_id(project_id)
   references projects(id)
   on delete cascade
 );
@@ -119,7 +119,7 @@ create table if not exists devices (
   info longtext not null,
 
   primary key (id),
-  foreign key project_id(project_id)
+  foreign key devices_project_id(project_id)
   references projects(id)
   on delete cascade
 );
@@ -133,7 +133,7 @@ create table if not exists device_labels (
   value varchar(100) not null,
 
   primary key (`key`, device_id),
-  foreign key device_id(device_id)
+  foreign key device_labels_device_id(device_id)
   references devices(id)
   on delete cascade
 );
@@ -164,7 +164,7 @@ create table if not exists device_access_keys (
   hash varchar(255) not null,
 
   primary key (id),
-  foreign key device_id(device_id)
+  foreign key device_access_keys_device_id(device_id)
   references devices(id)
   on delete cascade
 );
@@ -180,7 +180,7 @@ create table if not exists applications (
   name varchar(100) not null,
 
   primary key (id),
-  foreign key project_id(project_id)
+  foreign key applications_project_id(project_id)
   references projects(id)
   on delete cascade
 );
@@ -197,7 +197,7 @@ create table if not exists releases (
   config longtext not null,
 
   primary key (id),
-  foreign key application_id(application_id)
+  foreign key releases_application_id(application_id)
   references applications(id)
   on delete cascade
 );
