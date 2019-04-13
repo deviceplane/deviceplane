@@ -273,12 +273,13 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 		FromAddress:      "noreply@deviceplane.io",
 		ToName:           name,
 		ToAddress:        user.Email,
-		Subject:          "Device Plane Registration Confirmaion",
+		Subject:          "Device Plane Registration Confirmation",
 		PlainTextContent: "Please go to the following URL to complete registration. https://app.deviceplane.io/confirm/" + registrationTokenValue,
 		HTMLContent:      "Please go to the following URL to complete registration. https://app.deviceplane.io/confirm/" + registrationTokenValue,
 	}); err != nil {
 		log.WithError(err).Error("send registration email")
 		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)
