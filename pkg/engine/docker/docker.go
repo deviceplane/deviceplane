@@ -84,9 +84,7 @@ func (e *Engine) Remove(ctx context.Context, id string) error {
 
 func convert(c types.Container) engine.Instance {
 	return engine.Instance{
-		ID: c.ID,
-		Service: spec.Service{
-			Labels: c.Labels,
-		},
+		ID:     c.ID,
+		Labels: c.Labels,
 	}
 }

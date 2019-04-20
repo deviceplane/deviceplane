@@ -21,11 +21,12 @@ type Service struct {
 	Scheduling string            `yaml:"scheduling"`
 }
 
-func (s Service) WithHash() Service {
+func (s Service) WithStandardLabels(serviceName string) Service {
 	// TODO
 	if s.Labels == nil {
 		s.Labels = make(map[string]string)
 	}
+	s.Labels[models.ServiceLabel] = serviceName
 	s.Labels[models.HashLabel] = s.Hash()
 	return s
 }
