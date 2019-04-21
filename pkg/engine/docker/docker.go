@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/strslice"
@@ -45,7 +46,14 @@ func (e *Engine) Create(ctx context.Context, name string, s spec.Service) (strin
 }
 
 func (e *Engine) Start(ctx context.Context, id string) error {
-	return e.client.ContainerStart(ctx, id, types.ContainerStartOptions{})
+	if err := e.client.ContainerStart(ctx, id, types.ContainerStartOptions{}); err != nil {
+		// TODO
+		if strings.Contains(err.Error(), "No such container") {
+			return engine.ErrInstanceNotFound
+		}
+		return err
+	}
+	return nil
 }
 
 func (e *Engine) List(ctx context.Context, keyFilters map[string]bool, keyAndValueFilters map[string]string, all bool) ([]engine.Instance, error) {
@@ -74,11 +82,25 @@ func (e *Engine) List(ctx context.Context, keyFilters map[string]bool, keyAndVal
 }
 
 func (e *Engine) Stop(ctx context.Context, id string) error {
-	return e.client.ContainerStop(ctx, id, nil)
+	if err := e.client.ContainerStop(ctx, id, nil); err != nil {
+		// TODO
+		if strings.Contains(err.Error(), "No such container") {
+			return engine.ErrInstanceNotFound
+		}
+		return engine.ErrInstanceNotFound
+	}
+	return nil
 }
 
 func (e *Engine) Remove(ctx context.Context, id string) error {
-	return e.client.ContainerRemove(ctx, id, types.ContainerRemoveOptions{})
+	if err := e.client.ContainerRemove(ctx, id, types.ContainerRemoveOptions{}); err != nil {
+		// TODO
+		if strings.Contains(err.Error(), "No such container") {
+			return engine.ErrInstanceNotFound
+		}
+		return engine.ErrInstanceNotFound
+	}
+	return nil
 }
 
 func convert(c types.Container) engine.Instance {
@@ -86,6 +108,6 @@ func convert(c types.Container) engine.Instance {
 		ID:     c.ID,
 		Labels: c.Labels,
 		// TODO
-		Running: c.Status == "running",
+		Running: c.State == "running",
 	}
 }

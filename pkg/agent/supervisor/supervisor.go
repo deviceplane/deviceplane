@@ -170,7 +170,7 @@ func (s *Supervisor) engineCreate(name string, service spec.Service) string {
 
 func (s *Supervisor) engineStart(id string) {
 	engineRetry(func(ctx context.Context) error {
-		if err := s.engine.Start(ctx, id); err != nil {
+		if err := s.engine.Start(ctx, id); err != nil && err != engine.ErrInstanceNotFound {
 			log.WithError(err).Error("start container")
 			return err
 		}
@@ -196,7 +196,7 @@ func (s *Supervisor) engineList(keyFilters map[string]bool, keyAndValueFilters m
 
 func (s *Supervisor) engineStop(id string) {
 	engineRetry(func(ctx context.Context) error {
-		if err := s.engine.Stop(ctx, id); err != nil {
+		if err := s.engine.Stop(ctx, id); err != nil && err != engine.ErrInstanceNotFound {
 			log.WithError(err).Error("stop container")
 			return err
 		}
@@ -206,7 +206,7 @@ func (s *Supervisor) engineStop(id string) {
 
 func (s *Supervisor) engineRemove(id string) {
 	engineRetry(func(ctx context.Context) error {
-		if err := s.engine.Remove(ctx, id); err != nil {
+		if err := s.engine.Remove(ctx, id); err != nil && err != engine.ErrInstanceNotFound {
 			log.WithError(err).Error("remove container")
 			return err
 		}

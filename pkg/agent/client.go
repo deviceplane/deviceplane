@@ -67,8 +67,19 @@ func (c *Client) RegisterDevice(ctx context.Context, registrationToken string) (
 	}
 	defer resp.Body.Close()
 
+	bytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	log.WithFields(log.Fields{
+		"status": resp.Status,
+		"code":   resp.StatusCode,
+		"body":   string(bytes),
+	}).Debug("POST response")
+
 	var registerDeviceResponse models.RegisterDeviceResponse
-	if err := json.NewDecoder(resp.Body).Decode(&registerDeviceResponse); err != nil {
+	if err := json.Unmarshal(bytes, &registerDeviceResponse); err != nil {
 		return nil, err
 	}
 
