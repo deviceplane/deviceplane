@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/apex/log"
@@ -17,10 +16,12 @@ var config struct {
 	Controller        string `conf:"controller"`
 	Project           string `conf:"project"`
 	RegistrationToken string `conf:"registration-token"`
+	StateDir          string `conf:"state-dir"`
 }
 
 func init() {
 	config.Controller = "https://api.deviceplane.io"
+	config.StateDir = "/var/lib/deviceplane"
 }
 
 func main() {
@@ -32,19 +33,13 @@ func main() {
 	}
 
 	client := agent.NewClient(config.Controller, config.Project, http.DefaultClient)
+	agent := agent.NewAgent(client, engine, config.Project, config.RegistrationToken, config.StateDir)
 
-	// TODO: check for existing access key
-
-	registerDeviceResponse, err := client.RegisterDevice(context.Background(), config.RegistrationToken)
-	if err != nil {
-		log.WithError(err).Fatal("register device")
+	if err := agent.Initialize(); err != nil {
+		log.WithError(err).Fatal("failure while initializing agent")
 	}
 
-	client.SetDeviceID(registerDeviceResponse.DeviceID)
-	client.SetAccessKey(registerDeviceResponse.DeviceAccessKeyValue)
-
-	agent := agent.NewAgent(client, engine)
 	if err := agent.Run(); err != nil {
-		log.WithError(err).Fatal("agent error")
+		log.WithError(err).Fatal("failure while running agent")
 	}
 }
