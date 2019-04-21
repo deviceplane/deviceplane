@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
+	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
@@ -95,7 +97,18 @@ func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {
 	}
 	defer resp.Body.Close()
 
-	return json.NewDecoder(resp.Body).Decode(&out)
+	bytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	log.WithFields(log.Fields{
+		"status": resp.Status,
+		"code":   resp.StatusCode,
+		"body":   string(bytes),
+	}).Debug("GET response")
+
+	return json.Unmarshal(bytes, &out)
 }
 
 func (c *Client) post(ctx context.Context, in, out interface{}, s ...string) error {
@@ -118,7 +131,18 @@ func (c *Client) post(ctx context.Context, in, out interface{}, s ...string) err
 	}
 	defer resp.Body.Close()
 
-	return json.NewDecoder(resp.Body).Decode(&out)
+	bytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	log.WithFields(log.Fields{
+		"status": resp.Status,
+		"code":   resp.StatusCode,
+		"body":   string(bytes),
+	}).Debug("POST response")
+
+	return json.Unmarshal(bytes, &out)
 }
 
 func (c *Client) getURL(s ...string) string {

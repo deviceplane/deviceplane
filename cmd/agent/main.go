@@ -17,15 +17,23 @@ var config struct {
 	Project           string `conf:"project"`
 	RegistrationToken string `conf:"registration-token"`
 	StateDir          string `conf:"state-dir"`
+	LogLevel          string `conf:"log-level"`
 }
 
 func init() {
 	config.Controller = "https://api.deviceplane.io"
 	config.StateDir = "/var/lib/deviceplane"
+	config.LogLevel = "info"
 }
 
 func main() {
 	conf.Load(&config)
+
+	lvl, err := log.ParseLevel(config.LogLevel)
+	if err != nil {
+		log.WithError(err).Fatal("--log-level")
+	}
+	log.SetLevel(lvl)
 
 	engine, err := docker.NewEngine()
 	if err != nil {
