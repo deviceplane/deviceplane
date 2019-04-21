@@ -4,19 +4,13 @@ cli:
 	go build -o ./dist/cli ./cmd/cli
 
 controller:
-	GOOS=linux go build -o ./dist/controller ./cmd/controller
-
-controller-image: controller
 	docker build -t deviceplane/deviceplane:${version} -f Dockerfile.controller .
 
-push-controller-image: controller-image
+push-controller: controller
 	docker push deviceplane/deviceplane:${version}
 
 agent:
-	GOOS=linux GOARCH=arm go build -o ./dist/agent ./cmd/agent
-
-agent-image: agent
 	docker build -t deviceplane/agent:${version} -f Dockerfile.agent .
 
-push-agent-image: agent-image
+push-agent: agent
 	docker push deviceplane/agent:${version}
