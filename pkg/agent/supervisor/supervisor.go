@@ -124,6 +124,7 @@ func (s *Supervisor) keepAlive(serviceName string, service spec.Service) {
 		s.lock.Unlock()
 	}()
 
+	dead := false
 	ticker := time.NewTicker(time.Second)
 	for {
 		select {
@@ -132,6 +133,9 @@ func (s *Supervisor) keepAlive(serviceName string, service spec.Service) {
 			return
 
 		case <-ticker.C:
+			if dead {
+				continue
+			}
 			instances := s.engineList(nil, map[string]string{
 				models.ServiceLabel: serviceName,
 				models.HashLabel:    service.Hash(),
@@ -139,7 +143,8 @@ func (s *Supervisor) keepAlive(serviceName string, service spec.Service) {
 
 			if len(instances) == 0 {
 				go s.reconcile(serviceName, service)
-				return
+				dead = true
+				continue
 			}
 
 			// TODO: filter down to just one instance if we find more
