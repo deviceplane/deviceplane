@@ -30,27 +30,25 @@ func NewEngine() (*Engine, error) {
 	}, nil
 }
 
-func (e *Engine) Create(ctx context.Context, s spec.Service) (*engine.Instance, error) {
+func (e *Engine) Create(ctx context.Context, name string, s spec.Service) (string, error) {
 	resp, err := e.client.ContainerCreate(ctx, &container.Config{
 		Image:      s.Image,
 		Entrypoint: strslice.StrSlice(s.Entrypoint),
 		Cmd:        s.Command,
 		Labels:     s.Labels,
-	}, nil, nil, s.Name)
+	}, nil, nil, name)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return &engine.Instance{
-		ID: resp.ID,
-	}, nil
+	return resp.ID, nil
 }
 
 func (e *Engine) Start(ctx context.Context, id string) error {
 	return e.client.ContainerStart(ctx, id, types.ContainerStartOptions{})
 }
 
-func (e *Engine) List(ctx context.Context, keyFilters map[string]bool, keyAndValueFilters map[string]string) ([]engine.Instance, error) {
+func (e *Engine) List(ctx context.Context, keyFilters map[string]bool, keyAndValueFilters map[string]string, all bool) ([]engine.Instance, error) {
 	args := filters.NewArgs()
 	for k := range keyFilters {
 		args.Add("label", k)
@@ -61,6 +59,7 @@ func (e *Engine) List(ctx context.Context, keyFilters map[string]bool, keyAndVal
 
 	containers, err := e.client.ContainerList(ctx, types.ContainerListOptions{
 		Filters: args,
+		All:     all,
 	})
 	if err != nil {
 		return nil, err
@@ -86,5 +85,7 @@ func convert(c types.Container) engine.Instance {
 	return engine.Instance{
 		ID:     c.ID,
 		Labels: c.Labels,
+		// TODO
+		Running: c.Status == "running",
 	}
 }

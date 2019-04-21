@@ -13,13 +13,12 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// TODO: we might need state to not constsntly retry failing updates
 type Supervisor struct {
 	engine              engine.Engine
 	reconcilingServices map[string]struct{}
 	keepAliveShutdowns  map[string]chan struct{}
 	keepAliveAcks       map[string]chan struct{}
-	lock                sync.RWMutex
+	lock                sync.Mutex
 }
 
 func NewSupervisor(engine engine.Engine) *Supervisor {
@@ -45,7 +44,6 @@ func (s *Supervisor) SetApplication(application models.ApplicationAndLatestRelea
 	return nil
 }
 
-// this is a little confusing because ports of this can run at the same time as keepalive
 func (s *Supervisor) reconcile(serviceName string, service spec.Service) {
 	s.lock.Lock()
 	// If this service is already in reconciling state then exit
@@ -66,6 +64,7 @@ func (s *Supervisor) reconcile(serviceName string, service spec.Service) {
 
 	stopKeepAlive := func() {
 		s.lock.Lock()
+
 		shutdown, ok := s.keepAliveShutdowns[serviceName]
 		if !ok {
 			s.lock.Unlock()
@@ -81,16 +80,12 @@ func (s *Supervisor) reconcile(serviceName string, service spec.Service) {
 		s.lock.Unlock()
 	}
 
-	instances, err := s.engine.List(context.TODO(), nil, map[string]string{
+	instances := s.engineList(nil, map[string]string{
 		models.ServiceLabel: serviceName,
-	})
-	if err != nil {
-		// TODO
-		log.WithError(err).Error("list containers")
-		panic(err)
-	}
+	}, true)
 
 	if len(instances) > 0 {
+		// TODO: filter down to just one instance if we find more
 		instance := instances[0]
 
 		if hashLabel, ok := instance.Labels[models.HashLabel]; ok && hashLabel == service.Hash() {
@@ -100,36 +95,15 @@ func (s *Supervisor) reconcile(serviceName string, service spec.Service) {
 
 		stopKeepAlive()
 
-		if err := s.engine.Stop(context.TODO(), instance.ID); err != nil {
-			// TODO
-			log.WithError(err).Error("stop container")
-			panic(err)
-		}
-
-		if err := s.engine.Remove(context.TODO(), instance.ID); err != nil {
-			// TODO
-			log.WithError(err).Error("remove container")
-			panic(err)
-		}
+		s.engineStop(instance.ID)
+		s.engineRemove(instance.ID)
 	}
 
-	// TODO: is this really the right thing to do here?
 	stopKeepAlive()
 
+	name := fmt.Sprintf("%s-%s", serviceName, service.Hash()[:6])
 	serviceWithHash := service.WithStandardLabels(serviceName)
-	// TODO
-	serviceWithHash.Name = fmt.Sprintf("%s-%s", serviceName, service.Hash()[:6])
-	instance, err := s.engine.Create(context.TODO(), serviceWithHash)
-	if err != nil {
-		// TODO
-		log.WithError(err).Error("create container 1")
-		panic(err)
-	}
-	if err = s.engine.Start(context.TODO(), instance.ID); err != nil {
-		// TODO
-		log.WithError(err).Error("start container")
-		panic(err)
-	}
+	s.engineCreate(name, serviceWithHash)
 
 	go s.keepAlive(serviceName, service)
 }
@@ -158,32 +132,97 @@ func (s *Supervisor) keepAlive(serviceName string, service spec.Service) {
 			return
 
 		case <-ticker.C:
-			instances, err := s.engine.List(context.TODO(), nil, map[string]string{
-				// TODO: probably want AND hash here
+			instances := s.engineList(nil, map[string]string{
 				models.ServiceLabel: serviceName,
-			})
-			if err != nil {
-				// TODO
-				log.WithError(err).Error("list containers")
+				models.HashLabel:    service.Hash(),
+			}, true)
+
+			if len(instances) == 0 {
+				go s.reconcile(serviceName, service)
+				return
 			}
 
-			if len(instances) > 0 {
-				continue
-			}
+			// TODO: filter down to just one instance if we find more
+			instance := instances[0]
 
-			serviceWithHash := service.WithStandardLabels(serviceName)
-			// TODO
-			serviceWithHash.Name = fmt.Sprintf("%s-%s", serviceName, service.Hash()[:6])
-			instance, err := s.engine.Create(context.TODO(), serviceWithHash)
-			if err != nil {
-				// TODO
-				log.WithError(err).Error("create container 2")
-				panic(err)
+			if !instance.Running {
+				s.engineStart(instance.ID)
 			}
-			if err = s.engine.Start(context.TODO(), instance.ID); err != nil {
-				// TODO
-				log.WithError(err).Error("start container")
-				panic(err)
+		}
+	}
+}
+
+func (s *Supervisor) engineCreate(name string, service spec.Service) string {
+	var id string
+
+	engineRetry(func(ctx context.Context) error {
+		var err error
+		id, err = s.engine.Create(ctx, name, service)
+		if err != nil {
+			log.WithError(err).Error("create container")
+			return err
+		}
+		return nil
+	})
+
+	return id
+}
+
+func (s *Supervisor) engineStart(id string) {
+	engineRetry(func(ctx context.Context) error {
+		if err := s.engine.Start(ctx, id); err != nil {
+			log.WithError(err).Error("start container")
+			return err
+		}
+		return nil
+	})
+}
+
+func (s *Supervisor) engineList(keyFilters map[string]bool, keyAndValueFilters map[string]string, all bool) []engine.Instance {
+	var instances []engine.Instance
+
+	engineRetry(func(ctx context.Context) error {
+		var err error
+		instances, err = s.engine.List(context.TODO(), keyFilters, keyAndValueFilters, all)
+		if err != nil {
+			log.WithError(err).Error("list containers")
+			return err
+		}
+		return nil
+	})
+
+	return instances
+}
+
+func (s *Supervisor) engineStop(id string) {
+	engineRetry(func(ctx context.Context) error {
+		if err := s.engine.Stop(ctx, id); err != nil {
+			log.WithError(err).Error("stop container")
+			return err
+		}
+		return nil
+	})
+}
+
+func (s *Supervisor) engineRemove(id string) {
+	engineRetry(func(ctx context.Context) error {
+		if err := s.engine.Remove(ctx, id); err != nil {
+			log.WithError(err).Error("remove container")
+			return err
+		}
+		return nil
+	})
+}
+
+func engineRetry(f func(context.Context) error) {
+	ticker := time.NewTicker(time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+			if err := f(ctx); err == nil {
+				return
 			}
 		}
 	}
