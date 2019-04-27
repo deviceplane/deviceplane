@@ -17,6 +17,7 @@ require (
 	github.com/segmentio/ksuid v1.0.2
 	github.com/sendgrid/rest v2.4.1+incompatible // indirect
 	github.com/sendgrid/sendgrid-go v3.4.1+incompatible
+	github.com/stretchr/testify v1.3.0
 	golang.org/x/net v0.0.0-20190420063019-afa5a82059c6 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 )

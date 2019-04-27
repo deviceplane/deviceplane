@@ -8,6 +8,8 @@ insert into access_keys (id, user_id, hash) values ('key', 'usr', '2C70E12B7A064
 insert into projects (id, name) values ('prj', 'testproject');
 insert into memberships (user_id, project_id, level) values ('usr', 'prj', 'admin');
 insert into applications (id, project_id, name) values ('app', 'prj', 'testapplication');
+
+update users set registration_completed = 1 where id = 'usr';
 "
 
 echo "$query" | mysql -h 127.0.0.1 -u user -ppass -P 3306

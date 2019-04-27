@@ -23,6 +23,7 @@ var config struct {
 	Addr          string `conf:"addr"`
 	MySQLPrimary  string `conf:"mysql-primary"`
 	CookieDomain  string `conf:"cookie-domain"`
+	CookieSecure  bool   `conf:"cookie-secure"`
 	AllowedOrigin string `conf:"allowed-origin"`
 }
 
@@ -30,6 +31,7 @@ func init() {
 	config.Addr = ":8080"
 	config.MySQLPrimary = "user:pass@tcp(localhost:3306)/deviceplane?parseTime=true"
 	config.CookieDomain = "localhost"
+	config.CookieSecure = false
 	config.AllowedOrigin = "http://localhost:3000"
 }
 
@@ -47,7 +49,7 @@ func main() {
 	sendgridEmail := sendgrid_email.NewEmail(sendgridClient)
 
 	svc := service.NewService(store, store, store, store, store, store, store, store,
-		store, store, store, store, sendgridEmail, config.CookieDomain)
+		store, store, store, store, sendgridEmail, config.CookieDomain, config.CookieSecure)
 
 	server := &http.Server{
 		Addr: config.Addr,
