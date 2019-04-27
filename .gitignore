@@ -1,1 +1,5 @@
 dist/
+cmd/agent/agent
+cmd/controller/controller
+cmd/deviceplane/deviceplane
+cmd/deviceplane/config.yaml
