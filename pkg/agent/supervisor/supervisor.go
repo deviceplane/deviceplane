@@ -8,6 +8,7 @@ import (
 
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/engine"
+	canonical_image "github.com/deviceplane/deviceplane/pkg/image"
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/deviceplane/deviceplane/pkg/spec"
 	"gopkg.in/yaml.v2"
@@ -223,7 +224,7 @@ func (s *Supervisor) containerRemove(id string) {
 
 func (s *Supervisor) imagePull(image string) {
 	retry(func(ctx context.Context) error {
-		if err := s.engine.PullImage(ctx, image); err != nil {
+		if err := s.engine.PullImage(ctx, canonical_image.ToCanonical(image)); err != nil {
 			log.WithError(err).Error("pull image")
 			return err
 		}
