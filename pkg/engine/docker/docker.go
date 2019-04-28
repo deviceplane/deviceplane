@@ -3,6 +3,8 @@ package docker
 import (
 	"context"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"strings"
 
 	"github.com/docker/docker/api/types/filters"
@@ -31,7 +33,7 @@ func NewEngine() (*Engine, error) {
 	}, nil
 }
 
-func (e *Engine) Create(ctx context.Context, name string, s spec.Service) (string, error) {
+func (e *Engine) CreateContainer(ctx context.Context, name string, s spec.Service) (string, error) {
 	resp, err := e.client.ContainerCreate(ctx, &container.Config{
 		Image:      s.Image,
 		Entrypoint: strslice.StrSlice(s.Entrypoint),
@@ -45,7 +47,7 @@ func (e *Engine) Create(ctx context.Context, name string, s spec.Service) (strin
 	return resp.ID, nil
 }
 
-func (e *Engine) Start(ctx context.Context, id string) error {
+func (e *Engine) StartContainer(ctx context.Context, id string) error {
 	if err := e.client.ContainerStart(ctx, id, types.ContainerStartOptions{}); err != nil {
 		// TODO
 		if strings.Contains(err.Error(), "No such container") {
@@ -56,7 +58,7 @@ func (e *Engine) Start(ctx context.Context, id string) error {
 	return nil
 }
 
-func (e *Engine) List(ctx context.Context, keyFilters map[string]bool, keyAndValueFilters map[string]string, all bool) ([]engine.Instance, error) {
+func (e *Engine) ListContainers(ctx context.Context, keyFilters map[string]bool, keyAndValueFilters map[string]string, all bool) ([]engine.Instance, error) {
 	args := filters.NewArgs()
 	for k := range keyFilters {
 		args.Add("label", k)
@@ -81,7 +83,7 @@ func (e *Engine) List(ctx context.Context, keyFilters map[string]bool, keyAndVal
 	return instances, nil
 }
 
-func (e *Engine) Stop(ctx context.Context, id string) error {
+func (e *Engine) StopContainer(ctx context.Context, id string) error {
 	if err := e.client.ContainerStop(ctx, id, nil); err != nil {
 		// TODO
 		if strings.Contains(err.Error(), "No such container") {
@@ -92,7 +94,7 @@ func (e *Engine) Stop(ctx context.Context, id string) error {
 	return nil
 }
 
-func (e *Engine) Remove(ctx context.Context, id string) error {
+func (e *Engine) RemoveContainer(ctx context.Context, id string) error {
 	if err := e.client.ContainerRemove(ctx, id, types.ContainerRemoveOptions{}); err != nil {
 		// TODO
 		if strings.Contains(err.Error(), "No such container") {
@@ -101,6 +103,16 @@ func (e *Engine) Remove(ctx context.Context, id string) error {
 		return engine.ErrInstanceNotFound
 	}
 	return nil
+}
+
+func (e *Engine) PullImage(ctx context.Context, image string) error {
+	out, err := e.client.ImagePull(ctx, image, types.ImagePullOptions{})
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	_, err = io.Copy(ioutil.Discard, out)
+	return err
 }
 
 func convert(c types.Container) engine.Instance {

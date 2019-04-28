@@ -12,11 +12,13 @@ var (
 )
 
 type Engine interface {
-	Create(context.Context, string, spec.Service) (string, error)
-	Start(context.Context, string) error
-	List(context.Context, map[string]bool, map[string]string, bool) ([]Instance, error)
-	Stop(context.Context, string) error
-	Remove(context.Context, string) error
+	CreateContainer(context.Context, string, spec.Service) (string, error)
+	StartContainer(context.Context, string) error
+	ListContainers(context.Context, map[string]bool, map[string]string, bool) ([]Instance, error)
+	StopContainer(context.Context, string) error
+	RemoveContainer(context.Context, string) error
+
+	PullImage(context.Context, string) error
 }
 
 type Instance struct {

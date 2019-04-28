@@ -80,7 +80,7 @@ func (s *Supervisor) reconcile(serviceName string, service spec.Service) {
 		s.lock.Unlock()
 	}
 
-	instances := s.engineList(nil, map[string]string{
+	instances := s.containerList(nil, map[string]string{
 		models.ServiceLabel: serviceName,
 	}, true)
 
@@ -93,17 +93,19 @@ func (s *Supervisor) reconcile(serviceName string, service spec.Service) {
 			return
 		}
 
+		s.imagePull(service.Image)
 		stopKeepAlive()
 
-		s.engineStop(instance.ID)
-		s.engineRemove(instance.ID)
+		s.containerStop(instance.ID)
+		s.containerRemove(instance.ID)
 	}
 
+	s.imagePull(service.Image)
 	stopKeepAlive()
 
 	name := fmt.Sprintf("%s-%s", serviceName, service.Hash()[:6])
 	serviceWithHash := service.WithStandardLabels(serviceName)
-	s.engineCreate(name, serviceWithHash)
+	s.containerCreate(name, serviceWithHash)
 
 	go s.keepAlive(serviceName, service)
 }
@@ -136,7 +138,7 @@ func (s *Supervisor) keepAlive(serviceName string, service spec.Service) {
 			if dead {
 				continue
 			}
-			instances := s.engineList(nil, map[string]string{
+			instances := s.containerList(nil, map[string]string{
 				models.ServiceLabel: serviceName,
 				models.HashLabel:    service.Hash(),
 			}, true)
@@ -151,80 +153,90 @@ func (s *Supervisor) keepAlive(serviceName string, service spec.Service) {
 			instance := instances[0]
 
 			if !instance.Running {
-				s.engineStart(instance.ID)
+				s.containerStart(instance.ID)
 			}
 		}
 	}
 }
 
-func (s *Supervisor) engineCreate(name string, service spec.Service) string {
+func (s *Supervisor) containerCreate(name string, service spec.Service) string {
 	var id string
 
-	engineRetry(func(ctx context.Context) error {
+	retry(func(ctx context.Context) error {
 		var err error
-		id, err = s.engine.Create(ctx, name, service)
+		id, err = s.engine.CreateContainer(ctx, name, service)
 		if err != nil {
 			log.WithError(err).Error("create container")
 			return err
 		}
 		return nil
-	})
+	}, 5*time.Minute)
 
 	return id
 }
 
-func (s *Supervisor) engineStart(id string) {
-	engineRetry(func(ctx context.Context) error {
-		if err := s.engine.Start(ctx, id); err != nil && err != engine.ErrInstanceNotFound {
+func (s *Supervisor) containerStart(id string) {
+	retry(func(ctx context.Context) error {
+		if err := s.engine.StartContainer(ctx, id); err != nil && err != engine.ErrInstanceNotFound {
 			log.WithError(err).Error("start container")
 			return err
 		}
 		return nil
-	})
+	}, 5*time.Minute)
 }
 
-func (s *Supervisor) engineList(keyFilters map[string]bool, keyAndValueFilters map[string]string, all bool) []engine.Instance {
+func (s *Supervisor) containerList(keyFilters map[string]bool, keyAndValueFilters map[string]string, all bool) []engine.Instance {
 	var instances []engine.Instance
 
-	engineRetry(func(ctx context.Context) error {
+	retry(func(ctx context.Context) error {
 		var err error
-		instances, err = s.engine.List(context.TODO(), keyFilters, keyAndValueFilters, all)
+		instances, err = s.engine.ListContainers(context.TODO(), keyFilters, keyAndValueFilters, all)
 		if err != nil {
 			log.WithError(err).Error("list containers")
 			return err
 		}
 		return nil
-	})
+	}, 5*time.Minute)
 
 	return instances
 }
 
-func (s *Supervisor) engineStop(id string) {
-	engineRetry(func(ctx context.Context) error {
-		if err := s.engine.Stop(ctx, id); err != nil && err != engine.ErrInstanceNotFound {
+func (s *Supervisor) containerStop(id string) {
+	retry(func(ctx context.Context) error {
+		if err := s.engine.StopContainer(ctx, id); err != nil && err != engine.ErrInstanceNotFound {
 			log.WithError(err).Error("stop container")
 			return err
 		}
 		return nil
-	})
+	}, 5*time.Minute)
 }
 
-func (s *Supervisor) engineRemove(id string) {
-	engineRetry(func(ctx context.Context) error {
-		if err := s.engine.Remove(ctx, id); err != nil && err != engine.ErrInstanceNotFound {
+func (s *Supervisor) containerRemove(id string) {
+	retry(func(ctx context.Context) error {
+		if err := s.engine.RemoveContainer(ctx, id); err != nil && err != engine.ErrInstanceNotFound {
 			log.WithError(err).Error("remove container")
 			return err
 		}
 		return nil
-	})
+	}, 5*time.Minute)
 }
 
-func engineRetry(f func(context.Context) error) {
+func (s *Supervisor) imagePull(image string) {
+	retry(func(ctx context.Context) error {
+		if err := s.engine.PullImage(ctx, image); err != nil {
+			log.WithError(err).Error("pull image")
+			return err
+		}
+		return nil
+	}, 30*time.Minute)
+}
+
+func retry(f func(context.Context) error, timeout time.Duration) {
 	ticker := time.NewTicker(time.Second)
 	for {
 		select {
 		case <-ticker.C:
-			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()
 			if err := f(ctx); err == nil {
 				return
