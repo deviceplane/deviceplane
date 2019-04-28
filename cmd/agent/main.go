@@ -5,6 +5,7 @@ import (
 
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/agent"
+	agent_client "github.com/deviceplane/deviceplane/pkg/agent/client"
 	"github.com/deviceplane/deviceplane/pkg/engine/docker"
 	"github.com/segmentio/conf"
 )
@@ -40,14 +41,12 @@ func main() {
 		log.WithError(err).Fatal("create docker client")
 	}
 
-	client := agent.NewClient(config.Controller, config.Project, http.DefaultClient)
+	client := agent_client.NewClient(config.Controller, config.Project, http.DefaultClient)
 	agent := agent.NewAgent(client, engine, config.Project, config.RegistrationToken, config.StateDir)
 
 	if err := agent.Initialize(); err != nil {
 		log.WithError(err).Fatal("failure while initializing agent")
 	}
 
-	if err := agent.Run(); err != nil {
-		log.WithError(err).Fatal("failure while running agent")
-	}
+	agent.Run()
 }

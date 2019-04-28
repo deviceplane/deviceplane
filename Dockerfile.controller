@@ -5,7 +5,7 @@ FROM golang:1.12
 WORKDIR /app
 COPY ./ ./
 RUN go build -o ./controller ./cmd/controller
-RUN GOOS=linux GOARCH=arm CGO_ENABLED=0 go build -o ./controller ./cmd/controller
+RUN GOOS=linux CGO_ENABLED=0 go build -o ./controller ./cmd/controller
 
 FROM scratch
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt

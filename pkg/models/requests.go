@@ -14,5 +14,5 @@ type RegisterDeviceResponse struct {
 }
 
 type SetDeviceInfoRequest struct {
-	Info map[string]interface{} `json:"info"`
+	DeviceInfo DeviceInfo `json:"deviceInfo"`
 }

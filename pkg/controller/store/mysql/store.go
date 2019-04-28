@@ -495,8 +495,8 @@ func (s *Store) ListDevices(ctx context.Context, projectID string) ([]models.Dev
 	return devices, nil
 }
 
-func (s *Store) SetDeviceInfo(ctx context.Context, id, projectID string, info map[string]interface{}) (*models.Device, error) {
-	infoBytes, err := json.Marshal(info)
+func (s *Store) SetDeviceInfo(ctx context.Context, id, projectID string, deviceInfo models.DeviceInfo) (*models.Device, error) {
+	infoBytes, err := json.Marshal(deviceInfo)
 	if err != nil {
 		return nil, err
 	}

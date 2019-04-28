@@ -865,7 +865,7 @@ func (s *Service) setDeviceInfo(w http.ResponseWriter, r *http.Request, projectI
 		return
 	}
 
-	if _, err := s.devices.SetDeviceInfo(r.Context(), deviceID, projectID, setDeviceInfoRequest.Info); err != nil {
+	if _, err := s.devices.SetDeviceInfo(r.Context(), deviceID, projectID, setDeviceInfoRequest.DeviceInfo); err != nil {
 		log.WithError(err).Error("set device info")
 		w.WriteHeader(http.StatusInternalServerError)
 		return

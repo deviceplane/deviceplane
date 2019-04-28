@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/apex/log"
+	agent_client "github.com/deviceplane/deviceplane/pkg/agent/client"
+	"github.com/deviceplane/deviceplane/pkg/agent/info"
 	"github.com/deviceplane/deviceplane/pkg/agent/supervisor"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/pkg/errors"
@@ -19,15 +21,16 @@ const (
 )
 
 type Agent struct {
-	client            *Client // TODO: interface
+	client            *agent_client.Client // TODO: interface
 	engine            engine.Engine
 	projectID         string
 	registrationToken string
 	stateDir          string
 	supervisor        *supervisor.Supervisor
+	infoReporter      *info.Reporter
 }
 
-func NewAgent(client *Client, engine engine.Engine, projectID, registrationToken, stateDir string) *Agent {
+func NewAgent(client *agent_client.Client, engine engine.Engine, projectID, registrationToken, stateDir string) *Agent {
 	return &Agent{
 		client:            client,
 		engine:            engine,
@@ -35,6 +38,7 @@ func NewAgent(client *Client, engine engine.Engine, projectID, registrationToken
 		registrationToken: registrationToken,
 		stateDir:          stateDir,
 		supervisor:        supervisor.NewSupervisor(engine),
+		infoReporter:      info.NewReporter(client),
 	}
 }
 
@@ -99,10 +103,18 @@ func (a *Agent) register() error {
 	return nil
 }
 
-func (a *Agent) Run() error {
+func (a *Agent) Run() {
+	go a.runSupervisor()
+	go a.runInfoReporter()
+	select {}
+}
+
+func (a *Agent) runSupervisor() {
 	ticker := time.NewTicker(time.Second)
-	for range ticker.C {
-		bundle, err := a.client.getBundle(context.TODO())
+	defer ticker.Stop()
+
+	for {
+		bundle, err := a.client.GetBundle(context.TODO())
 		if err != nil {
 			log.WithError(err).Error("get bundle")
 			continue
@@ -118,7 +130,26 @@ func (a *Agent) Run() error {
 				continue
 			}
 		}
-	}
 
-	return nil
+		select {
+		case <-ticker.C:
+			continue
+		}
+	}
+}
+
+func (a *Agent) runInfoReporter() {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+
+	for {
+		if err := a.infoReporter.Report(); err != nil {
+			log.WithError(err).Error("report device info")
+		}
+
+		select {
+		case <-ticker.C:
+			continue
+		}
+	}
 }

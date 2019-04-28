@@ -1,4 +1,4 @@
-package agent
+package client
 
 import (
 	"bytes"
@@ -86,12 +86,16 @@ func (c *Client) RegisterDevice(ctx context.Context, registrationToken string) (
 	return &registerDeviceResponse, nil
 }
 
-func (c *Client) getBundle(ctx context.Context) (*models.Bundle, error) {
+func (c *Client) GetBundle(ctx context.Context) (*models.Bundle, error) {
 	var bundle models.Bundle
 	if err := c.get(ctx, &bundle, "projects", c.projectID, "devices", c.deviceID, "bundle"); err != nil {
 		return nil, err
 	}
 	return &bundle, nil
+}
+
+func (c *Client) SetDeviceInfo(ctx context.Context, info models.SetDeviceInfoRequest) error {
+	return c.post(ctx, info, nil, "projects", c.projectID, "devices", c.deviceID, "info")
 }
 
 func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {
@@ -118,6 +122,10 @@ func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {
 		"code":   resp.StatusCode,
 		"body":   string(bytes),
 	}).Debug("GET response")
+
+	if len(bytes) == 0 {
+		return nil
+	}
 
 	return json.Unmarshal(bytes, &out)
 }
@@ -152,6 +160,10 @@ func (c *Client) post(ctx context.Context, in, out interface{}, s ...string) err
 		"code":   resp.StatusCode,
 		"body":   string(bytes),
 	}).Debug("POST response")
+
+	if len(bytes) == 0 {
+		return nil
+	}
 
 	return json.Unmarshal(bytes, &out)
 }

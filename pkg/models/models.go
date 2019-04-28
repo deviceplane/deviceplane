@@ -101,3 +101,7 @@ type ApplicationAndLatestRelease struct {
 	Application   Application `json:"application"`
 	LatestRelease *Release    `json:"latestRelease"`
 }
+
+type DeviceInfo struct {
+	IPAddress string `json:"ipAddress"`
+}
