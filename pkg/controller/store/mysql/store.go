@@ -525,7 +525,6 @@ func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 	); err != nil {
 		return nil, err
 	}
-	device.Info = make(map[string]interface{})
 	if infoString != "" {
 		if err := json.Unmarshal([]byte(infoString), &device.Info); err != nil {
 			return nil, err
