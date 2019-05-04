@@ -39,6 +39,14 @@ type Project struct {
 	Name      string    `json:"name"`
 }
 
+type ProjectDeviceCounts struct {
+	AllCount int `json:"allCount"`
+}
+
+type ProjectApplicationCounts struct {
+	AllCount int `json:"allCount"`
+}
+
 type Membership struct {
 	UserID    string    `json:"userId"`
 	ProjectID string    `json:"projectId"`
@@ -90,6 +98,17 @@ type Release struct {
 	ProjectID     string    `json:"projectId"`
 	ApplicationID string    `json:"applicationId"`
 	Config        string    `json:"config"`
+}
+
+type MembershipFull struct {
+	User    User        `json:"user"`
+	Project ProjectFull `json:"project"`
+}
+
+type ProjectFull struct {
+	Project
+	DeviceCounts      ProjectDeviceCounts      `json:"deviceCounts"`
+	ApplicationCounts ProjectApplicationCounts `json:"applicationCounts"`
 }
 
 type Bundle struct {

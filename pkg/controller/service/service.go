@@ -30,6 +30,8 @@ type Service struct {
 	accessKeys               store.AccessKeys
 	sessions                 store.Sessions
 	projects                 store.Projects
+	projectDeviceCounts      store.ProjectDeviceCounts
+	projectApplicationCounts store.ProjectApplicationCounts
 	memberships              store.Memberships
 	devices                  store.Devices
 	deviceLabels             store.DeviceLabels
@@ -49,6 +51,8 @@ func NewService(
 	sessions store.Sessions,
 	accessKeys store.AccessKeys,
 	projects store.Projects,
+	projectDeviceCounts store.ProjectDeviceCounts,
+	projectApplicationCounts store.ProjectApplicationCounts,
 	memberships store.Memberships,
 	devices store.Devices,
 	deviceLabels store.DeviceLabels,
@@ -66,6 +70,8 @@ func NewService(
 		sessions:                 sessions,
 		accessKeys:               accessKeys,
 		projects:                 projects,
+		projectDeviceCounts:      projectDeviceCounts,
+		projectApplicationCounts: projectApplicationCounts,
 		memberships:              memberships,
 		devices:                  devices,
 		deviceLabels:             deviceLabels,
@@ -88,6 +94,7 @@ func NewService(
 	s.router.HandleFunc("/me", s.withUserAuth(s.me)).Methods("GET")
 
 	s.router.HandleFunc("/users/{user}/memberships", s.withUserAuth(s.listMembershipsByUser)).Methods("GET")
+	s.router.HandleFunc("/users/{user}/memberships/full", s.withUserAuth(s.listMembershipsByUserFull)).Methods("GET")
 
 	s.router.HandleFunc("/projects", s.withUserAuth(s.createProject)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}", s.validateMembershipLevel("write", s.getProject)).Methods("GET")
@@ -425,6 +432,67 @@ func (s *Service) listMembershipsByUser(w http.ResponseWriter, r *http.Request, 
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(memberships)
+}
+
+func (s *Service) listMembershipsByUserFull(w http.ResponseWriter, r *http.Request, authenticatedUserID string) {
+	vars := mux.Vars(r)
+	userID := vars["user"]
+
+	if userID != authenticatedUserID {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	memberships, err := s.memberships.ListMembershipsByUser(r.Context(), userID)
+	if err != nil {
+		log.WithError(err).Error("list memberships by user")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var membershipsFull []models.MembershipFull
+
+	for _, membership := range memberships {
+		user, err := s.users.GetUser(r.Context(), membership.UserID)
+		if err != nil {
+			log.WithError(err).Error("get user")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		project, err := s.projects.GetProject(r.Context(), membership.ProjectID)
+		if err != nil {
+			log.WithError(err).Error("get project")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		projectDeviceCounts, err := s.projectDeviceCounts.GetProjectDeviceCounts(r.Context(), membership.ProjectID)
+		if err != nil {
+			log.WithError(err).Error("get project device counts")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		projectApplicationCounts, err := s.projectApplicationCounts.GetProjectApplicationCounts(r.Context(), membership.ProjectID)
+		if err != nil {
+			log.WithError(err).Error("get project application counts")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		membershipsFull = append(membershipsFull, models.MembershipFull{
+			User: *user,
+			Project: models.ProjectFull{
+				Project:           *project,
+				DeviceCounts:      *projectDeviceCounts,
+				ApplicationCounts: *projectApplicationCounts,
+			},
+		})
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(membershipsFull)
 }
 
 func (s *Service) createProject(w http.ResponseWriter, r *http.Request, userID string) {

@@ -105,6 +105,16 @@ const getProject = `
   where id = ?
 `
 
+const getProjectTotalDeviceCount = `
+  select count(*) from devices
+  where devices.project_id = ?
+`
+
+const getProjectTotalApplicationCount = `
+  select count(*) from applications
+  where applications.project_id = ?
+`
+
 const createMembership = `
   insert into memberships (
     user_id,

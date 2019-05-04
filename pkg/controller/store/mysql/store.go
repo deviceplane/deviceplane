@@ -76,6 +76,7 @@ var (
 	_ store.Sessions                 = &Store{}
 	_ store.AccessKeys               = &Store{}
 	_ store.Projects                 = &Store{}
+	_ store.ProjectDeviceCounts      = &Store{}
 	_ store.Memberships              = &Store{}
 	_ store.Devices                  = &Store{}
 	_ store.DeviceLabels             = &Store{}
@@ -370,6 +371,56 @@ func (s *Store) scanProject(scanner scanner) (*models.Project, error) {
 		return nil, err
 	}
 	return &project, nil
+}
+
+func (s *Store) GetProjectDeviceCounts(ctx context.Context, projectID string) (*models.ProjectDeviceCounts, error) {
+	countRow := s.db.QueryRowContext(ctx, getProjectTotalDeviceCount, projectID)
+
+	count, err := s.scanProjectTotalDeviceCountRow(countRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrProjectNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &models.ProjectDeviceCounts{
+		AllCount: count,
+	}, nil
+}
+
+func (s *Store) scanProjectTotalDeviceCountRow(scanner scanner) (int, error) {
+	var count int
+	if err := scanner.Scan(
+		&count,
+	); err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (s *Store) GetProjectApplicationCounts(ctx context.Context, projectID string) (*models.ProjectApplicationCounts, error) {
+	countRow := s.db.QueryRowContext(ctx, getProjectTotalApplicationCount, projectID)
+
+	count, err := s.scanProjectTotalApplicationCountRow(countRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrProjectNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &models.ProjectApplicationCounts{
+		AllCount: count,
+	}, nil
+}
+
+func (s *Store) scanProjectTotalApplicationCountRow(scanner scanner) (int, error) {
+	var count int
+	if err := scanner.Scan(
+		&count,
+	); err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (s *Store) CreateMembership(ctx context.Context, userID, projectID, level string) (*models.Membership, error) {

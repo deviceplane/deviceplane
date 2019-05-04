@@ -48,6 +48,14 @@ type Projects interface {
 
 var ErrProjectNotFound = errors.New("project not found")
 
+type ProjectDeviceCounts interface {
+	GetProjectDeviceCounts(ctx context.Context, projectID string) (*models.ProjectDeviceCounts, error)
+}
+
+type ProjectApplicationCounts interface {
+	GetProjectApplicationCounts(ctx context.Context, projectID string) (*models.ProjectApplicationCounts, error)
+}
+
 type Memberships interface {
 	CreateMembership(ctx context.Context, userID, projectID, membershipType string) (*models.Membership, error)
 	GetMembership(ctx context.Context, userID, projectID string) (*models.Membership, error)
