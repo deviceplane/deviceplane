@@ -62,6 +62,13 @@ type Device struct {
 	Info      DeviceInfo `json:"info"`
 }
 
+type DeviceStatus string
+
+const (
+	DeviceStatusOnline  = DeviceStatus("online")
+	DeviceStatusOffline = DeviceStatus("offline")
+)
+
 type DeviceLabel struct {
 	Key       string    `json:"key"`
 	DeviceID  string    `json:"deviceId"`
@@ -109,6 +116,11 @@ type ProjectFull struct {
 	Project
 	DeviceCounts      ProjectDeviceCounts      `json:"deviceCounts"`
 	ApplicationCounts ProjectApplicationCounts `json:"applicationCounts"`
+}
+
+type DeviceFull struct {
+	Device
+	Status DeviceStatus `json:"status"`
 }
 
 type Bundle struct {

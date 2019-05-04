@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
@@ -73,6 +74,12 @@ type Devices interface {
 }
 
 var ErrDeviceNotFound = errors.New("device not found")
+
+type DeviceStatuses interface {
+	ResetDeviceStatus(ctx context.Context, deviceID string, ttl time.Duration) error
+	GetDeviceStatus(ctx context.Context, deviceID string) (models.DeviceStatus, error)
+	GetDeviceStatuses(ctx context.Context, deviceIDs []string) ([]models.DeviceStatus, error)
+}
 
 type DeviceLabels interface {
 	SetDeviceLabel(ctx context.Context, key, deviceID, projectID, value string) (*models.DeviceLabel, error)
