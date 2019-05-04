@@ -29,12 +29,18 @@ jobs:
 
 workflows:
   version: 2
-  jobs:
+  test_release:
     jobs:
       - test
       - release-controller:
           requires:
             - test
+          filters:
+            branches:
+              only: master
       - release-agent:
           requires:
             - test
+          filters:
+            branches:
+              only: master
