@@ -107,6 +107,21 @@ type Release struct {
 	Config        string    `json:"config"`
 }
 
+type DeviceApplicationRelease struct {
+	ProjectID     string `json:"projectId"`
+	DeviceID      string `json:"deviceId"`
+	ApplicationID string `json:"applicationId"`
+	ReleaseID     string `json:"releaseId"`
+}
+
+type DeviceApplicationServiceRelease struct {
+	ProjectID     string `json:"projectId"`
+	DeviceID      string `json:"deviceId"`
+	ApplicationID string `json:"applicationId"`
+	Service       string `json:"service"`
+	ReleaseID     string `json:"releaseId"`
+}
+
 type MembershipFull struct {
 	User    User        `json:"user"`
 	Project ProjectFull `json:"project"`
@@ -118,9 +133,21 @@ type ProjectFull struct {
 	ApplicationCounts ProjectApplicationCounts `json:"applicationCounts"`
 }
 
-type DeviceFull struct {
+type DeviceFull1 struct {
 	Device
 	Status DeviceStatus `json:"status"`
+}
+
+type DeviceFull2 struct {
+	Device
+	Status                    DeviceStatus                `json:"status"`
+	ApplicationAndReleaseInfo []ApplicationAndReleaseInfo `json:"applicationAndReleaseInfo"`
+}
+
+type ApplicationAndReleaseInfo struct {
+	Application                Application                       `json:"application"`
+	ApplicationRelease         DeviceApplicationRelease          `json:"deviceApplicationRelease"`
+	ApplicationServiceReleases []DeviceApplicationServiceRelease `json:"deviceApplicationServiceReleases"`
 }
 
 type Bundle struct {

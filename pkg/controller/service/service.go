@@ -25,25 +25,27 @@ const (
 )
 
 type Service struct {
-	users                    store.Users
-	registrationTokens       store.RegistrationTokens
-	accessKeys               store.AccessKeys
-	sessions                 store.Sessions
-	projects                 store.Projects
-	projectDeviceCounts      store.ProjectDeviceCounts
-	projectApplicationCounts store.ProjectApplicationCounts
-	memberships              store.Memberships
-	devices                  store.Devices
-	deviceStatuses           store.DeviceStatuses
-	deviceLabels             store.DeviceLabels
-	deviceRegistrationTokens store.DeviceRegistrationTokens
-	deviceAccessKeys         store.DeviceAccessKeys
-	applications             store.Applications
-	releases                 store.Releases
-	email                    email.Interface
-	router                   *mux.Router
-	cookieDomain             string
-	cookieSecure             bool
+	users                            store.Users
+	registrationTokens               store.RegistrationTokens
+	accessKeys                       store.AccessKeys
+	sessions                         store.Sessions
+	projects                         store.Projects
+	projectDeviceCounts              store.ProjectDeviceCounts
+	projectApplicationCounts         store.ProjectApplicationCounts
+	memberships                      store.Memberships
+	devices                          store.Devices
+	deviceStatuses                   store.DeviceStatuses
+	deviceLabels                     store.DeviceLabels
+	deviceRegistrationTokens         store.DeviceRegistrationTokens
+	deviceAccessKeys                 store.DeviceAccessKeys
+	applications                     store.Applications
+	releases                         store.Releases
+	deviceApplicationReleases        store.DeviceApplicationReleases
+	deviceApplicationServiceReleases store.DeviceApplicationServiceReleases
+	email                            email.Interface
+	router                           *mux.Router
+	cookieDomain                     string
+	cookieSecure                     bool
 }
 
 func NewService(
@@ -62,30 +64,34 @@ func NewService(
 	deviceAccessKeys store.DeviceAccessKeys,
 	applications store.Applications,
 	releases store.Releases,
+	deviceApplicationReleases store.DeviceApplicationReleases,
+	deviceApplicationServiceReleases store.DeviceApplicationServiceReleases,
 	email email.Interface,
 	cookieDomain string,
 	cookieSecure bool,
 ) *Service {
 	s := &Service{
-		users:                    users,
-		registrationTokens:       registrationTokens,
-		sessions:                 sessions,
-		accessKeys:               accessKeys,
-		projects:                 projects,
-		projectDeviceCounts:      projectDeviceCounts,
-		projectApplicationCounts: projectApplicationCounts,
-		memberships:              memberships,
-		devices:                  devices,
-		deviceStatuses:           deviceStatuses,
-		deviceLabels:             deviceLabels,
-		deviceRegistrationTokens: deviceRegistrationTokens,
-		deviceAccessKeys:         deviceAccessKeys,
-		applications:             applications,
-		releases:                 releases,
-		email:                    email,
-		cookieDomain:             cookieDomain,
-		cookieSecure:             cookieSecure,
-		router:                   mux.NewRouter(),
+		users:                            users,
+		registrationTokens:               registrationTokens,
+		sessions:                         sessions,
+		accessKeys:                       accessKeys,
+		projects:                         projects,
+		projectDeviceCounts:              projectDeviceCounts,
+		projectApplicationCounts:         projectApplicationCounts,
+		memberships:                      memberships,
+		devices:                          devices,
+		deviceStatuses:                   deviceStatuses,
+		deviceLabels:                     deviceLabels,
+		deviceRegistrationTokens:         deviceRegistrationTokens,
+		deviceAccessKeys:                 deviceAccessKeys,
+		applications:                     applications,
+		releases:                         releases,
+		deviceApplicationReleases:        deviceApplicationReleases,
+		deviceApplicationServiceReleases: deviceApplicationServiceReleases,
+		email:                            email,
+		cookieDomain:                     cookieDomain,
+		cookieSecure:                     cookieSecure,
+		router:                           mux.NewRouter(),
 	}
 
 	s.router.HandleFunc("/health", s.health).Methods("GET")
@@ -127,6 +133,8 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/devices/register", s.registerDevice).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/bundle", s.withDeviceAuth(s.getBundle)).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/info", s.withDeviceAuth(s.setDeviceInfo)).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/applicationreleases", s.withDeviceAuth(s.setDeviceApplicationRelease)).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/applicationservicereleases", s.withDeviceAuth(s.setDeviceApplicationServiceRelease)).Methods("POST")
 
 	return s
 }
@@ -709,9 +717,9 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request, projectID,
 			return
 		}
 
-		var devicesFull []models.DeviceFull
+		var devicesFull []models.DeviceFull1
 		for i, device := range devices {
-			devicesFull = append(devicesFull, models.DeviceFull{
+			devicesFull = append(devicesFull, models.DeviceFull1{
 				Device: device,
 				Status: deviceStatuses[i],
 			})
@@ -744,9 +752,42 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, u
 			return
 		}
 
-		ret = models.DeviceFull{
-			Device: *device,
-			Status: deviceStatus,
+		applications, err := s.applications.ListApplications(r.Context(), projectID)
+		if err != nil {
+			log.WithError(err).Error("list applications")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		var applicationAndReleaseInfo []models.ApplicationAndReleaseInfo
+		for _, application := range applications {
+			deviceApplicationRelease, err := s.deviceApplicationReleases.GetDeviceApplicationRelease(
+				r.Context(), projectID, device.ID, application.ID)
+			if err != nil {
+				log.WithError(err).Error("get device application release")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			deviceApplicationServiceReleases, err := s.deviceApplicationServiceReleases.GetDeviceApplicationServiceReleases(
+				r.Context(), projectID, device.ID, application.ID)
+			if err != nil {
+				log.WithError(err).Error("get device application service releases")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			applicationAndReleaseInfo = append(applicationAndReleaseInfo, models.ApplicationAndReleaseInfo{
+				Application:                application,
+				ApplicationRelease:         *deviceApplicationRelease,
+				ApplicationServiceReleases: deviceApplicationServiceReleases,
+			})
+		}
+
+		ret = models.DeviceFull2{
+			Device:                    *device,
+			Status:                    deviceStatus,
+			ApplicationAndReleaseInfo: applicationAndReleaseInfo,
 		}
 	}
 
@@ -983,6 +1024,44 @@ func (s *Service) setDeviceInfo(w http.ResponseWriter, r *http.Request, projectI
 
 	if _, err := s.devices.SetDeviceInfo(r.Context(), deviceID, projectID, setDeviceInfoRequest.DeviceInfo); err != nil {
 		log.WithError(err).Error("set device info")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Service) setDeviceApplicationRelease(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
+	var setDeviceApplicationReleaseRequest models.SetDeviceApplicationReleaseRequest
+	if err := json.NewDecoder(r.Body).Decode(&setDeviceApplicationReleaseRequest); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if err := s.deviceApplicationReleases.SetDeviceApplicationRelease(r.Context(), projectID, deviceID,
+		setDeviceApplicationReleaseRequest.ApplicationID, setDeviceApplicationReleaseRequest.ReleaseID,
+	); err != nil {
+		log.WithError(err).Error("set device application release")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Service) setDeviceApplicationServiceRelease(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
+	var setDeviceApplicationServiceReleaseRequest models.SetDeviceApplicationServiceReleaseRequest
+	if err := json.NewDecoder(r.Body).Decode(&setDeviceApplicationServiceReleaseRequest); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if err := s.deviceApplicationServiceReleases.SetDeviceApplicationServiceRelease(r.Context(), projectID, deviceID,
+		setDeviceApplicationServiceReleaseRequest.ApplicationID,
+		setDeviceApplicationServiceReleaseRequest.Service,
+		setDeviceApplicationServiceReleaseRequest.ReleaseID,
+	); err != nil {
+		log.WithError(err).Error("set device application service release")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

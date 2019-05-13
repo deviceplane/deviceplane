@@ -15,68 +15,216 @@ import (
 )
 
 type Supervisor struct {
-	engine              engine.Engine
-	reconcilingServices map[string]struct{}
-	keepAliveShutdowns  map[string]chan struct{}
-	keepAliveAcks       map[string]chan struct{}
-	lock                sync.Mutex
+	engine                          engine.Engine
+	reportApplicationRelease        func(ctx context.Context, applicationID string, releaseID string) error
+	reportApplicationServiceRelease func(ctx context.Context, applicationID, service, releaseID string) error
+
+	latestDesiredApplicationReleases map[string]string
+	reportedApplicationReleases      map[string]string
+
+	serviceReleases         map[string]map[string]string
+	reportedServiceReleases map[string]map[string]string
+
+	reconcilingServices map[string]map[string]struct{}
+	keepAliveShutdowns  map[string]map[string]chan struct{}
+	keepAliveAcks       map[string]map[string]chan struct{}
+
+	lock sync.Mutex
 }
 
-func NewSupervisor(engine engine.Engine) *Supervisor {
-	return &Supervisor{
-		engine:              engine,
-		reconcilingServices: make(map[string]struct{}),
-		keepAliveShutdowns:  make(map[string]chan struct{}),
-		keepAliveAcks:       make(map[string]chan struct{}),
+func NewSupervisor(
+	engine engine.Engine,
+	reportApplicationRelease func(ctx context.Context, applicationID, releaseID string) error,
+	reportApplicationServiceRelease func(ctx context.Context, applicationID, service, releaseID string) error,
+) *Supervisor {
+	supervisor := &Supervisor{
+		engine:                          engine,
+		reportApplicationRelease:        reportApplicationRelease,
+		reportApplicationServiceRelease: reportApplicationServiceRelease,
+
+		latestDesiredApplicationReleases: make(map[string]string),
+		reportedApplicationReleases:      make(map[string]string),
+
+		serviceReleases:         make(map[string]map[string]string),
+		reportedServiceReleases: make(map[string]map[string]string),
+
+		reconcilingServices: make(map[string]map[string]struct{}),
+		keepAliveShutdowns:  make(map[string]map[string]chan struct{}),
+		keepAliveAcks:       make(map[string]map[string]chan struct{}),
+	}
+	go supervisor.applicationReleaseReporter()
+	go supervisor.serviceReleaseReporter()
+	return supervisor
+}
+
+func (s *Supervisor) applicationReleaseReporter() {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for {
+		s.lock.Lock()
+
+		completedApplicationReleases := make(map[string]string)
+		for applicationID, serviceReleases := range s.serviceReleases {
+			desiredApplicationRelease := s.latestDesiredApplicationReleases[applicationID]
+
+			applicationCompleted := true
+			for _, releaseID := range serviceReleases {
+				if releaseID != desiredApplicationRelease {
+					applicationCompleted = false
+					break
+				}
+			}
+
+			if applicationCompleted {
+				completedApplicationReleases[applicationID] = desiredApplicationRelease
+			}
+		}
+
+		diff := make(map[string]string)
+		copy := make(map[string]string)
+		for applicationID, releaseID := range completedApplicationReleases {
+			reportedReleaseID, ok := s.reportedApplicationReleases[applicationID]
+			if !ok || reportedReleaseID != releaseID {
+				diff[applicationID] = releaseID
+			}
+			copy[applicationID] = releaseID
+		}
+
+		s.lock.Unlock()
+
+		for applicationID, releaseID := range diff {
+			retry(func(ctx context.Context) error {
+				if err := s.reportApplicationRelease(ctx, applicationID, releaseID); err != nil {
+					log.WithError(err).Error("report release")
+					return err
+				}
+				return nil
+			}, time.Minute)
+		}
+
+		s.reportedApplicationReleases = copy
+
+		select {
+		case <-ticker.C:
+			continue
+		}
 	}
 }
 
-// TODO: removes applications and services
+func (s *Supervisor) serviceReleaseReporter() {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for {
+		s.lock.Lock()
+		diff := make(map[string]map[string]string)
+		copy := make(map[string]map[string]string)
+		for applicationID, serviceReleases := range s.serviceReleases {
+			diff[applicationID] = make(map[string]string)
+			copy[applicationID] = make(map[string]string)
+
+			if _, ok := s.reportedServiceReleases[applicationID]; !ok {
+				s.reportedServiceReleases[applicationID] = make(map[string]string)
+			}
+
+			for service, releaseID := range serviceReleases {
+				reportedReleaseID, ok := s.reportedServiceReleases[applicationID][service]
+				if !ok || reportedReleaseID != releaseID {
+					diff[applicationID][service] = releaseID
+				}
+				copy[applicationID][service] = releaseID
+			}
+		}
+		s.lock.Unlock()
+
+		for applicationID, applicationDiff := range diff {
+			for service, releaseID := range applicationDiff {
+				retry(func(ctx context.Context) error {
+					if err := s.reportApplicationServiceRelease(ctx, applicationID, service, releaseID); err != nil {
+						log.WithError(err).Error("report service release")
+						return err
+					}
+					return nil
+				}, time.Minute)
+			}
+		}
+
+		s.reportedServiceReleases = copy
+
+		select {
+		case <-ticker.C:
+			continue
+		}
+	}
+}
+
 func (s *Supervisor) SetApplication(application models.ApplicationAndLatestRelease) error {
 	var applicationConfig spec.Application
 	if err := yaml.Unmarshal([]byte(application.LatestRelease.Config), &applicationConfig); err != nil {
 		return err
 	}
 
+	s.lock.Lock()
+
+	if _, ok := s.serviceReleases[application.Application.ID]; !ok {
+		s.serviceReleases[application.Application.ID] = make(map[string]string)
+	}
+	if _, ok := s.reportedServiceReleases[application.Application.ID]; !ok {
+		s.reportedServiceReleases[application.Application.ID] = make(map[string]string)
+	}
+	if _, ok := s.reconcilingServices[application.Application.ID]; !ok {
+		s.reconcilingServices[application.Application.ID] = make(map[string]struct{})
+	}
+	if _, ok := s.keepAliveShutdowns[application.Application.ID]; !ok {
+		s.keepAliveShutdowns[application.Application.ID] = make(map[string]chan struct{})
+	}
+	if _, ok := s.keepAliveAcks[application.Application.ID]; !ok {
+		s.keepAliveAcks[application.Application.ID] = make(map[string]chan struct{})
+	}
+
+	s.latestDesiredApplicationReleases[application.Application.ID] = application.LatestRelease.ID
+
+	s.lock.Unlock()
+
 	for serviceName, service := range applicationConfig.Services {
-		go s.reconcile(serviceName, service)
+		go s.reconcile(application.Application.ID, application.LatestRelease.ID, serviceName, service)
 	}
 
 	return nil
 }
 
-func (s *Supervisor) reconcile(serviceName string, service spec.Service) {
+func (s *Supervisor) reconcile(applicationID, releaseID, serviceName string, service spec.Service) {
 	s.lock.Lock()
 	// If this service is already in reconciling state then exit
-	_, ok := s.reconcilingServices[serviceName]
-	if ok {
+	if _, ok := s.reconcilingServices[applicationID][serviceName]; ok {
 		s.lock.Unlock()
 		return
 	}
 	// Set this service to reconciling state
-	s.reconcilingServices[serviceName] = struct{}{}
+	s.reconcilingServices[applicationID][serviceName] = struct{}{}
 	s.lock.Unlock()
 
 	defer func() {
 		s.lock.Lock()
-		delete(s.reconcilingServices, serviceName)
+		delete(s.reconcilingServices[applicationID], serviceName)
 		s.lock.Unlock()
 	}()
 
 	stopKeepAlive := func() {
 		s.lock.Lock()
 
-		shutdown, ok := s.keepAliveShutdowns[serviceName]
+		shutdown, ok := s.keepAliveShutdowns[applicationID][serviceName]
 		if !ok {
 			s.lock.Unlock()
 			return
 		}
 
 		ack := make(chan struct{})
-		s.keepAliveAcks[serviceName] = ack
+		s.keepAliveAcks[applicationID][serviceName] = ack
 		shutdown <- struct{}{}
 		<-ack
-		delete(s.keepAliveAcks, serviceName)
+		delete(s.keepAliveAcks[applicationID], serviceName)
 
 		s.lock.Unlock()
 	}
@@ -90,7 +238,7 @@ func (s *Supervisor) reconcile(serviceName string, service spec.Service) {
 		instance := instances[0]
 
 		if hashLabel, ok := instance.Labels[models.HashLabel]; ok && hashLabel == service.Hash() {
-			go s.keepAlive(serviceName, service)
+			go s.keepAlive(applicationID, releaseID, serviceName, service)
 			return
 		}
 
@@ -108,22 +256,26 @@ func (s *Supervisor) reconcile(serviceName string, service spec.Service) {
 	serviceWithHash := service.WithStandardLabels(serviceName)
 	s.containerCreate(name, serviceWithHash)
 
-	go s.keepAlive(serviceName, service)
+	go s.keepAlive(applicationID, releaseID, serviceName, service)
 }
 
-func (s *Supervisor) keepAlive(serviceName string, service spec.Service) {
+func (s *Supervisor) keepAlive(applicationID, releaseID, serviceName string, service spec.Service) {
 	s.lock.Lock()
-	if _, ok := s.keepAliveShutdowns[serviceName]; ok {
+
+	if _, ok := s.keepAliveShutdowns[applicationID][serviceName]; ok {
 		s.lock.Unlock()
 		return
 	}
 	shutdown := make(chan struct{}, 1)
-	s.keepAliveShutdowns[serviceName] = shutdown
+	s.keepAliveShutdowns[applicationID][serviceName] = shutdown
+
+	s.serviceReleases[applicationID][serviceName] = releaseID
+
 	s.lock.Unlock()
 
 	defer func() {
 		s.lock.Lock()
-		delete(s.keepAliveShutdowns, serviceName)
+		delete(s.keepAliveShutdowns[applicationID], serviceName)
 		s.lock.Unlock()
 	}()
 
@@ -132,7 +284,8 @@ func (s *Supervisor) keepAlive(serviceName string, service spec.Service) {
 	for {
 		select {
 		case <-shutdown:
-			s.keepAliveAcks[serviceName] <- struct{}{}
+			// TODO: need a lock here?
+			s.keepAliveAcks[applicationID][serviceName] <- struct{}{}
 			return
 
 		case <-ticker.C:
@@ -145,7 +298,7 @@ func (s *Supervisor) keepAlive(serviceName string, service spec.Service) {
 			}, true)
 
 			if len(instances) == 0 {
-				go s.reconcile(serviceName, service)
+				go s.reconcile(applicationID, releaseID, serviceName, service)
 				dead = true
 				continue
 			}
@@ -171,7 +324,7 @@ func (s *Supervisor) containerCreate(name string, service spec.Service) string {
 			return err
 		}
 		return nil
-	}, 5*time.Minute)
+	}, 2*time.Minute)
 
 	return id
 }
@@ -183,7 +336,7 @@ func (s *Supervisor) containerStart(id string) {
 			return err
 		}
 		return nil
-	}, 5*time.Minute)
+	}, 2*time.Minute)
 }
 
 func (s *Supervisor) containerList(keyFilters map[string]bool, keyAndValueFilters map[string]string, all bool) []engine.Instance {
@@ -197,7 +350,7 @@ func (s *Supervisor) containerList(keyFilters map[string]bool, keyAndValueFilter
 			return err
 		}
 		return nil
-	}, 5*time.Minute)
+	}, 2*time.Minute)
 
 	return instances
 }
@@ -209,7 +362,7 @@ func (s *Supervisor) containerStop(id string) {
 			return err
 		}
 		return nil
-	}, 5*time.Minute)
+	}, 2*time.Minute)
 }
 
 func (s *Supervisor) containerRemove(id string) {
@@ -219,7 +372,7 @@ func (s *Supervisor) containerRemove(id string) {
 			return err
 		}
 		return nil
-	}, 5*time.Minute)
+	}, 2*time.Minute)
 }
 
 func (s *Supervisor) imagePull(image string) {

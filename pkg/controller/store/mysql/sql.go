@@ -275,3 +275,43 @@ const listReleases = `
   select id, project_id, application_id, config from releases
   where project_id = ? and application_id = ?
 `
+
+const setDeviceApplicationRelease = `
+  insert into device_application_releases (
+    project_id,
+    device_id,
+    application_id,
+    release_id
+  )
+  values (?, ?, ?, ?)
+  on duplicate key update
+    release_id = ?
+`
+
+const getDeviceApplicationRelease = `
+  select project_id, device_id, application_id, release_id from device_application_releases
+  where project_id = ? and device_id = ? and application_id = ?
+`
+
+const setDeviceApplicationServiceRelease = `
+  insert into device_application_service_releases (
+    project_id,
+    device_id,
+    application_id,
+    service,
+    release_id
+  )
+  values (?, ?, ?, ?, ?)
+  on duplicate key update
+    release_id = ?
+`
+
+const getDeviceApplicationServiceRelease = `
+  select project_id, device_id, application_id, service, release_id from device_application_service_releases
+  where project_id = ? and device_id = ? and application_id = ? and service = ?
+`
+
+const getDeviceApplicationServiceReleases = `
+  select project_id, device_id, application_id, service, release_id from device_application_service_releases
+  where project_id = ? and device_id = ? and application_id = ?
+`

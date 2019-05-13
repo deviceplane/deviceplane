@@ -12,6 +12,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/agent/info"
 	"github.com/deviceplane/deviceplane/pkg/agent/supervisor"
 	"github.com/deviceplane/deviceplane/pkg/engine"
+	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/pkg/errors"
 )
 
@@ -37,8 +38,19 @@ func NewAgent(client *agent_client.Client, engine engine.Engine, projectID, regi
 		projectID:         projectID,
 		registrationToken: registrationToken,
 		stateDir:          stateDir,
-		supervisor:        supervisor.NewSupervisor(engine),
-		infoReporter:      info.NewReporter(client),
+		supervisor: supervisor.NewSupervisor(engine, func(ctx context.Context, applicationID, releaseID string) error {
+			return client.SetDeviceApplicationRelease(ctx, models.SetDeviceApplicationReleaseRequest{
+				ApplicationID: applicationID,
+				ReleaseID:     releaseID,
+			})
+		}, func(ctx context.Context, applicationID, service, releaseID string) error {
+			return client.SetDeviceApplicationServiceRelease(ctx, models.SetDeviceApplicationServiceReleaseRequest{
+				ApplicationID: applicationID,
+				Service:       service,
+				ReleaseID:     releaseID,
+			})
+		}),
+		infoReporter: info.NewReporter(client),
 	}
 }
 

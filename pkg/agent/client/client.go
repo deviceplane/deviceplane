@@ -94,8 +94,16 @@ func (c *Client) GetBundle(ctx context.Context) (*models.Bundle, error) {
 	return &bundle, nil
 }
 
-func (c *Client) SetDeviceInfo(ctx context.Context, info models.SetDeviceInfoRequest) error {
-	return c.post(ctx, info, nil, "projects", c.projectID, "devices", c.deviceID, "info")
+func (c *Client) SetDeviceInfo(ctx context.Context, req models.SetDeviceInfoRequest) error {
+	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "info")
+}
+
+func (c *Client) SetDeviceApplicationRelease(ctx context.Context, req models.SetDeviceApplicationReleaseRequest) error {
+	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "applicationreleases")
+}
+
+func (c *Client) SetDeviceApplicationServiceRelease(ctx context.Context, req models.SetDeviceApplicationServiceReleaseRequest) error {
+	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "applicationservicereleases")
 }
 
 func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {

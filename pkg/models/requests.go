@@ -16,3 +16,14 @@ type RegisterDeviceResponse struct {
 type SetDeviceInfoRequest struct {
 	DeviceInfo DeviceInfo `json:"deviceInfo"`
 }
+
+type SetDeviceApplicationReleaseRequest struct {
+	ApplicationID string `json:"applicationId"`
+	ReleaseID     string `json:"releaseId"`
+}
+
+type SetDeviceApplicationServiceReleaseRequest struct {
+	ApplicationID string `json:"applicationId"`
+	Service       string `json:"service"`
+	ReleaseID     string `json:"releaseId"`
+}

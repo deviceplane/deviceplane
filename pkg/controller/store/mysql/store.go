@@ -917,3 +917,106 @@ func (s *Store) scanRelease(scanner scanner) (*models.Release, error) {
 	}
 	return &release, nil
 }
+
+func (s *Store) SetDeviceApplicationRelease(ctx context.Context, projectID, deviceID, applicationID, releaseID string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		setDeviceApplicationRelease,
+		projectID,
+		deviceID,
+		applicationID,
+		releaseID,
+		releaseID,
+	)
+	return err
+}
+
+func (s *Store) GetDeviceApplicationRelease(ctx context.Context, projectID, deviceID, applicationID string) (*models.DeviceApplicationRelease, error) {
+	deviceApplicationReleaseRow := s.db.QueryRowContext(ctx, getDeviceApplicationRelease, projectID, deviceID, applicationID)
+
+	deviceApplicationRelease, err := s.scanDeviceApplicationRelease(deviceApplicationReleaseRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrDeviceApplicationReleaseNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return deviceApplicationRelease, nil
+}
+
+func (s *Store) scanDeviceApplicationRelease(scanner scanner) (*models.DeviceApplicationRelease, error) {
+	var deviceApplicationRelease models.DeviceApplicationRelease
+	if err := scanner.Scan(
+		&deviceApplicationRelease.ProjectID,
+		&deviceApplicationRelease.DeviceID,
+		&deviceApplicationRelease.ApplicationID,
+		&deviceApplicationRelease.ReleaseID,
+	); err != nil {
+		return nil, err
+	}
+	return &deviceApplicationRelease, nil
+}
+
+func (s *Store) SetDeviceApplicationServiceRelease(ctx context.Context, projectID, deviceID, applicationID, service, releaseID string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		setDeviceApplicationServiceRelease,
+		projectID,
+		deviceID,
+		applicationID,
+		service,
+		releaseID,
+		releaseID,
+	)
+	return err
+}
+
+func (s *Store) GetDeviceApplicationServiceRelease(ctx context.Context, projectID, deviceID, applicationID, service string) (*models.DeviceApplicationServiceRelease, error) {
+	deviceApplicationServiceReleaseRow := s.db.QueryRowContext(ctx, getDeviceApplicationServiceRelease, projectID, deviceID, applicationID, service)
+
+	deviceApplicationServiceRelease, err := s.scanDeviceApplicationServiceRelease(deviceApplicationServiceReleaseRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrDeviceApplicationReleaseNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return deviceApplicationServiceRelease, nil
+}
+
+func (s *Store) GetDeviceApplicationServiceReleases(ctx context.Context, projectID, deviceID, applicationID string) ([]models.DeviceApplicationServiceRelease, error) {
+	deviceApplicationServiceReleasesRows, err := s.db.QueryContext(ctx, getDeviceApplicationServiceReleases, projectID, deviceID, applicationID)
+	if err != nil {
+		return nil, errors.Wrap(err, "query device application service releases")
+	}
+	defer deviceApplicationServiceReleasesRows.Close()
+
+	deviceApplicationServiceReleases := make([]models.DeviceApplicationServiceRelease, 0)
+	for deviceApplicationServiceReleasesRows.Next() {
+		deviceApplicationServiceRelease, err := s.scanDeviceApplicationServiceRelease(deviceApplicationServiceReleasesRows)
+		if err != nil {
+			return nil, err
+		}
+		deviceApplicationServiceReleases = append(deviceApplicationServiceReleases, *deviceApplicationServiceRelease)
+	}
+
+	if err := deviceApplicationServiceReleasesRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return deviceApplicationServiceReleases, nil
+}
+
+func (s *Store) scanDeviceApplicationServiceRelease(scanner scanner) (*models.DeviceApplicationServiceRelease, error) {
+	var deviceApplicationServiceRelease models.DeviceApplicationServiceRelease
+	if err := scanner.Scan(
+		&deviceApplicationServiceRelease.ProjectID,
+		&deviceApplicationServiceRelease.DeviceID,
+		&deviceApplicationServiceRelease.ApplicationID,
+		&deviceApplicationServiceRelease.Service,
+		&deviceApplicationServiceRelease.ReleaseID,
+	); err != nil {
+		return nil, err
+	}
+	return &deviceApplicationServiceRelease, nil
+}

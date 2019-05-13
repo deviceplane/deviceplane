@@ -122,3 +122,18 @@ type Releases interface {
 }
 
 var ErrReleaseNotFound = errors.New("release not found")
+
+type DeviceApplicationReleases interface {
+	SetDeviceApplicationRelease(ctx context.Context, projectID, deviceID, applicationID, releaseID string) error
+	GetDeviceApplicationRelease(ctx context.Context, projectID, deviceID, applicationID string) (*models.DeviceApplicationRelease, error)
+}
+
+var ErrDeviceApplicationReleaseNotFound = errors.New("device application release not found")
+
+type DeviceApplicationServiceReleases interface {
+	SetDeviceApplicationServiceRelease(ctx context.Context, projectID, deviceID, applicationID, service, releaseID string) error
+	GetDeviceApplicationServiceRelease(ctx context.Context, projectID, deviceID, applicationID, service string) (*models.DeviceApplicationServiceRelease, error)
+	GetDeviceApplicationServiceReleases(ctx context.Context, projectID, deviceID, applicationID string) ([]models.DeviceApplicationServiceRelease, error)
+}
+
+var ErrDeviceApplicationServiceReleaseNotFound = errors.New("device application service release not found")
