@@ -1,0 +1,10 @@
+FROM golang:1.12
+WORKDIR /app
+COPY ./ ./
+RUN go build -o ./deviceplane ./cmd/deviceplane
+RUN GOOS=linux CGO_ENABLED=0 go build -ldflags "-s -w" -o ./deviceplane ./cmd/deviceplane
+
+FROM alpine:3.9
+RUN apk --update add git openssh tar gzip ca-certificates \
+  bash curl
+COPY --from=0 /app/deviceplane /bin/deviceplane

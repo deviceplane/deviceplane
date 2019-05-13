@@ -14,3 +14,9 @@ agent:
 
 push-agent: agent
 	docker push deviceplane/agent:${version}
+
+cli-ci:
+	docker build -t deviceplane/cli-ci:${version} -f Dockerfile.cli-ci .
+
+push-cli-ci: cli-ci
+	docker push deviceplane/cli-ci:${version}

@@ -27,6 +27,16 @@ jobs:
       - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
       - run: make push-agent
 
+  release-cli-ci:
+    docker:
+      - image: circleci/golang:1.12
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
+      - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
+      - run: make push-cli-ci
+
 workflows:
   version: 2
   test_release:
@@ -39,6 +49,12 @@ workflows:
             branches:
               only: master
       - release-agent:
+          requires:
+            - test
+          filters:
+            branches:
+              only: master
+      - release-cli-ci:
           requires:
             - test
           filters:
