@@ -24,9 +24,9 @@ var application = cli.Command{
 				accessKey := c.GlobalString("access-key")
 				client := client.NewClient(url, accessKey, nil)
 
-				projectID := c.String("project")
+				project := c.String("project")
 
-				application, err := client.CreateApplication(context.TODO(), projectID)
+				application, err := client.CreateApplication(context.TODO(), project)
 				if err != nil {
 					return err
 				}

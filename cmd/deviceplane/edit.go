@@ -22,10 +22,10 @@ var edit = cli.Command{
 		accessKey := c.GlobalString("access-key")
 		client := client.NewClient(url, accessKey, nil)
 
-		projectID := c.String("project")
+		project := c.String("project")
 		applicationID := c.String("application")
 
-		release, err := client.GetLatestRelease(context.TODO(), projectID, applicationID)
+		release, err := client.GetLatestRelease(context.TODO(), project, applicationID)
 		if err != nil {
 			return err
 		}
@@ -74,7 +74,7 @@ var edit = cli.Command{
 			return err
 		}
 
-		release, err = client.CreateRelease(context.TODO(), projectID, applicationID, string(configBytes))
+		release, err = client.CreateRelease(context.TODO(), project, applicationID, string(configBytes))
 		if err != nil {
 			return err
 		}

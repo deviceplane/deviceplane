@@ -362,6 +362,19 @@ func (s *Store) GetProject(ctx context.Context, id string) (*models.Project, err
 	return project, nil
 }
 
+func (s *Store) LookupProject(ctx context.Context, name string) (*models.Project, error) {
+	projectRow := s.db.QueryRowContext(ctx, lookupProject, name)
+
+	project, err := s.scanProject(projectRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrProjectNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return project, nil
+}
+
 func (s *Store) scanProject(scanner scanner) (*models.Project, error) {
 	var project models.Project
 	if err := scanner.Scan(

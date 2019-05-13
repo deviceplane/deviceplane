@@ -45,6 +45,7 @@ var ErrAccessKeyNotFound = errors.New("access key not found")
 type Projects interface {
 	CreateProject(ctx context.Context, name string) (*models.Project, error)
 	GetProject(ctx context.Context, id string) (*models.Project, error)
+	LookupProject(ctx context.Context, name string) (*models.Project, error)
 }
 
 var ErrProjectNotFound = errors.New("project not found")

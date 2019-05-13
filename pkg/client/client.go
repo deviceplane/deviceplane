@@ -45,27 +45,27 @@ func (c *Client) CreateProject(ctx context.Context) (*models.Project, error) {
 	return &project, nil
 }
 
-func (c *Client) CreateApplication(ctx context.Context, projectID string) (*models.Application, error) {
+func (c *Client) CreateApplication(ctx context.Context, project string) (*models.Application, error) {
 	var application models.Application
-	if err := c.post(ctx, struct{}{}, &application, projectsURL, projectID, applicationsURL); err != nil {
+	if err := c.post(ctx, struct{}{}, &application, projectsURL, project, applicationsURL); err != nil {
 		return nil, err
 	}
 	return &application, nil
 }
 
-func (c *Client) GetLatestRelease(ctx context.Context, projectID, applicationID string) (*models.Release, error) {
+func (c *Client) GetLatestRelease(ctx context.Context, project, applicationID string) (*models.Release, error) {
 	var release models.Release
-	if err := c.get(ctx, &release, projectsURL, projectID, applicationsURL, applicationID, releasesURL, "latest"); err != nil {
+	if err := c.get(ctx, &release, projectsURL, project, applicationsURL, applicationID, releasesURL, "latest"); err != nil {
 		return nil, err
 	}
 	return &release, nil
 }
 
-func (c *Client) CreateRelease(ctx context.Context, projectID, applicationID, config string) (*models.Release, error) {
+func (c *Client) CreateRelease(ctx context.Context, project, applicationID, config string) (*models.Release, error) {
 	var release models.Release
 	if err := c.post(ctx, models.CreateRelease{
 		Config: config,
-	}, &release, projectsURL, projectID, applicationsURL, applicationID, releasesURL); err != nil {
+	}, &release, projectsURL, project, applicationsURL, applicationID, releasesURL); err != nil {
 		return nil, err
 	}
 	return &release, nil

@@ -105,6 +105,11 @@ const getProject = `
   where id = ?
 `
 
+const lookupProject = `
+  select id, name from projects
+  where name = ?
+`
+
 const getProjectTotalDeviceCount = `
   select count(*) from devices
   where devices.project_id = ?

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/deviceplane/deviceplane/pkg/spec"
@@ -217,10 +218,27 @@ func (s *Service) withUserAuth(handler func(http.ResponseWriter, *http.Request, 
 func (s *Service) validateMembershipLevel(requiredLevel string, handler func(http.ResponseWriter, *http.Request, string, string)) func(http.ResponseWriter, *http.Request) {
 	return s.withUserAuth(func(w http.ResponseWriter, r *http.Request, userID string) {
 		vars := mux.Vars(r)
-		projectID := vars["project"]
-		if projectID == "" {
+		project := vars["project"]
+		if project == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			return
+		}
+
+		// TODO: move this logic into a middleware function
+		var projectID string
+		if strings.Contains(project, "_") {
+			projectID = project
+		} else {
+			project, err := s.projects.LookupProject(r.Context(), project)
+			if err == store.ErrProjectNotFound {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			} else if err != nil {
+				log.WithError(err).Error("lookup project")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			projectID = project.ID
 		}
 
 		membership, err := s.memberships.GetMembership(r.Context(), userID, projectID)
