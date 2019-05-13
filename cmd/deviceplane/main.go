@@ -30,7 +30,6 @@ func main() {
 		application,
 		edit,
 		deploy,
-		release,
 	}
 
 	if err := app.Run(os.Args); err != nil {

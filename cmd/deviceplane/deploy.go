@@ -15,12 +15,8 @@ import (
 var deploy = cli.Command{
 	Name: "deploy",
 	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name: "project",
-		},
-		cli.StringFlag{
-			Name: "application",
-		},
+		projectFlag,
+		applicationFlag,
 	},
 	Action: func(c *cli.Context) error {
 		url := c.GlobalString("url")
