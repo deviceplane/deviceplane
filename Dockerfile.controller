@@ -9,5 +9,5 @@ RUN GOOS=linux CGO_ENABLED=0 go build -o ./controller ./cmd/controller
 
 FROM scratch
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=1 /app/controller /usr/bin/controller
-ENTRYPOINT ["/usr/bin/controller"]
+COPY --from=1 /app/controller /bin/controller
+ENTRYPOINT ["/bin/controller"]

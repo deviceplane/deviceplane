@@ -5,9 +5,9 @@ FROM golang:1.12
 WORKDIR /app
 COPY ./ ./
 RUN go build -o ./agent ./cmd/agent
-RUN GOOS=linux GOARCH=arm CGO_ENABLED=0 go build -o ./agent ./cmd/agent
+RUN GOOS=linux GOARCH=arm CGO_ENABLED=0 go build -ldflags "-s -w" -o ./agent ./cmd/agent
 
 FROM scratch
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=1 /app/agent /usr/bin/agent
-ENTRYPOINT ["/usr/bin/agent"]
+COPY --from=1 /app/agent /bin/agent
+ENTRYPOINT ["/bin/agent"]
