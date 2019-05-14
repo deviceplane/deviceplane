@@ -24,9 +24,9 @@ var deploy = cli.Command{
 		client := client.NewClient(url, accessKey, nil)
 
 		project := c.String("project")
-		applicationID := c.String("application")
+		application := c.String("application")
 
-		release, err := client.GetLatestRelease(context.TODO(), project, applicationID)
+		release, err := client.GetLatestRelease(context.TODO(), project, application)
 		if err != nil {
 			return err
 		}
@@ -50,7 +50,7 @@ var deploy = cli.Command{
 			return err
 		}
 
-		release, err = client.CreateRelease(context.TODO(), project, applicationID, string(configBytes))
+		release, err = client.CreateRelease(context.TODO(), project, application, string(configBytes))
 		if err != nil {
 			return err
 		}

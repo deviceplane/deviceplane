@@ -53,19 +53,19 @@ func (c *Client) CreateApplication(ctx context.Context, project string) (*models
 	return &application, nil
 }
 
-func (c *Client) GetLatestRelease(ctx context.Context, project, applicationID string) (*models.Release, error) {
+func (c *Client) GetLatestRelease(ctx context.Context, project, application string) (*models.Release, error) {
 	var release models.Release
-	if err := c.get(ctx, &release, projectsURL, project, applicationsURL, applicationID, releasesURL, "latest"); err != nil {
+	if err := c.get(ctx, &release, projectsURL, project, applicationsURL, application, releasesURL, "latest"); err != nil {
 		return nil, err
 	}
 	return &release, nil
 }
 
-func (c *Client) CreateRelease(ctx context.Context, project, applicationID, config string) (*models.Release, error) {
+func (c *Client) CreateRelease(ctx context.Context, project, application, config string) (*models.Release, error) {
 	var release models.Release
 	if err := c.post(ctx, models.CreateRelease{
 		Config: config,
-	}, &release, projectsURL, project, applicationsURL, applicationID, releasesURL); err != nil {
+	}, &release, projectsURL, project, applicationsURL, application, releasesURL); err != nil {
 		return nil, err
 	}
 	return &release, nil

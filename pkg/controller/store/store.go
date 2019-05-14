@@ -110,6 +110,7 @@ var ErrDeviceAccessKeyNotFound = errors.New("device access key not found")
 type Applications interface {
 	CreateApplication(ctx context.Context, projectID, name string) (*models.Application, error)
 	GetApplication(ctx context.Context, id, projectID string) (*models.Application, error)
+	LookupApplication(ctx context.Context, name, projectID string) (*models.Application, error)
 	ListApplications(ctx context.Context, projectID string) ([]models.Application, error)
 }
 
@@ -117,7 +118,7 @@ var ErrApplicationNotFound = errors.New("application not found")
 
 type Releases interface {
 	CreateRelease(ctx context.Context, projectID, applicationID, config string) (*models.Release, error)
-	GetRelease(ctx context.Context, id, projectID string) (*models.Release, error)
+	GetRelease(ctx context.Context, id, projectID, applicationID string) (*models.Release, error)
 	GetLatestRelease(ctx context.Context, projectID, applicationID string) (*models.Release, error)
 	ListReleases(ctx context.Context, projectID, applicationID string) ([]models.Release, error)
 }

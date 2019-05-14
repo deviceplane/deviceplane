@@ -113,15 +113,15 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/memberships", s.validateMembershipLevel("read", s.listMembershipsByProject)).Methods("GET")
 
 	s.router.HandleFunc("/projects/{project}/applications", s.validateMembershipLevel("write", s.createApplication)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/applications/{id}", s.validateMembershipLevel("read", s.getApplication)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/applications/{application}", s.validateMembershipLevel("read", s.withApplication(s.getApplication))).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/applications", s.validateMembershipLevel("read", s.listApplications)).Methods("GET")
 
-	s.router.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateMembershipLevel("write", s.createRelease)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/applications/{application}/releases/latest", s.validateMembershipLevel("read", s.getLatestRelease)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/applications/{application}/releases/{id}", s.validateMembershipLevel("read", s.getRelease)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateMembershipLevel("read", s.listReleases)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateMembershipLevel("write", s.withApplication(s.createRelease))).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/applications/{application}/releases/latest", s.validateMembershipLevel("read", s.withApplication(s.getLatestRelease))).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/applications/{application}/releases/{release}", s.validateMembershipLevel("read", s.withApplication(s.getRelease))).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateMembershipLevel("read", s.withApplication(s.listReleases))).Methods("GET")
 
-	s.router.HandleFunc("/projects/{project}/devices/{id}", s.validateMembershipLevel("read", s.getDevice)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/devices/{device}", s.validateMembershipLevel("read", s.getDevice)).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/devices", s.validateMembershipLevel("read", s.listDevices)).Methods("GET")
 
 	s.router.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateMembershipLevel("write", s.setDeviceLabel)).Methods("POST")
@@ -275,6 +275,35 @@ func (s *Service) validateMembershipLevel(requiredLevel string, handler func(htt
 
 		handler(w, r, projectID, userID)
 	})
+}
+
+func (s *Service) withApplication(handler func(http.ResponseWriter, *http.Request, string, string, string)) func(http.ResponseWriter, *http.Request, string, string) {
+	return func(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+		vars := mux.Vars(r)
+		application := vars["application"]
+		if application == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		var applicationID string
+		if strings.Contains(application, "_") {
+			applicationID = application
+		} else {
+			application, err := s.applications.LookupApplication(r.Context(), application, projectID)
+			if err == store.ErrApplicationNotFound {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			} else if err != nil {
+				log.WithError(err).Error("lookup application")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			applicationID = application.ID
+		}
+
+		handler(w, r, projectID, userID, applicationID)
+	}
 }
 
 func (s *Service) register(w http.ResponseWriter, r *http.Request) {
@@ -617,11 +646,8 @@ func (s *Service) createApplication(w http.ResponseWriter, r *http.Request, proj
 	json.NewEncoder(w).Encode(application)
 }
 
-func (s *Service) getApplication(w http.ResponseWriter, r *http.Request, projectID, userID string) {
-	vars := mux.Vars(r)
-	id := vars["id"]
-
-	application, err := s.applications.GetApplication(r.Context(), id, projectID)
+func (s *Service) getApplication(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
+	application, err := s.applications.GetApplication(r.Context(), applicationID, projectID)
 	if err != nil {
 		log.WithError(err).Error("get application")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -645,10 +671,7 @@ func (s *Service) listApplications(w http.ResponseWriter, r *http.Request, proje
 }
 
 // TOOD: this has a vulnerability!
-func (s *Service) createRelease(w http.ResponseWriter, r *http.Request, projectID, userID string) {
-	vars := mux.Vars(r)
-	applicationID := vars["application"]
-
+func (s *Service) createRelease(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
 	var createReleaseRequest struct {
 		Config string `json:"config"`
 	}
@@ -668,11 +691,11 @@ func (s *Service) createRelease(w http.ResponseWriter, r *http.Request, projectI
 	json.NewEncoder(w).Encode(release)
 }
 
-func (s *Service) getRelease(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) getRelease(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
 	vars := mux.Vars(r)
-	id := vars["id"]
+	releaseID := vars["release"]
 
-	release, err := s.releases.GetRelease(r.Context(), id, projectID)
+	release, err := s.releases.GetRelease(r.Context(), releaseID, projectID, applicationID)
 	if err != nil {
 		log.WithError(err).Error("get release")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -683,10 +706,7 @@ func (s *Service) getRelease(w http.ResponseWriter, r *http.Request, projectID, 
 	json.NewEncoder(w).Encode(release)
 }
 
-func (s *Service) getLatestRelease(w http.ResponseWriter, r *http.Request, projectID string, userID string) {
-	vars := mux.Vars(r)
-	applicationID := vars["application"]
-
+func (s *Service) getLatestRelease(w http.ResponseWriter, r *http.Request, projectID string, userID, applicationID string) {
 	release, err := s.releases.GetLatestRelease(r.Context(), projectID, applicationID)
 	if err != nil {
 		log.WithError(err).Error("get latest release")
@@ -698,10 +718,7 @@ func (s *Service) getLatestRelease(w http.ResponseWriter, r *http.Request, proje
 	json.NewEncoder(w).Encode(release)
 }
 
-func (s *Service) listReleases(w http.ResponseWriter, r *http.Request, projectID, userID string) {
-	vars := mux.Vars(r)
-	applicationID := vars["application"]
-
+func (s *Service) listReleases(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
 	releases, err := s.releases.ListReleases(r.Context(), projectID, applicationID)
 	if err != nil {
 		log.WithError(err).Error("list releases")
@@ -752,9 +769,9 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request, projectID,
 
 func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, userID string) {
 	vars := mux.Vars(r)
-	id := vars["id"]
+	deviceID := vars["device"]
 
-	device, err := s.devices.GetDevice(r.Context(), id, projectID)
+	device, err := s.devices.GetDevice(r.Context(), deviceID, projectID)
 	if err != nil {
 		log.WithError(err).Error("get device")
 		w.WriteHeader(http.StatusInternalServerError)

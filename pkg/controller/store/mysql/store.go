@@ -813,6 +813,19 @@ func (s *Store) GetApplication(ctx context.Context, id, projectID string) (*mode
 	return application, nil
 }
 
+func (s *Store) LookupApplication(ctx context.Context, name, projectID string) (*models.Application, error) {
+	applicationRow := s.db.QueryRowContext(ctx, lookupApplication, name, projectID)
+
+	application, err := s.scanApplication(applicationRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrApplicationNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return application, nil
+}
+
 func (s *Store) ListApplications(ctx context.Context, projectID string) ([]models.Application, error) {
 	applicationRows, err := s.db.QueryContext(ctx, listApplications, projectID)
 	if err != nil {
@@ -869,8 +882,8 @@ func (s *Store) CreateRelease(ctx context.Context, projectID, applicationID, con
 	}, nil
 }
 
-func (s *Store) GetRelease(ctx context.Context, id, projectID string) (*models.Release, error) {
-	applicationRow := s.db.QueryRowContext(ctx, getRelease, id, projectID)
+func (s *Store) GetRelease(ctx context.Context, id, projectID, applicationID string) (*models.Release, error) {
+	applicationRow := s.db.QueryRowContext(ctx, getRelease, id, projectID, applicationID)
 
 	release, err := s.scanRelease(applicationRow)
 	if err == sql.ErrNoRows {

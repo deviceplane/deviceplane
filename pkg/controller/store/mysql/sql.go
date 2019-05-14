@@ -249,6 +249,11 @@ const getApplication = `
   where id = ? and project_id = ?
 `
 
+const lookupApplication = `
+  select id, project_id, name from applications
+  where name = ? and project_id = ?
+`
+
 const listApplications = `
   select id, project_id, name from applications
   where project_id = ?
