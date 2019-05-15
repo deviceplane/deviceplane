@@ -764,7 +764,9 @@ func (s *Store) ValidateDeviceAccessKey(ctx context.Context, projectID, hash str
 	deviceAccessKeyRow := s.db.QueryRowContext(ctx, validateDeviceAccessKey, projectID, hash)
 
 	deviceAccessKey, err := s.scanDeviceAccessKey(deviceAccessKeyRow)
-	if err != nil && err != sql.ErrNoRows {
+	if err == sql.ErrNoRows {
+		return nil, store.ErrDeviceAccessKeyNotFound
+	} else if err != nil {
 		return nil, err
 	}
 
