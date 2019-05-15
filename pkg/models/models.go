@@ -145,9 +145,9 @@ type DeviceFull2 struct {
 }
 
 type DeviceApplicationStatusInfo struct {
-	Application       Application             `json:"application"`
-	ApplicationStatus DeviceApplicationStatus `json:"applicationStatus"`
-	ServiceStatuses   []DeviceServiceStatus   `json:"serviceStatuses"`
+	Application       Application              `json:"application"`
+	ApplicationStatus *DeviceApplicationStatus `json:"applicationStatus"`
+	ServiceStatuses   []DeviceServiceStatus    `json:"serviceStatuses"`
 }
 
 type Bundle struct {

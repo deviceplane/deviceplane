@@ -794,11 +794,17 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, u
 			return
 		}
 
-		var applicationStatusInfo []models.DeviceApplicationStatusInfo
+		var allApplicationStatusInfo []models.DeviceApplicationStatusInfo
 		for _, application := range applications {
+			applicationStatusInfo := models.DeviceApplicationStatusInfo{
+				Application: application,
+			}
+
 			deviceApplicationStatus, err := s.deviceApplicationStatuses.GetDeviceApplicationStatus(
 				r.Context(), projectID, device.ID, application.ID)
-			if err != nil {
+			if err == nil {
+				applicationStatusInfo.ApplicationStatus = deviceApplicationStatus
+			} else if err != store.ErrDeviceApplicationStatusNotFound {
 				log.WithError(err).Error("get device application status")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
@@ -806,23 +812,21 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, u
 
 			deviceServiceStatuses, err := s.deviceServiceStatuses.GetDeviceServiceStatuses(
 				r.Context(), projectID, device.ID, application.ID)
-			if err != nil {
+			if err == nil {
+				applicationStatusInfo.ServiceStatuses = deviceServiceStatuses
+			} else if err != store.ErrDeviceServiceStatusNotFound {
 				log.WithError(err).Error("get device service statuses")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
-			applicationStatusInfo = append(applicationStatusInfo, models.DeviceApplicationStatusInfo{
-				Application:       application,
-				ApplicationStatus: *deviceApplicationStatus,
-				ServiceStatuses:   deviceServiceStatuses,
-			})
+			allApplicationStatusInfo = append(allApplicationStatusInfo, applicationStatusInfo)
 		}
 
 		ret = models.DeviceFull2{
 			Device:                *device,
 			Status:                deviceStatus,
-			ApplicationStatusInfo: applicationStatusInfo,
+			ApplicationStatusInfo: allApplicationStatusInfo,
 		}
 	}
 
