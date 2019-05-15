@@ -17,13 +17,10 @@ type SetDeviceInfoRequest struct {
 	DeviceInfo DeviceInfo `json:"deviceInfo"`
 }
 
-type SetDeviceApplicationReleaseRequest struct {
-	ApplicationID string `json:"applicationId"`
-	ReleaseID     string `json:"releaseId"`
+type SetDeviceApplicationStatusRequest struct {
+	CurrentReleaseID string `json:"currentReleaseId"`
 }
 
-type SetDeviceApplicationServiceReleaseRequest struct {
-	ApplicationID string `json:"applicationId"`
-	Service       string `json:"service"`
-	ReleaseID     string `json:"releaseId"`
+type SetDeviceServiceStatusRequest struct {
+	CurrentReleaseID string `json:"currentReleaseId"`
 }

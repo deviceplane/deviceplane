@@ -286,42 +286,42 @@ const listReleases = `
   where project_id = ? and application_id = ?
 `
 
-const setDeviceApplicationRelease = `
-  insert into device_application_releases (
+const setDeviceApplicationStatus = `
+  insert into device_application_statuses (
     project_id,
     device_id,
     application_id,
-    release_id
+    current_release_id
   )
   values (?, ?, ?, ?)
   on duplicate key update
-    release_id = ?
+    current_release_id = ?
 `
 
-const getDeviceApplicationRelease = `
-  select project_id, device_id, application_id, release_id from device_application_releases
+const getDeviceApplicationStatus = `
+  select project_id, device_id, application_id, current_release_id from device_application_statuses
   where project_id = ? and device_id = ? and application_id = ?
 `
 
-const setDeviceApplicationServiceRelease = `
-  insert into device_application_service_releases (
+const setDeviceServiceStatus = `
+  insert into device_service_statuses (
     project_id,
     device_id,
     application_id,
     service,
-    release_id
+    current_release_id
   )
   values (?, ?, ?, ?, ?)
   on duplicate key update
-    release_id = ?
+    current_release_id = ?
 `
 
-const getDeviceApplicationServiceRelease = `
-  select project_id, device_id, application_id, service, release_id from device_application_service_releases
+const getDeviceServiceStatus = `
+  select project_id, device_id, application_id, service, current_release_id from device_service_statuses
   where project_id = ? and device_id = ? and application_id = ? and service = ?
 `
 
-const getDeviceApplicationServiceReleases = `
-  select project_id, device_id, application_id, service, release_id from device_application_service_releases
+const getDeviceServiceStatuses = `
+  select project_id, device_id, application_id, service, current_release_id from device_service_statuses
   where project_id = ? and device_id = ? and application_id = ?
 `

@@ -107,19 +107,19 @@ type Release struct {
 	Config        string    `json:"config"`
 }
 
-type DeviceApplicationRelease struct {
-	ProjectID     string `json:"projectId"`
-	DeviceID      string `json:"deviceId"`
-	ApplicationID string `json:"applicationId"`
-	ReleaseID     string `json:"releaseId"`
+type DeviceApplicationStatus struct {
+	ProjectID        string `json:"projectId"`
+	DeviceID         string `json:"deviceId"`
+	ApplicationID    string `json:"applicationId"`
+	CurrentReleaseID string `json:"currentReleaseId"`
 }
 
-type DeviceApplicationServiceRelease struct {
-	ProjectID     string `json:"projectId"`
-	DeviceID      string `json:"deviceId"`
-	ApplicationID string `json:"applicationId"`
-	Service       string `json:"service"`
-	ReleaseID     string `json:"releaseId"`
+type DeviceServiceStatus struct {
+	ProjectID        string `json:"projectId"`
+	DeviceID         string `json:"deviceId"`
+	ApplicationID    string `json:"applicationId"`
+	Service          string `json:"service"`
+	CurrentReleaseID string `json:"currentReleaseId"`
 }
 
 type MembershipFull struct {
@@ -140,14 +140,14 @@ type DeviceFull1 struct {
 
 type DeviceFull2 struct {
 	Device
-	Status                    DeviceStatus                `json:"status"`
-	ApplicationAndReleaseInfo []ApplicationAndReleaseInfo `json:"applicationAndReleaseInfo"`
+	Status                DeviceStatus                  `json:"status"`
+	ApplicationStatusInfo []DeviceApplicationStatusInfo `json:"applicationStatusInfo"`
 }
 
-type ApplicationAndReleaseInfo struct {
-	Application                Application                       `json:"application"`
-	ApplicationRelease         DeviceApplicationRelease          `json:"deviceApplicationRelease"`
-	ApplicationServiceReleases []DeviceApplicationServiceRelease `json:"deviceApplicationServiceReleases"`
+type DeviceApplicationStatusInfo struct {
+	Application       Application             `json:"application"`
+	ApplicationStatus DeviceApplicationStatus `json:"applicationStatus"`
+	ServiceStatuses   []DeviceServiceStatus   `json:"serviceStatuses"`
 }
 
 type Bundle struct {

@@ -38,16 +38,13 @@ func NewAgent(client *agent_client.Client, engine engine.Engine, projectID, regi
 		projectID:         projectID,
 		registrationToken: registrationToken,
 		stateDir:          stateDir,
-		supervisor: supervisor.NewSupervisor(engine, func(ctx context.Context, applicationID, releaseID string) error {
-			return client.SetDeviceApplicationRelease(ctx, models.SetDeviceApplicationReleaseRequest{
-				ApplicationID: applicationID,
-				ReleaseID:     releaseID,
+		supervisor: supervisor.NewSupervisor(engine, func(ctx context.Context, applicationID, currentReleaseID string) error {
+			return client.SetDeviceApplicationStatus(ctx, applicationID, models.SetDeviceApplicationStatusRequest{
+				CurrentReleaseID: currentReleaseID,
 			})
-		}, func(ctx context.Context, applicationID, service, releaseID string) error {
-			return client.SetDeviceApplicationServiceRelease(ctx, models.SetDeviceApplicationServiceReleaseRequest{
-				ApplicationID: applicationID,
-				Service:       service,
-				ReleaseID:     releaseID,
+		}, func(ctx context.Context, applicationID, service, currentReleaseID string) error {
+			return client.SetDeviceServiceStatus(ctx, applicationID, service, models.SetDeviceServiceStatusRequest{
+				CurrentReleaseID: currentReleaseID,
 			})
 		}),
 		infoReporter: info.NewReporter(client),

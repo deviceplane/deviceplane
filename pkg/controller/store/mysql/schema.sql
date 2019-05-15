@@ -203,48 +203,48 @@ create table if not exists releases (
 );
 
 --
--- DeviceApplicationReleases
+-- DeviceApplicationStatuses
 --
 
-create table if not exists device_application_releases (
+create table if not exists device_application_statuses (
   project_id varchar(32) not null,
   device_id varchar(32) not null,
   application_id varchar(32) not null,
 
-  release_id varchar(32) not null,
+  current_release_id varchar(32) not null,
 
   primary key (project_id, device_id, application_id),
-  foreign key device_application_releases_project_id(project_id)
+  foreign key device_application_statuses_project_id(project_id)
   references projects(id)
   on delete cascade,
-  foreign key device_application_releases_device_id(device_id)
+  foreign key device_application_statuses_device_id(device_id)
   references devices(id)
   on delete cascade,
-  foreign key device_application_releases_application_id(application_id)
+  foreign key device_application_statuses_application_id(application_id)
   references applications(id)
   on delete cascade
 );
 
 --
--- DeviceApplicationServiceReleases
+-- DeviceServiceStatuses
 --
 
-create table if not exists device_application_service_releases (
+create table if not exists device_service_statuses (
   project_id varchar(32) not null,
   device_id varchar(32) not null,
   application_id varchar(32) not null,
   service varchar(100) not null,
 
-  release_id varchar(32) not null,
+  current_release_id varchar(32) not null,
 
   primary key (project_id, device_id, application_id, service),
-  foreign key device_application_releases_project_id(project_id)
+  foreign key device_service_statuses_project_id(project_id)
   references projects(id)
   on delete cascade,
-  foreign key device_application_releases_device_id(device_id)
+  foreign key device_service_statuses_device_id(device_id)
   references devices(id)
   on delete cascade,
-  foreign key device_application_releases_application_id(application_id)
+  foreign key device_service_statuses_application_id(application_id)
   references applications(id)
   on delete cascade
 );

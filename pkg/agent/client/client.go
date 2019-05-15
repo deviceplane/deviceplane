@@ -98,12 +98,12 @@ func (c *Client) SetDeviceInfo(ctx context.Context, req models.SetDeviceInfoRequ
 	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "info")
 }
 
-func (c *Client) SetDeviceApplicationRelease(ctx context.Context, req models.SetDeviceApplicationReleaseRequest) error {
-	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "applicationreleases")
+func (c *Client) SetDeviceApplicationStatus(ctx context.Context, applicationID string, req models.SetDeviceApplicationStatusRequest) error {
+	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "applications", applicationID, "deviceapplicationstatuses")
 }
 
-func (c *Client) SetDeviceApplicationServiceRelease(ctx context.Context, req models.SetDeviceApplicationServiceReleaseRequest) error {
-	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "applicationservicereleases")
+func (c *Client) SetDeviceServiceStatus(ctx context.Context, applicationID, service string, req models.SetDeviceServiceStatusRequest) error {
+	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "applications", applicationID, "services", service, "deviceservicestatuses")
 }
 
 func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {

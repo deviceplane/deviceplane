@@ -944,105 +944,105 @@ func (s *Store) scanRelease(scanner scanner) (*models.Release, error) {
 	return &release, nil
 }
 
-func (s *Store) SetDeviceApplicationRelease(ctx context.Context, projectID, deviceID, applicationID, releaseID string) error {
+func (s *Store) SetDeviceApplicationStatus(ctx context.Context, projectID, deviceID, applicationID, currentReleaseID string) error {
 	_, err := s.db.ExecContext(
 		ctx,
-		setDeviceApplicationRelease,
+		setDeviceApplicationStatus,
 		projectID,
 		deviceID,
 		applicationID,
-		releaseID,
-		releaseID,
+		currentReleaseID,
+		currentReleaseID,
 	)
 	return err
 }
 
-func (s *Store) GetDeviceApplicationRelease(ctx context.Context, projectID, deviceID, applicationID string) (*models.DeviceApplicationRelease, error) {
-	deviceApplicationReleaseRow := s.db.QueryRowContext(ctx, getDeviceApplicationRelease, projectID, deviceID, applicationID)
+func (s *Store) GetDeviceApplicationStatus(ctx context.Context, projectID, deviceID, applicationID string) (*models.DeviceApplicationStatus, error) {
+	deviceApplicationStatusRow := s.db.QueryRowContext(ctx, getDeviceApplicationStatus, projectID, deviceID, applicationID)
 
-	deviceApplicationRelease, err := s.scanDeviceApplicationRelease(deviceApplicationReleaseRow)
+	deviceApplicationStatus, err := s.scanDeviceApplicationStatus(deviceApplicationStatusRow)
 	if err == sql.ErrNoRows {
-		return nil, store.ErrDeviceApplicationReleaseNotFound
+		return nil, store.ErrDeviceApplicationStatusNotFound
 	} else if err != nil {
 		return nil, err
 	}
 
-	return deviceApplicationRelease, nil
+	return deviceApplicationStatus, nil
 }
 
-func (s *Store) scanDeviceApplicationRelease(scanner scanner) (*models.DeviceApplicationRelease, error) {
-	var deviceApplicationRelease models.DeviceApplicationRelease
+func (s *Store) scanDeviceApplicationStatus(scanner scanner) (*models.DeviceApplicationStatus, error) {
+	var deviceApplicationStatus models.DeviceApplicationStatus
 	if err := scanner.Scan(
-		&deviceApplicationRelease.ProjectID,
-		&deviceApplicationRelease.DeviceID,
-		&deviceApplicationRelease.ApplicationID,
-		&deviceApplicationRelease.ReleaseID,
+		&deviceApplicationStatus.ProjectID,
+		&deviceApplicationStatus.DeviceID,
+		&deviceApplicationStatus.ApplicationID,
+		&deviceApplicationStatus.CurrentReleaseID,
 	); err != nil {
 		return nil, err
 	}
-	return &deviceApplicationRelease, nil
+	return &deviceApplicationStatus, nil
 }
 
-func (s *Store) SetDeviceApplicationServiceRelease(ctx context.Context, projectID, deviceID, applicationID, service, releaseID string) error {
+func (s *Store) SetDeviceServiceStatus(ctx context.Context, projectID, deviceID, applicationID, service, currentReleaseID string) error {
 	_, err := s.db.ExecContext(
 		ctx,
-		setDeviceApplicationServiceRelease,
+		setDeviceServiceStatus,
 		projectID,
 		deviceID,
 		applicationID,
 		service,
-		releaseID,
-		releaseID,
+		currentReleaseID,
+		currentReleaseID,
 	)
 	return err
 }
 
-func (s *Store) GetDeviceApplicationServiceRelease(ctx context.Context, projectID, deviceID, applicationID, service string) (*models.DeviceApplicationServiceRelease, error) {
-	deviceApplicationServiceReleaseRow := s.db.QueryRowContext(ctx, getDeviceApplicationServiceRelease, projectID, deviceID, applicationID, service)
+func (s *Store) GetDeviceServiceStatus(ctx context.Context, projectID, deviceID, applicationID, service string) (*models.DeviceServiceStatus, error) {
+	deviceServiceStatusRow := s.db.QueryRowContext(ctx, getDeviceServiceStatus, projectID, deviceID, applicationID, service)
 
-	deviceApplicationServiceRelease, err := s.scanDeviceApplicationServiceRelease(deviceApplicationServiceReleaseRow)
+	deviceServiceStatus, err := s.scanDeviceServiceStatus(deviceServiceStatusRow)
 	if err == sql.ErrNoRows {
-		return nil, store.ErrDeviceApplicationReleaseNotFound
+		return nil, store.ErrDeviceApplicationStatusNotFound
 	} else if err != nil {
 		return nil, err
 	}
 
-	return deviceApplicationServiceRelease, nil
+	return deviceServiceStatus, nil
 }
 
-func (s *Store) GetDeviceApplicationServiceReleases(ctx context.Context, projectID, deviceID, applicationID string) ([]models.DeviceApplicationServiceRelease, error) {
-	deviceApplicationServiceReleasesRows, err := s.db.QueryContext(ctx, getDeviceApplicationServiceReleases, projectID, deviceID, applicationID)
+func (s *Store) GetDeviceServiceStatuses(ctx context.Context, projectID, deviceID, applicationID string) ([]models.DeviceServiceStatus, error) {
+	deviceServiceStatusRows, err := s.db.QueryContext(ctx, getDeviceServiceStatuses, projectID, deviceID, applicationID)
 	if err != nil {
-		return nil, errors.Wrap(err, "query device application service releases")
+		return nil, errors.Wrap(err, "query device service statuses")
 	}
-	defer deviceApplicationServiceReleasesRows.Close()
+	defer deviceServiceStatusRows.Close()
 
-	deviceApplicationServiceReleases := make([]models.DeviceApplicationServiceRelease, 0)
-	for deviceApplicationServiceReleasesRows.Next() {
-		deviceApplicationServiceRelease, err := s.scanDeviceApplicationServiceRelease(deviceApplicationServiceReleasesRows)
+	deviceServiceStatuses := make([]models.DeviceServiceStatus, 0)
+	for deviceServiceStatusRows.Next() {
+		deviceServiceStatus, err := s.scanDeviceServiceStatus(deviceServiceStatusRows)
 		if err != nil {
 			return nil, err
 		}
-		deviceApplicationServiceReleases = append(deviceApplicationServiceReleases, *deviceApplicationServiceRelease)
+		deviceServiceStatuses = append(deviceServiceStatuses, *deviceServiceStatus)
 	}
 
-	if err := deviceApplicationServiceReleasesRows.Err(); err != nil {
+	if err := deviceServiceStatusRows.Err(); err != nil {
 		return nil, err
 	}
 
-	return deviceApplicationServiceReleases, nil
+	return deviceServiceStatuses, nil
 }
 
-func (s *Store) scanDeviceApplicationServiceRelease(scanner scanner) (*models.DeviceApplicationServiceRelease, error) {
-	var deviceApplicationServiceRelease models.DeviceApplicationServiceRelease
+func (s *Store) scanDeviceServiceStatus(scanner scanner) (*models.DeviceServiceStatus, error) {
+	var deviceServiceStatus models.DeviceServiceStatus
 	if err := scanner.Scan(
-		&deviceApplicationServiceRelease.ProjectID,
-		&deviceApplicationServiceRelease.DeviceID,
-		&deviceApplicationServiceRelease.ApplicationID,
-		&deviceApplicationServiceRelease.Service,
-		&deviceApplicationServiceRelease.ReleaseID,
+		&deviceServiceStatus.ProjectID,
+		&deviceServiceStatus.DeviceID,
+		&deviceServiceStatus.ApplicationID,
+		&deviceServiceStatus.Service,
+		&deviceServiceStatus.CurrentReleaseID,
 	); err != nil {
 		return nil, err
 	}
-	return &deviceApplicationServiceRelease, nil
+	return &deviceServiceStatus, nil
 }

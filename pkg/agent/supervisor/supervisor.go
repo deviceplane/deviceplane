@@ -15,9 +15,9 @@ import (
 )
 
 type Supervisor struct {
-	engine                          engine.Engine
-	reportApplicationRelease        func(ctx context.Context, applicationID string, releaseID string) error
-	reportApplicationServiceRelease func(ctx context.Context, applicationID, service, releaseID string) error
+	engine                  engine.Engine
+	reportApplicationStatus func(ctx context.Context, applicationID string, currentReleaseID string) error
+	reportServiceStatus     func(ctx context.Context, applicationID, service, currentReleaseID string) error
 
 	latestDesiredApplicationReleases map[string]string
 	reportedApplicationReleases      map[string]string
@@ -34,13 +34,13 @@ type Supervisor struct {
 
 func NewSupervisor(
 	engine engine.Engine,
-	reportApplicationRelease func(ctx context.Context, applicationID, releaseID string) error,
-	reportApplicationServiceRelease func(ctx context.Context, applicationID, service, releaseID string) error,
+	reportApplicationStatus func(ctx context.Context, applicationID, currentReleaseID string) error,
+	reportServiceStatus func(ctx context.Context, applicationID, service, currentReleaseID string) error,
 ) *Supervisor {
 	supervisor := &Supervisor{
-		engine:                          engine,
-		reportApplicationRelease:        reportApplicationRelease,
-		reportApplicationServiceRelease: reportApplicationServiceRelease,
+		engine:                  engine,
+		reportApplicationStatus: reportApplicationStatus,
+		reportServiceStatus:     reportServiceStatus,
 
 		latestDesiredApplicationReleases: make(map[string]string),
 		reportedApplicationReleases:      make(map[string]string),
@@ -52,12 +52,12 @@ func NewSupervisor(
 		keepAliveShutdowns:  make(map[string]map[string]chan struct{}),
 		keepAliveAcks:       make(map[string]map[string]chan struct{}),
 	}
-	go supervisor.applicationReleaseReporter()
-	go supervisor.serviceReleaseReporter()
+	go supervisor.applicationStatusReporter()
+	go supervisor.serviceStatusReporter()
 	return supervisor
 }
 
-func (s *Supervisor) applicationReleaseReporter() {
+func (s *Supervisor) applicationStatusReporter() {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
@@ -95,8 +95,8 @@ func (s *Supervisor) applicationReleaseReporter() {
 
 		for applicationID, releaseID := range diff {
 			retry(func(ctx context.Context) error {
-				if err := s.reportApplicationRelease(ctx, applicationID, releaseID); err != nil {
-					log.WithError(err).Error("report release")
+				if err := s.reportApplicationStatus(ctx, applicationID, releaseID); err != nil {
+					log.WithError(err).Error("report application status")
 					return err
 				}
 				return nil
@@ -112,7 +112,7 @@ func (s *Supervisor) applicationReleaseReporter() {
 	}
 }
 
-func (s *Supervisor) serviceReleaseReporter() {
+func (s *Supervisor) serviceStatusReporter() {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
@@ -141,8 +141,8 @@ func (s *Supervisor) serviceReleaseReporter() {
 		for applicationID, applicationDiff := range diff {
 			for service, releaseID := range applicationDiff {
 				retry(func(ctx context.Context) error {
-					if err := s.reportApplicationServiceRelease(ctx, applicationID, service, releaseID); err != nil {
-						log.WithError(err).Error("report service release")
+					if err := s.reportServiceStatus(ctx, applicationID, service, releaseID); err != nil {
+						log.WithError(err).Error("report service status")
 						return err
 					}
 					return nil

@@ -125,17 +125,17 @@ type Releases interface {
 
 var ErrReleaseNotFound = errors.New("release not found")
 
-type DeviceApplicationReleases interface {
-	SetDeviceApplicationRelease(ctx context.Context, projectID, deviceID, applicationID, releaseID string) error
-	GetDeviceApplicationRelease(ctx context.Context, projectID, deviceID, applicationID string) (*models.DeviceApplicationRelease, error)
+type DeviceApplicationStatuses interface {
+	SetDeviceApplicationStatus(ctx context.Context, projectID, deviceID, applicationID, currentReleaseID string) error
+	GetDeviceApplicationStatus(ctx context.Context, projectID, deviceID, applicationID string) (*models.DeviceApplicationStatus, error)
 }
 
-var ErrDeviceApplicationReleaseNotFound = errors.New("device application release not found")
+var ErrDeviceApplicationStatusNotFound = errors.New("device application status not found")
 
-type DeviceApplicationServiceReleases interface {
-	SetDeviceApplicationServiceRelease(ctx context.Context, projectID, deviceID, applicationID, service, releaseID string) error
-	GetDeviceApplicationServiceRelease(ctx context.Context, projectID, deviceID, applicationID, service string) (*models.DeviceApplicationServiceRelease, error)
-	GetDeviceApplicationServiceReleases(ctx context.Context, projectID, deviceID, applicationID string) ([]models.DeviceApplicationServiceRelease, error)
+type DeviceServiceStatuses interface {
+	SetDeviceServiceStatus(ctx context.Context, projectID, deviceID, applicationID, service, currentReleaseID string) error
+	GetDeviceServiceStatus(ctx context.Context, projectID, deviceID, applicationID, service string) (*models.DeviceServiceStatus, error)
+	GetDeviceServiceStatuses(ctx context.Context, projectID, deviceID, applicationID string) ([]models.DeviceServiceStatus, error)
 }
 
-var ErrDeviceApplicationServiceReleaseNotFound = errors.New("device application service release not found")
+var ErrDeviceServiceStatusNotFound = errors.New("device service status not found")
