@@ -387,12 +387,10 @@ func (s *Store) scanProject(scanner scanner) (*models.Project, error) {
 }
 
 func (s *Store) GetProjectDeviceCounts(ctx context.Context, projectID string) (*models.ProjectDeviceCounts, error) {
-	countRow := s.db.QueryRowContext(ctx, getProjectTotalDeviceCount, projectID)
+	countRow := s.db.QueryRowContext(ctx, getProjectDeviceCounts, projectID)
 
-	count, err := s.scanProjectTotalDeviceCountRow(countRow)
-	if err == sql.ErrNoRows {
-		return nil, store.ErrProjectNotFound
-	} else if err != nil {
+	count, err := s.scanProjectDeviceCountRow(countRow)
+	if err != nil {
 		return nil, err
 	}
 
@@ -401,7 +399,7 @@ func (s *Store) GetProjectDeviceCounts(ctx context.Context, projectID string) (*
 	}, nil
 }
 
-func (s *Store) scanProjectTotalDeviceCountRow(scanner scanner) (int, error) {
+func (s *Store) scanProjectDeviceCountRow(scanner scanner) (int, error) {
 	var count int
 	if err := scanner.Scan(
 		&count,
@@ -412,12 +410,10 @@ func (s *Store) scanProjectTotalDeviceCountRow(scanner scanner) (int, error) {
 }
 
 func (s *Store) GetProjectApplicationCounts(ctx context.Context, projectID string) (*models.ProjectApplicationCounts, error) {
-	countRow := s.db.QueryRowContext(ctx, getProjectTotalApplicationCount, projectID)
+	countRow := s.db.QueryRowContext(ctx, getProjectApplicationCounts, projectID)
 
-	count, err := s.scanProjectTotalApplicationCountRow(countRow)
-	if err == sql.ErrNoRows {
-		return nil, store.ErrProjectNotFound
-	} else if err != nil {
+	count, err := s.scanProjectApplicationCountRow(countRow)
+	if err != nil {
 		return nil, err
 	}
 
@@ -426,7 +422,7 @@ func (s *Store) GetProjectApplicationCounts(ctx context.Context, projectID strin
 	}, nil
 }
 
-func (s *Store) scanProjectTotalApplicationCountRow(scanner scanner) (int, error) {
+func (s *Store) scanProjectApplicationCountRow(scanner scanner) (int, error) {
 	var count int
 	if err := scanner.Scan(
 		&count,
@@ -944,6 +940,29 @@ func (s *Store) scanRelease(scanner scanner) (*models.Release, error) {
 		return nil, err
 	}
 	return &release, nil
+}
+
+func (s *Store) GetReleaseDeviceCounts(ctx context.Context, projectID, applicationID, releaseID string) (*models.ReleaseDeviceCounts, error) {
+	countRow := s.db.QueryRowContext(ctx, getReleaseDeviceCounts, projectID, applicationID, releaseID)
+
+	count, err := s.scanReleaseDeviceCountRow(countRow)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.ReleaseDeviceCounts{
+		AllCount: count,
+	}, nil
+}
+
+func (s *Store) scanReleaseDeviceCountRow(scanner scanner) (int, error) {
+	var count int
+	if err := scanner.Scan(
+		&count,
+	); err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (s *Store) SetDeviceApplicationStatus(ctx context.Context, projectID, deviceID, applicationID, currentReleaseID string) error {

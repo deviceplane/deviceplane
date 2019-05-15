@@ -110,14 +110,14 @@ const lookupProject = `
   where name = ?
 `
 
-const getProjectTotalDeviceCount = `
+const getProjectDeviceCounts = `
   select count(*) from devices
-  where devices.project_id = ?
+  where project_id = ?
 `
 
-const getProjectTotalApplicationCount = `
+const getProjectApplicationCounts = `
   select count(*) from applications
-  where applications.project_id = ?
+  where project_id = ?
 `
 
 const createMembership = `
@@ -284,6 +284,11 @@ const getLatestRelease = `
 const listReleases = `
   select id, project_id, application_id, config from releases
   where project_id = ? and application_id = ?
+`
+
+const getReleaseDeviceCounts = `
+  select count(*) from device_application_statuses
+  where project_id = ? and application_id = ? and current_release_id = ?
 `
 
 const setDeviceApplicationStatus = `

@@ -125,6 +125,10 @@ type Releases interface {
 
 var ErrReleaseNotFound = errors.New("release not found")
 
+type ReleaseDeviceCounts interface {
+	GetReleaseDeviceCounts(ctx context.Context, projectID, applicationID, releaseIF string) (*models.ReleaseDeviceCounts, error)
+}
+
 type DeviceApplicationStatuses interface {
 	SetDeviceApplicationStatus(ctx context.Context, projectID, deviceID, applicationID, currentReleaseID string) error
 	GetDeviceApplicationStatus(ctx context.Context, projectID, deviceID, applicationID string) (*models.DeviceApplicationStatus, error)

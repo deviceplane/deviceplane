@@ -107,6 +107,10 @@ type Release struct {
 	Config        string    `json:"config"`
 }
 
+type ReleaseDeviceCounts struct {
+	AllCount int `json:"allCount"`
+}
+
 type DeviceApplicationStatus struct {
 	ProjectID        string `json:"projectId"`
 	DeviceID         string `json:"deviceId"`
@@ -148,6 +152,11 @@ type DeviceApplicationStatusInfo struct {
 	Application       Application              `json:"application"`
 	ApplicationStatus *DeviceApplicationStatus `json:"applicationStatus"`
 	ServiceStatuses   []DeviceServiceStatus    `json:"serviceStatuses"`
+}
+
+type ReleaseFull struct {
+	Release
+	DeviceCounts ReleaseDeviceCounts `json:"deviceCounts"`
 }
 
 type Bundle struct {

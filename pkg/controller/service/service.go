@@ -41,6 +41,7 @@ type Service struct {
 	deviceAccessKeys          store.DeviceAccessKeys
 	applications              store.Applications
 	releases                  store.Releases
+	releaseDeviceCounts       store.ReleaseDeviceCounts
 	deviceApplicationStatuses store.DeviceApplicationStatuses
 	deviceServiceStatuses     store.DeviceServiceStatuses
 	email                     email.Interface
@@ -65,6 +66,7 @@ func NewService(
 	deviceAccessKeys store.DeviceAccessKeys,
 	applications store.Applications,
 	releases store.Releases,
+	releasesDeviceCounts store.ReleaseDeviceCounts,
 	deviceApplicationStatuses store.DeviceApplicationStatuses,
 	deviceServiceStatuses store.DeviceServiceStatuses,
 	email email.Interface,
@@ -87,6 +89,7 @@ func NewService(
 		deviceAccessKeys:          deviceAccessKeys,
 		applications:              applications,
 		releases:                  releases,
+		releaseDeviceCounts:       releasesDeviceCounts,
 		deviceApplicationStatuses: deviceApplicationStatuses,
 		deviceServiceStatuses:     deviceServiceStatuses,
 		email:                     email,
@@ -702,8 +705,23 @@ func (s *Service) getRelease(w http.ResponseWriter, r *http.Request, projectID, 
 		return
 	}
 
+	var ret interface{} = release
+	if _, ok := r.URL.Query()["full"]; ok {
+		releaseDeviceCounts, err := s.releaseDeviceCounts.GetReleaseDeviceCounts(r.Context(), projectID, applicationID, releaseID)
+		if err != nil {
+			log.WithError(err).Error("get release device counts")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		ret = models.ReleaseFull{
+			Release:      *release,
+			DeviceCounts: *releaseDeviceCounts,
+		}
+	}
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(release)
+	json.NewEncoder(w).Encode(ret)
 }
 
 func (s *Service) getLatestRelease(w http.ResponseWriter, r *http.Request, projectID string, userID, applicationID string) {
@@ -713,6 +731,24 @@ func (s *Service) getLatestRelease(w http.ResponseWriter, r *http.Request, proje
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	var ret interface{} = release
+	if _, ok := r.URL.Query()["full"]; ok {
+		releaseDeviceCounts, err := s.releaseDeviceCounts.GetReleaseDeviceCounts(r.Context(), projectID, applicationID, release.ID)
+		if err != nil {
+			log.WithError(err).Error("get release device counts")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		ret = models.ReleaseFull{
+			Release:      *release,
+			DeviceCounts: *releaseDeviceCounts,
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(ret)
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(release)
@@ -726,8 +762,28 @@ func (s *Service) listReleases(w http.ResponseWriter, r *http.Request, projectID
 		return
 	}
 
+	var ret interface{} = releases
+	if _, ok := r.URL.Query()["full"]; ok {
+		var releasesFull []models.ReleaseFull
+
+		for _, release := range releases {
+			releaseDeviceCounts, err := s.releaseDeviceCounts.GetReleaseDeviceCounts(r.Context(), projectID, applicationID, release.ID)
+			if err != nil {
+				log.WithError(err).Error("get release device counts")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			releasesFull = append(releasesFull, models.ReleaseFull{
+				Release:      release,
+				DeviceCounts: *releaseDeviceCounts,
+			})
+		}
+
+		ret = releasesFull
+	}
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(releases)
+	json.NewEncoder(w).Encode(ret)
 }
 
 func (s *Service) listDevices(w http.ResponseWriter, r *http.Request, projectID, userID string) {
