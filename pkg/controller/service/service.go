@@ -110,7 +110,7 @@ func NewService(
 	s.router.HandleFunc("/users/{user}/memberships/full", s.withUserAuth(s.listMembershipsByUserFull)).Methods("GET")
 
 	s.router.HandleFunc("/projects", s.withUserAuth(s.createProject)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}", s.validateMembershipLevel("write", s.getProject)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}", s.validateMembershipLevel("read", s.getProject)).Methods("GET")
 
 	s.router.HandleFunc("/projects/{project}/memberships", s.validateMembershipLevel("admin", s.createMembership)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/memberships", s.validateMembershipLevel("read", s.listMembershipsByProject)).Methods("GET")
@@ -749,9 +749,6 @@ func (s *Service) getLatestRelease(w http.ResponseWriter, r *http.Request, proje
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(ret)
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(release)
 }
 
 func (s *Service) listReleases(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
@@ -1073,7 +1070,9 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, d
 	var bundle models.Bundle
 	for i, application := range applications {
 		release, err := s.releases.GetLatestRelease(r.Context(), projectID, application.ID)
-		if err != nil && err != store.ErrReleaseNotFound {
+		if err == store.ErrReleaseNotFound {
+			continue
+		} else if err != nil {
 			log.WithError(err).Error("get latest release")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
