@@ -112,6 +112,7 @@ type Applications interface {
 	GetApplication(ctx context.Context, id, projectID string) (*models.Application, error)
 	LookupApplication(ctx context.Context, name, projectID string) (*models.Application, error)
 	ListApplications(ctx context.Context, projectID string) ([]models.Application, error)
+	SetApplicationSettings(ctx context.Context, id, projectID string, applicationSettings models.ApplicationSettings) (*models.Application, error)
 }
 
 var ErrApplicationNotFound = errors.New("application not found")

@@ -1,5 +1,9 @@
 package models
 
+type SetApplicationSettingsRequest struct {
+	ApplicationSettings ApplicationSettings `json:"applicationSettings"`
+}
+
 type CreateRelease struct {
 	Config string `json:"config"`
 }

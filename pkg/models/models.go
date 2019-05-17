@@ -93,10 +93,11 @@ type DeviceAccessKey struct {
 }
 
 type Application struct {
-	ID        string    `json:"id"`
-	CreatedAt time.Time `json:"createdAt"`
-	ProjectID string    `json:"projectId"`
-	Name      string    `json:"name"`
+	ID        string              `json:"id"`
+	CreatedAt time.Time           `json:"createdAt"`
+	ProjectID string              `json:"projectId"`
+	Name      string              `json:"name"`
+	Settings  ApplicationSettings `json:"settings"`
 }
 
 type Release struct {
@@ -171,4 +172,8 @@ type ApplicationAndLatestRelease struct {
 
 type DeviceInfo struct {
 	IPAddress string `json:"ipAddress"`
+}
+
+type ApplicationSettings struct {
+	SchedulingRule string `json:"schedulingRule"`
 }

@@ -847,14 +847,40 @@ func (s *Store) ListApplications(ctx context.Context, projectID string) ([]model
 	return applications, nil
 }
 
+func (s *Store) SetApplicationSettings(ctx context.Context, id, projectID string, applicationSettings models.ApplicationSettings) (*models.Application, error) {
+	settingsBytes, err := json.Marshal(applicationSettings)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		setApplicationSettings,
+		string(settingsBytes),
+		id,
+		projectID,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetApplication(ctx, id, projectID)
+}
+
 func (s *Store) scanApplication(scanner scanner) (*models.Application, error) {
 	var application models.Application
+	var settingsString string
 	if err := scanner.Scan(
 		&application.ID,
 		&application.ProjectID,
 		&application.Name,
+		&settingsString,
 	); err != nil {
 		return nil, err
+	}
+	if settingsString != "" {
+		if err := json.Unmarshal([]byte(settingsString), &application.Settings); err != nil {
+			return nil, err
+		}
 	}
 	return &application, nil
 }

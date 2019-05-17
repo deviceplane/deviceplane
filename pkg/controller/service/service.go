@@ -8,13 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/deviceplane/deviceplane/pkg/spec"
-	"gopkg.in/yaml.v2"
-
+	"github.com/Knetic/govaluate"
 	"github.com/segmentio/ksuid"
 
 	"github.com/apex/log"
-	"github.com/deviceplane/deviceplane/pkg/controller/scheduler"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/email"
 	"github.com/deviceplane/deviceplane/pkg/models"
@@ -118,6 +115,7 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/applications", s.validateMembershipLevel("write", s.createApplication)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/applications/{application}", s.validateMembershipLevel("read", s.withApplication(s.getApplication))).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/applications", s.validateMembershipLevel("read", s.listApplications)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/applications/{application}/settings", s.validateMembershipLevel("write", s.withApplication(s.setApplicationSettings))).Methods("POST")
 
 	s.router.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateMembershipLevel("write", s.withApplication(s.createRelease))).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/applications/{application}/releases/latest", s.validateMembershipLevel("read", s.withApplication(s.getLatestRelease))).Methods("GET")
@@ -673,6 +671,22 @@ func (s *Service) listApplications(w http.ResponseWriter, r *http.Request, proje
 	json.NewEncoder(w).Encode(applications)
 }
 
+func (s *Service) setApplicationSettings(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
+	var setApplicationSettingsRequest models.SetApplicationSettingsRequest
+	if err := json.NewDecoder(r.Body).Decode(&setApplicationSettingsRequest); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if _, err := s.applications.SetApplicationSettings(r.Context(), applicationID, projectID, setApplicationSettingsRequest.ApplicationSettings); err != nil {
+		log.WithError(err).Error("set application settings")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 // TOOD: this has a vulnerability!
 func (s *Service) createRelease(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
 	var createReleaseRequest struct {
@@ -1078,26 +1092,31 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, d
 			return
 		}
 
-		var applicationSpec spec.Application
-		if err = yaml.Unmarshal([]byte(release.Config), &applicationSpec); err != nil {
-			log.WithError(err).Error("invalid application spec")
-			continue
-		}
+		if application.Settings.SchedulingRule != "" {
+			expression, err := govaluate.NewEvaluableExpression(application.Settings.SchedulingRule)
+			if err != nil {
+				log.WithError(err).Error("parse application scheduling rule")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 
-		transformedApplicationSpec, err := scheduler.TransformSpec(applicationSpec, deviceLabels)
-		if err != nil {
-			log.WithError(err).Error("transform application spec")
-			continue
-		}
+			result, err := expression.Eval(deviceLabelParameters(deviceLabels))
+			if err != nil {
+				log.WithError(err).Error("evaluate application scheduling rule")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 
-		transformedApplicationSpecBytes, err := yaml.Marshal(transformedApplicationSpec)
-		if err != nil {
-			log.WithError(err).Error("marshal transformed application spec")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
+			booleanResult, ok := result.(bool)
+			if !ok {
+				log.Error("invalid scheduling rule evaluation result")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			if !booleanResult {
+				continue
+			}
 		}
-
-		release.Config = string(transformedApplicationSpecBytes)
 
 		bundle.Applications = append(bundle.Applications, models.ApplicationAndLatestRelease{
 			Application:   applications[i],

@@ -3,6 +3,7 @@ module github.com/deviceplane/deviceplane
 go 1.12
 
 require (
+	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/apex/log v1.1.0
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v1.13.1

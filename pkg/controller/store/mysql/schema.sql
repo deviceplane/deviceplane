@@ -177,7 +177,9 @@ create table if not exists applications (
   id varchar(32) not null,
   created_at timestamp not null default current_timestamp, 
   project_id varchar(32) not null,
+
   name varchar(100) not null,
+  settings longtext not null,
 
   primary key (id),
   foreign key applications_project_id(project_id)

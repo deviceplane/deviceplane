@@ -245,18 +245,24 @@ const createApplication = `
 `
 
 const getApplication = `
-  select id, project_id, name from applications
+  select id, project_id, name, settings from applications
   where id = ? and project_id = ?
 `
 
 const lookupApplication = `
-  select id, project_id, name from applications
+  select id, project_id, name, settings from applications
   where name = ? and project_id = ?
 `
 
 const listApplications = `
-  select id, project_id, name from applications
+  select id, project_id, name, settings from applications
   where project_id = ?
+`
+
+const setApplicationSettings = `
+  update applications
+  set settings = ?
+  where id = ? and project_id = ?
 `
 
 const createRelease = `
