@@ -6,11 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/deviceplane/deviceplane/pkg/controller/authz"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
+	"gopkg.in/yaml.v2"
 )
 
 type scanner interface {
@@ -23,6 +25,9 @@ const (
 	sessionPrefix                 = "ses"
 	accessKeyPrefix               = "key"
 	projectPrefix                 = "prj"
+	rolePrefix                    = "rol"
+	membershipPrefix              = "mem"
+	membershipRoleBindingPrefix   = "mrb"
 	devicePrefix                  = "dev"
 	deviceRegistrationTokenPrefix = "drt"
 	deviceAccessKeyPrefix         = "dak"
@@ -50,6 +55,18 @@ func newProjectID() string {
 	return fmt.Sprintf("%s_%s", projectPrefix, ksuid.New().String())
 }
 
+func newRoleID() string {
+	return fmt.Sprintf("%s_%s", rolePrefix, ksuid.New().String())
+}
+
+func newMembershipID() string {
+	return fmt.Sprintf("%s_%s", membershipPrefix, ksuid.New().String())
+}
+
+func newMembershipRoleBindingID() string {
+	return fmt.Sprintf("%s_%s", membershipRoleBindingPrefix, ksuid.New().String())
+}
+
 func newDeviceID() string {
 	return fmt.Sprintf("%s_%s", devicePrefix, ksuid.New().String())
 }
@@ -71,19 +88,24 @@ func newReleaseID() string {
 }
 
 var (
-	_ store.Users                    = &Store{}
-	_ store.RegistrationTokens       = &Store{}
-	_ store.Sessions                 = &Store{}
-	_ store.AccessKeys               = &Store{}
-	_ store.Projects                 = &Store{}
-	_ store.ProjectDeviceCounts      = &Store{}
-	_ store.Memberships              = &Store{}
-	_ store.Devices                  = &Store{}
-	_ store.DeviceLabels             = &Store{}
-	_ store.DeviceAccessKeys         = &Store{}
-	_ store.DeviceRegistrationTokens = &Store{}
-	_ store.Applications             = &Store{}
-	_ store.Releases                 = &Store{}
+	_ store.Users                     = &Store{}
+	_ store.RegistrationTokens        = &Store{}
+	_ store.Sessions                  = &Store{}
+	_ store.AccessKeys                = &Store{}
+	_ store.Projects                  = &Store{}
+	_ store.ProjectDeviceCounts       = &Store{}
+	_ store.Roles                     = &Store{}
+	_ store.Memberships               = &Store{}
+	_ store.MembershipRoleBindings    = &Store{}
+	_ store.Devices                   = &Store{}
+	_ store.DeviceLabels              = &Store{}
+	_ store.DeviceAccessKeys          = &Store{}
+	_ store.DeviceRegistrationTokens  = &Store{}
+	_ store.Applications              = &Store{}
+	_ store.Releases                  = &Store{}
+	_ store.ReleaseDeviceCounts       = &Store{}
+	_ store.DeviceApplicationStatuses = &Store{}
+	_ store.DeviceServiceStatuses     = &Store{}
 )
 
 type Store struct {
@@ -432,13 +454,88 @@ func (s *Store) scanProjectApplicationCountRow(scanner scanner) (int, error) {
 	return count, nil
 }
 
-func (s *Store) CreateMembership(ctx context.Context, userID, projectID, level string) (*models.Membership, error) {
+func (s *Store) CreateRole(ctx context.Context, projectID string, config authz.Config) (*models.Role, error) {
+	id := newRoleID()
+
+	configBytes, err := json.Marshal(config)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		createRole,
+		id,
+		projectID,
+		string(configBytes),
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetRole(ctx, id, projectID)
+}
+
+func (s *Store) GetRole(ctx context.Context, id, projectID string) (*models.Role, error) {
+	roleRow := s.db.QueryRowContext(ctx, getRole, id, projectID)
+
+	role, err := s.scanRole(roleRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrRoleNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return role, nil
+}
+
+func (s *Store) ListRoles(ctx context.Context, projectID string) ([]models.Role, error) {
+	roleRows, err := s.db.QueryContext(ctx, listRoles, projectID)
+	if err != nil {
+		return nil, errors.Wrap(err, "query roles")
+	}
+	defer roleRows.Close()
+
+	roles := make([]models.Role, 0)
+	for roleRows.Next() {
+		role, err := s.scanRole(roleRows)
+		if err != nil {
+			return nil, err
+		}
+		roles = append(roles, *role)
+	}
+
+	if err := roleRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return roles, nil
+}
+
+func (s *Store) scanRole(scanner scanner) (*models.Role, error) {
+	var role models.Role
+	var configString string
+	if err := scanner.Scan(
+		&role.ID,
+		&role.ProjectID,
+		&configString,
+	); err != nil {
+		return nil, err
+	}
+	if err := yaml.Unmarshal([]byte(configString), &role.Config); err != nil {
+		return nil, err
+	}
+	return &role, nil
+}
+
+func (s *Store) CreateMembership(ctx context.Context, userID, projectID string) (*models.Membership, error) {
+	id := newMembershipID()
+
 	if _, err := s.db.ExecContext(
 		ctx,
 		createMembership,
+		id,
 		userID,
 		projectID,
-		level,
 	); err != nil {
 		return nil, err
 	}
@@ -493,13 +590,75 @@ func (s *Store) listMemberships(ctx context.Context, id, query string) ([]models
 func (s *Store) scanMembership(scanner scanner) (*models.Membership, error) {
 	var membership models.Membership
 	if err := scanner.Scan(
+		&membership.ID,
 		&membership.UserID,
 		&membership.ProjectID,
-		&membership.Level,
 	); err != nil {
 		return nil, err
 	}
 	return &membership, nil
+}
+
+func (s *Store) CreateMembershipRoleBinding(ctx context.Context, membershipID, roleID, projectID string) (*models.MembershipRoleBinding, error) {
+	if _, err := s.db.ExecContext(
+		ctx,
+		createMembershipRoleBinding,
+		membershipID,
+		roleID,
+		projectID,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetMembershipRoleBinding(ctx, membershipID, roleID, projectID)
+}
+
+func (s *Store) GetMembershipRoleBinding(ctx context.Context, membershipID, roleID, projectID string) (*models.MembershipRoleBinding, error) {
+	membershipRoleBindingRow := s.db.QueryRowContext(ctx, getMembershipRoleBinding, membershipID, roleID, projectID)
+
+	membershipRoleBinding, err := s.scanMembershipRoleBinding(membershipRoleBindingRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrMembershipRoleBindingNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return membershipRoleBinding, nil
+}
+
+func (s *Store) ListMembershipRoleBindings(ctx context.Context, membershipID, projectID string) ([]models.MembershipRoleBinding, error) {
+	membershipRoleBindingRows, err := s.db.QueryContext(ctx, listMembershipRoleBindings, membershipID, projectID)
+	if err != nil {
+		return nil, errors.Wrap(err, "query membership role bindings")
+	}
+	defer membershipRoleBindingRows.Close()
+
+	membershipRoleBindings := make([]models.MembershipRoleBinding, 0)
+	for membershipRoleBindingRows.Next() {
+		membershipRoleBinding, err := s.scanMembershipRoleBinding(membershipRoleBindingRows)
+		if err != nil {
+			return nil, err
+		}
+		membershipRoleBindings = append(membershipRoleBindings, *membershipRoleBinding)
+	}
+
+	if err := membershipRoleBindingRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return membershipRoleBindings, nil
+}
+
+func (s *Store) scanMembershipRoleBinding(scanner scanner) (*models.MembershipRoleBinding, error) {
+	var membershipRoleBinding models.MembershipRoleBinding
+	if err := scanner.Scan(
+		&membershipRoleBinding.MembershipID,
+		&membershipRoleBinding.RoleID,
+		&membershipRoleBinding.ProjectID,
+	); err != nil {
+		return nil, err
+	}
+	return &membershipRoleBinding, nil
 }
 
 func (s *Store) CreateDevice(ctx context.Context, projectID string) (*models.Device, error) {

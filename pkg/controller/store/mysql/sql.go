@@ -120,28 +120,66 @@ const getProjectApplicationCounts = `
   where project_id = ?
 `
 
-const createMembership = `
-  insert into memberships (
-    user_id,
+const createRole = `
+  insert into roles (
+    id,
     project_id,
-    level
+    config
   )
   values (?, ?, ?)
 `
 
+const getRole = `
+  select id, project_id, config from roles
+  where id = ? and project_id = ?
+`
+
+const listRoles = `
+  select id, project_id, config from roles
+  where project_id = ?
+`
+
+const createMembership = `
+  insert into memberships (
+    id,
+    user_id,
+    project_id
+  )
+  values (?, ?, ?, ?)
+`
+
 const getMembership = `
-  select user_id, project_id, level from memberships
+  select id, user_id, project_id from memberships
   where user_id = ? and project_id = ?
 `
 
 const listMembershipsByUser = `
-  select user_id, project_id, level from memberships
+  select id, user_id, project_id from memberships
   where user_id = ?
 `
 
 const listMembershipsByProject = `
-  select user_id, project_id, level from memberships
+  select id, user_id, project_id from memberships
   where project_id = ?
+`
+
+const createMembershipRoleBinding = `
+  insert into membership_role_bindings (
+    membership_id,
+    role_id,
+    project_id
+  )
+  values (?, ?, ?)
+`
+
+const getMembershipRoleBinding = `
+  select membership_id, role_id, project_id from membership_role_bindings
+  where membership_id = ? and role_id = ? and project_id = ?
+`
+
+const listMembershipRoleBindings = `
+  select membership_id, role_id, project_id from membership_role_bindings
+  where membership_id = ? and project_id = ?
 `
 
 const createDevice = `

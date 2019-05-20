@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/deviceplane/deviceplane/pkg/controller/authz"
+)
 
 type User struct {
 	ID                    string    `json:"id"`
@@ -47,11 +51,25 @@ type ProjectApplicationCounts struct {
 	AllCount int `json:"allCount"`
 }
 
+type Role struct {
+	ID        string       `json:"id"`
+	ProjectID string       `json:"projectId"`
+	CreatedAt time.Time    `json:"createdAt"`
+	Config    authz.Config `json:"config"`
+}
+
 type Membership struct {
+	ID        string    `json:"id"`
 	UserID    string    `json:"userId"`
 	ProjectID string    `json:"projectId"`
 	CreatedAt time.Time `json:"createdAt"`
-	Level     string    `json:"level"`
+}
+
+type MembershipRoleBinding struct {
+	MembershipID string    `json:"membershipId"`
+	RoleID       string    `json:"roleId"`
+	CreatedAt    time.Time `json:"createdAt"`
+	ProjectID    string    `json:"projectId"`
 }
 
 type Device struct {

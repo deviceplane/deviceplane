@@ -87,21 +87,57 @@ create table if not exists projects (
 );
 
 --
+-- Roles
+--
+
+create table if not exists roles (
+  id varchar(32) not null,
+  created_at timestamp not null default current_timestamp,
+  project_id varchar(32) not null,
+
+  config longtext not null,
+
+  primary key (id)
+);
+
+--
 -- Memberships
 --
 
 create table if not exists memberships (
+  id varchar(32) not null,
   user_id varchar(32) not null,
   project_id varchar(32) not null,
   created_at timestamp not null default current_timestamp,
 
-  level enum ('admin', 'write', 'read') not null,
-
-  primary key (user_id, project_id),
+  primary key (id),
+  unique(user_id, project_id),
   foreign key memberships_user_id(user_id)
   references users(id)
   on delete cascade,
   foreign key memberships_project_id(project_id)
+  references projects(id)
+  on delete cascade
+);
+
+--
+-- MembershipRoleBindings
+--
+
+create table if not exists membership_role_bindings (
+  membership_id varchar(32) not null,
+  role_id varchar(32) not null,
+  created_at timestamp not null default current_timestamp,
+  project_id varchar(32) not null,
+
+  primary key (membership_id, role_id),
+  foreign key membership_role_bindings_membership_id(membership_id)
+  references memberships(id)
+  on delete cascade,
+  foreign key membership_role_bindings_role_id(role_id)
+  references roles(id)
+  on delete cascade,
+  foreign key membership_role_bindings_project_id(project_id)
   references projects(id)
   on delete cascade
 );

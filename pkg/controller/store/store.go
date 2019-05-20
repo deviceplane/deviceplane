@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/deviceplane/deviceplane/pkg/controller/authz"
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
@@ -58,14 +59,30 @@ type ProjectApplicationCounts interface {
 	GetProjectApplicationCounts(ctx context.Context, projectID string) (*models.ProjectApplicationCounts, error)
 }
 
+type Roles interface {
+	CreateRole(ctx context.Context, projectID string, config authz.Config) (*models.Role, error)
+	GetRole(ctx context.Context, id, projectID string) (*models.Role, error)
+	ListRoles(ctx context.Context, projectID string) ([]models.Role, error)
+}
+
+var ErrRoleNotFound = errors.New("role not found")
+
 type Memberships interface {
-	CreateMembership(ctx context.Context, userID, projectID, membershipType string) (*models.Membership, error)
+	CreateMembership(ctx context.Context, userID, projectID string) (*models.Membership, error)
 	GetMembership(ctx context.Context, userID, projectID string) (*models.Membership, error)
 	ListMembershipsByUser(ctx context.Context, userID string) ([]models.Membership, error)
 	ListMembershipsByProject(ctx context.Context, projectID string) ([]models.Membership, error)
 }
 
 var ErrMembershipNotFound = errors.New("membership not found")
+
+type MembershipRoleBindings interface {
+	CreateMembershipRoleBinding(ctx context.Context, membershipID, roleID, projectID string) (*models.MembershipRoleBinding, error)
+	GetMembershipRoleBinding(ctx context.Context, membershipID, roleID, projectID string) (*models.MembershipRoleBinding, error)
+	ListMembershipRoleBindings(ctx context.Context, membershipID, projectID string) ([]models.MembershipRoleBinding, error)
+}
+
+var ErrMembershipRoleBindingNotFound = errors.New("membership role binding not found")
 
 type Devices interface {
 	CreateDevice(ctx context.Context, projectID string) (*models.Device, error)

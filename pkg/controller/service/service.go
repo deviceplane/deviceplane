@@ -10,8 +10,10 @@ import (
 
 	"github.com/Knetic/govaluate"
 	"github.com/segmentio/ksuid"
+	"gopkg.in/yaml.v2"
 
 	"github.com/apex/log"
+	"github.com/deviceplane/deviceplane/pkg/controller/authz"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/email"
 	"github.com/deviceplane/deviceplane/pkg/models"
@@ -30,7 +32,9 @@ type Service struct {
 	projects                  store.Projects
 	projectDeviceCounts       store.ProjectDeviceCounts
 	projectApplicationCounts  store.ProjectApplicationCounts
+	roles                     store.Roles
 	memberships               store.Memberships
+	membershipRoleBindings    store.MembershipRoleBindings
 	devices                   store.Devices
 	deviceStatuses            store.DeviceStatuses
 	deviceLabels              store.DeviceLabels
@@ -55,7 +59,9 @@ func NewService(
 	projects store.Projects,
 	projectDeviceCounts store.ProjectDeviceCounts,
 	projectApplicationCounts store.ProjectApplicationCounts,
+	roles store.Roles,
 	memberships store.Memberships,
+	membershipRoleBindings store.MembershipRoleBindings,
 	devices store.Devices,
 	deviceStatuses store.DeviceStatuses,
 	deviceLabels store.DeviceLabels,
@@ -78,7 +84,9 @@ func NewService(
 		projects:                  projects,
 		projectDeviceCounts:       projectDeviceCounts,
 		projectApplicationCounts:  projectApplicationCounts,
+		roles:                     roles,
 		memberships:               memberships,
+		membershipRoleBindings:    membershipRoleBindings,
 		devices:                   devices,
 		deviceStatuses:            deviceStatuses,
 		deviceLabels:              deviceLabels,
@@ -107,30 +115,38 @@ func NewService(
 	s.router.HandleFunc("/users/{user}/memberships/full", s.withUserAuth(s.listMembershipsByUserFull)).Methods("GET")
 
 	s.router.HandleFunc("/projects", s.withUserAuth(s.createProject)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}", s.validateMembershipLevel("read", s.getProject)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}", s.validateAuthorization("projects", "GetProject", s.getProject)).Methods("GET")
 
-	s.router.HandleFunc("/projects/{project}/memberships", s.validateMembershipLevel("admin", s.createMembership)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/memberships", s.validateMembershipLevel("read", s.listMembershipsByProject)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/roles", s.validateAuthorization("roles", "CreateRole", s.createRole)).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/roles/{role}", s.validateAuthorization("roles", "GetRole", s.getRole)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/roles", s.validateAuthorization("roles", "ListRoles", s.listRoles)).Methods("GET")
 
-	s.router.HandleFunc("/projects/{project}/applications", s.validateMembershipLevel("write", s.createApplication)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/applications/{application}", s.validateMembershipLevel("read", s.withApplication(s.getApplication))).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/applications", s.validateMembershipLevel("read", s.listApplications)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/applications/{application}/settings", s.validateMembershipLevel("write", s.withApplication(s.setApplicationSettings))).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/memberships", s.validateAuthorization("memberships", "CreateMembership", s.createMembership)).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/memberships", s.validateAuthorization("memberships", "ListMembershipsByProject", s.listMembershipsByProject)).Methods("GET")
 
-	s.router.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateMembershipLevel("write", s.withApplication(s.createRelease))).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/applications/{application}/releases/latest", s.validateMembershipLevel("read", s.withApplication(s.getLatestRelease))).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/applications/{application}/releases/{release}", s.validateMembershipLevel("read", s.withApplication(s.getRelease))).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateMembershipLevel("read", s.withApplication(s.listReleases))).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/memberships/{membership}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "CreateMembershipRoleBinding", s.createMembershipRoleBinding)).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/memberships/{membership}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "GetMembershipRoleBinding", s.getMembershipRoleBinding)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/memberships/{membership}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "ListMembershipRoleBindings", s.listMembershipRoleBindings)).Methods("GET")
 
-	s.router.HandleFunc("/projects/{project}/devices/{device}", s.validateMembershipLevel("read", s.getDevice)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/devices", s.validateMembershipLevel("read", s.listDevices)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/applications", s.validateAuthorization("applications", "CreateApplication", s.createApplication)).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/applications/{application}", s.validateAuthorization("applications", "GetApplication", s.withApplication(s.getApplication))).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/applications", s.validateAuthorization("applications", "ListApplications", s.listApplications)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/applications/{application}/settings", s.validateAuthorization("applications", "SetApplicationSettings", s.withApplication(s.setApplicationSettings))).Methods("POST")
 
-	s.router.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateMembershipLevel("write", s.setDeviceLabel)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateMembershipLevel("read", s.getDeviceLabel)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateMembershipLevel("read", s.listDeviceLabels)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateMembershipLevel("write", s.deleteDeviceLabel)).Methods("DELETE")
+	s.router.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateAuthorization("releases", "CreateRelease", s.withApplication(s.createRelease))).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/applications/{application}/releases/latest", s.validateAuthorization("releases", "GetLatestRelease", s.withApplication(s.getLatestRelease))).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/applications/{application}/releases/{release}", s.validateAuthorization("releases", "GetRelease", s.withApplication(s.getRelease))).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateAuthorization("releases", "ListReleases", s.withApplication(s.listReleases))).Methods("GET")
 
-	s.router.HandleFunc("/projects/{project}/deviceregistrationtokens", s.validateMembershipLevel("write", s.createDeviceRegistrationToken)).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "GetDevice", s.getDevice)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/devices", s.validateAuthorization("devices", "ListDevices", s.listDevices)).Methods("GET")
+
+	s.router.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "SetDeviceLabel", s.setDeviceLabel)).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateAuthorization("devicelabels", "GetDeviceLabel", s.getDeviceLabel)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "ListDeviceLabels", s.listDeviceLabels)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateAuthorization("devicelabels", "DeleteDeviceLabel", s.deleteDeviceLabel)).Methods("DELETE")
+
+	s.router.HandleFunc("/projects/{project}/deviceregistrationtokens", s.validateAuthorization("deviceregistrationtokens", "CreateDeviceRegistrationToken", s.createDeviceRegistrationToken)).Methods("POST")
 
 	s.router.HandleFunc("/projects/{project}/devices/register", s.registerDevice).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/bundle", s.withDeviceAuth(s.getBundle)).Methods("GET")
@@ -216,7 +232,7 @@ func (s *Service) withUserAuth(handler func(http.ResponseWriter, *http.Request, 
 	}
 }
 
-func (s *Service) validateMembershipLevel(requiredLevel string, handler func(http.ResponseWriter, *http.Request, string, string)) func(http.ResponseWriter, *http.Request) {
+func (s *Service) validateAuthorization(requestedResource, requestedAction string, handler func(http.ResponseWriter, *http.Request, string, string)) func(http.ResponseWriter, *http.Request) {
 	return s.withUserAuth(func(w http.ResponseWriter, r *http.Request, userID string) {
 		vars := mux.Vars(r)
 		project := vars["project"]
@@ -253,20 +269,31 @@ func (s *Service) validateMembershipLevel(requiredLevel string, handler func(htt
 			return
 		}
 
-		accessGranted := false
-		switch requiredLevel {
-		case "admin":
-			if membership.Level == "admin" {
-				accessGranted = true
+		membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), membership.ID, projectID)
+		if err != nil {
+			log.WithError(err).Error("get membership role bindings")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		var configs []authz.Config
+		for _, membershipRoleBinding := range membershipRoleBindings {
+			role, err := s.roles.GetRole(r.Context(), membershipRoleBinding.RoleID, projectID)
+			if err == store.ErrRoleNotFound {
+				continue
+			} else if err != nil {
+				log.WithError(err).Error("get role")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
 			}
-		case "write":
-			if membership.Level == "admin" || membership.Level == "write" {
-				accessGranted = true
-			}
-		case "read":
-			if membership.Level == "admin" || membership.Level == "write" || membership.Level == "read" {
-				accessGranted = true
-			}
+			configs = append(configs, role.Config)
+		}
+
+		accessGranted, err := authz.Evaluate(requestedResource, requestedAction, configs)
+		if err != nil {
+			log.WithError(err).Error("evaluate authz")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 
 		if !accessGranted {
@@ -570,9 +597,24 @@ func (s *Service) createProject(w http.ResponseWriter, r *http.Request, userID s
 		return
 	}
 
-	_, err = s.memberships.CreateMembership(r.Context(), userID, project.ID, "admin")
+	membership, err := s.memberships.CreateMembership(r.Context(), userID, project.ID)
 	if err != nil {
 		log.WithError(err).Error("create membership")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	adminRole, err := s.roles.CreateRole(r.Context(), project.ID, authz.AdminAllRole)
+	if err != nil {
+		log.WithError(err).Error("create role")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if _, err = s.membershipRoleBindings.CreateMembershipRoleBinding(r.Context(),
+		membership.ID, adminRole.ID, project.ID,
+	); err != nil {
+		log.WithError(err).Error("create membership role binding")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -593,10 +635,62 @@ func (s *Service) getProject(w http.ResponseWriter, r *http.Request, projectID, 
 	json.NewEncoder(w).Encode(project)
 }
 
+func (s *Service) createRole(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	var createRoleRequest struct {
+		Config string `json:"config"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&createRoleRequest); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var config authz.Config
+	if err := yaml.Unmarshal([]byte(createRoleRequest.Config), &config); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	role, err := s.roles.CreateRole(r.Context(), projectID, config)
+	if err != nil {
+		log.WithError(err).Error("create role")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(role)
+}
+
+func (s *Service) getRole(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	vars := mux.Vars(r)
+	roleID := vars["role"]
+
+	role, err := s.roles.GetRole(r.Context(), roleID, projectID)
+	if err != nil {
+		log.WithError(err).Error("get role")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(role)
+}
+
+func (s *Service) listRoles(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	roles, err := s.roles.ListRoles(r.Context(), projectID)
+	if err != nil {
+		log.WithError(err).Error("list roles")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(roles)
+}
+
 func (s *Service) createMembership(w http.ResponseWriter, r *http.Request, projectID, userID string) {
 	var createMembershipRequest struct {
 		UserID string `json:"userId"`
-		Level  string `json:"level"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&createMembershipRequest); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -604,7 +698,7 @@ func (s *Service) createMembership(w http.ResponseWriter, r *http.Request, proje
 	}
 
 	membership, err := s.memberships.CreateMembership(r.Context(),
-		createMembershipRequest.UserID, projectID, createMembershipRequest.Level)
+		createMembershipRequest.UserID, projectID)
 	if err != nil {
 		log.WithError(err).Error("create membership")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -625,6 +719,53 @@ func (s *Service) listMembershipsByProject(w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(memberships)
+}
+
+func (s *Service) createMembershipRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	vars := mux.Vars(r)
+	membershipID := vars["membership"]
+	roleID := vars["role"]
+
+	membershipRoleBinding, err := s.membershipRoleBindings.CreateMembershipRoleBinding(r.Context(), membershipID, roleID, projectID)
+	if err != nil {
+		log.WithError(err).Error("create membership role binding")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(membershipRoleBinding)
+}
+
+func (s *Service) getMembershipRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	vars := mux.Vars(r)
+	membershipID := vars["membership"]
+	roleID := vars["role"]
+
+	membershipRoleBinding, err := s.membershipRoleBindings.GetMembershipRoleBinding(r.Context(), membershipID, roleID, projectID)
+	if err != nil {
+		log.WithError(err).Error("get membership role binding")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(membershipRoleBinding)
+}
+
+func (s *Service) listMembershipRoleBindings(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	vars := mux.Vars(r)
+	membershipID := vars["membership"]
+
+	membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), projectID, membershipID)
+	if err != nil {
+		log.WithError(err).Error("list membership role bindings")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(membershipRoleBindings)
 }
 
 func (s *Service) createApplication(w http.ResponseWriter, r *http.Request, projectID, userID string) {

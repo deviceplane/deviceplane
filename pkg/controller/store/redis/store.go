@@ -54,6 +54,10 @@ func (s *Store) GetDeviceStatus(ctx context.Context, deviceID string) (models.De
 }
 
 func (s *Store) GetDeviceStatuses(ctx context.Context, deviceIDs []string) ([]models.DeviceStatus, error) {
+	if len(deviceIDs) == 0 {
+		return nil, nil
+	}
+
 	conn := s.pool.Get()
 	defer conn.Close()
 

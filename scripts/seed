@@ -6,7 +6,9 @@ use deviceplane;
 insert into users (id, email, password_hash, first_name, last_name) values ('usr', 'email@example.com', '5E884898DA28047151D0E56F8DC6292773603D0D6AABBDD62A11EF721D1542D8', 'First', 'Last');
 insert into access_keys (id, user_id, hash) values ('key', 'usr', '2C70E12B7A0646F92279F427C7B38E7334D8E5389CFF167A1DC30E73F826B683');
 insert into projects (id, name) values ('prj', 'testproject');
-insert into memberships (user_id, project_id, level) values ('usr', 'prj', 'admin');
+insert into memberships (id, user_id, project_id) values ('mem', 'usr', 'prj');
+insert into roles (id, project_id, config) values ('rol', 'prj', '{"rules":[{"resources":"*","actions":"admin"}]}');
+insert into membership_role_bindings (membership_id, role_id, project_id) values ('mem', 'rol', 'prj');
 insert into applications (id, project_id, name) values ('app', 'prj', 'testapplication');
 
 update users set registration_completed = 1 where id = 'usr';
