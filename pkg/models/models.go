@@ -53,8 +53,8 @@ type ProjectApplicationCounts struct {
 
 type Role struct {
 	ID        string       `json:"id"`
-	ProjectID string       `json:"projectId"`
 	CreatedAt time.Time    `json:"createdAt"`
+	ProjectID string       `json:"projectId"`
 	Config    authz.Config `json:"config"`
 }
 
