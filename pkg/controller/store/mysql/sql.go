@@ -124,19 +124,32 @@ const createRole = `
   insert into roles (
     id,
     project_id,
+    name,
+    description,
     config
   )
-  values (?, ?, ?)
+  values (?, ?, ?, ?, ?)
 `
 
 const getRole = `
-  select id, project_id, config from roles
+  select id, project_id, name, description, config from roles
   where id = ? and project_id = ?
 `
 
+const lookupRole = `
+  select id, project_id, name, description, config from roles
+  where name = ? and project_id = ?
+`
+
 const listRoles = `
-  select id, project_id, config from roles
+  select id, project_id, name, description, config from roles
   where project_id = ?
+`
+
+const updateRole = `
+  update roles
+  set name = ?, description = ?, config = ?
+  where id = ? and project_id = ?
 `
 
 const createMembership = `

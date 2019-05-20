@@ -118,14 +118,14 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}", s.validateAuthorization("projects", "GetProject", s.getProject)).Methods("GET")
 
 	s.router.HandleFunc("/projects/{project}/roles", s.validateAuthorization("roles", "CreateRole", s.createRole)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/roles/{role}", s.validateAuthorization("roles", "GetRole", s.getRole)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/roles/{role}", s.validateAuthorization("roles", "GetRole", s.withRole(s.getRole))).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/roles", s.validateAuthorization("roles", "ListRoles", s.listRoles)).Methods("GET")
 
 	s.router.HandleFunc("/projects/{project}/memberships", s.validateAuthorization("memberships", "CreateMembership", s.createMembership)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/memberships", s.validateAuthorization("memberships", "ListMembershipsByProject", s.listMembershipsByProject)).Methods("GET")
 
-	s.router.HandleFunc("/projects/{project}/memberships/{membership}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "CreateMembershipRoleBinding", s.createMembershipRoleBinding)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/memberships/{membership}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "GetMembershipRoleBinding", s.getMembershipRoleBinding)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/memberships/{membership}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "CreateMembershipRoleBinding", s.withRole(s.createMembershipRoleBinding))).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/memberships/{membership}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "GetMembershipRoleBinding", s.withRole(s.getMembershipRoleBinding))).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/memberships/{membership}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "ListMembershipRoleBindings", s.listMembershipRoleBindings)).Methods("GET")
 
 	s.router.HandleFunc("/projects/{project}/applications", s.validateAuthorization("applications", "CreateApplication", s.createApplication)).Methods("POST")
@@ -334,6 +334,35 @@ func (s *Service) withApplication(handler func(http.ResponseWriter, *http.Reques
 	}
 }
 
+func (s *Service) withRole(handler func(http.ResponseWriter, *http.Request, string, string, string)) func(http.ResponseWriter, *http.Request, string, string) {
+	return func(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+		vars := mux.Vars(r)
+		role := vars["role"]
+		if role == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		var roleID string
+		if strings.Contains(role, "_") {
+			roleID = role
+		} else {
+			role, err := s.roles.LookupRole(r.Context(), role, projectID)
+			if err == store.ErrRoleNotFound {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			} else if err != nil {
+				log.WithError(err).Error("lookup role")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			roleID = role.ID
+		}
+
+		handler(w, r, projectID, userID, roleID)
+	}
+}
+
 func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 	var registerRequest struct {
 		Email     string `json:"email"`
@@ -536,7 +565,7 @@ func (s *Service) listMembershipsByUserFull(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var membershipsFull []models.MembershipFull
+	var membershipsFull []models.MembershipFull1
 
 	for _, membership := range memberships {
 		user, err := s.users.GetUser(r.Context(), membership.UserID)
@@ -567,7 +596,7 @@ func (s *Service) listMembershipsByUserFull(w http.ResponseWriter, r *http.Reque
 			return
 		}
 
-		membershipsFull = append(membershipsFull, models.MembershipFull{
+		membershipsFull = append(membershipsFull, models.MembershipFull1{
 			User: *user,
 			Project: models.ProjectFull{
 				Project:           *project,
@@ -604,7 +633,7 @@ func (s *Service) createProject(w http.ResponseWriter, r *http.Request, userID s
 		return
 	}
 
-	adminRole, err := s.roles.CreateRole(r.Context(), project.ID, authz.AdminAllRole)
+	adminRole, err := s.roles.CreateRole(r.Context(), project.ID, "default", "", authz.AdminAllRole)
 	if err != nil {
 		log.WithError(err).Error("create role")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -637,7 +666,9 @@ func (s *Service) getProject(w http.ResponseWriter, r *http.Request, projectID, 
 
 func (s *Service) createRole(w http.ResponseWriter, r *http.Request, projectID, userID string) {
 	var createRoleRequest struct {
-		Config string `json:"config"`
+		Name        string `json:"name"`
+		Description string `json:"description"`
+		Config      string `json:"config"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&createRoleRequest); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -650,7 +681,8 @@ func (s *Service) createRole(w http.ResponseWriter, r *http.Request, projectID, 
 		return
 	}
 
-	role, err := s.roles.CreateRole(r.Context(), projectID, config)
+	role, err := s.roles.CreateRole(r.Context(), projectID, createRoleRequest.Name,
+		createRoleRequest.Description, config)
 	if err != nil {
 		log.WithError(err).Error("create role")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -661,12 +693,12 @@ func (s *Service) createRole(w http.ResponseWriter, r *http.Request, projectID, 
 	json.NewEncoder(w).Encode(role)
 }
 
-func (s *Service) getRole(w http.ResponseWriter, r *http.Request, projectID, userID string) {
-	vars := mux.Vars(r)
-	roleID := vars["role"]
-
+func (s *Service) getRole(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
 	role, err := s.roles.GetRole(r.Context(), roleID, projectID)
-	if err != nil {
+	if err == store.ErrRoleNotFound {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
 		log.WithError(err).Error("get role")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -717,14 +749,52 @@ func (s *Service) listMembershipsByProject(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	var ret interface{} = memberships
+	if _, ok := r.URL.Query()["full"]; ok {
+		var membershipsFull []models.MembershipFull2
+
+		for _, membership := range memberships {
+			user, err := s.users.GetUser(r.Context(), membership.UserID)
+			if err != nil {
+				log.WithError(err).Error("get user")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), membership.ID, projectID)
+			if err != nil {
+				log.WithError(err).Error("list membership role bindings")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			var roles []models.Role
+			for _, membershipRoleBinding := range membershipRoleBindings {
+				role, err := s.roles.GetRole(r.Context(), membershipRoleBinding.RoleID, projectID)
+				if err != nil {
+					log.WithError(err).Error("get role")
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				roles = append(roles, *role)
+			}
+
+			membershipsFull = append(membershipsFull, models.MembershipFull2{
+				User:  *user,
+				Roles: roles,
+			})
+		}
+
+		ret = membershipsFull
+	}
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(memberships)
+	json.NewEncoder(w).Encode(ret)
 }
 
-func (s *Service) createMembershipRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) createMembershipRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
 	vars := mux.Vars(r)
 	membershipID := vars["membership"]
-	roleID := vars["role"]
 
 	membershipRoleBinding, err := s.membershipRoleBindings.CreateMembershipRoleBinding(r.Context(), membershipID, roleID, projectID)
 	if err != nil {
@@ -737,10 +807,9 @@ func (s *Service) createMembershipRoleBinding(w http.ResponseWriter, r *http.Req
 	json.NewEncoder(w).Encode(membershipRoleBinding)
 }
 
-func (s *Service) getMembershipRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) getMembershipRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
 	vars := mux.Vars(r)
 	membershipID := vars["membership"]
-	roleID := vars["role"]
 
 	membershipRoleBinding, err := s.membershipRoleBindings.GetMembershipRoleBinding(r.Context(), membershipID, roleID, projectID)
 	if err != nil {

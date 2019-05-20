@@ -60,9 +60,11 @@ type ProjectApplicationCounts interface {
 }
 
 type Roles interface {
-	CreateRole(ctx context.Context, projectID string, config authz.Config) (*models.Role, error)
+	CreateRole(ctx context.Context, projectID, name, description string, config authz.Config) (*models.Role, error)
 	GetRole(ctx context.Context, id, projectID string) (*models.Role, error)
+	LookupRole(ctx context.Context, name, projectID string) (*models.Role, error)
 	ListRoles(ctx context.Context, projectID string) ([]models.Role, error)
+	UpdateRole(ctx context.Context, id, projectID, name, description string, config authz.Config) (*models.Role, error)
 }
 
 var ErrRoleNotFound = errors.New("role not found")

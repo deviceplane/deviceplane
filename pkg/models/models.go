@@ -52,10 +52,12 @@ type ProjectApplicationCounts struct {
 }
 
 type Role struct {
-	ID        string       `json:"id"`
-	CreatedAt time.Time    `json:"createdAt"`
-	ProjectID string       `json:"projectId"`
-	Config    authz.Config `json:"config"`
+	ID          string       `json:"id"`
+	CreatedAt   time.Time    `json:"createdAt"`
+	ProjectID   string       `json:"projectId"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Config      authz.Config `json:"config"`
 }
 
 type Membership struct {
@@ -145,7 +147,7 @@ type DeviceServiceStatus struct {
 	CurrentReleaseID string `json:"currentReleaseId"`
 }
 
-type MembershipFull struct {
+type MembershipFull1 struct {
 	User    User        `json:"user"`
 	Project ProjectFull `json:"project"`
 }
@@ -154,6 +156,11 @@ type ProjectFull struct {
 	Project
 	DeviceCounts      ProjectDeviceCounts      `json:"deviceCounts"`
 	ApplicationCounts ProjectApplicationCounts `json:"applicationCounts"`
+}
+
+type MembershipFull2 struct {
+	User  User   `json:"user"`
+	Roles []Role `json:"roles"`
 }
 
 type DeviceFull1 struct {

@@ -454,7 +454,7 @@ func (s *Store) scanProjectApplicationCountRow(scanner scanner) (int, error) {
 	return count, nil
 }
 
-func (s *Store) CreateRole(ctx context.Context, projectID string, config authz.Config) (*models.Role, error) {
+func (s *Store) CreateRole(ctx context.Context, projectID, name, description string, config authz.Config) (*models.Role, error) {
 	id := newRoleID()
 
 	configBytes, err := json.Marshal(config)
@@ -467,6 +467,8 @@ func (s *Store) CreateRole(ctx context.Context, projectID string, config authz.C
 		createRole,
 		id,
 		projectID,
+		name,
+		description,
 		string(configBytes),
 	); err != nil {
 		return nil, err
@@ -477,6 +479,19 @@ func (s *Store) CreateRole(ctx context.Context, projectID string, config authz.C
 
 func (s *Store) GetRole(ctx context.Context, id, projectID string) (*models.Role, error) {
 	roleRow := s.db.QueryRowContext(ctx, getRole, id, projectID)
+
+	role, err := s.scanRole(roleRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrRoleNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return role, nil
+}
+
+func (s *Store) LookupRole(ctx context.Context, name, projectID string) (*models.Role, error) {
+	roleRow := s.db.QueryRowContext(ctx, lookupRole, name, projectID)
 
 	role, err := s.scanRole(roleRow)
 	if err == sql.ErrNoRows {
@@ -511,12 +526,35 @@ func (s *Store) ListRoles(ctx context.Context, projectID string) ([]models.Role,
 	return roles, nil
 }
 
+func (s *Store) UpdateRole(ctx context.Context, id, projectID, name, description string, config authz.Config) (*models.Role, error) {
+	configBytes, err := json.Marshal(config)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateRole,
+		name,
+		description,
+		string(configBytes),
+		id,
+		projectID,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetRole(ctx, id, projectID)
+}
+
 func (s *Store) scanRole(scanner scanner) (*models.Role, error) {
 	var role models.Role
 	var configString string
 	if err := scanner.Scan(
 		&role.ID,
 		&role.ProjectID,
+		&role.Name,
+		&role.Description,
 		&configString,
 	); err != nil {
 		return nil, err
