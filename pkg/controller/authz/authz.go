@@ -42,7 +42,7 @@ var (
 	readActions = []string{
 		"GetProject",
 		"GetRole",
-		"ListRole",
+		"ListRoles",
 		"ListMembershipsByProject",
 		"GetMembershipRoleBinding",
 		"ListMembershipRoleBindings",
