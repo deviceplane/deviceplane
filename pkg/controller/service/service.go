@@ -131,7 +131,7 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/applications", s.validateAuthorization("applications", "CreateApplication", s.createApplication)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/applications/{application}", s.validateAuthorization("applications", "GetApplication", s.withApplication(s.getApplication))).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/applications", s.validateAuthorization("applications", "ListApplications", s.listApplications)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/applications/{application}/settings", s.validateAuthorization("applications", "SetApplicationSettings", s.withApplication(s.setApplicationSettings))).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/applications/{application}", s.validateAuthorization("applications", "UpdateApplication", s.withApplication(s.updateApplication))).Methods("PUT")
 
 	s.router.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateAuthorization("releases", "CreateRelease", s.withApplication(s.createRelease))).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/applications/{application}/releases/latest", s.validateAuthorization("releases", "GetLatestRelease", s.withApplication(s.getLatestRelease))).Methods("GET")
@@ -839,14 +839,17 @@ func (s *Service) listMembershipRoleBindings(w http.ResponseWriter, r *http.Requ
 
 func (s *Service) createApplication(w http.ResponseWriter, r *http.Request, projectID, userID string) {
 	var createApplicationRequest struct {
-		Name string `json:"name"`
+		Name        string                     `json:"name"`
+		Description string                     `json:"description"`
+		Settings    models.ApplicationSettings `json:"settings"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&createApplicationRequest); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	application, err := s.applications.CreateApplication(r.Context(), projectID, createApplicationRequest.Name)
+	application, err := s.applications.CreateApplication(r.Context(), projectID, createApplicationRequest.Name,
+		createApplicationRequest.Description, createApplicationRequest.Settings)
 	if err != nil {
 		log.WithError(err).Error("create application")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -881,20 +884,27 @@ func (s *Service) listApplications(w http.ResponseWriter, r *http.Request, proje
 	json.NewEncoder(w).Encode(applications)
 }
 
-func (s *Service) setApplicationSettings(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
-	var setApplicationSettingsRequest models.SetApplicationSettingsRequest
-	if err := json.NewDecoder(r.Body).Decode(&setApplicationSettingsRequest); err != nil {
+func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
+	var updateApplicationRequest struct {
+		Name        string                     `json:"name"`
+		Description string                     `json:"description"`
+		Settings    models.ApplicationSettings `json:"settings"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&updateApplicationRequest); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if _, err := s.applications.SetApplicationSettings(r.Context(), applicationID, projectID, setApplicationSettingsRequest.ApplicationSettings); err != nil {
-		log.WithError(err).Error("set application settings")
+	application, err := s.applications.UpdateApplication(r.Context(), applicationID, projectID, updateApplicationRequest.Name,
+		updateApplicationRequest.Description, updateApplicationRequest.Settings)
+	if err != nil {
+		log.WithError(err).Error("update application")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(application)
 }
 
 // TOOD: this has a vulnerability!
@@ -923,7 +933,10 @@ func (s *Service) getRelease(w http.ResponseWriter, r *http.Request, projectID, 
 	releaseID := vars["release"]
 
 	release, err := s.releases.GetRelease(r.Context(), releaseID, projectID, applicationID)
-	if err != nil {
+	if err == store.ErrReleaseNotFound {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
 		log.WithError(err).Error("get release")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -950,7 +963,10 @@ func (s *Service) getRelease(w http.ResponseWriter, r *http.Request, projectID, 
 
 func (s *Service) getLatestRelease(w http.ResponseWriter, r *http.Request, projectID string, userID, applicationID string) {
 	release, err := s.releases.GetLatestRelease(r.Context(), projectID, applicationID)
-	if err != nil {
+	if err == store.ErrReleaseNotFound {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
 		log.WithError(err).Error("get latest release")
 		w.WriteHeader(http.StatusInternalServerError)
 		return

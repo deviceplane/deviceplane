@@ -979,8 +979,14 @@ func (s *Store) scanDeviceAccessKey(scanner scanner) (*models.DeviceAccessKey, e
 	return &deviceAccessKey, nil
 }
 
-func (s *Store) CreateApplication(ctx context.Context, projectID, name string) (*models.Application, error) {
+func (s *Store) CreateApplication(ctx context.Context, projectID, name, description string,
+	applicationSettings models.ApplicationSettings) (*models.Application, error) {
 	id := newApplicationID()
+
+	settingsBytes, err := json.Marshal(applicationSettings)
+	if err != nil {
+		return nil, err
+	}
 
 	if _, err := s.db.ExecContext(
 		ctx,
@@ -988,6 +994,8 @@ func (s *Store) CreateApplication(ctx context.Context, projectID, name string) (
 		id,
 		projectID,
 		name,
+		description,
+		string(settingsBytes),
 	); err != nil {
 		return nil, err
 	}
@@ -1044,7 +1052,8 @@ func (s *Store) ListApplications(ctx context.Context, projectID string) ([]model
 	return applications, nil
 }
 
-func (s *Store) SetApplicationSettings(ctx context.Context, id, projectID string, applicationSettings models.ApplicationSettings) (*models.Application, error) {
+func (s *Store) UpdateApplication(ctx context.Context, id, projectID, name, description string,
+	applicationSettings models.ApplicationSettings) (*models.Application, error) {
 	settingsBytes, err := json.Marshal(applicationSettings)
 	if err != nil {
 		return nil, err
@@ -1052,7 +1061,9 @@ func (s *Store) SetApplicationSettings(ctx context.Context, id, projectID string
 
 	if _, err := s.db.ExecContext(
 		ctx,
-		setApplicationSettings,
+		updateApplication,
+		name,
+		description,
 		string(settingsBytes),
 		id,
 		projectID,
@@ -1070,6 +1081,7 @@ func (s *Store) scanApplication(scanner scanner) (*models.Application, error) {
 		&application.ID,
 		&application.ProjectID,
 		&application.Name,
+		&application.Description,
 		&settingsString,
 	); err != nil {
 		return nil, err

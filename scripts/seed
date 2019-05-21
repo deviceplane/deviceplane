@@ -9,7 +9,7 @@ insert into projects (id, name) values ('prj', 'testproject');
 insert into memberships (id, user_id, project_id) values ('mem', 'usr', 'prj');
 insert into roles (id, project_id, name, description, config) values ('rol', 'prj', 'role', 'role description', '{\"rules\":[{\"resources\":[\"*\"],\"actions\":[\"admin\"]}]}');
 insert into membership_role_bindings (membership_id, role_id, project_id) values ('mem', 'rol', 'prj');
-insert into applications (id, project_id, name) values ('app', 'prj', 'testapplication');
+insert into applications (id, project_id, name, description) values ('app', 'prj', 'testapplication', 'application description');
 
 update users set registration_completed = 1 where id = 'usr';
 "

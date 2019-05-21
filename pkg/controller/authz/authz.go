@@ -58,7 +58,7 @@ var (
 	}
 	writeActions = append(readActions, []string{
 		"CreateApplication",
-		"SetApplicationSettings",
+		"UpdateApplication",
 		"CreateRelease",
 		"SetDeviceLabel",
 		"CreateDeviceRegistrationToken",

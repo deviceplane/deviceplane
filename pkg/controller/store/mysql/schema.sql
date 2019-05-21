@@ -217,6 +217,7 @@ create table if not exists applications (
   project_id varchar(32) not null,
 
   name varchar(100) not null,
+  description longtext not null,
   settings longtext not null,
 
   primary key (id),

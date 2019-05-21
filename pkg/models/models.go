@@ -113,11 +113,12 @@ type DeviceAccessKey struct {
 }
 
 type Application struct {
-	ID        string              `json:"id"`
-	CreatedAt time.Time           `json:"createdAt"`
-	ProjectID string              `json:"projectId"`
-	Name      string              `json:"name"`
-	Settings  ApplicationSettings `json:"settings"`
+	ID          string              `json:"id"`
+	CreatedAt   time.Time           `json:"createdAt"`
+	ProjectID   string              `json:"projectId"`
+	Name        string              `json:"name"`
+	Description string              `json:"description"`
+	Settings    ApplicationSettings `json:"settings"`
 }
 
 type Release struct {
