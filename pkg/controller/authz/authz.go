@@ -46,6 +46,8 @@ var (
 		"ListMembershipsByProject",
 		"GetMembershipRoleBinding",
 		"ListMembershipRoleBindings",
+		"GetServiceAccount",
+		"ListServiceAccounts",
 		"GetApplication",
 		"ListApplications",
 		"GetLatestRelease",
@@ -67,6 +69,7 @@ var (
 		"CreateRole",
 		"CreateMembership",
 		"CreateMembershipRoleBinding",
+		"CreateServiceAccount",
 	}...)
 )
 

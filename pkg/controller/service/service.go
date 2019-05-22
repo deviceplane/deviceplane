@@ -25,43 +25,47 @@ const (
 )
 
 type Service struct {
-	users                     store.Users
-	registrationTokens        store.RegistrationTokens
-	accessKeys                store.AccessKeys
-	sessions                  store.Sessions
-	projects                  store.Projects
-	projectDeviceCounts       store.ProjectDeviceCounts
-	projectApplicationCounts  store.ProjectApplicationCounts
-	roles                     store.Roles
-	memberships               store.Memberships
-	membershipRoleBindings    store.MembershipRoleBindings
-	devices                   store.Devices
-	deviceStatuses            store.DeviceStatuses
-	deviceLabels              store.DeviceLabels
-	deviceRegistrationTokens  store.DeviceRegistrationTokens
-	deviceAccessKeys          store.DeviceAccessKeys
-	applications              store.Applications
-	releases                  store.Releases
-	releaseDeviceCounts       store.ReleaseDeviceCounts
-	deviceApplicationStatuses store.DeviceApplicationStatuses
-	deviceServiceStatuses     store.DeviceServiceStatuses
-	email                     email.Interface
-	router                    *mux.Router
-	cookieDomain              string
-	cookieSecure              bool
+	users                      store.Users
+	registrationTokens         store.RegistrationTokens
+	userAccessKeys             store.UserAccessKeys
+	sessions                   store.Sessions
+	projects                   store.Projects
+	projectDeviceCounts        store.ProjectDeviceCounts
+	projectApplicationCounts   store.ProjectApplicationCounts
+	roles                      store.Roles
+	memberships                store.Memberships
+	membershipRoleBindings     store.MembershipRoleBindings
+	serviceAccounts            store.ServiceAccounts
+	serviceAccountRoleBindings store.ServiceAccountRoleBindings
+	devices                    store.Devices
+	deviceStatuses             store.DeviceStatuses
+	deviceLabels               store.DeviceLabels
+	deviceRegistrationTokens   store.DeviceRegistrationTokens
+	deviceAccessKeys           store.DeviceAccessKeys
+	applications               store.Applications
+	releases                   store.Releases
+	releaseDeviceCounts        store.ReleaseDeviceCounts
+	deviceApplicationStatuses  store.DeviceApplicationStatuses
+	deviceServiceStatuses      store.DeviceServiceStatuses
+	email                      email.Interface
+	router                     *mux.Router
+	cookieDomain               string
+	cookieSecure               bool
 }
 
 func NewService(
 	users store.Users,
 	registrationTokens store.RegistrationTokens,
 	sessions store.Sessions,
-	accessKeys store.AccessKeys,
+	userAccessKeys store.UserAccessKeys,
 	projects store.Projects,
 	projectDeviceCounts store.ProjectDeviceCounts,
 	projectApplicationCounts store.ProjectApplicationCounts,
 	roles store.Roles,
 	memberships store.Memberships,
 	membershipRoleBindings store.MembershipRoleBindings,
+	serviceAccounts store.ServiceAccounts,
+	serviceAccountRoleBindings store.ServiceAccountRoleBindings,
 	devices store.Devices,
 	deviceStatuses store.DeviceStatuses,
 	deviceLabels store.DeviceLabels,
@@ -77,30 +81,32 @@ func NewService(
 	cookieSecure bool,
 ) *Service {
 	s := &Service{
-		users:                     users,
-		registrationTokens:        registrationTokens,
-		sessions:                  sessions,
-		accessKeys:                accessKeys,
-		projects:                  projects,
-		projectDeviceCounts:       projectDeviceCounts,
-		projectApplicationCounts:  projectApplicationCounts,
-		roles:                     roles,
-		memberships:               memberships,
-		membershipRoleBindings:    membershipRoleBindings,
-		devices:                   devices,
-		deviceStatuses:            deviceStatuses,
-		deviceLabels:              deviceLabels,
-		deviceRegistrationTokens:  deviceRegistrationTokens,
-		deviceAccessKeys:          deviceAccessKeys,
-		applications:              applications,
-		releases:                  releases,
-		releaseDeviceCounts:       releasesDeviceCounts,
-		deviceApplicationStatuses: deviceApplicationStatuses,
-		deviceServiceStatuses:     deviceServiceStatuses,
-		email:                     email,
-		cookieDomain:              cookieDomain,
-		cookieSecure:              cookieSecure,
-		router:                    mux.NewRouter(),
+		users:                      users,
+		registrationTokens:         registrationTokens,
+		sessions:                   sessions,
+		userAccessKeys:             userAccessKeys,
+		projects:                   projects,
+		projectDeviceCounts:        projectDeviceCounts,
+		projectApplicationCounts:   projectApplicationCounts,
+		roles:                      roles,
+		memberships:                memberships,
+		membershipRoleBindings:     membershipRoleBindings,
+		serviceAccounts:            serviceAccounts,
+		serviceAccountRoleBindings: serviceAccountRoleBindings,
+		devices:                    devices,
+		deviceStatuses:             deviceStatuses,
+		deviceLabels:               deviceLabels,
+		deviceRegistrationTokens:   deviceRegistrationTokens,
+		deviceAccessKeys:           deviceAccessKeys,
+		applications:               applications,
+		releases:                   releases,
+		releaseDeviceCounts:        releasesDeviceCounts,
+		deviceApplicationStatuses:  deviceApplicationStatuses,
+		deviceServiceStatuses:      deviceServiceStatuses,
+		email:                      email,
+		cookieDomain:               cookieDomain,
+		cookieSecure:               cookieSecure,
+		router:                     mux.NewRouter(),
 	}
 
 	s.router.HandleFunc("/health", s.health).Methods("GET")
@@ -127,6 +133,14 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/memberships/{membership}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "CreateMembershipRoleBinding", s.withRole(s.createMembershipRoleBinding))).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/memberships/{membership}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "GetMembershipRoleBinding", s.withRole(s.getMembershipRoleBinding))).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/memberships/{membership}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "ListMembershipRoleBindings", s.listMembershipRoleBindings)).Methods("GET")
+
+	s.router.HandleFunc("/projects/{project}/serviceaccounts", s.validateAuthorization("serviceaccounts", "CreateServiceAccount", s.createServiceAccount)).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}", s.validateAuthorization("serviceaccounts", "GetServiceAccount", s.withServiceAccount(s.getServiceAccount))).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/serviceaccounts", s.validateAuthorization("serviceaccounts", "ListServiceAccounts", s.listServiceAccounts)).Methods("GET")
+
+	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.validateAuthorization("serviceaccountrolebindings", "CreateServiceAccountRoleBinding", s.withRole(s.createServiceAccountRoleBinding))).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.validateAuthorization("serviceaccountrolebindings", "GetServiceAccountRoleBinding", s.withRole(s.getServiceAccountRoleBinding))).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountrolebindings", s.validateAuthorization("serviceaccountrolebindings", "ListMembershipRoleBindings", s.listServiceAccountRoleBindings)).Methods("GET")
 
 	s.router.HandleFunc("/projects/{project}/applications", s.validateAuthorization("applications", "CreateApplication", s.createApplication)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/applications/{application}", s.validateAuthorization("applications", "GetApplication", s.withApplication(s.getApplication))).Methods("GET")
@@ -191,17 +205,17 @@ func (s *Service) withUserAuth(handler func(http.ResponseWriter, *http.Request, 
 				return
 			}
 
-			accessKey, err := s.accessKeys.ValidateAccessKey(r.Context(), hash(accessKeyValue))
-			if err == store.ErrAccessKeyNotFound {
+			userAccessKey, err := s.userAccessKeys.ValidateUserAccessKey(r.Context(), hash(accessKeyValue))
+			if err == store.ErrUserAccessKeyNotFound {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			} else if err != nil {
-				log.WithError(err).Error("validate access key")
+				log.WithError(err).Error("validate user access key")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
-			userID = accessKey.UserID
+			userID = userAccessKey.UserID
 		default:
 			log.WithError(err).Error("get session cookie")
 			w.WriteHeader(http.StatusInternalServerError)
@@ -286,7 +300,13 @@ func (s *Service) validateAuthorization(requestedResource, requestedAction strin
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			configs = append(configs, role.Config)
+			var config authz.Config
+			if err := yaml.Unmarshal([]byte(role.Config), &config); err != nil {
+				log.WithError(err).Error("unmarshal role config")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			configs = append(configs, config)
 		}
 
 		accessGranted, err := authz.Evaluate(requestedResource, requestedAction, configs)
@@ -303,64 +323,6 @@ func (s *Service) validateAuthorization(requestedResource, requestedAction strin
 
 		handler(w, r, projectID, userID)
 	})
-}
-
-func (s *Service) withApplication(handler func(http.ResponseWriter, *http.Request, string, string, string)) func(http.ResponseWriter, *http.Request, string, string) {
-	return func(w http.ResponseWriter, r *http.Request, projectID, userID string) {
-		vars := mux.Vars(r)
-		application := vars["application"]
-		if application == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		var applicationID string
-		if strings.Contains(application, "_") {
-			applicationID = application
-		} else {
-			application, err := s.applications.LookupApplication(r.Context(), application, projectID)
-			if err == store.ErrApplicationNotFound {
-				w.WriteHeader(http.StatusNotFound)
-				return
-			} else if err != nil {
-				log.WithError(err).Error("lookup application")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			applicationID = application.ID
-		}
-
-		handler(w, r, projectID, userID, applicationID)
-	}
-}
-
-func (s *Service) withRole(handler func(http.ResponseWriter, *http.Request, string, string, string)) func(http.ResponseWriter, *http.Request, string, string) {
-	return func(w http.ResponseWriter, r *http.Request, projectID, userID string) {
-		vars := mux.Vars(r)
-		role := vars["role"]
-		if role == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		var roleID string
-		if strings.Contains(role, "_") {
-			roleID = role
-		} else {
-			role, err := s.roles.LookupRole(r.Context(), role, projectID)
-			if err == store.ErrRoleNotFound {
-				w.WriteHeader(http.StatusNotFound)
-				return
-			} else if err != nil {
-				log.WithError(err).Error("lookup role")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			roleID = role.ID
-		}
-
-		handler(w, r, projectID, userID, roleID)
-	}
 }
 
 func (s *Service) register(w http.ResponseWriter, r *http.Request) {
@@ -633,7 +595,14 @@ func (s *Service) createProject(w http.ResponseWriter, r *http.Request, userID s
 		return
 	}
 
-	adminRole, err := s.roles.CreateRole(r.Context(), project.ID, "default", "", authz.AdminAllRole)
+	adminAllRoleBytes, err := yaml.Marshal(authz.AdminAllRole)
+	if err != nil {
+		log.WithError(err).Error("marshal role config")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	adminRole, err := s.roles.CreateRole(r.Context(), project.ID, "default", "", string(adminAllRoleBytes))
 	if err != nil {
 		log.WithError(err).Error("create role")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -675,14 +644,8 @@ func (s *Service) createRole(w http.ResponseWriter, r *http.Request, projectID, 
 		return
 	}
 
-	var config authz.Config
-	if err := yaml.Unmarshal([]byte(createRoleRequest.Config), &config); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
 	role, err := s.roles.CreateRole(r.Context(), projectID, createRoleRequest.Name,
-		createRoleRequest.Description, config)
+		createRoleRequest.Description, createRoleRequest.Config)
 	if err != nil {
 		log.WithError(err).Error("create role")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -718,6 +681,132 @@ func (s *Service) listRoles(w http.ResponseWriter, r *http.Request, projectID, u
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(roles)
+}
+
+func (s *Service) createServiceAccount(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	var createServiceAccountRequest struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&createServiceAccountRequest); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	serviceAccount, err := s.serviceAccounts.CreateServiceAccount(r.Context(), projectID, createServiceAccountRequest.Name,
+		createServiceAccountRequest.Description)
+	if err != nil {
+		log.WithError(err).Error("create service account")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(serviceAccount)
+}
+
+func (s *Service) getServiceAccount(w http.ResponseWriter, r *http.Request, projectID, userID, serviceAccountID string) {
+	serviceAccount, err := s.serviceAccounts.GetServiceAccount(r.Context(), serviceAccountID, projectID)
+	if err == store.ErrServiceAccountNotFound {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("get service account")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(serviceAccount)
+}
+
+func (s *Service) listServiceAccounts(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	serviceAccounts, err := s.serviceAccounts.ListServiceAccounts(r.Context(), projectID)
+	if err != nil {
+		log.WithError(err).Error("list service accounts")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var ret interface{} = serviceAccounts
+	if _, ok := r.URL.Query()["full"]; ok {
+		serviceAccountsFull := make([]models.ServiceAccountFull, 0)
+
+		for _, serviceAccount := range serviceAccounts {
+			serviceAccountRoleBindings, err := s.serviceAccountRoleBindings.ListServiceAccountRoleBindings(r.Context(), serviceAccount.ID, projectID)
+			if err != nil {
+				log.WithError(err).Error("list service account role bindings")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			roles := make([]models.Role, 0)
+			for _, serviceAccountRoleBinding := range serviceAccountRoleBindings {
+				role, err := s.roles.GetRole(r.Context(), serviceAccountRoleBinding.RoleID, projectID)
+				if err != nil {
+					log.WithError(err).Error("get role")
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				roles = append(roles, *role)
+			}
+
+			serviceAccountsFull = append(serviceAccountsFull, models.ServiceAccountFull{
+				ServiceAccount: serviceAccount,
+				Roles:          roles,
+			})
+		}
+
+		ret = serviceAccountsFull
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(ret)
+}
+
+func (s *Service) createServiceAccountRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
+	vars := mux.Vars(r)
+	serviceAccountID := vars["serviceaccount"]
+
+	serviceAccountRoleBinding, err := s.serviceAccountRoleBindings.CreateServiceAccountRoleBinding(r.Context(), serviceAccountID, roleID, projectID)
+	if err != nil {
+		log.WithError(err).Error("create service account role binding")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(serviceAccountRoleBinding)
+}
+
+func (s *Service) getServiceAccountRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
+	vars := mux.Vars(r)
+	serviceAccountID := vars["serviceaccount"]
+
+	serviceAccountRoleBinding, err := s.serviceAccountRoleBindings.GetServiceAccountRoleBinding(r.Context(), serviceAccountID, roleID, projectID)
+	if err != nil {
+		log.WithError(err).Error("get service account role binding")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(serviceAccountRoleBinding)
+}
+
+func (s *Service) listServiceAccountRoleBindings(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	vars := mux.Vars(r)
+	serviceAccountID := vars["serviceaccount"]
+
+	serviceAccountRoleBindings, err := s.serviceAccountRoleBindings.ListServiceAccountRoleBindings(r.Context(), projectID, serviceAccountID)
+	if err != nil {
+		log.WithError(err).Error("list service account role bindings")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(serviceAccountRoleBindings)
 }
 
 func (s *Service) createMembership(w http.ResponseWriter, r *http.Request, projectID, userID string) {

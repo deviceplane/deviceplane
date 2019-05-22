@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"github.com/deviceplane/deviceplane/pkg/controller/authz"
 )
 
 type User struct {
@@ -30,7 +28,7 @@ type Session struct {
 	Hash      string    `json:"hash"`
 }
 
-type AccessKey struct {
+type UserAccessKey struct {
 	ID        string    `json:"id"`
 	CreatedAt time.Time `json:"createdAt"`
 	UserID    string    `json:"userId"`
@@ -52,12 +50,12 @@ type ProjectApplicationCounts struct {
 }
 
 type Role struct {
-	ID          string       `json:"id"`
-	CreatedAt   time.Time    `json:"createdAt"`
-	ProjectID   string       `json:"projectId"`
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-	Config      authz.Config `json:"config"`
+	ID          string    `json:"id"`
+	CreatedAt   time.Time `json:"createdAt"`
+	ProjectID   string    `json:"projectId"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Config      string    `json:"config"`
 }
 
 type Membership struct {
@@ -72,6 +70,29 @@ type MembershipRoleBinding struct {
 	RoleID       string    `json:"roleId"`
 	CreatedAt    time.Time `json:"createdAt"`
 	ProjectID    string    `json:"projectId"`
+}
+
+type ServiceAccount struct {
+	ID          string    `json:"id"`
+	CreatedAt   time.Time `json:"createdAt"`
+	ProjectID   string    `json:"projectId"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+}
+
+type ServiceAccountAccessKey struct {
+	ID               string    `json:"id"`
+	CreatedAt        time.Time `json:"createdAt"`
+	ProjectID        string    `json:"projectId"`
+	ServiceAccountID string    `json:"serviceAccountId"`
+	Hash             string    `json:"hash"`
+}
+
+type ServiceAccountRoleBinding struct {
+	ServiceAccountID string    `json:"serviceAccountId"`
+	RoleID           string    `json:"roleId"`
+	CreatedAt        time.Time `json:"createdAt"`
+	ProjectID        string    `json:"projectId"`
 }
 
 type Device struct {
@@ -161,6 +182,11 @@ type ProjectFull struct {
 
 type MembershipFull2 struct {
 	User  User   `json:"user"`
+	Roles []Role `json:"roles"`
+}
+
+type ServiceAccountFull struct {
+	ServiceAccount
 	Roles []Role `json:"roles"`
 }
 

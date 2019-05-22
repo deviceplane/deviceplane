@@ -57,10 +57,10 @@ create table if not exists sessions (
 );
 
 --
--- AccessKeys
+-- UserAccessKeys
 --
 
-create table if not exists access_keys (
+create table if not exists user_access_keys (
   id varchar(32) not null,
   created_at timestamp not null default current_timestamp,
   user_id varchar(32) not null,
@@ -68,7 +68,7 @@ create table if not exists access_keys (
   hash varchar(255) not null,
 
   primary key (id),
-  foreign key access_keys_user_id(user_id)
+  foreign key user_access_keys_user_id(user_id)
   references users(id)
   on delete cascade
 );
@@ -140,6 +140,67 @@ create table if not exists membership_role_bindings (
   references roles(id)
   on delete cascade,
   foreign key membership_role_bindings_project_id(project_id)
+  references projects(id)
+  on delete cascade
+);
+
+--
+-- ServiceAccounts
+--
+
+create table if not exists service_accounts (
+  id varchar(32) not null,
+  created_at timestamp not null default current_timestamp,
+  project_id varchar(32) not null,
+
+  name varchar(100) not null,
+  description longtext not null,
+
+  primary key (id),
+  foreign key service_accounts_project_id(project_id)
+  references projects(id)
+  on delete cascade
+);
+
+--
+-- ServiceAccountAccessKeys
+--
+
+create table if not exists service_account_access_keys (
+  id varchar(32) not null,
+  created_at timestamp not null default current_timestamp,
+  project_id varchar(32) not null,
+  service_account_id varchar(32) not null,
+
+  hash varchar(255) not null,
+
+  primary key (id),
+  foreign key service_account_access_keys_project_id(project_id)
+  references projects(id)
+  on delete cascade,
+  foreign key service_account_access_keys_service_account_id(service_account_id)
+  references service_accounts(id)
+  on delete cascade
+);
+
+--
+-- ServiceAccountRoleBindings
+--
+
+create table if not exists service_account_role_bindings (
+  service_account_id varchar(32) not null,
+  role_id varchar(32) not null,
+  created_at timestamp not null default current_timestamp,
+  project_id varchar(32) not null,
+
+  primary key (service_account_id, role_id),
+  foreign key service_account_role_bindings_service_account_id(service_account_id)
+  references service_accounts(id)
+  on delete cascade,
+  foreign key service_account_role_bindings_role_id(role_id)
+  references roles(id)
+  on delete cascade,
+  foreign key service_account_role_bindings_project_id(project_id)
   references projects(id)
   on delete cascade
 );

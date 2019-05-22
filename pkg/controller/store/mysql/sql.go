@@ -73,8 +73,8 @@ const deleteSession = `
   limit 1
 `
 
-const createAccessKey = `
-  insert into access_keys (
+const createUserAccessKey = `
+  insert into user_access_keys (
     id,
     user_id,
     hash
@@ -82,13 +82,13 @@ const createAccessKey = `
   values (?, ?, ?)
 `
 
-const getAccessKey = `
-  select id, user_id, hash from access_keys
+const getUserAccessKey = `
+  select id, user_id, hash from user_access_keys
   where id = ?
 `
 
-const validateAccessKey = `
-  select id, user_id, hash from access_keys
+const validateUserAccessKey = `
+  select id, user_id, hash from user_access_keys
   where hash = ?
 `
 
@@ -193,6 +193,76 @@ const getMembershipRoleBinding = `
 const listMembershipRoleBindings = `
   select membership_id, role_id, project_id from membership_role_bindings
   where membership_id = ? and project_id = ?
+`
+
+const createServiceAccount = `
+  insert into service_accounts (
+    id,
+    project_id,
+    name,
+    description
+  )
+  values (?, ?, ?, ?)
+`
+
+const getServiceAccount = `
+  select id, project_id, name, description from service_accounts
+  where id = ? and project_id = ?
+`
+
+const lookupServiceAccount = `
+  select id, project_id, name, description from service_accounts
+  where name = ? and project_id = ?
+`
+
+const listServiceAccounts = `
+  select id, project_id, name, description from service_accounts
+  where project_id = ?
+`
+
+const updateServiceAccount = `
+  update service_accounts
+  set name = ?, description = ?
+  where id = ? and project_id = ?
+`
+
+const createServiceAccountAccessKey = `
+  insert into service_account_access_keys (
+    id,
+    project_id,
+    service_account_id,
+    hash
+  )
+  values (?, ?, ?, ?)
+`
+
+const getServiceAccountAccessKey = `
+  select id, project_id, service_account_id, hash from service_account_access_keys
+  where id = ? and project_id = ?
+`
+
+const validateServiceAccountAccessKey = `
+  select id, project_id, service_account_id, hash from service_account_access_keys
+  where hash = ? and project_id = ?
+`
+
+const createServiceAccountRoleBinding = `
+  insert into service_account_role_bindings (
+    service_account_id,
+    role_id,
+    project_id
+  )
+  values (?, ?, ?)
+`
+
+const getServiceAccountRoleBinding = `
+  select service_account_id, role_id, project_id from service_account_role_bindings
+  where service_account_id = ? and role_id = ? and project_id = ?
+`
+
+const listServiceAccountRoleBindings = `
+  select service_account_id, role_id, project_id from service_account_role_bindings
+  where service_account_id = ? and project_id = ?
 `
 
 const createDevice = `

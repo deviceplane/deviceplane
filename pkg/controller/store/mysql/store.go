@@ -6,13 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/deviceplane/deviceplane/pkg/controller/authz"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
-	"gopkg.in/yaml.v2"
 )
 
 type scanner interface {
@@ -20,19 +18,22 @@ type scanner interface {
 }
 
 const (
-	userPrefix                    = "usr"
-	registrationTokenPrefix       = "reg"
-	sessionPrefix                 = "ses"
-	accessKeyPrefix               = "key"
-	projectPrefix                 = "prj"
-	rolePrefix                    = "rol"
-	membershipPrefix              = "mem"
-	membershipRoleBindingPrefix   = "mrb"
-	devicePrefix                  = "dev"
-	deviceRegistrationTokenPrefix = "drt"
-	deviceAccessKeyPrefix         = "dak"
-	applicationPrefix             = "app"
-	releasePrefix                 = "rel"
+	userPrefix                      = "usr"
+	registrationTokenPrefix         = "reg"
+	sessionPrefix                   = "ses"
+	userAccessKeyPrefix             = "uky"
+	projectPrefix                   = "prj"
+	rolePrefix                      = "rol"
+	membershipPrefix                = "mem"
+	membershipRoleBindingPrefix     = "mrb"
+	serviceAccountPrefix            = "sac"
+	serviceAccountAccessKeyPrefix   = "sak"
+	serviceAccountRoleBindingPrefix = "srb"
+	devicePrefix                    = "dev"
+	deviceRegistrationTokenPrefix   = "drt"
+	deviceAccessKeyPrefix           = "dak"
+	applicationPrefix               = "app"
+	releasePrefix                   = "rel"
 )
 
 func newUserID() string {
@@ -47,8 +48,8 @@ func newSessionID() string {
 	return fmt.Sprintf("%s_%s", sessionPrefix, ksuid.New().String())
 }
 
-func newAccessKeyID() string {
-	return fmt.Sprintf("%s_%s", accessKeyPrefix, ksuid.New().String())
+func newUserAccessKeyID() string {
+	return fmt.Sprintf("%s_%s", userAccessKeyPrefix, ksuid.New().String())
 }
 
 func newProjectID() string {
@@ -65,6 +66,18 @@ func newMembershipID() string {
 
 func newMembershipRoleBindingID() string {
 	return fmt.Sprintf("%s_%s", membershipRoleBindingPrefix, ksuid.New().String())
+}
+
+func newServiceAccountID() string {
+	return fmt.Sprintf("%s_%s", serviceAccountPrefix, ksuid.New().String())
+}
+
+func newServiceAccountAccessKeyID() string {
+	return fmt.Sprintf("%s_%s", serviceAccountAccessKeyPrefix, ksuid.New().String())
+}
+
+func newServiceAccountRoleBindingID() string {
+	return fmt.Sprintf("%s_%s", serviceAccountRoleBindingPrefix, ksuid.New().String())
 }
 
 func newDeviceID() string {
@@ -88,24 +101,26 @@ func newReleaseID() string {
 }
 
 var (
-	_ store.Users                     = &Store{}
-	_ store.RegistrationTokens        = &Store{}
-	_ store.Sessions                  = &Store{}
-	_ store.AccessKeys                = &Store{}
-	_ store.Projects                  = &Store{}
-	_ store.ProjectDeviceCounts       = &Store{}
-	_ store.Roles                     = &Store{}
-	_ store.Memberships               = &Store{}
-	_ store.MembershipRoleBindings    = &Store{}
-	_ store.Devices                   = &Store{}
-	_ store.DeviceLabels              = &Store{}
-	_ store.DeviceAccessKeys          = &Store{}
-	_ store.DeviceRegistrationTokens  = &Store{}
-	_ store.Applications              = &Store{}
-	_ store.Releases                  = &Store{}
-	_ store.ReleaseDeviceCounts       = &Store{}
-	_ store.DeviceApplicationStatuses = &Store{}
-	_ store.DeviceServiceStatuses     = &Store{}
+	_ store.Users                      = &Store{}
+	_ store.RegistrationTokens         = &Store{}
+	_ store.Sessions                   = &Store{}
+	_ store.UserAccessKeys             = &Store{}
+	_ store.Projects                   = &Store{}
+	_ store.ProjectDeviceCounts        = &Store{}
+	_ store.Roles                      = &Store{}
+	_ store.Memberships                = &Store{}
+	_ store.MembershipRoleBindings     = &Store{}
+	_ store.ServiceAccounts            = &Store{}
+	_ store.ServiceAccountRoleBindings = &Store{}
+	_ store.Devices                    = &Store{}
+	_ store.DeviceLabels               = &Store{}
+	_ store.DeviceAccessKeys           = &Store{}
+	_ store.DeviceRegistrationTokens   = &Store{}
+	_ store.Applications               = &Store{}
+	_ store.Releases                   = &Store{}
+	_ store.ReleaseDeviceCounts        = &Store{}
+	_ store.DeviceApplicationStatuses  = &Store{}
+	_ store.DeviceServiceStatuses      = &Store{}
 )
 
 type Store struct {
@@ -302,12 +317,12 @@ func (s *Store) scanSession(scanner scanner) (*models.Session, error) {
 	return &session, nil
 }
 
-func (s *Store) CreateAccessKey(ctx context.Context, userID, hash string) (*models.AccessKey, error) {
-	id := newAccessKeyID()
+func (s *Store) CreateUserAccessKey(ctx context.Context, userID, hash string) (*models.UserAccessKey, error) {
+	id := newUserAccessKeyID()
 
 	if _, err := s.db.ExecContext(
 		ctx,
-		createAccessKey,
+		createUserAccessKey,
 		id,
 		userID,
 		hash,
@@ -315,45 +330,45 @@ func (s *Store) CreateAccessKey(ctx context.Context, userID, hash string) (*mode
 		return nil, err
 	}
 
-	return s.GetAccessKey(ctx, id)
+	return s.GetUserAccessKey(ctx, id)
 }
 
-func (s *Store) GetAccessKey(ctx context.Context, id string) (*models.AccessKey, error) {
-	accessKeyRow := s.db.QueryRowContext(ctx, getAccessKey, id)
+func (s *Store) GetUserAccessKey(ctx context.Context, id string) (*models.UserAccessKey, error) {
+	userAccessKeyRow := s.db.QueryRowContext(ctx, getUserAccessKey, id)
 
-	accessKey, err := s.scanAccessKey(accessKeyRow)
+	userAccessKey, err := s.scanUserAccessKey(userAccessKeyRow)
 	if err == sql.ErrNoRows {
-		return nil, store.ErrAccessKeyNotFound
+		return nil, store.ErrUserAccessKeyNotFound
 	} else if err != nil {
 		return nil, err
 	}
 
-	return accessKey, nil
+	return userAccessKey, nil
 }
 
-func (s *Store) ValidateAccessKey(ctx context.Context, hash string) (*models.AccessKey, error) {
-	accessKeyRow := s.db.QueryRowContext(ctx, validateAccessKey, hash)
+func (s *Store) ValidateUserAccessKey(ctx context.Context, hash string) (*models.UserAccessKey, error) {
+	userAccessKeyRow := s.db.QueryRowContext(ctx, validateUserAccessKey, hash)
 
-	accessKey, err := s.scanAccessKey(accessKeyRow)
+	userAccessKey, err := s.scanUserAccessKey(userAccessKeyRow)
 	if err == sql.ErrNoRows {
-		return nil, store.ErrAccessKeyNotFound
+		return nil, store.ErrUserAccessKeyNotFound
 	} else if err != nil {
 		return nil, err
 	}
 
-	return accessKey, nil
+	return userAccessKey, nil
 }
 
-func (s *Store) scanAccessKey(scanner scanner) (*models.AccessKey, error) {
-	var accessKey models.AccessKey
+func (s *Store) scanUserAccessKey(scanner scanner) (*models.UserAccessKey, error) {
+	var userAccessKey models.UserAccessKey
 	if err := scanner.Scan(
-		&accessKey.ID,
-		&accessKey.UserID,
-		&accessKey.Hash,
+		&userAccessKey.ID,
+		&userAccessKey.UserID,
+		&userAccessKey.Hash,
 	); err != nil {
 		return nil, err
 	}
-	return &accessKey, nil
+	return &userAccessKey, nil
 }
 
 func (s *Store) CreateProject(ctx context.Context, name string) (*models.Project, error) {
@@ -454,13 +469,8 @@ func (s *Store) scanProjectApplicationCountRow(scanner scanner) (int, error) {
 	return count, nil
 }
 
-func (s *Store) CreateRole(ctx context.Context, projectID, name, description string, config authz.Config) (*models.Role, error) {
+func (s *Store) CreateRole(ctx context.Context, projectID, name, description, config string) (*models.Role, error) {
 	id := newRoleID()
-
-	configBytes, err := json.Marshal(config)
-	if err != nil {
-		return nil, err
-	}
 
 	if _, err := s.db.ExecContext(
 		ctx,
@@ -469,7 +479,7 @@ func (s *Store) CreateRole(ctx context.Context, projectID, name, description str
 		projectID,
 		name,
 		description,
-		string(configBytes),
+		config,
 	); err != nil {
 		return nil, err
 	}
@@ -526,18 +536,13 @@ func (s *Store) ListRoles(ctx context.Context, projectID string) ([]models.Role,
 	return roles, nil
 }
 
-func (s *Store) UpdateRole(ctx context.Context, id, projectID, name, description string, config authz.Config) (*models.Role, error) {
-	configBytes, err := json.Marshal(config)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *Store) UpdateRole(ctx context.Context, id, projectID, name, description, config string) (*models.Role, error) {
 	if _, err := s.db.ExecContext(
 		ctx,
 		updateRole,
 		name,
 		description,
-		string(configBytes),
+		config,
 		id,
 		projectID,
 	); err != nil {
@@ -549,17 +554,13 @@ func (s *Store) UpdateRole(ctx context.Context, id, projectID, name, description
 
 func (s *Store) scanRole(scanner scanner) (*models.Role, error) {
 	var role models.Role
-	var configString string
 	if err := scanner.Scan(
 		&role.ID,
 		&role.ProjectID,
 		&role.Name,
 		&role.Description,
-		&configString,
+		&role.Config,
 	); err != nil {
-		return nil, err
-	}
-	if err := yaml.Unmarshal([]byte(configString), &role.Config); err != nil {
 		return nil, err
 	}
 	return &role, nil
@@ -697,6 +698,217 @@ func (s *Store) scanMembershipRoleBinding(scanner scanner) (*models.MembershipRo
 		return nil, err
 	}
 	return &membershipRoleBinding, nil
+}
+
+func (s *Store) CreateServiceAccount(ctx context.Context, projectID, name, description string) (*models.ServiceAccount, error) {
+	id := newServiceAccountID()
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		createServiceAccount,
+		id,
+		projectID,
+		name,
+		description,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetServiceAccount(ctx, id, projectID)
+}
+
+func (s *Store) GetServiceAccount(ctx context.Context, id, projectID string) (*models.ServiceAccount, error) {
+	serviceAccountRow := s.db.QueryRowContext(ctx, getServiceAccount, id, projectID)
+
+	serviceAccount, err := s.scanServiceAccount(serviceAccountRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrServiceAccountNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return serviceAccount, nil
+}
+
+func (s *Store) LookupServiceAccount(ctx context.Context, name, projectID string) (*models.ServiceAccount, error) {
+	serviceAccountRow := s.db.QueryRowContext(ctx, lookupServiceAccount, name, projectID)
+
+	serviceAccount, err := s.scanServiceAccount(serviceAccountRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrServiceAccountNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return serviceAccount, nil
+}
+
+func (s *Store) ListServiceAccounts(ctx context.Context, projectID string) ([]models.ServiceAccount, error) {
+	serviceAccountRows, err := s.db.QueryContext(ctx, listServiceAccounts, projectID)
+	if err != nil {
+		return nil, errors.Wrap(err, "query service accounts")
+	}
+	defer serviceAccountRows.Close()
+
+	serviceAccounts := make([]models.ServiceAccount, 0)
+	for serviceAccountRows.Next() {
+		serviceAccount, err := s.scanServiceAccount(serviceAccountRows)
+		if err != nil {
+			return nil, err
+		}
+		serviceAccounts = append(serviceAccounts, *serviceAccount)
+	}
+
+	if err := serviceAccountRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return serviceAccounts, nil
+}
+
+func (s *Store) UpdateServiceAccount(ctx context.Context, id, projectID, name, description string) (*models.ServiceAccount, error) {
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateServiceAccount,
+		name,
+		description,
+		id,
+		projectID,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetServiceAccount(ctx, id, projectID)
+}
+
+func (s *Store) scanServiceAccount(scanner scanner) (*models.ServiceAccount, error) {
+	var serviceAccount models.ServiceAccount
+	if err := scanner.Scan(
+		&serviceAccount.ID,
+		&serviceAccount.ProjectID,
+		&serviceAccount.Name,
+		&serviceAccount.Description,
+	); err != nil {
+		return nil, err
+	}
+	return &serviceAccount, nil
+}
+
+func (s *Store) CreateServiceAccountAccessKey(ctx context.Context, projectID, serviceAccountID, hash string) (*models.ServiceAccountAccessKey, error) {
+	id := newServiceAccountAccessKeyID()
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		createServiceAccountAccessKey,
+		id,
+		projectID,
+		serviceAccountID,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetServiceAccountAccessKey(ctx, id, projectID)
+}
+
+func (s *Store) GetServiceAccountAccessKey(ctx context.Context, id, projectID string) (*models.ServiceAccountAccessKey, error) {
+	serviceAccountAccessKeyRow := s.db.QueryRowContext(ctx, getServiceAccountAccessKey, id)
+
+	serviceAccountAccessKey, err := s.scanServiceAccountAccessKey(serviceAccountAccessKeyRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrServiceAccountAccessKeyNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return serviceAccountAccessKey, nil
+}
+
+func (s *Store) ValidateServiceAccountAccessKey(ctx context.Context, hash string) (*models.ServiceAccountAccessKey, error) {
+	serviceAccountAccessKeyRow := s.db.QueryRowContext(ctx, validateServiceAccountAccessKey, hash)
+
+	serviceAccountAccessKey, err := s.scanServiceAccountAccessKey(serviceAccountAccessKeyRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrServiceAccountAccessKeyNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return serviceAccountAccessKey, nil
+}
+
+func (s *Store) scanServiceAccountAccessKey(scanner scanner) (*models.ServiceAccountAccessKey, error) {
+	var serviceAccountAccessKey models.ServiceAccountAccessKey
+	if err := scanner.Scan(
+		&serviceAccountAccessKey.ID,
+		&serviceAccountAccessKey.ProjectID,
+		&serviceAccountAccessKey.ServiceAccountID,
+		&serviceAccountAccessKey.Hash,
+	); err != nil {
+		return nil, err
+	}
+	return &serviceAccountAccessKey, nil
+}
+
+func (s *Store) CreateServiceAccountRoleBinding(ctx context.Context, serviceAccountID, roleID, projectID string) (*models.ServiceAccountRoleBinding, error) {
+	if _, err := s.db.ExecContext(
+		ctx,
+		createServiceAccountRoleBinding,
+		serviceAccountID,
+		roleID,
+		projectID,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetServiceAccountRoleBinding(ctx, serviceAccountID, roleID, projectID)
+}
+
+func (s *Store) GetServiceAccountRoleBinding(ctx context.Context, serviceAccountID, roleID, projectID string) (*models.ServiceAccountRoleBinding, error) {
+	serviceAccountRoleBindingRow := s.db.QueryRowContext(ctx, getServiceAccountRoleBinding, serviceAccountID, roleID, projectID)
+
+	serviceAccountRoleBinding, err := s.scanServiceAccountRoleBinding(serviceAccountRoleBindingRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrServiceAccountRoleBindingNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return serviceAccountRoleBinding, nil
+}
+
+func (s *Store) ListServiceAccountRoleBindings(ctx context.Context, serviceAccountID, projectID string) ([]models.ServiceAccountRoleBinding, error) {
+	serviceAccountRoleBindingRows, err := s.db.QueryContext(ctx, listServiceAccountRoleBindings, serviceAccountID, projectID)
+	if err != nil {
+		return nil, errors.Wrap(err, "query service account role bindings")
+	}
+	defer serviceAccountRoleBindingRows.Close()
+
+	serviceAccountRoleBindings := make([]models.ServiceAccountRoleBinding, 0)
+	for serviceAccountRoleBindingRows.Next() {
+		serviceAccountRoleBinding, err := s.scanServiceAccountRoleBinding(serviceAccountRoleBindingRows)
+		if err != nil {
+			return nil, err
+		}
+		serviceAccountRoleBindings = append(serviceAccountRoleBindings, *serviceAccountRoleBinding)
+	}
+
+	if err := serviceAccountRoleBindingRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return serviceAccountRoleBindings, nil
+}
+
+func (s *Store) scanServiceAccountRoleBinding(scanner scanner) (*models.ServiceAccountRoleBinding, error) {
+	var serviceAccountRoleBinding models.ServiceAccountRoleBinding
+	if err := scanner.Scan(
+		&serviceAccountRoleBinding.ServiceAccountID,
+		&serviceAccountRoleBinding.RoleID,
+		&serviceAccountRoleBinding.ProjectID,
+	); err != nil {
+		return nil, err
+	}
+	return &serviceAccountRoleBinding, nil
 }
 
 func (s *Store) CreateDevice(ctx context.Context, projectID string) (*models.Device, error) {

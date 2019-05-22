@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/deviceplane/deviceplane/pkg/controller/authz"
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
@@ -35,13 +34,13 @@ type Sessions interface {
 
 var ErrSessionNotFound = errors.New("session not found")
 
-type AccessKeys interface {
-	CreateAccessKey(ctx context.Context, userID string, hash string) (*models.AccessKey, error)
-	GetAccessKey(ctx context.Context, id string) (*models.AccessKey, error)
-	ValidateAccessKey(ctx context.Context, hash string) (*models.AccessKey, error)
+type UserAccessKeys interface {
+	CreateUserAccessKey(ctx context.Context, userID string, hash string) (*models.UserAccessKey, error)
+	GetUserAccessKey(ctx context.Context, id string) (*models.UserAccessKey, error)
+	ValidateUserAccessKey(ctx context.Context, hash string) (*models.UserAccessKey, error)
 }
 
-var ErrAccessKeyNotFound = errors.New("access key not found")
+var ErrUserAccessKeyNotFound = errors.New("user access key not found")
 
 type Projects interface {
 	CreateProject(ctx context.Context, name string) (*models.Project, error)
@@ -60,11 +59,11 @@ type ProjectApplicationCounts interface {
 }
 
 type Roles interface {
-	CreateRole(ctx context.Context, projectID, name, description string, config authz.Config) (*models.Role, error)
+	CreateRole(ctx context.Context, projectID, name, description, config string) (*models.Role, error)
 	GetRole(ctx context.Context, id, projectID string) (*models.Role, error)
 	LookupRole(ctx context.Context, name, projectID string) (*models.Role, error)
 	ListRoles(ctx context.Context, projectID string) ([]models.Role, error)
-	UpdateRole(ctx context.Context, id, projectID, name, description string, config authz.Config) (*models.Role, error)
+	UpdateRole(ctx context.Context, id, projectID, name, description, config string) (*models.Role, error)
 }
 
 var ErrRoleNotFound = errors.New("role not found")
@@ -85,6 +84,32 @@ type MembershipRoleBindings interface {
 }
 
 var ErrMembershipRoleBindingNotFound = errors.New("membership role binding not found")
+
+type ServiceAccounts interface {
+	CreateServiceAccount(ctx context.Context, projectID, name, description string) (*models.ServiceAccount, error)
+	GetServiceAccount(ctx context.Context, id, projectID string) (*models.ServiceAccount, error)
+	LookupServiceAccount(ctx context.Context, name, projectID string) (*models.ServiceAccount, error)
+	ListServiceAccounts(ctx context.Context, projectID string) ([]models.ServiceAccount, error)
+	UpdateServiceAccount(ctx context.Context, id, projectID, name, description string) (*models.ServiceAccount, error)
+}
+
+var ErrServiceAccountNotFound = errors.New("service account not found")
+
+type ServiceAccountAccessKeys interface {
+	CreateServiceAccountAccessKey(ctx context.Context, userID string, hash string) (*models.ServiceAccountAccessKey, error)
+	GetServiceAccountAccessKey(ctx context.Context, id string) (*models.ServiceAccountAccessKey, error)
+	ValidateServiceAccountAccessKey(ctx context.Context, hash string) (*models.ServiceAccountAccessKey, error)
+}
+
+var ErrServiceAccountAccessKeyNotFound = errors.New("service account access key not found")
+
+type ServiceAccountRoleBindings interface {
+	CreateServiceAccountRoleBinding(ctx context.Context, serviceAccountID, roleID, projectID string) (*models.ServiceAccountRoleBinding, error)
+	GetServiceAccountRoleBinding(ctx context.Context, serviceAccountID, roleID, projectID string) (*models.ServiceAccountRoleBinding, error)
+	ListServiceAccountRoleBindings(ctx context.Context, serviceAccountID, projectID string) ([]models.ServiceAccountRoleBinding, error)
+}
+
+var ErrServiceAccountRoleBindingNotFound = errors.New("service account role binding not found")
 
 type Devices interface {
 	CreateDevice(ctx context.Context, projectID string) (*models.Device, error)
