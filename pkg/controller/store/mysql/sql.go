@@ -398,20 +398,23 @@ const createRelease = `
 `
 
 const getRelease = `
-  select id, project_id, application_id, config from releases
+  select id, created_at, project_id, application_id, config from releases
   where id = ? and project_id = ? and application_id = ?
 `
 
 const getLatestRelease = `
-  select id, project_id, application_id, config from releases
+  select id, created_at, project_id, application_id, config from releases
   where project_id = ? and application_id = ?
   order by created_at desc
   limit 1
 `
 
+// TODO: real pagination
 const listReleases = `
-  select id, project_id, application_id, config from releases
+  select id, created_at, project_id, application_id, config from releases
   where project_id = ? and application_id = ?
+  order by created_at desc
+  limit 10
 `
 
 const getReleaseDeviceCounts = `

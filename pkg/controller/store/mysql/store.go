@@ -1361,6 +1361,7 @@ func (s *Store) scanRelease(scanner scanner) (*models.Release, error) {
 	var release models.Release
 	if err := scanner.Scan(
 		&release.ID,
+		&release.CreatedAt,
 		&release.ProjectID,
 		&release.ApplicationID,
 		&release.Config,
