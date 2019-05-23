@@ -170,6 +170,7 @@ type DeviceServiceStatus struct {
 }
 
 type MembershipFull1 struct {
+	Membership
 	User    User        `json:"user"`
 	Project ProjectFull `json:"project"`
 }
@@ -181,6 +182,7 @@ type ProjectFull struct {
 }
 
 type MembershipFull2 struct {
+	Membership
 	User  User   `json:"user"`
 	Roles []Role `json:"roles"`
 }

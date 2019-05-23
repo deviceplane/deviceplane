@@ -128,6 +128,7 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/roles", s.validateAuthorization("roles", "ListRoles", s.listRoles)).Methods("GET")
 
 	s.router.HandleFunc("/projects/{project}/memberships", s.validateAuthorization("memberships", "CreateMembership", s.createMembership)).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/memberships/{user}", s.validateAuthorization("memberships", "GetMembership", s.getMembership)).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/memberships", s.validateAuthorization("memberships", "ListMembershipsByProject", s.listMembershipsByProject)).Methods("GET")
 
 	s.router.HandleFunc("/projects/{project}/memberships/{membership}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "CreateMembershipRoleBinding", s.withRole(s.createMembershipRoleBinding))).Methods("POST")
@@ -559,7 +560,8 @@ func (s *Service) listMembershipsByUserFull(w http.ResponseWriter, r *http.Reque
 		}
 
 		membershipsFull = append(membershipsFull, models.MembershipFull1{
-			User: *user,
+			Membership: membership,
+			User:       *user,
 			Project: models.ProjectFull{
 				Project:           *project,
 				DeviceCounts:      *projectDeviceCounts,
@@ -830,6 +832,59 @@ func (s *Service) createMembership(w http.ResponseWriter, r *http.Request, proje
 	json.NewEncoder(w).Encode(membership)
 }
 
+func (s *Service) getMembership(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	vars := mux.Vars(r)
+	// TODO: rename this to userID and change all instances of the other to authenticatedUserUD
+	membershipUserID := vars["user"]
+
+	membership, err := s.memberships.GetMembership(r.Context(), membershipUserID, projectID)
+	if err == store.ErrMembershipNotFound {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("get membership")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var ret interface{} = membership
+	if _, ok := r.URL.Query()["full"]; ok {
+		user, err := s.users.GetUser(r.Context(), membership.UserID)
+		if err != nil {
+			log.WithError(err).Error("get user")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), membership.ID, projectID)
+		if err != nil {
+			log.WithError(err).Error("list membership role bindings")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		var roles []models.Role
+		for _, membershipRoleBinding := range membershipRoleBindings {
+			role, err := s.roles.GetRole(r.Context(), membershipRoleBinding.RoleID, projectID)
+			if err != nil {
+				log.WithError(err).Error("get role")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			roles = append(roles, *role)
+		}
+
+		ret = models.MembershipFull2{
+			Membership: *membership,
+			User:       *user,
+			Roles:      roles,
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(ret)
+}
+
 func (s *Service) listMembershipsByProject(w http.ResponseWriter, r *http.Request, projectID, userID string) {
 	memberships, err := s.memberships.ListMembershipsByProject(r.Context(), projectID)
 	if err != nil {
@@ -869,8 +924,9 @@ func (s *Service) listMembershipsByProject(w http.ResponseWriter, r *http.Reques
 			}
 
 			membershipsFull = append(membershipsFull, models.MembershipFull2{
-				User:  *user,
-				Roles: roles,
+				Membership: membership,
+				User:       *user,
+				Roles:      roles,
 			})
 		}
 
@@ -901,7 +957,10 @@ func (s *Service) getMembershipRoleBinding(w http.ResponseWriter, r *http.Reques
 	membershipID := vars["membership"]
 
 	membershipRoleBinding, err := s.membershipRoleBindings.GetMembershipRoleBinding(r.Context(), membershipID, roleID, projectID)
-	if err != nil {
+	if err == store.ErrMembershipRoleBindingNotFound {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
 		log.WithError(err).Error("get membership role binding")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -951,7 +1010,10 @@ func (s *Service) createApplication(w http.ResponseWriter, r *http.Request, proj
 
 func (s *Service) getApplication(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
 	application, err := s.applications.GetApplication(r.Context(), applicationID, projectID)
-	if err != nil {
+	if err == store.ErrApplicationNotFound {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
 		log.WithError(err).Error("get application")
 		w.WriteHeader(http.StatusInternalServerError)
 		return

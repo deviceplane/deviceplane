@@ -43,6 +43,7 @@ var (
 		"GetProject",
 		"GetRole",
 		"ListRoles",
+		"GetMembership",
 		"ListMembershipsByProject",
 		"GetMembershipRoleBinding",
 		"ListMembershipRoleBindings",
