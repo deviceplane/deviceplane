@@ -238,6 +238,7 @@ func (s *Supervisor) reconcile(applicationID, releaseID, serviceName string, ser
 		instance := instances[0]
 
 		if hashLabel, ok := instance.Labels[models.HashLabel]; ok && hashLabel == service.Hash() {
+			stopKeepAlive()
 			go s.keepAlive(applicationID, releaseID, serviceName, service)
 			return
 		}
