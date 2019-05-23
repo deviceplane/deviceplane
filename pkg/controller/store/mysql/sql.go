@@ -359,9 +359,11 @@ const createApplication = `
   insert into applications (
     id,
     project_id,
-    name
+    name,
+    description,
+    settings
   )
-  values (?, ?, ?)
+  values (?, ?, ?, ?, ?)
 `
 
 const getApplication = `
