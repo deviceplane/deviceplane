@@ -275,7 +275,11 @@ func (s *Service) validateAuthorization(requestedResource, requestedAction strin
 
 		membership, err := s.memberships.GetMembership(r.Context(), userID, projectID)
 		if err != nil {
-			log.WithError(err).Error("get membership")
+			// TODO: better logging all around
+			log.WithField("user_id", userID).
+				WithField("project_id", projectID).
+				WithError(err).
+				Error("get membership")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}

@@ -83,7 +83,8 @@ create table if not exists projects (
 
   name varchar(100) not null,
 
-  primary key (id)
+  primary key (id),
+  unique(name)
 );
 
 --
@@ -99,7 +100,10 @@ create table if not exists roles (
   description longtext not null,
   config longtext not null,
 
-  primary key (id)
+  primary key (id),
+  foreign key roles_project_id(project_id)
+  references projects(id)
+  on delete cascade
 );
 
 --
