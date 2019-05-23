@@ -107,13 +107,11 @@ create table if not exists roles (
 --
 
 create table if not exists memberships (
-  id varchar(32) not null,
   user_id varchar(32) not null,
   project_id varchar(32) not null,
   created_at timestamp not null default current_timestamp,
 
-  primary key (id),
-  unique(user_id, project_id),
+  primary key (user_id, project_id),
   foreign key memberships_user_id(user_id)
   references users(id)
   on delete cascade,
@@ -127,14 +125,14 @@ create table if not exists memberships (
 --
 
 create table if not exists membership_role_bindings (
-  membership_id varchar(32) not null,
+  user_id varchar(32) not null,
+  project_id varchar(32) not null,
   role_id varchar(32) not null,
   created_at timestamp not null default current_timestamp,
-  project_id varchar(32) not null,
 
-  primary key (membership_id, role_id),
-  foreign key membership_role_bindings_membership_id(membership_id)
-  references memberships(id)
+  primary key (user_id, project_id, role_id),
+  foreign key membership_role_bindings_user_id_project_id(user_id, project_id)
+  references memberships(user_id, project_id)
   on delete cascade,
   foreign key membership_role_bindings_role_id(role_id)
   references roles(id)

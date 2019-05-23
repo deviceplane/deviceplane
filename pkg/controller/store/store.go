@@ -78,9 +78,9 @@ type Memberships interface {
 var ErrMembershipNotFound = errors.New("membership not found")
 
 type MembershipRoleBindings interface {
-	CreateMembershipRoleBinding(ctx context.Context, membershipID, roleID, projectID string) (*models.MembershipRoleBinding, error)
-	GetMembershipRoleBinding(ctx context.Context, membershipID, roleID, projectID string) (*models.MembershipRoleBinding, error)
-	ListMembershipRoleBindings(ctx context.Context, membershipID, projectID string) ([]models.MembershipRoleBinding, error)
+	CreateMembershipRoleBinding(ctx context.Context, userID, projectID, roleID string) (*models.MembershipRoleBinding, error)
+	GetMembershipRoleBinding(ctx context.Context, userID, projectID, roleID string) (*models.MembershipRoleBinding, error)
+	ListMembershipRoleBindings(ctx context.Context, userID, projectID string) ([]models.MembershipRoleBinding, error)
 }
 
 var ErrMembershipRoleBindingNotFound = errors.New("membership role binding not found")

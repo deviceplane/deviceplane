@@ -59,17 +59,16 @@ type Role struct {
 }
 
 type Membership struct {
-	ID        string    `json:"id"`
 	UserID    string    `json:"userId"`
 	ProjectID string    `json:"projectId"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 
 type MembershipRoleBinding struct {
-	MembershipID string    `json:"membershipId"`
-	RoleID       string    `json:"roleId"`
-	CreatedAt    time.Time `json:"createdAt"`
-	ProjectID    string    `json:"projectId"`
+	UserID    string    `json:"userId"`
+	ProjectID string    `json:"projectId"`
+	RoleID    string    `json:"roleId"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type ServiceAccount struct {

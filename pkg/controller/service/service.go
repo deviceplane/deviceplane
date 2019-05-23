@@ -284,9 +284,9 @@ func (s *Service) validateAuthorization(requestedResource, requestedAction strin
 			return
 		}
 
-		membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), membership.ID, projectID)
+		membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), membership.UserID, projectID)
 		if err != nil {
-			log.WithError(err).Error("get membership role bindings")
+			log.WithError(err).Error("list membership role bindings")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -590,8 +590,7 @@ func (s *Service) createProject(w http.ResponseWriter, r *http.Request, userID s
 		return
 	}
 
-	membership, err := s.memberships.CreateMembership(r.Context(), userID, project.ID)
-	if err != nil {
+	if _, err = s.memberships.CreateMembership(r.Context(), userID, project.ID); err != nil {
 		log.WithError(err).Error("create membership")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -612,7 +611,7 @@ func (s *Service) createProject(w http.ResponseWriter, r *http.Request, userID s
 	}
 
 	if _, err = s.membershipRoleBindings.CreateMembershipRoleBinding(r.Context(),
-		membership.ID, adminRole.ID, project.ID,
+		userID, project.ID, adminRole.ID,
 	); err != nil {
 		log.WithError(err).Error("create membership role binding")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -856,7 +855,7 @@ func (s *Service) getMembership(w http.ResponseWriter, r *http.Request, projectI
 			return
 		}
 
-		membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), membership.ID, projectID)
+		membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), membershipUserID, projectID)
 		if err != nil {
 			log.WithError(err).Error("list membership role bindings")
 			w.WriteHeader(http.StatusInternalServerError)
@@ -905,7 +904,7 @@ func (s *Service) listMembershipsByProject(w http.ResponseWriter, r *http.Reques
 				return
 			}
 
-			membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), membership.ID, projectID)
+			membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), membership.UserID, projectID)
 			if err != nil {
 				log.WithError(err).Error("list membership role bindings")
 				w.WriteHeader(http.StatusInternalServerError)

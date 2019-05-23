@@ -162,37 +162,37 @@ const createMembership = `
 `
 
 const getMembership = `
-  select id, user_id, project_id from memberships
+  select user_id, project_id from memberships
   where user_id = ? and project_id = ?
 `
 
 const listMembershipsByUser = `
-  select id, user_id, project_id from memberships
+  select user_id, project_id from memberships
   where user_id = ?
 `
 
 const listMembershipsByProject = `
-  select id, user_id, project_id from memberships
+  select user_id, project_id from memberships
   where project_id = ?
 `
 
 const createMembershipRoleBinding = `
   insert into membership_role_bindings (
-    membership_id,
-    role_id,
-    project_id
+    user_id,
+    project_id,
+    role_id
   )
   values (?, ?, ?)
 `
 
 const getMembershipRoleBinding = `
-  select membership_id, role_id, project_id from membership_role_bindings
-  where membership_id = ? and role_id = ? and project_id = ?
+  select user_id, project_id, role_id from membership_role_bindings
+  where user_id = ? and project_id = ? and role_id = ?
 `
 
 const listMembershipRoleBindings = `
-  select membership_id, role_id, project_id from membership_role_bindings
-  where membership_id = ? and project_id = ?
+  select user_id, project_id, role_id from membership_role_bindings
+  where user_id = ? and project_id = ?
 `
 
 const createServiceAccount = `

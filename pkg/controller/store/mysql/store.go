@@ -629,7 +629,6 @@ func (s *Store) listMemberships(ctx context.Context, id, query string) ([]models
 func (s *Store) scanMembership(scanner scanner) (*models.Membership, error) {
 	var membership models.Membership
 	if err := scanner.Scan(
-		&membership.ID,
 		&membership.UserID,
 		&membership.ProjectID,
 	); err != nil {
@@ -638,22 +637,22 @@ func (s *Store) scanMembership(scanner scanner) (*models.Membership, error) {
 	return &membership, nil
 }
 
-func (s *Store) CreateMembershipRoleBinding(ctx context.Context, membershipID, roleID, projectID string) (*models.MembershipRoleBinding, error) {
+func (s *Store) CreateMembershipRoleBinding(ctx context.Context, userID, projectID, roleID string) (*models.MembershipRoleBinding, error) {
 	if _, err := s.db.ExecContext(
 		ctx,
 		createMembershipRoleBinding,
-		membershipID,
-		roleID,
+		userID,
 		projectID,
+		roleID,
 	); err != nil {
 		return nil, err
 	}
 
-	return s.GetMembershipRoleBinding(ctx, membershipID, roleID, projectID)
+	return s.GetMembershipRoleBinding(ctx, userID, projectID, roleID)
 }
 
-func (s *Store) GetMembershipRoleBinding(ctx context.Context, membershipID, roleID, projectID string) (*models.MembershipRoleBinding, error) {
-	membershipRoleBindingRow := s.db.QueryRowContext(ctx, getMembershipRoleBinding, membershipID, roleID, projectID)
+func (s *Store) GetMembershipRoleBinding(ctx context.Context, userID, projectID, roleID string) (*models.MembershipRoleBinding, error) {
+	membershipRoleBindingRow := s.db.QueryRowContext(ctx, getMembershipRoleBinding, userID, projectID, roleID)
 
 	membershipRoleBinding, err := s.scanMembershipRoleBinding(membershipRoleBindingRow)
 	if err == sql.ErrNoRows {
@@ -665,8 +664,8 @@ func (s *Store) GetMembershipRoleBinding(ctx context.Context, membershipID, role
 	return membershipRoleBinding, nil
 }
 
-func (s *Store) ListMembershipRoleBindings(ctx context.Context, membershipID, projectID string) ([]models.MembershipRoleBinding, error) {
-	membershipRoleBindingRows, err := s.db.QueryContext(ctx, listMembershipRoleBindings, membershipID, projectID)
+func (s *Store) ListMembershipRoleBindings(ctx context.Context, userID, projectID string) ([]models.MembershipRoleBinding, error) {
+	membershipRoleBindingRows, err := s.db.QueryContext(ctx, listMembershipRoleBindings, userID, projectID)
 	if err != nil {
 		return nil, errors.Wrap(err, "query membership role bindings")
 	}
@@ -691,9 +690,9 @@ func (s *Store) ListMembershipRoleBindings(ctx context.Context, membershipID, pr
 func (s *Store) scanMembershipRoleBinding(scanner scanner) (*models.MembershipRoleBinding, error) {
 	var membershipRoleBinding models.MembershipRoleBinding
 	if err := scanner.Scan(
-		&membershipRoleBinding.MembershipID,
-		&membershipRoleBinding.RoleID,
+		&membershipRoleBinding.UserID,
 		&membershipRoleBinding.ProjectID,
+		&membershipRoleBinding.RoleID,
 	); err != nil {
 		return nil, err
 	}
