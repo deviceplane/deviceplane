@@ -284,6 +284,7 @@ create table if not exists applications (
   settings longtext not null,
 
   primary key (id),
+  unique(name, project_id),
   foreign key applications_project_id(project_id)
   references projects(id)
   on delete cascade
