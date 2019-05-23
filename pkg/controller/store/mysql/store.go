@@ -18,22 +18,19 @@ type scanner interface {
 }
 
 const (
-	userPrefix                      = "usr"
-	registrationTokenPrefix         = "reg"
-	sessionPrefix                   = "ses"
-	userAccessKeyPrefix             = "uky"
-	projectPrefix                   = "prj"
-	rolePrefix                      = "rol"
-	membershipPrefix                = "mem"
-	membershipRoleBindingPrefix     = "mrb"
-	serviceAccountPrefix            = "sac"
-	serviceAccountAccessKeyPrefix   = "sak"
-	serviceAccountRoleBindingPrefix = "srb"
-	devicePrefix                    = "dev"
-	deviceRegistrationTokenPrefix   = "drt"
-	deviceAccessKeyPrefix           = "dak"
-	applicationPrefix               = "app"
-	releasePrefix                   = "rel"
+	userPrefix                    = "usr"
+	registrationTokenPrefix       = "reg"
+	sessionPrefix                 = "ses"
+	userAccessKeyPrefix           = "uky"
+	projectPrefix                 = "prj"
+	rolePrefix                    = "rol"
+	serviceAccountPrefix          = "sac"
+	serviceAccountAccessKeyPrefix = "sak"
+	devicePrefix                  = "dev"
+	deviceRegistrationTokenPrefix = "drt"
+	deviceAccessKeyPrefix         = "dak"
+	applicationPrefix             = "app"
+	releasePrefix                 = "rel"
 )
 
 func newUserID() string {
@@ -60,24 +57,12 @@ func newRoleID() string {
 	return fmt.Sprintf("%s_%s", rolePrefix, ksuid.New().String())
 }
 
-func newMembershipID() string {
-	return fmt.Sprintf("%s_%s", membershipPrefix, ksuid.New().String())
-}
-
-func newMembershipRoleBindingID() string {
-	return fmt.Sprintf("%s_%s", membershipRoleBindingPrefix, ksuid.New().String())
-}
-
 func newServiceAccountID() string {
 	return fmt.Sprintf("%s_%s", serviceAccountPrefix, ksuid.New().String())
 }
 
 func newServiceAccountAccessKeyID() string {
 	return fmt.Sprintf("%s_%s", serviceAccountAccessKeyPrefix, ksuid.New().String())
-}
-
-func newServiceAccountRoleBindingID() string {
-	return fmt.Sprintf("%s_%s", serviceAccountRoleBindingPrefix, ksuid.New().String())
 }
 
 func newDeviceID() string {
@@ -567,12 +552,9 @@ func (s *Store) scanRole(scanner scanner) (*models.Role, error) {
 }
 
 func (s *Store) CreateMembership(ctx context.Context, userID, projectID string) (*models.Membership, error) {
-	id := newMembershipID()
-
 	if _, err := s.db.ExecContext(
 		ctx,
 		createMembership,
-		id,
 		userID,
 		projectID,
 	); err != nil {

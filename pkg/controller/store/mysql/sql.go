@@ -154,11 +154,10 @@ const updateRole = `
 
 const createMembership = `
   insert into memberships (
-    id,
     user_id,
     project_id
   )
-  values (?, ?, ?, ?)
+  values (?, ?)
 `
 
 const getMembership = `
