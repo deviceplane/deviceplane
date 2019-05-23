@@ -224,7 +224,17 @@ type ApplicationAndLatestRelease struct {
 }
 
 type DeviceInfo struct {
-	IPAddress string `json:"ipAddress"`
+	IPAddress string    `json:"ipAddress"`
+	OSRelease OSRelease `json:"osRelease"`
+}
+
+type OSRelease struct {
+	PrettyName string `json:"prettyName"`
+	Name       string `json:"name"`
+	VersionID  string `json:"versionId"`
+	Version    string `json:"version"`
+	ID         string `json:"id"`
+	IDLike     string `json:"idLike"`
 }
 
 type ApplicationSettings struct {

@@ -42,5 +42,12 @@ func (r *Reporter) readInfo() models.DeviceInfo {
 		log.WithError(err).Error("failed to get IP address")
 	}
 
+	osRelease, err := getOSRelease()
+	if err == nil {
+		info.OSRelease = *osRelease
+	} else {
+		log.WithError(err).Error("failed to get OS release")
+	}
+
 	return info
 }

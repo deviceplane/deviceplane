@@ -5,6 +5,7 @@ go 1.12
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/apex/log v1.1.0
+	github.com/cobaugh/osrelease v0.0.0-20181218015638-a93a0a55a249
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0 // indirect
