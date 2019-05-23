@@ -1,5 +1,12 @@
 version= $(shell git describe --tags --always --dirty="-dev")
 
+db-reset:
+	docker-compose down
+	docker-compose build
+	docker-compose up -d
+	sleep 20
+	./scripts/seed
+
 cli:
 	go build -o ./dist/cli ./cmd/cli
 
