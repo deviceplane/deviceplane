@@ -68,6 +68,7 @@ var (
 	}...)
 	adminActions = append(writeActions, []string{
 		"CreateRole",
+		"UpdateRole",
 		"CreateMembership",
 		"CreateMembershipRoleBinding",
 		"CreateServiceAccount",

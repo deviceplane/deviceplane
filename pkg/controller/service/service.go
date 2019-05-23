@@ -126,6 +126,7 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/roles", s.validateAuthorization("roles", "CreateRole", s.createRole)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/roles/{role}", s.validateAuthorization("roles", "GetRole", s.withRole(s.getRole))).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/roles", s.validateAuthorization("roles", "ListRoles", s.listRoles)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/roles/{role}", s.validateAuthorization("roles", "UpdateRole", s.updateRole)).Methods("PUT")
 
 	s.router.HandleFunc("/projects/{project}/memberships", s.validateAuthorization("memberships", "CreateMembership", s.createMembership)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/memberships/{user}", s.validateAuthorization("memberships", "GetMembership", s.getMembership)).Methods("GET")
@@ -686,6 +687,32 @@ func (s *Service) listRoles(w http.ResponseWriter, r *http.Request, projectID, u
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(roles)
+}
+
+func (s *Service) updateRole(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	vars := mux.Vars(r)
+	roleID := vars["role"]
+
+	var updateRoleRequest struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+		Config      string `json:"config"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&updateRoleRequest); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	role, err := s.roles.UpdateRole(r.Context(), roleID, projectID, updateRoleRequest.Name,
+		updateRoleRequest.Description, updateRoleRequest.Config)
+	if err != nil {
+		log.WithError(err).Error("update role")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(role)
 }
 
 func (s *Service) createServiceAccount(w http.ResponseWriter, r *http.Request, projectID, userID string) {
