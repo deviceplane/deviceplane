@@ -26,11 +26,6 @@ var deploy = cli.Command{
 		project := c.String("project")
 		application := c.String("application")
 
-		release, err := client.GetLatestRelease(context.TODO(), project, application)
-		if err != nil {
-			return err
-		}
-
 		configBytes, err := ioutil.ReadFile(c.Args().First())
 		if err != nil {
 			return err
@@ -50,7 +45,7 @@ var deploy = cli.Command{
 			return err
 		}
 
-		release, err = client.CreateRelease(context.TODO(), project, application, string(configBytes))
+		release, err := client.CreateRelease(context.TODO(), project, application, string(configBytes))
 		if err != nil {
 			return err
 		}
