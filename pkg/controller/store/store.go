@@ -161,6 +161,10 @@ type Applications interface {
 
 var ErrApplicationNotFound = errors.New("application not found")
 
+type ApplicationDeviceCounts interface {
+	GetApplicationDeviceCounts(ctx context.Context, projectID, applicationID string) (*models.ApplicationDeviceCounts, error)
+}
+
 type Releases interface {
 	CreateRelease(ctx context.Context, projectID, applicationID, config string) (*models.Release, error)
 	GetRelease(ctx context.Context, id, projectID, applicationID string) (*models.Release, error)
@@ -171,7 +175,7 @@ type Releases interface {
 var ErrReleaseNotFound = errors.New("release not found")
 
 type ReleaseDeviceCounts interface {
-	GetReleaseDeviceCounts(ctx context.Context, projectID, applicationID, releaseIF string) (*models.ReleaseDeviceCounts, error)
+	GetReleaseDeviceCounts(ctx context.Context, projectID, applicationID, releaseID string) (*models.ReleaseDeviceCounts, error)
 }
 
 type DeviceApplicationStatuses interface {

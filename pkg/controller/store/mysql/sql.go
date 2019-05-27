@@ -387,6 +387,11 @@ const updateApplication = `
   where id = ? and project_id = ?
 `
 
+const getApplicationDeviceCounts = `
+  select count(*) from device_application_statuses
+  where project_id = ? and application_id = ?
+`
+
 const createRelease = `
   insert into releases (
     id,

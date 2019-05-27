@@ -1287,6 +1287,29 @@ func (s *Store) scanApplication(scanner scanner) (*models.Application, error) {
 	return &application, nil
 }
 
+func (s *Store) GetApplicationDeviceCounts(ctx context.Context, projectID, applicationID string) (*models.ApplicationDeviceCounts, error) {
+	countRow := s.db.QueryRowContext(ctx, getApplicationDeviceCounts, projectID, applicationID)
+
+	count, err := s.scanApplicationDeviceCountRow(countRow)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.ApplicationDeviceCounts{
+		AllCount: count,
+	}, nil
+}
+
+func (s *Store) scanApplicationDeviceCountRow(scanner scanner) (int, error) {
+	var count int
+	if err := scanner.Scan(
+		&count,
+	); err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (s *Store) CreateRelease(ctx context.Context, projectID, applicationID, config string) (*models.Release, error) {
 	id := newReleaseID()
 

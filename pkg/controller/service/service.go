@@ -43,6 +43,7 @@ type Service struct {
 	deviceRegistrationTokens   store.DeviceRegistrationTokens
 	deviceAccessKeys           store.DeviceAccessKeys
 	applications               store.Applications
+	applicationDeviceCounts    store.ApplicationDeviceCounts
 	releases                   store.Releases
 	releaseDeviceCounts        store.ReleaseDeviceCounts
 	deviceApplicationStatuses  store.DeviceApplicationStatuses
@@ -72,6 +73,7 @@ func NewService(
 	deviceRegistrationTokens store.DeviceRegistrationTokens,
 	deviceAccessKeys store.DeviceAccessKeys,
 	applications store.Applications,
+	applicationDeviceCounts store.ApplicationDeviceCounts,
 	releases store.Releases,
 	releasesDeviceCounts store.ReleaseDeviceCounts,
 	deviceApplicationStatuses store.DeviceApplicationStatuses,
@@ -99,6 +101,7 @@ func NewService(
 		deviceRegistrationTokens:   deviceRegistrationTokens,
 		deviceAccessKeys:           deviceAccessKeys,
 		applications:               applications,
+		applicationDeviceCounts:    applicationDeviceCounts,
 		releases:                   releases,
 		releaseDeviceCounts:        releasesDeviceCounts,
 		deviceApplicationStatuses:  deviceApplicationStatuses,
@@ -1049,8 +1052,23 @@ func (s *Service) getApplication(w http.ResponseWriter, r *http.Request, project
 		return
 	}
 
+	var ret interface{} = application
+	if _, ok := r.URL.Query()["full"]; ok {
+		applicationDeviceCounts, err := s.applicationDeviceCounts.GetApplicationDeviceCounts(r.Context(), projectID, applicationID)
+		if err != nil {
+			log.WithError(err).Error("get application device counts")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		ret = models.ApplicationFull{
+			Application:  *application,
+			DeviceCounts: *applicationDeviceCounts,
+		}
+	}
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(application)
+	json.NewEncoder(w).Encode(ret)
 }
 
 func (s *Service) listApplications(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1061,8 +1079,28 @@ func (s *Service) listApplications(w http.ResponseWriter, r *http.Request, proje
 		return
 	}
 
+	var ret interface{} = applications
+	if _, ok := r.URL.Query()["full"]; ok {
+		var applicationsFull []models.ApplicationFull
+
+		for _, application := range applications {
+			applicationDeviceCounts, err := s.applicationDeviceCounts.GetApplicationDeviceCounts(r.Context(), projectID, application.ID)
+			if err != nil {
+				log.WithError(err).Error("get application device counts")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			applicationsFull = append(applicationsFull, models.ApplicationFull{
+				Application:  application,
+				DeviceCounts: *applicationDeviceCounts,
+			})
+		}
+
+		ret = applicationsFull
+	}
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(applications)
+	json.NewEncoder(w).Encode(ret)
 }
 
 func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {

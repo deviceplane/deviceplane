@@ -141,6 +141,10 @@ type Application struct {
 	Settings    ApplicationSettings `json:"settings"`
 }
 
+type ApplicationDeviceCounts struct {
+	AllCount int `json:"allCount"`
+}
+
 type Release struct {
 	ID            string    `json:"id"`
 	CreatedAt     time.Time `json:"createdAt"`
@@ -206,6 +210,11 @@ type DeviceApplicationStatusInfo struct {
 	Application       Application              `json:"application"`
 	ApplicationStatus *DeviceApplicationStatus `json:"applicationStatus"`
 	ServiceStatuses   []DeviceServiceStatus    `json:"serviceStatuses"`
+}
+
+type ApplicationFull struct {
+	Application
+	DeviceCounts ApplicationDeviceCounts `json:"deviceCounts"`
 }
 
 type ReleaseFull struct {
