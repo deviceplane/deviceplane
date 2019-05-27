@@ -9,16 +9,16 @@ import (
 )
 
 type Application struct {
-	Services map[string]Service `yaml:"services"`
+	Services map[string]Service `yaml:"services,omitempty"`
 }
 
 type Service struct {
-	Name       string            `yaml:"name"`
-	Image      string            `yaml:"image"`
-	Entrypoint []string          `yaml:"entrypoint"`
-	Command    []string          `yaml:"command"`
-	Labels     map[string]string `yaml:"labels"`
-	Scheduling string            `yaml:"scheduling"`
+	Name       string            `yaml:"name,omitempty"`
+	Image      string            `yaml:"image,omitempty"`
+	Entrypoint []string          `yaml:"entrypoint,omitempty"`
+	Command    []string          `yaml:"command,omitempty"`
+	Labels     map[string]string `yaml:"labels,omitempty"`
+	Scheduling string            `yaml:"scheduling,omitempty"`
 }
 
 func (s Service) WithStandardLabels(serviceName string) Service {

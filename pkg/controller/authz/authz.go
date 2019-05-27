@@ -1,14 +1,14 @@
 package authz
 
 type Config struct {
-	Rules []Rule
+	Rules []Rule `yaml:"rules,omitempty"`
 }
 
 type Rule struct {
-	Resources       []string
-	Actions         []string
-	ParentResources []string
-	Effect          string
+	Resources       []string `yaml:"resources,omitempty"`
+	Actions         []string `yaml:"actions,omitempty"`
+	ParentResources []string `yaml:"parent_resources,omitempty"`
+	Effect          string   `yaml:"effect,omitempty"`
 }
 
 var (
