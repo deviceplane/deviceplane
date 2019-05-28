@@ -8,10 +8,6 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
-type Application struct {
-	Services map[string]Service `yaml:"services,omitempty"`
-}
-
 type Service struct {
 	Name       string            `yaml:"name,omitempty"`
 	Image      string            `yaml:"image,omitempty"`

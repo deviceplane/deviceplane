@@ -160,7 +160,7 @@ func (s *Supervisor) serviceStatusReporter() {
 }
 
 func (s *Supervisor) SetApplication(application models.ApplicationAndLatestRelease) error {
-	var applicationConfig spec.Application
+	var applicationConfig map[string]spec.Service
 	if err := yaml.Unmarshal([]byte(application.LatestRelease.Config), &applicationConfig); err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func (s *Supervisor) SetApplication(application models.ApplicationAndLatestRelea
 
 	s.lock.Unlock()
 
-	for serviceName, service := range applicationConfig.Services {
+	for serviceName, service := range applicationConfig {
 		go s.reconcile(application.Application.ID, application.LatestRelease.ID, serviceName, service)
 	}
 
