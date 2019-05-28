@@ -214,7 +214,8 @@ type DeviceApplicationStatusInfo struct {
 
 type ApplicationFull struct {
 	Application
-	DeviceCounts ApplicationDeviceCounts `json:"deviceCounts"`
+	LatestRelease *Release                `json:"latestRelease"`
+	DeviceCounts  ApplicationDeviceCounts `json:"deviceCounts"`
 }
 
 type ReleaseFull struct {

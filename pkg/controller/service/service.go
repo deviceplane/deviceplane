@@ -1054,6 +1054,13 @@ func (s *Service) getApplication(w http.ResponseWriter, r *http.Request, project
 
 	var ret interface{} = application
 	if _, ok := r.URL.Query()["full"]; ok {
+		latestRelease, err := s.releases.GetLatestRelease(r.Context(), projectID, applicationID)
+		if err != nil && err != store.ErrReleaseNotFound {
+			log.WithError(err).Error("get latest release")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		applicationDeviceCounts, err := s.applicationDeviceCounts.GetApplicationDeviceCounts(r.Context(), projectID, applicationID)
 		if err != nil {
 			log.WithError(err).Error("get application device counts")
@@ -1062,8 +1069,9 @@ func (s *Service) getApplication(w http.ResponseWriter, r *http.Request, project
 		}
 
 		ret = models.ApplicationFull{
-			Application:  *application,
-			DeviceCounts: *applicationDeviceCounts,
+			Application:   *application,
+			LatestRelease: latestRelease,
+			DeviceCounts:  *applicationDeviceCounts,
 		}
 	}
 
@@ -1084,15 +1092,24 @@ func (s *Service) listApplications(w http.ResponseWriter, r *http.Request, proje
 		var applicationsFull []models.ApplicationFull
 
 		for _, application := range applications {
+			latestRelease, err := s.releases.GetLatestRelease(r.Context(), projectID, application.ID)
+			if err != nil && err != store.ErrReleaseNotFound {
+				log.WithError(err).Error("get latest release")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
 			applicationDeviceCounts, err := s.applicationDeviceCounts.GetApplicationDeviceCounts(r.Context(), projectID, application.ID)
 			if err != nil {
 				log.WithError(err).Error("get application device counts")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+
 			applicationsFull = append(applicationsFull, models.ApplicationFull{
-				Application:  application,
-				DeviceCounts: *applicationDeviceCounts,
+				Application:   application,
+				LatestRelease: latestRelease,
+				DeviceCounts:  *applicationDeviceCounts,
 			})
 		}
 
