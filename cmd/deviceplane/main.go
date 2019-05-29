@@ -13,6 +13,11 @@ var name = "deviceplane"
 func main() {
 	app := cli.NewApp()
 
+	app.EnableBashCompletion = true
+	app.Name = name
+	app.Version = version
+	app.Usage = "Device Plane CLI"
+
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Hidden: true,

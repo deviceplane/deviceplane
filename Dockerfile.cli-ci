@@ -1,7 +1,6 @@
 FROM golang:1.12
 WORKDIR /app
 COPY ./ ./
-RUN go build -o ./deviceplane ./cmd/deviceplane
 RUN GOOS=linux CGO_ENABLED=0 go build -ldflags "-s -w" -o ./deviceplane ./cmd/deviceplane
 
 FROM alpine:3.9

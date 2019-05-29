@@ -4,7 +4,6 @@ RUN apk --update add ca-certificates
 FROM golang:1.12
 WORKDIR /app
 COPY ./ ./
-RUN go build -o ./agent ./cmd/agent
 RUN GOOS=linux GOARCH=arm CGO_ENABLED=0 go build -ldflags "-s -w" -o ./agent ./cmd/agent
 
 FROM scratch

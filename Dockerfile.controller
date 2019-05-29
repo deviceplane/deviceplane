@@ -4,7 +4,6 @@ RUN apk --update add ca-certificates
 FROM golang:1.12
 WORKDIR /app
 COPY ./ ./
-RUN go build -o ./controller ./cmd/controller
 RUN GOOS=linux CGO_ENABLED=0 go build -o ./controller ./cmd/controller
 
 FROM scratch
