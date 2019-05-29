@@ -8,7 +8,6 @@ type User struct {
 	ID                    string    `json:"id"`
 	CreatedAt             time.Time `json:"createdAt"`
 	Email                 string    `json:"email"`
-	PasswordHash          string    `json:"passwordHash"`
 	FirstName             string    `json:"firstName"`
 	LastName              string    `json:"lastName"`
 	RegistrationCompleted bool      `json:"registrationCompleted"`
@@ -18,21 +17,18 @@ type RegistrationToken struct {
 	ID        string    `json:"id"`
 	UserID    string    `json:"userId"`
 	CreatedAt time.Time `json:"createdAt"`
-	Hash      string    `json:"hash"`
 }
 
 type Session struct {
 	ID        string    `json:"id"`
 	CreatedAt time.Time `json:"createdAt"`
 	UserID    string    `json:"userId"`
-	Hash      string    `json:"hash"`
 }
 
 type UserAccessKey struct {
 	ID        string    `json:"id"`
 	CreatedAt time.Time `json:"createdAt"`
 	UserID    string    `json:"userId"`
-	Hash      string    `json:"hash"`
 }
 
 type Project struct {
@@ -84,7 +80,6 @@ type ServiceAccountAccessKey struct {
 	CreatedAt        time.Time `json:"createdAt"`
 	ProjectID        string    `json:"projectId"`
 	ServiceAccountID string    `json:"serviceAccountId"`
-	Hash             string    `json:"hash"`
 }
 
 type ServiceAccountRoleBinding struct {
@@ -129,7 +124,6 @@ type DeviceAccessKey struct {
 	CreatedAt time.Time `json:"createdAt"`
 	ProjectID string    `json:"projectId"`
 	DeviceID  string    `json:"deviceId"`
-	Hash      string    `json:"hash"`
 }
 
 type Application struct {

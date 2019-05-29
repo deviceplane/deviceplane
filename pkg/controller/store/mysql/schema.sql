@@ -11,6 +11,7 @@ create table if not exists users (
   created_at timestamp not null default current_timestamp,
 
   email varchar(255) not null,
+  -- SENSITIVE FIELD
   password_hash varchar(255) not null,
   first_name varchar(100) not null,
   last_name varchar(100) not null,
@@ -29,6 +30,7 @@ create table if not exists registration_tokens (
   created_at timestamp not null default current_timestamp,
   user_id varchar(32) not null,
 
+  -- SENSITIVE FIELD
   hash varchar(255) not null,
 
   primary key (id),
@@ -48,6 +50,7 @@ create table if not exists sessions (
   created_at timestamp not null default current_timestamp,
   user_id varchar(32) not null,
 
+  -- SENSITIVE FIELD
   hash varchar(255) not null,
 
   primary key (id),
@@ -65,6 +68,7 @@ create table if not exists user_access_keys (
   created_at timestamp not null default current_timestamp,
   user_id varchar(32) not null,
 
+  -- SENSITIVE FIELD
   hash varchar(255) not null,
 
   primary key (id),
@@ -174,6 +178,7 @@ create table if not exists service_account_access_keys (
   project_id varchar(32) not null,
   service_account_id varchar(32) not null,
 
+  -- SENSITIVE FIELD
   hash varchar(255) not null,
 
   primary key (id),
@@ -262,6 +267,7 @@ create table if not exists device_access_keys (
   project_id varchar(32) not null,
   device_id varchar(32) not null,
 
+  -- SENSITIVE FIELD
   hash varchar(255) not null,
 
   primary key (id),

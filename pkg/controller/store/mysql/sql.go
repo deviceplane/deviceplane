@@ -14,12 +14,12 @@ const createUser = `
 `
 
 const getUser = `
-  select id, email, password_hash, first_name, last_name, registration_completed from users
+  select id, email, first_name, last_name, registration_completed from users
   where id = ?
 `
 
 const validateUser = `
-  select id, email, password_hash, first_name, last_name, registration_completed from users
+  select id, email, first_name, last_name, registration_completed from users
   where email = ? and password_hash = ?
 `
 
@@ -39,12 +39,12 @@ const createRegistrationToken = `
 `
 
 const getRegistrationToken = `
-  select id, user_id, hash from registration_tokens
+  select id, user_id from registration_tokens
   where id = ?
 `
 
 const validateRegistrationToken = `
-  select id, user_id, hash from registration_tokens
+  select id, user_id from registration_tokens
   where hash = ?
 `
 
@@ -58,12 +58,12 @@ const createSession = `
 `
 
 const getSession = `
-  select id, user_id, hash from sessions
+  select id, user_id from sessions
   where id = ?
 `
 
 const validateSession = `
-  select id, user_id, hash from sessions
+  select id, user_id from sessions
   where hash = ?
 `
 
@@ -83,12 +83,12 @@ const createUserAccessKey = `
 `
 
 const getUserAccessKey = `
-  select id, user_id, hash from user_access_keys
+  select id, user_id from user_access_keys
   where id = ?
 `
 
 const validateUserAccessKey = `
-  select id, user_id, hash from user_access_keys
+  select id, user_id from user_access_keys
   where hash = ?
 `
 
@@ -266,12 +266,12 @@ const createServiceAccountAccessKey = `
 `
 
 const getServiceAccountAccessKey = `
-  select id, project_id, service_account_id, hash from service_account_access_keys
+  select id, project_id, service_account_id from service_account_access_keys
   where id = ? and project_id = ?
 `
 
 const validateServiceAccountAccessKey = `
-  select id, project_id, service_account_id, hash from service_account_access_keys
+  select id, project_id, service_account_id from service_account_access_keys
   where hash = ? and project_id = ?
 `
 
@@ -388,12 +388,12 @@ const createDeviceAccessKey = `
 `
 
 const getDeviceAccessKey = `
-  select id, project_id, device_id, hash from device_access_keys
+  select id, project_id, device_id from device_access_keys
   where id = ? and project_id = ?
 `
 
 const validateDeviceAccessKey = `
-  select id, project_id, device_id, hash from device_access_keys
+  select id, project_id, device_id from device_access_keys
   where project_id = ? and hash = ?
 `
 

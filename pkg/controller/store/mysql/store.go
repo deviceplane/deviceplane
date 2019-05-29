@@ -180,7 +180,6 @@ func (s *Store) scanUser(scanner scanner) (*models.User, error) {
 	if err := scanner.Scan(
 		&user.ID,
 		&user.Email,
-		&user.PasswordHash,
 		&user.FirstName,
 		&user.LastName,
 		&user.RegistrationCompleted,
@@ -237,7 +236,6 @@ func (s *Store) scanRegistrationToken(scanner scanner) (*models.RegistrationToke
 	if err := scanner.Scan(
 		&registrationToken.ID,
 		&registrationToken.UserID,
-		&registrationToken.Hash,
 	); err != nil {
 		return nil, err
 	}
@@ -296,7 +294,6 @@ func (s *Store) scanSession(scanner scanner) (*models.Session, error) {
 	if err := scanner.Scan(
 		&session.ID,
 		&session.UserID,
-		&session.Hash,
 	); err != nil {
 		return nil, err
 	}
@@ -359,7 +356,6 @@ func (s *Store) scanUserAccessKey(scanner scanner) (*models.UserAccessKey, error
 	if err := scanner.Scan(
 		&userAccessKey.ID,
 		&userAccessKey.UserID,
-		&userAccessKey.Hash,
 	); err != nil {
 		return nil, err
 	}
@@ -884,7 +880,6 @@ func (s *Store) scanServiceAccountAccessKey(scanner scanner) (*models.ServiceAcc
 		&serviceAccountAccessKey.ID,
 		&serviceAccountAccessKey.ProjectID,
 		&serviceAccountAccessKey.ServiceAccountID,
-		&serviceAccountAccessKey.Hash,
 	); err != nil {
 		return nil, err
 	}
@@ -1237,7 +1232,6 @@ func (s *Store) scanDeviceAccessKey(scanner scanner) (*models.DeviceAccessKey, e
 		&deviceAccessKey.ID,
 		&deviceAccessKey.ProjectID,
 		&deviceAccessKey.DeviceID,
-		&deviceAccessKey.Hash,
 	); err != nil {
 		return nil, err
 	}
