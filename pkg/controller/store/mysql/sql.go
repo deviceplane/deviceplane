@@ -92,6 +92,12 @@ const validateUserAccessKey = `
   where hash = ?
 `
 
+const deleteUserAccessKey = `
+  delete from user_access_keys
+  where id = ?
+  limit 1
+`
+
 const createProject = `
   insert into projects (
     id,
@@ -152,6 +158,12 @@ const updateRole = `
   where id = ? and project_id = ?
 `
 
+const deleteRole = `
+  delete from roles
+  where id = ? and project_id = ?
+  limit 1
+`
+
 const createMembership = `
   insert into memberships (
     user_id,
@@ -175,6 +187,12 @@ const listMembershipsByProject = `
   where project_id = ?
 `
 
+const deleteMembership = `
+  delete from memberships
+  where user_id = ? and project_id = ?
+  limit 1
+`
+
 const createMembershipRoleBinding = `
   insert into membership_role_bindings (
     user_id,
@@ -192,6 +210,12 @@ const getMembershipRoleBinding = `
 const listMembershipRoleBindings = `
   select user_id, project_id, role_id from membership_role_bindings
   where user_id = ? and project_id = ?
+`
+
+const deleteMembershipRoleBinding = `
+  delete from membership_role_bindings
+  where user_id = ? and project_id = ? and role_id = ?
+  limit 1
 `
 
 const createServiceAccount = `
@@ -225,6 +249,12 @@ const updateServiceAccount = `
   where id = ? and project_id = ?
 `
 
+const deleteServiceAccount = `
+  delete from service_accounts
+  where id = ? and project_id = ?
+  limit 1
+`
+
 const createServiceAccountAccessKey = `
   insert into service_account_access_keys (
     id,
@@ -245,6 +275,12 @@ const validateServiceAccountAccessKey = `
   where hash = ? and project_id = ?
 `
 
+const deleteServiceAccountAccessKey = `
+  delete from service_account_access_keys
+  where id = ? and project_id = ?
+  limit 1
+`
+
 const createServiceAccountRoleBinding = `
   insert into service_account_role_bindings (
     service_account_id,
@@ -262,6 +298,12 @@ const getServiceAccountRoleBinding = `
 const listServiceAccountRoleBindings = `
   select service_account_id, role_id, project_id from service_account_role_bindings
   where service_account_id = ? and project_id = ?
+`
+
+const deleteServiceAccountRoleBinding = `
+  delete from service_account_membership_role_bindings
+  where service_account_id = ? and role_id = ? and project_id = ?
+  limit 1
 `
 
 const createDevice = `
@@ -385,6 +427,12 @@ const updateApplication = `
   update applications
   set name = ?, description = ?, settings = ?
   where id = ? and project_id = ?
+`
+
+const deleteApplication = `
+  delete from applications
+  where id = ? and project_id = ?
+  limit 1
 `
 
 const getApplicationDeviceCounts = `

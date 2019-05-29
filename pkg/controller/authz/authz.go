@@ -62,6 +62,7 @@ var (
 	writeActions = append(readActions, []string{
 		"CreateApplication",
 		"UpdateApplication",
+		"DeleteApplication",
 		"CreateRelease",
 		"SetDeviceLabel",
 		"DeleteDeviceLabel",
@@ -70,9 +71,16 @@ var (
 	adminActions = append(writeActions, []string{
 		"CreateRole",
 		"UpdateRole",
+		"DeleteRole",
 		"CreateMembership",
+		"DeleteMembership",
 		"CreateMembershipRoleBinding",
+		"DeleteMembershipRoleBinding",
 		"CreateServiceAccount",
+		"UpdateServiceAccount",
+		"DeleteServiceAccount",
+		"CreateServiceAccountRoleBinding",
+		"DeleteServiceAccountRoleBinding",
 	}...)
 )
 

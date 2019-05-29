@@ -96,6 +96,7 @@ var (
 	_ store.Memberships                = &Store{}
 	_ store.MembershipRoleBindings     = &Store{}
 	_ store.ServiceAccounts            = &Store{}
+	_ store.ServiceAccountAccessKeys   = &Store{}
 	_ store.ServiceAccountRoleBindings = &Store{}
 	_ store.Devices                    = &Store{}
 	_ store.DeviceLabels               = &Store{}
@@ -344,6 +345,15 @@ func (s *Store) ValidateUserAccessKey(ctx context.Context, hash string) (*models
 	return userAccessKey, nil
 }
 
+func (s *Store) DeleteUserAccessKey(ctx context.Context, id string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		deleteUserAccessKey,
+		id,
+	)
+	return err
+}
+
 func (s *Store) scanUserAccessKey(scanner scanner) (*models.UserAccessKey, error) {
 	var userAccessKey models.UserAccessKey
 	if err := scanner.Scan(
@@ -537,6 +547,16 @@ func (s *Store) UpdateRole(ctx context.Context, id, projectID, name, description
 	return s.GetRole(ctx, id, projectID)
 }
 
+func (s *Store) DeleteRole(ctx context.Context, id, projectID string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		deleteRole,
+		id,
+		projectID,
+	)
+	return err
+}
+
 func (s *Store) scanRole(scanner scanner) (*models.Role, error) {
 	var role models.Role
 	if err := scanner.Scan(
@@ -608,6 +628,16 @@ func (s *Store) listMemberships(ctx context.Context, id, query string) ([]models
 	return memberships, nil
 }
 
+func (s *Store) DeleteMembership(ctx context.Context, userID, projectID string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		deleteMembership,
+		userID,
+		projectID,
+	)
+	return err
+}
+
 func (s *Store) scanMembership(scanner scanner) (*models.Membership, error) {
 	var membership models.Membership
 	if err := scanner.Scan(
@@ -667,6 +697,17 @@ func (s *Store) ListMembershipRoleBindings(ctx context.Context, userID, projectI
 	}
 
 	return membershipRoleBindings, nil
+}
+
+func (s *Store) DeleteMembershipRoleBinding(ctx context.Context, userID, projectID, roleID string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		deleteMembershipRoleBinding,
+		userID,
+		projectID,
+		roleID,
+	)
+	return err
 }
 
 func (s *Store) scanMembershipRoleBinding(scanner scanner) (*models.MembershipRoleBinding, error) {
@@ -762,6 +803,16 @@ func (s *Store) UpdateServiceAccount(ctx context.Context, id, projectID, name, d
 	return s.GetServiceAccount(ctx, id, projectID)
 }
 
+func (s *Store) DeleteServiceAccount(ctx context.Context, id, projectID string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		deleteServiceAccount,
+		id,
+		projectID,
+	)
+	return err
+}
+
 func (s *Store) scanServiceAccount(scanner scanner) (*models.ServiceAccount, error) {
 	var serviceAccount models.ServiceAccount
 	if err := scanner.Scan(
@@ -815,6 +866,16 @@ func (s *Store) ValidateServiceAccountAccessKey(ctx context.Context, hash string
 	}
 
 	return serviceAccountAccessKey, nil
+}
+
+func (s *Store) DeleteServiceAccountAccessKey(ctx context.Context, id, projectID string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		deleteServiceAccountAccessKey,
+		id,
+		projectID,
+	)
+	return err
 }
 
 func (s *Store) scanServiceAccountAccessKey(scanner scanner) (*models.ServiceAccountAccessKey, error) {
@@ -878,6 +939,17 @@ func (s *Store) ListServiceAccountRoleBindings(ctx context.Context, serviceAccou
 	}
 
 	return serviceAccountRoleBindings, nil
+}
+
+func (s *Store) DeleteServiceAccountRoleBinding(ctx context.Context, serviceAccountID, projectID, roleID string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		deleteServiceAccountRoleBinding,
+		serviceAccountID,
+		roleID,
+		projectID,
+	)
+	return err
 }
 
 func (s *Store) scanServiceAccountRoleBinding(scanner scanner) (*models.ServiceAccountRoleBinding, error) {
@@ -1265,6 +1337,16 @@ func (s *Store) UpdateApplication(ctx context.Context, id, projectID, name, desc
 	}
 
 	return s.GetApplication(ctx, id, projectID)
+}
+
+func (s *Store) DeleteApplication(ctx context.Context, id, projectID string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		deleteApplication,
+		id,
+		projectID,
+	)
+	return err
 }
 
 func (s *Store) scanApplication(scanner scanner) (*models.Application, error) {

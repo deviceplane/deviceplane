@@ -38,6 +38,7 @@ type UserAccessKeys interface {
 	CreateUserAccessKey(ctx context.Context, userID string, hash string) (*models.UserAccessKey, error)
 	GetUserAccessKey(ctx context.Context, id string) (*models.UserAccessKey, error)
 	ValidateUserAccessKey(ctx context.Context, hash string) (*models.UserAccessKey, error)
+	DeleteUserAccessKey(ctx context.Context, id string) error
 }
 
 var ErrUserAccessKeyNotFound = errors.New("user access key not found")
@@ -64,6 +65,7 @@ type Roles interface {
 	LookupRole(ctx context.Context, name, projectID string) (*models.Role, error)
 	ListRoles(ctx context.Context, projectID string) ([]models.Role, error)
 	UpdateRole(ctx context.Context, id, projectID, name, description, config string) (*models.Role, error)
+	DeleteRole(ctx context.Context, id, projectID string) error
 }
 
 var ErrRoleNotFound = errors.New("role not found")
@@ -73,6 +75,7 @@ type Memberships interface {
 	GetMembership(ctx context.Context, userID, projectID string) (*models.Membership, error)
 	ListMembershipsByUser(ctx context.Context, userID string) ([]models.Membership, error)
 	ListMembershipsByProject(ctx context.Context, projectID string) ([]models.Membership, error)
+	DeleteMembership(ctx context.Context, userID, projectID string) error
 }
 
 var ErrMembershipNotFound = errors.New("membership not found")
@@ -81,6 +84,7 @@ type MembershipRoleBindings interface {
 	CreateMembershipRoleBinding(ctx context.Context, userID, projectID, roleID string) (*models.MembershipRoleBinding, error)
 	GetMembershipRoleBinding(ctx context.Context, userID, projectID, roleID string) (*models.MembershipRoleBinding, error)
 	ListMembershipRoleBindings(ctx context.Context, userID, projectID string) ([]models.MembershipRoleBinding, error)
+	DeleteMembershipRoleBinding(ctx context.Context, userID, projectID, roleID string) error
 }
 
 var ErrMembershipRoleBindingNotFound = errors.New("membership role binding not found")
@@ -91,14 +95,16 @@ type ServiceAccounts interface {
 	LookupServiceAccount(ctx context.Context, name, projectID string) (*models.ServiceAccount, error)
 	ListServiceAccounts(ctx context.Context, projectID string) ([]models.ServiceAccount, error)
 	UpdateServiceAccount(ctx context.Context, id, projectID, name, description string) (*models.ServiceAccount, error)
+	DeleteServiceAccount(ctx context.Context, id, projectID string) error
 }
 
 var ErrServiceAccountNotFound = errors.New("service account not found")
 
 type ServiceAccountAccessKeys interface {
-	CreateServiceAccountAccessKey(ctx context.Context, userID string, hash string) (*models.ServiceAccountAccessKey, error)
-	GetServiceAccountAccessKey(ctx context.Context, id string) (*models.ServiceAccountAccessKey, error)
+	CreateServiceAccountAccessKey(ctx context.Context, projectID, serviceAccountID string, hash string) (*models.ServiceAccountAccessKey, error)
+	GetServiceAccountAccessKey(ctx context.Context, id, projectID string) (*models.ServiceAccountAccessKey, error)
 	ValidateServiceAccountAccessKey(ctx context.Context, hash string) (*models.ServiceAccountAccessKey, error)
+	DeleteServiceAccountAccessKey(ctx context.Context, id, projectID string) error
 }
 
 var ErrServiceAccountAccessKeyNotFound = errors.New("service account access key not found")
@@ -107,6 +113,7 @@ type ServiceAccountRoleBindings interface {
 	CreateServiceAccountRoleBinding(ctx context.Context, serviceAccountID, roleID, projectID string) (*models.ServiceAccountRoleBinding, error)
 	GetServiceAccountRoleBinding(ctx context.Context, serviceAccountID, roleID, projectID string) (*models.ServiceAccountRoleBinding, error)
 	ListServiceAccountRoleBindings(ctx context.Context, serviceAccountID, projectID string) ([]models.ServiceAccountRoleBinding, error)
+	DeleteServiceAccountRoleBinding(ctx context.Context, serviceAccountID, roleID, projectID string) error
 }
 
 var ErrServiceAccountRoleBindingNotFound = errors.New("service account role binding not found")
@@ -157,6 +164,7 @@ type Applications interface {
 	LookupApplication(ctx context.Context, name, projectID string) (*models.Application, error)
 	ListApplications(ctx context.Context, projectID string) ([]models.Application, error)
 	UpdateApplication(ctx context.Context, id, projectID, name, description string, applicationSettings models.ApplicationSettings) (*models.Application, error)
+	DeleteApplication(ctx context.Context, id, projectID string) error
 }
 
 var ErrApplicationNotFound = errors.New("application not found")

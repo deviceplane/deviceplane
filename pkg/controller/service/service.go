@@ -36,6 +36,7 @@ type Service struct {
 	memberships                store.Memberships
 	membershipRoleBindings     store.MembershipRoleBindings
 	serviceAccounts            store.ServiceAccounts
+	serviceAccountAccessKeys   store.ServiceAccountAccessKeys
 	serviceAccountRoleBindings store.ServiceAccountRoleBindings
 	devices                    store.Devices
 	deviceStatuses             store.DeviceStatuses
@@ -66,6 +67,7 @@ func NewService(
 	memberships store.Memberships,
 	membershipRoleBindings store.MembershipRoleBindings,
 	serviceAccounts store.ServiceAccounts,
+	serviceAccountAccessKeys store.ServiceAccountAccessKeys,
 	serviceAccountRoleBindings store.ServiceAccountRoleBindings,
 	devices store.Devices,
 	deviceStatuses store.DeviceStatuses,
@@ -94,6 +96,7 @@ func NewService(
 		memberships:                memberships,
 		membershipRoleBindings:     membershipRoleBindings,
 		serviceAccounts:            serviceAccounts,
+		serviceAccountAccessKeys:   serviceAccountAccessKeys,
 		serviceAccountRoleBindings: serviceAccountRoleBindings,
 		devices:                    devices,
 		deviceStatuses:             deviceStatuses,
@@ -130,27 +133,33 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/roles/{role}", s.validateAuthorization("roles", "GetRole", s.withRole(s.getRole))).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/roles", s.validateAuthorization("roles", "ListRoles", s.listRoles)).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/roles/{role}", s.validateAuthorization("roles", "UpdateRole", s.updateRole)).Methods("PUT")
+	s.router.HandleFunc("/projects/{project}/roles/{role}", s.validateAuthorization("roles", "DeleteRole", s.deleteRole)).Methods("DELETE")
 
 	s.router.HandleFunc("/projects/{project}/memberships", s.validateAuthorization("memberships", "CreateMembership", s.createMembership)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/memberships/{user}", s.validateAuthorization("memberships", "GetMembership", s.getMembership)).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/memberships", s.validateAuthorization("memberships", "ListMembershipsByProject", s.listMembershipsByProject)).Methods("GET")
 
-	s.router.HandleFunc("/projects/{project}/memberships/{membership}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "CreateMembershipRoleBinding", s.withRole(s.createMembershipRoleBinding))).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/memberships/{membership}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "GetMembershipRoleBinding", s.withRole(s.getMembershipRoleBinding))).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/memberships/{membership}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "ListMembershipRoleBindings", s.listMembershipRoleBindings)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/memberships/{user}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "CreateMembershipRoleBinding", s.withRole(s.createMembershipRoleBinding))).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/memberships/{user}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "GetMembershipRoleBinding", s.withRole(s.getMembershipRoleBinding))).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/memberships/{user}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "ListMembershipRoleBindings", s.listMembershipRoleBindings)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/memberships/{user}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "DeleteMembershipRoleBinding", s.withRole(s.deleteMembershipRoleBinding))).Methods("DELETE")
 
 	s.router.HandleFunc("/projects/{project}/serviceaccounts", s.validateAuthorization("serviceaccounts", "CreateServiceAccount", s.createServiceAccount)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}", s.validateAuthorization("serviceaccounts", "GetServiceAccount", s.withServiceAccount(s.getServiceAccount))).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/serviceaccounts", s.validateAuthorization("serviceaccounts", "ListServiceAccounts", s.listServiceAccounts)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}", s.validateAuthorization("serviceaccounts", "UpdateServiceAccount", s.withServiceAccount(s.updateServiceAccount))).Methods("PUT")
+	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}", s.validateAuthorization("serviceaccounts", "DeleteServiceAccount", s.withServiceAccount(s.deleteServiceAccount))).Methods("DELETE")
 
 	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.validateAuthorization("serviceaccountrolebindings", "CreateServiceAccountRoleBinding", s.withRole(s.createServiceAccountRoleBinding))).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.validateAuthorization("serviceaccountrolebindings", "GetServiceAccountRoleBinding", s.withRole(s.getServiceAccountRoleBinding))).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountrolebindings", s.validateAuthorization("serviceaccountrolebindings", "ListMembershipRoleBindings", s.listServiceAccountRoleBindings)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.validateAuthorization("serviceaccountrolebindings", "DeleteServiceAccountRoleBinding", s.withRole(s.deleteServiceAccountRoleBinding))).Methods("DELETE")
 
 	s.router.HandleFunc("/projects/{project}/applications", s.validateAuthorization("applications", "CreateApplication", s.createApplication)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/applications/{application}", s.validateAuthorization("applications", "GetApplication", s.withApplication(s.getApplication))).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/applications", s.validateAuthorization("applications", "ListApplications", s.listApplications)).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/applications/{application}", s.validateAuthorization("applications", "UpdateApplication", s.withApplication(s.updateApplication))).Methods("PUT")
+	s.router.HandleFunc("/projects/{project}/applications/{application}", s.validateAuthorization("applications", "DeleteApplication", s.withApplication(s.deleteApplication))).Methods("DELETE")
 
 	s.router.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateAuthorization("releases", "CreateRelease", s.withApplication(s.createRelease))).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/applications/{application}/releases/latest", s.validateAuthorization("releases", "GetLatestRelease", s.withApplication(s.getLatestRelease))).Methods("GET")
@@ -718,6 +727,19 @@ func (s *Service) updateRole(w http.ResponseWriter, r *http.Request, projectID, 
 	json.NewEncoder(w).Encode(role)
 }
 
+func (s *Service) deleteRole(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	vars := mux.Vars(r)
+	roleID := vars["role"]
+
+	if err := s.roles.DeleteRole(r.Context(), roleID, projectID); err != nil {
+		log.WithError(err).Error("delete role")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func (s *Service) createServiceAccount(w http.ResponseWriter, r *http.Request, projectID, userID string) {
 	var createServiceAccountRequest struct {
 		Name        string `json:"name"`
@@ -799,6 +821,38 @@ func (s *Service) listServiceAccounts(w http.ResponseWriter, r *http.Request, pr
 	json.NewEncoder(w).Encode(ret)
 }
 
+func (s *Service) updateServiceAccount(w http.ResponseWriter, r *http.Request, projectID, userID, serviceAccountID string) {
+	var updateServiceAccountRequest struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&updateServiceAccountRequest); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	serviceAccount, err := s.serviceAccounts.UpdateServiceAccount(r.Context(), serviceAccountID, projectID,
+		updateServiceAccountRequest.Name, updateServiceAccountRequest.Description)
+	if err != nil {
+		log.WithError(err).Error("update service account")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(serviceAccount)
+}
+
+func (s *Service) deleteServiceAccount(w http.ResponseWriter, r *http.Request, projectID, userID, serviceAccountID string) {
+	if err := s.serviceAccounts.DeleteServiceAccount(r.Context(), serviceAccountID, projectID); err != nil {
+		log.WithError(err).Error("delete service account")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func (s *Service) createServiceAccountRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
 	vars := mux.Vars(r)
 	serviceAccountID := vars["serviceaccount"]
@@ -842,6 +896,19 @@ func (s *Service) listServiceAccountRoleBindings(w http.ResponseWriter, r *http.
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(serviceAccountRoleBindings)
+}
+
+func (s *Service) deleteServiceAccountRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
+	vars := mux.Vars(r)
+	serviceAccountID := vars["serviceaccount"]
+
+	if err := s.serviceAccountRoleBindings.DeleteServiceAccountRoleBinding(r.Context(), serviceAccountID, roleID, projectID); err != nil {
+		log.WithError(err).Error("delete service account role binding")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) createMembership(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -972,9 +1039,10 @@ func (s *Service) listMembershipsByProject(w http.ResponseWriter, r *http.Reques
 
 func (s *Service) createMembershipRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
 	vars := mux.Vars(r)
-	membershipID := vars["membership"]
+	// TODO: rename this to userID and change all instances of the other to authenticatedUserUD
+	membershipUserID := vars["user"]
 
-	membershipRoleBinding, err := s.membershipRoleBindings.CreateMembershipRoleBinding(r.Context(), membershipID, roleID, projectID)
+	membershipRoleBinding, err := s.membershipRoleBindings.CreateMembershipRoleBinding(r.Context(), membershipUserID, roleID, projectID)
 	if err != nil {
 		log.WithError(err).Error("create membership role binding")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -987,9 +1055,10 @@ func (s *Service) createMembershipRoleBinding(w http.ResponseWriter, r *http.Req
 
 func (s *Service) getMembershipRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
 	vars := mux.Vars(r)
-	membershipID := vars["membership"]
+	// TODO: rename this to userID and change all instances of the other to authenticatedUserUD
+	membershipUserID := vars["user"]
 
-	membershipRoleBinding, err := s.membershipRoleBindings.GetMembershipRoleBinding(r.Context(), membershipID, roleID, projectID)
+	membershipRoleBinding, err := s.membershipRoleBindings.GetMembershipRoleBinding(r.Context(), membershipUserID, roleID, projectID)
 	if err == store.ErrMembershipRoleBindingNotFound {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -1005,9 +1074,10 @@ func (s *Service) getMembershipRoleBinding(w http.ResponseWriter, r *http.Reques
 
 func (s *Service) listMembershipRoleBindings(w http.ResponseWriter, r *http.Request, projectID, userID string) {
 	vars := mux.Vars(r)
-	membershipID := vars["membership"]
+	// TODO: rename this to userID and change all instances of the other to authenticatedUserUD
+	membershipUserID := vars["user"]
 
-	membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), projectID, membershipID)
+	membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), membershipUserID, projectID)
 	if err != nil {
 		log.WithError(err).Error("list membership role bindings")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -1016,6 +1086,20 @@ func (s *Service) listMembershipRoleBindings(w http.ResponseWriter, r *http.Requ
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(membershipRoleBindings)
+}
+
+func (s *Service) deleteMembershipRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
+	vars := mux.Vars(r)
+	// TODO: rename this to userID and change all instances of the other to authenticatedUserUD
+	membershipUserID := vars["user"]
+
+	if err := s.membershipRoleBindings.DeleteMembershipRoleBinding(r.Context(), membershipUserID, roleID, projectID); err != nil {
+		log.WithError(err).Error("delete membership role binding")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) createApplication(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1141,6 +1225,16 @@ func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request, proj
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(application)
+}
+
+func (s *Service) deleteApplication(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
+	if err := s.applications.DeleteApplication(r.Context(), applicationID, projectID); err != nil {
+		log.WithError(err).Error("delete application")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 // TOOD: this has a vulnerability!
