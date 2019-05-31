@@ -1042,7 +1042,7 @@ func (s *Service) createMembershipRoleBinding(w http.ResponseWriter, r *http.Req
 	// TODO: rename this to userID and change all instances of the other to authenticatedUserUD
 	membershipUserID := vars["user"]
 
-	membershipRoleBinding, err := s.membershipRoleBindings.CreateMembershipRoleBinding(r.Context(), membershipUserID, roleID, projectID)
+	membershipRoleBinding, err := s.membershipRoleBindings.CreateMembershipRoleBinding(r.Context(), membershipUserID, projectID, roleID)
 	if err != nil {
 		log.WithError(err).Error("create membership role binding")
 		w.WriteHeader(http.StatusInternalServerError)
