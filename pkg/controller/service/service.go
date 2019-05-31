@@ -1093,7 +1093,7 @@ func (s *Service) deleteMembershipRoleBinding(w http.ResponseWriter, r *http.Req
 	// TODO: rename this to userID and change all instances of the other to authenticatedUserUD
 	membershipUserID := vars["user"]
 
-	if err := s.membershipRoleBindings.DeleteMembershipRoleBinding(r.Context(), membershipUserID, roleID, projectID); err != nil {
+	if err := s.membershipRoleBindings.DeleteMembershipRoleBinding(r.Context(), membershipUserID, projectID, roleID); err != nil {
 		log.WithError(err).Error("delete membership role binding")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
