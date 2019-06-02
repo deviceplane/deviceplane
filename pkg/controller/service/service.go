@@ -1,9 +1,7 @@
 package service
 
 import (
-	"crypto/sha256"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -16,6 +14,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/controller/authz"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/email"
+	"github.com/deviceplane/deviceplane/pkg/hash"
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/gorilla/mux"
 )
@@ -201,7 +200,7 @@ func (s *Service) withUserAuth(handler func(http.ResponseWriter, *http.Request, 
 
 		switch err {
 		case nil:
-			session, err := s.sessions.ValidateSession(r.Context(), hash(sessionValue.Value))
+			session, err := s.sessions.ValidateSession(r.Context(), hash.Hash(sessionValue.Value))
 			if err == store.ErrSessionNotFound {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
@@ -219,7 +218,7 @@ func (s *Service) withUserAuth(handler func(http.ResponseWriter, *http.Request, 
 				return
 			}
 
-			userAccessKey, err := s.userAccessKeys.ValidateUserAccessKey(r.Context(), hash(accessKeyValue))
+			userAccessKey, err := s.userAccessKeys.ValidateUserAccessKey(r.Context(), hash.Hash(accessKeyValue))
 			if err == store.ErrUserAccessKeyNotFound {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
@@ -355,7 +354,7 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := s.users.CreateUser(r.Context(), registerRequest.Email, hash(registerRequest.Password),
+	user, err := s.users.CreateUser(r.Context(), registerRequest.Email, hash.Hash(registerRequest.Password),
 		registerRequest.FirstName, registerRequest.LastName)
 	if err != nil {
 		log.WithError(err).Error("create user")
@@ -365,7 +364,7 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 
 	registrationTokenValue := ksuid.New().String()
 
-	if _, err := s.registrationTokens.CreateRegistrationToken(r.Context(), user.ID, hash(registrationTokenValue)); err != nil {
+	if _, err := s.registrationTokens.CreateRegistrationToken(r.Context(), user.ID, hash.Hash(registrationTokenValue)); err != nil {
 		log.WithError(err).Error("create registration token")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -400,7 +399,7 @@ func (s *Service) confirmRegistration(w http.ResponseWriter, r *http.Request) {
 	}
 
 	registrationToken, err := s.registrationTokens.ValidateRegistrationToken(r.Context(),
-		hash(confirmRegistrationRequest.RegistrationTokenValue))
+		hash.Hash(confirmRegistrationRequest.RegistrationTokenValue))
 	if err != nil {
 		log.WithError(err).Error("validate registration token")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -426,7 +425,7 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := s.users.ValidateUser(r.Context(), loginRequest.Email, hash(loginRequest.Password))
+	user, err := s.users.ValidateUser(r.Context(), loginRequest.Email, hash.Hash(loginRequest.Password))
 	if err == store.ErrUserNotFound {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -447,7 +446,7 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 func (s *Service) newSession(w http.ResponseWriter, r *http.Request, userID string) {
 	sessionValue := ksuid.New().String()
 
-	if _, err := s.sessions.CreateSession(r.Context(), userID, hash(sessionValue)); err != nil {
+	if _, err := s.sessions.CreateSession(r.Context(), userID, hash.Hash(sessionValue)); err != nil {
 		log.WithError(err).Error("create session")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -472,7 +471,7 @@ func (s *Service) logout(w http.ResponseWriter, r *http.Request) {
 
 	switch err {
 	case nil:
-		session, err := s.sessions.ValidateSession(r.Context(), hash(sessionValue.Value))
+		session, err := s.sessions.ValidateSession(r.Context(), hash.Hash(sessionValue.Value))
 		if err == store.ErrSessionNotFound {
 			w.WriteHeader(http.StatusForbidden)
 			return
@@ -1550,7 +1549,7 @@ func (s *Service) withDeviceAuth(handler func(http.ResponseWriter, *http.Request
 			return
 		}
 
-		deviceAccessKey, err := s.deviceAccessKeys.ValidateDeviceAccessKey(r.Context(), projectID, hash(deviceAccessKeyValue))
+		deviceAccessKey, err := s.deviceAccessKeys.ValidateDeviceAccessKey(r.Context(), projectID, hash.Hash(deviceAccessKeyValue))
 		if err == store.ErrDeviceAccessKeyNotFound {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
@@ -1596,7 +1595,7 @@ func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
 
 	deviceAccessKeyValue := ksuid.New().String()
 
-	deviceAccessKey, err := s.deviceAccessKeys.CreateDeviceAccessKey(r.Context(), projectID, device.ID, hash(deviceAccessKeyValue))
+	deviceAccessKey, err := s.deviceAccessKeys.CreateDeviceAccessKey(r.Context(), projectID, device.ID, hash.Hash(deviceAccessKeyValue))
 	if err != nil {
 		log.WithError(err).Error("create device access key")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -1741,9 +1740,4 @@ func (s *Service) setDeviceServiceStatus(w http.ResponseWriter, r *http.Request,
 	}
 
 	w.WriteHeader(http.StatusOK)
-}
-
-func hash(s string) string {
-	sum := sha256.Sum256([]byte(s))
-	return fmt.Sprintf("%x", sum)
 }

@@ -1,10 +1,9 @@
 package spec
 
 import (
-	"crypto/sha256"
-	"fmt"
 	"strings"
 
+	"github.com/deviceplane/deviceplane/pkg/hash"
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
@@ -17,17 +16,26 @@ type Service struct {
 	Scheduling string            `yaml:"scheduling,omitempty"`
 }
 
-func (s Service) WithStandardLabels(serviceName string) Service {
+func (s Service) WithStandardLabels(applicationID, serviceName string) Service {
 	// TODO
 	if s.Labels == nil {
 		s.Labels = make(map[string]string)
 	}
+	s.Labels[models.ApplicationLabel] = applicationID
 	s.Labels[models.ServiceLabel] = serviceName
 	s.Labels[models.HashLabel] = s.Hash()
 	return s
 }
 
 func (s Service) Hash() string {
+	return s.hash(hash.Hash)
+}
+
+func (s Service) ShortHash() string {
+	return s.hash(hash.ShortHash)
+}
+
+func (s Service) hash(hash func(string) string) string {
 	var parts []string
 
 	parts = append(parts, s.Name)
@@ -36,10 +44,5 @@ func (s Service) Hash() string {
 	parts = append(parts, s.Command...)
 	// TODO: labels
 
-	return hash(parts)
-}
-
-func hash(parts []string) string {
-	sum := sha256.Sum256([]byte(strings.Join(parts, "")))
-	return fmt.Sprintf("%x", sum)
+	return hash(strings.Join(parts, ""))
 }

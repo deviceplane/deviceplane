@@ -14,7 +14,7 @@ var (
 type Engine interface {
 	CreateContainer(context.Context, string, spec.Service) (string, error)
 	StartContainer(context.Context, string) error
-	ListContainers(context.Context, map[string]bool, map[string]string, bool) ([]Instance, error)
+	ListContainers(context.Context, map[string]struct{}, map[string]string, bool) ([]Instance, error)
 	StopContainer(context.Context, string) error
 	RemoveContainer(context.Context, string) error
 

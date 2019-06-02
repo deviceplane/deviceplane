@@ -58,7 +58,7 @@ func (e *Engine) StartContainer(ctx context.Context, id string) error {
 	return nil
 }
 
-func (e *Engine) ListContainers(ctx context.Context, keyFilters map[string]bool, keyAndValueFilters map[string]string, all bool) ([]engine.Instance, error) {
+func (e *Engine) ListContainers(ctx context.Context, keyFilters map[string]struct{}, keyAndValueFilters map[string]string, all bool) ([]engine.Instance, error) {
 	args := filters.NewArgs()
 	for k := range keyFilters {
 		args.Add("label", k)

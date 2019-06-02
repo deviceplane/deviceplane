@@ -126,20 +126,12 @@ func (a *Agent) runSupervisor() {
 		bundle, err := a.client.GetBundle(context.TODO())
 		if err != nil {
 			log.WithError(err).Error("get bundle")
-			continue
+			goto cont
 		}
 
-		for _, application := range bundle.Applications {
-			if application.LatestRelease == nil {
-				continue
-			}
+		a.supervisor.SetApplications(bundle.Applications)
 
-			if err := a.supervisor.SetApplication(application); err != nil {
-				log.WithError(err).Error("set application")
-				continue
-			}
-		}
-
+	cont:
 		select {
 		case <-ticker.C:
 			continue
@@ -154,8 +146,10 @@ func (a *Agent) runInfoReporter() {
 	for {
 		if err := a.infoReporter.Report(); err != nil {
 			log.WithError(err).Error("report device info")
+			goto cont
 		}
 
+	cont:
 		select {
 		case <-ticker.C:
 			continue
