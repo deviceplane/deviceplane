@@ -342,6 +342,29 @@ func (s *Store) ValidateUserAccessKey(ctx context.Context, hash string) (*models
 	return userAccessKey, nil
 }
 
+func (s *Store) ListUserAccessKeys(ctx context.Context, projectID string) ([]models.UserAccessKey, error) {
+	userAccessKeyRows, err := s.db.QueryContext(ctx, listUserAccessKeys, projectID)
+	if err != nil {
+		return nil, errors.Wrap(err, "query user access keys")
+	}
+	defer userAccessKeyRows.Close()
+
+	userAccessKeys := make([]models.UserAccessKey, 0)
+	for userAccessKeyRows.Next() {
+		userAccessKey, err := s.scanUserAccessKey(userAccessKeyRows)
+		if err != nil {
+			return nil, err
+		}
+		userAccessKeys = append(userAccessKeys, *userAccessKey)
+	}
+
+	if err := userAccessKeyRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return userAccessKeys, nil
+}
+
 func (s *Store) DeleteUserAccessKey(ctx context.Context, id string) error {
 	_, err := s.db.ExecContext(
 		ctx,
@@ -645,22 +668,22 @@ func (s *Store) scanMembership(scanner scanner) (*models.Membership, error) {
 	return &membership, nil
 }
 
-func (s *Store) CreateMembershipRoleBinding(ctx context.Context, userID, projectID, roleID string) (*models.MembershipRoleBinding, error) {
+func (s *Store) CreateMembershipRoleBinding(ctx context.Context, userID, roleID, projectID string) (*models.MembershipRoleBinding, error) {
 	if _, err := s.db.ExecContext(
 		ctx,
 		createMembershipRoleBinding,
 		userID,
-		projectID,
 		roleID,
+		projectID,
 	); err != nil {
 		return nil, err
 	}
 
-	return s.GetMembershipRoleBinding(ctx, userID, projectID, roleID)
+	return s.GetMembershipRoleBinding(ctx, userID, roleID, projectID)
 }
 
-func (s *Store) GetMembershipRoleBinding(ctx context.Context, userID, projectID, roleID string) (*models.MembershipRoleBinding, error) {
-	membershipRoleBindingRow := s.db.QueryRowContext(ctx, getMembershipRoleBinding, userID, projectID, roleID)
+func (s *Store) GetMembershipRoleBinding(ctx context.Context, userID, roleID, projectID string) (*models.MembershipRoleBinding, error) {
+	membershipRoleBindingRow := s.db.QueryRowContext(ctx, getMembershipRoleBinding, userID, roleID, projectID)
 
 	membershipRoleBinding, err := s.scanMembershipRoleBinding(membershipRoleBindingRow)
 	if err == sql.ErrNoRows {
@@ -695,13 +718,13 @@ func (s *Store) ListMembershipRoleBindings(ctx context.Context, userID, projectI
 	return membershipRoleBindings, nil
 }
 
-func (s *Store) DeleteMembershipRoleBinding(ctx context.Context, userID, projectID, roleID string) error {
+func (s *Store) DeleteMembershipRoleBinding(ctx context.Context, userID, roleID, projectID string) error {
 	_, err := s.db.ExecContext(
 		ctx,
 		deleteMembershipRoleBinding,
 		userID,
-		projectID,
 		roleID,
+		projectID,
 	)
 	return err
 }
@@ -710,8 +733,8 @@ func (s *Store) scanMembershipRoleBinding(scanner scanner) (*models.MembershipRo
 	var membershipRoleBinding models.MembershipRoleBinding
 	if err := scanner.Scan(
 		&membershipRoleBinding.UserID,
-		&membershipRoleBinding.ProjectID,
 		&membershipRoleBinding.RoleID,
+		&membershipRoleBinding.ProjectID,
 	); err != nil {
 		return nil, err
 	}
@@ -864,6 +887,29 @@ func (s *Store) ValidateServiceAccountAccessKey(ctx context.Context, hash string
 	return serviceAccountAccessKey, nil
 }
 
+func (s *Store) ListServiceAccountAccessKeys(ctx context.Context, projectID, serviceAccountID string) ([]models.ServiceAccountAccessKey, error) {
+	serviceAccountAccessKeyRows, err := s.db.QueryContext(ctx, listServiceAccountAccessKeys, projectID, serviceAccountID)
+	if err != nil {
+		return nil, errors.Wrap(err, "query service account access keys")
+	}
+	defer serviceAccountAccessKeyRows.Close()
+
+	serviceAccountAccessKeys := make([]models.ServiceAccountAccessKey, 0)
+	for serviceAccountAccessKeyRows.Next() {
+		serviceAccountAccessKey, err := s.scanServiceAccountAccessKey(serviceAccountAccessKeyRows)
+		if err != nil {
+			return nil, err
+		}
+		serviceAccountAccessKeys = append(serviceAccountAccessKeys, *serviceAccountAccessKey)
+	}
+
+	if err := serviceAccountAccessKeyRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return serviceAccountAccessKeys, nil
+}
+
 func (s *Store) DeleteServiceAccountAccessKey(ctx context.Context, id, projectID string) error {
 	_, err := s.db.ExecContext(
 		ctx,
@@ -936,7 +982,7 @@ func (s *Store) ListServiceAccountRoleBindings(ctx context.Context, serviceAccou
 	return serviceAccountRoleBindings, nil
 }
 
-func (s *Store) DeleteServiceAccountRoleBinding(ctx context.Context, serviceAccountID, projectID, roleID string) error {
+func (s *Store) DeleteServiceAccountRoleBinding(ctx context.Context, serviceAccountID, roleID, projectID string) error {
 	_, err := s.db.ExecContext(
 		ctx,
 		deleteServiceAccountRoleBinding,

@@ -38,6 +38,7 @@ type UserAccessKeys interface {
 	CreateUserAccessKey(ctx context.Context, userID string, hash string) (*models.UserAccessKey, error)
 	GetUserAccessKey(ctx context.Context, id string) (*models.UserAccessKey, error)
 	ValidateUserAccessKey(ctx context.Context, hash string) (*models.UserAccessKey, error)
+	ListUserAccessKeys(ctx context.Context, userID string) ([]models.UserAccessKey, error)
 	DeleteUserAccessKey(ctx context.Context, id string) error
 }
 
@@ -81,10 +82,10 @@ type Memberships interface {
 var ErrMembershipNotFound = errors.New("membership not found")
 
 type MembershipRoleBindings interface {
-	CreateMembershipRoleBinding(ctx context.Context, userID, projectID, roleID string) (*models.MembershipRoleBinding, error)
-	GetMembershipRoleBinding(ctx context.Context, userID, projectID, roleID string) (*models.MembershipRoleBinding, error)
+	CreateMembershipRoleBinding(ctx context.Context, userID, roleID, projectID string) (*models.MembershipRoleBinding, error)
+	GetMembershipRoleBinding(ctx context.Context, userID, roleID, projectID string) (*models.MembershipRoleBinding, error)
 	ListMembershipRoleBindings(ctx context.Context, userID, projectID string) ([]models.MembershipRoleBinding, error)
-	DeleteMembershipRoleBinding(ctx context.Context, userID, projectID, roleID string) error
+	DeleteMembershipRoleBinding(ctx context.Context, userID, roleID, projectID string) error
 }
 
 var ErrMembershipRoleBindingNotFound = errors.New("membership role binding not found")
@@ -104,6 +105,7 @@ type ServiceAccountAccessKeys interface {
 	CreateServiceAccountAccessKey(ctx context.Context, projectID, serviceAccountID string, hash string) (*models.ServiceAccountAccessKey, error)
 	GetServiceAccountAccessKey(ctx context.Context, id, projectID string) (*models.ServiceAccountAccessKey, error)
 	ValidateServiceAccountAccessKey(ctx context.Context, hash string) (*models.ServiceAccountAccessKey, error)
+	ListServiceAccountAccessKeys(ctx context.Context, projectID, serviceAccountID string) ([]models.ServiceAccountAccessKey, error)
 	DeleteServiceAccountAccessKey(ctx context.Context, id, projectID string) error
 }
 

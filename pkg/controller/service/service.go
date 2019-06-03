@@ -120,12 +120,12 @@ func NewService(
 	s.router.HandleFunc("/completeregistration", s.confirmRegistration).Methods("POST")
 	s.router.HandleFunc("/login", s.login).Methods("POST")
 	s.router.HandleFunc("/logout", s.logout).Methods("POST")
-	s.router.HandleFunc("/me", s.withUserAuth(s.me)).Methods("GET")
+	s.router.HandleFunc("/me", s.withUserOrServiceAccountAuth(s.me)).Methods("GET")
 
-	s.router.HandleFunc("/users/{user}/memberships", s.withUserAuth(s.listMembershipsByUser)).Methods("GET")
-	s.router.HandleFunc("/users/{user}/memberships/full", s.withUserAuth(s.listMembershipsByUserFull)).Methods("GET")
+	s.router.HandleFunc("/users/{user}/memberships", s.withUserOrServiceAccountAuth(s.listMembershipsByUser)).Methods("GET")
+	s.router.HandleFunc("/users/{user}/memberships/full", s.withUserOrServiceAccountAuth(s.listMembershipsByUserFull)).Methods("GET")
 
-	s.router.HandleFunc("/projects", s.withUserAuth(s.createProject)).Methods("POST")
+	s.router.HandleFunc("/projects", s.withUserOrServiceAccountAuth(s.createProject)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}", s.validateAuthorization("projects", "GetProject", s.getProject)).Methods("GET")
 
 	s.router.HandleFunc("/projects/{project}/roles", s.validateAuthorization("roles", "CreateRole", s.createRole)).Methods("POST")
@@ -148,6 +148,11 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/serviceaccounts", s.validateAuthorization("serviceaccounts", "ListServiceAccounts", s.listServiceAccounts)).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}", s.validateAuthorization("serviceaccounts", "UpdateServiceAccount", s.withServiceAccount(s.updateServiceAccount))).Methods("PUT")
 	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}", s.validateAuthorization("serviceaccounts", "DeleteServiceAccount", s.withServiceAccount(s.deleteServiceAccount))).Methods("DELETE")
+
+	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountaccesskeys", s.validateAuthorization("serviceaccountaccesskeys", "CreateServiceAccountAccessKey", s.createServiceAccountAccessKey)).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountaccesskeys/{serviceaccountaccesskey}", s.validateAuthorization("serviceaccountaccesskeys", "GetServiceAccountAccessKey", s.getServiceAccountAccessKey)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountaccesskeys", s.validateAuthorization("serviceaccountsaccesskeys", "ListServiceAccountAccessKeys", s.listServiceAccountAccessKeys)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountaccesskeys/{serviceaccountaccesskey}", s.validateAuthorization("serviceaccountaccesskeys", "DeleteServiceAccount", s.deleteServiceAccountAccessKey)).Methods("DELETE")
 
 	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.validateAuthorization("serviceaccountrolebindings", "CreateServiceAccountRoleBinding", s.withRole(s.createServiceAccountRoleBinding))).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.validateAuthorization("serviceaccountrolebindings", "GetServiceAccountRoleBinding", s.withRole(s.getServiceAccountRoleBinding))).Methods("GET")
@@ -192,9 +197,10 @@ func (s *Service) health(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (s *Service) withUserAuth(handler func(http.ResponseWriter, *http.Request, string)) func(http.ResponseWriter, *http.Request) {
+func (s *Service) withUserOrServiceAccountAuth(handler func(http.ResponseWriter, *http.Request, string, string)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var userID string
+		var serviceAccountAccessKey *models.ServiceAccountAccessKey
 
 		sessionValue, err := r.Cookie(sessionCookie)
 
@@ -218,49 +224,75 @@ func (s *Service) withUserAuth(handler func(http.ResponseWriter, *http.Request, 
 				return
 			}
 
-			userAccessKey, err := s.userAccessKeys.ValidateUserAccessKey(r.Context(), hash.Hash(accessKeyValue))
-			if err == store.ErrUserAccessKeyNotFound {
+			if strings.HasPrefix(accessKeyValue, "u") {
+				userAccessKey, err := s.userAccessKeys.ValidateUserAccessKey(r.Context(), hash.Hash(accessKeyValue))
+				if err == store.ErrUserAccessKeyNotFound {
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				} else if err != nil {
+					log.WithError(err).Error("validate user access key")
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				userID = userAccessKey.UserID
+			} else if strings.HasPrefix(accessKeyValue, "s") {
+				serviceAccountAccessKey, err = s.serviceAccountAccessKeys.ValidateServiceAccountAccessKey(r.Context(), hash.Hash(accessKeyValue))
+				if err == store.ErrServiceAccountAccessKeyNotFound {
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				} else if err != nil {
+					log.WithError(err).Error("validate service account access key")
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+			} else {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
-			} else if err != nil {
-				log.WithError(err).Error("validate user access key")
+			}
+		default:
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		if userID == "" && serviceAccountAccessKey == nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		if userID != "" {
+			user, err := s.users.GetUser(r.Context(), userID)
+			if err != nil {
+				log.WithError(err).Error("get user")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
-			userID = userAccessKey.UserID
-		default:
-			log.WithError(err).Error("get session cookie")
+			if !user.RegistrationCompleted {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
+
+			handler(w, r, userID, "")
+		} else if serviceAccountAccessKey != nil {
+			serviceAccount, err := s.serviceAccounts.GetServiceAccount(r.Context(),
+				serviceAccountAccessKey.ServiceAccountID, serviceAccountAccessKey.ProjectID)
+			if err != nil {
+				log.WithError(err).Error("get service account")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			handler(w, r, "", serviceAccount.ID)
+		} else {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-
-		if userID == "" {
-			w.WriteHeader(http.StatusForbidden)
-			return
-		}
-
-		user, err := s.users.GetUser(r.Context(), userID)
-		if err == store.ErrUserNotFound {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		} else if err != nil {
-			log.WithError(err).Error("get user")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		if !user.RegistrationCompleted {
-			w.WriteHeader(http.StatusForbidden)
-			return
-		}
-
-		handler(w, r, userID)
 	}
 }
 
 func (s *Service) validateAuthorization(requestedResource, requestedAction string, handler func(http.ResponseWriter, *http.Request, string, string)) func(http.ResponseWriter, *http.Request) {
-	return s.withUserAuth(func(w http.ResponseWriter, r *http.Request, userID string) {
+	return s.withUserOrServiceAccountAuth(func(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
 		vars := mux.Vars(r)
 		project := vars["project"]
 		if project == "" {
@@ -285,31 +317,63 @@ func (s *Service) validateAuthorization(requestedResource, requestedAction strin
 			projectID = project.ID
 		}
 
-		membership, err := s.memberships.GetMembership(r.Context(), userID, projectID)
-		if err != nil {
-			// TODO: better logging all around
-			log.WithField("user_id", userID).
-				WithField("project_id", projectID).
-				WithError(err).
-				Error("get membership")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		if membership == nil {
-			w.WriteHeader(http.StatusForbidden)
-			return
-		}
+		var roles []string
+		if authenticatedUserID != "" {
+			if _, err := s.memberships.GetMembership(r.Context(),
+				authenticatedUserID, projectID,
+			); err == store.ErrMembershipNotFound {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			} else if err != nil {
+				// TODO: better logging all around
+				log.WithField("user_id", authenticatedUserID).
+					WithField("project_id", projectID).
+					WithError(err).
+					Error("get membership")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 
-		membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), membership.UserID, projectID)
-		if err != nil {
-			log.WithError(err).Error("list membership role bindings")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
+			roleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(),
+				authenticatedUserID, projectID)
+			if err != nil {
+				log.WithError(err).Error("list membership role bindings")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			for _, roleBinding := range roleBindings {
+				roles = append(roles, roleBinding.RoleID)
+			}
+		} else if authenticatedServiceAccountID != "" {
+			// Sanity check that this service account belongs to this project
+			if _, err := s.serviceAccounts.GetServiceAccount(r.Context(),
+				authenticatedServiceAccountID, projectID,
+			); err == store.ErrServiceAccountNotFound {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			} else if err != nil {
+				log.WithError(err).Error("get service account")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			roleBindings, err := s.serviceAccountRoleBindings.ListServiceAccountRoleBindings(r.Context(),
+				authenticatedServiceAccountID, projectID)
+			if err != nil {
+				log.WithError(err).Error("list service account role bindings")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			for _, roleBinding := range roleBindings {
+				roles = append(roles, roleBinding.RoleID)
+			}
 		}
 
 		var configs []authz.Config
-		for _, membershipRoleBinding := range membershipRoleBindings {
-			role, err := s.roles.GetRole(r.Context(), membershipRoleBinding.RoleID, projectID)
+		for _, roleID := range roles {
+			role, err := s.roles.GetRole(r.Context(), roleID, projectID)
 			if err == store.ErrRoleNotFound {
 				continue
 			} else if err != nil {
@@ -338,7 +402,7 @@ func (s *Service) validateAuthorization(requestedResource, requestedAction strin
 			return
 		}
 
-		handler(w, r, projectID, userID)
+		handler(w, r, projectID, authenticatedUserID)
 	})
 }
 
@@ -496,7 +560,7 @@ func (s *Service) logout(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Service) me(w http.ResponseWriter, r *http.Request, authenticatedUserID string) {
+func (s *Service) me(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
 	user, err := s.users.GetUser(r.Context(), authenticatedUserID)
 	if err != nil {
 		log.WithError(err).Error("get user")
@@ -508,7 +572,7 @@ func (s *Service) me(w http.ResponseWriter, r *http.Request, authenticatedUserID
 	json.NewEncoder(w).Encode(user)
 }
 
-func (s *Service) listMembershipsByUser(w http.ResponseWriter, r *http.Request, authenticatedUserID string) {
+func (s *Service) listMembershipsByUser(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
 	vars := mux.Vars(r)
 	userID := vars["user"]
 
@@ -528,7 +592,7 @@ func (s *Service) listMembershipsByUser(w http.ResponseWriter, r *http.Request, 
 	json.NewEncoder(w).Encode(memberships)
 }
 
-func (s *Service) listMembershipsByUserFull(w http.ResponseWriter, r *http.Request, authenticatedUserID string) {
+func (s *Service) listMembershipsByUserFull(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
 	vars := mux.Vars(r)
 	userID := vars["user"]
 
@@ -590,7 +654,7 @@ func (s *Service) listMembershipsByUserFull(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(membershipsFull)
 }
 
-func (s *Service) createProject(w http.ResponseWriter, r *http.Request, userID string) {
+func (s *Service) createProject(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
 	var createProjectRequest struct {
 		Name string `json:"name"`
 	}
@@ -606,7 +670,7 @@ func (s *Service) createProject(w http.ResponseWriter, r *http.Request, userID s
 		return
 	}
 
-	if _, err = s.memberships.CreateMembership(r.Context(), userID, project.ID); err != nil {
+	if _, err = s.memberships.CreateMembership(r.Context(), authenticatedUserID, project.ID); err != nil {
 		log.WithError(err).Error("create membership")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -614,20 +678,46 @@ func (s *Service) createProject(w http.ResponseWriter, r *http.Request, userID s
 
 	adminAllRoleBytes, err := yaml.Marshal(authz.AdminAllRole)
 	if err != nil {
-		log.WithError(err).Error("marshal role config")
+		log.WithError(err).Error("marshal admin role config")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	adminRole, err := s.roles.CreateRole(r.Context(), project.ID, "default", "", string(adminAllRoleBytes))
+	adminRole, err := s.roles.CreateRole(r.Context(), project.ID, "admin-all", "", string(adminAllRoleBytes))
 	if err != nil {
-		log.WithError(err).Error("create role")
+		log.WithError(err).Error("create admin role")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	writeAllRoleBytes, err := yaml.Marshal(authz.WriteAllRole)
+	if err != nil {
+		log.WithError(err).Error("marshal write role config")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if _, err = s.roles.CreateRole(r.Context(), project.ID, "write-all", "", string(writeAllRoleBytes)); err != nil {
+		log.WithError(err).Error("create write role")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	readAllRoleBytes, err := yaml.Marshal(authz.ReadAllRole)
+	if err != nil {
+		log.WithError(err).Error("marshal read role config")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if _, err = s.roles.CreateRole(r.Context(), project.ID, "read-all", "", string(readAllRoleBytes)); err != nil {
+		log.WithError(err).Error("create read role")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	if _, err = s.membershipRoleBindings.CreateMembershipRoleBinding(r.Context(),
-		userID, project.ID, adminRole.ID,
+		authenticatedUserID, adminRole.ID, project.ID,
 	); err != nil {
 		log.WithError(err).Error("create membership role binding")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -772,8 +862,34 @@ func (s *Service) getServiceAccount(w http.ResponseWriter, r *http.Request, proj
 		return
 	}
 
+	var ret interface{} = serviceAccount
+	if _, ok := r.URL.Query()["full"]; ok {
+		serviceAccountRoleBindings, err := s.serviceAccountRoleBindings.ListServiceAccountRoleBindings(r.Context(), serviceAccountID, projectID)
+		if err != nil {
+			log.WithError(err).Error("list service account role bindings")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		roles := make([]models.Role, 0)
+		for _, serviceAccountRoleBinding := range serviceAccountRoleBindings {
+			role, err := s.roles.GetRole(r.Context(), serviceAccountRoleBinding.RoleID, projectID)
+			if err != nil {
+				log.WithError(err).Error("get role")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			roles = append(roles, *role)
+		}
+
+		ret = models.ServiceAccountFull{
+			ServiceAccount: *serviceAccount,
+			Roles:          roles,
+		}
+	}
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(serviceAccount)
+	json.NewEncoder(w).Encode(ret)
 }
 
 func (s *Service) listServiceAccounts(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -845,6 +961,70 @@ func (s *Service) updateServiceAccount(w http.ResponseWriter, r *http.Request, p
 func (s *Service) deleteServiceAccount(w http.ResponseWriter, r *http.Request, projectID, userID, serviceAccountID string) {
 	if err := s.serviceAccounts.DeleteServiceAccount(r.Context(), serviceAccountID, projectID); err != nil {
 		log.WithError(err).Error("delete service account")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Service) createServiceAccountAccessKey(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	vars := mux.Vars(r)
+	serviceAccountID := vars["serviceaccount"]
+
+	serviceAccountAccessKeyValue := "s" + ksuid.New().String()
+
+	serviceAccount, err := s.serviceAccountAccessKeys.CreateServiceAccountAccessKey(r.Context(),
+		projectID, serviceAccountID, serviceAccountAccessKeyValue)
+	if err != nil {
+		log.WithError(err).Error("create service account access key")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(serviceAccount)
+}
+
+func (s *Service) getServiceAccountAccessKey(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	vars := mux.Vars(r)
+	serviceAccountAccessKeyID := vars["serviceaccountaccesskey"]
+
+	serviceAccountAccessKey, err := s.serviceAccountAccessKeys.GetServiceAccountAccessKey(r.Context(), serviceAccountAccessKeyID, projectID)
+	if err == store.ErrServiceAccountAccessKeyNotFound {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("get service account access key")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(serviceAccountAccessKey)
+}
+
+func (s *Service) listServiceAccountAccessKeys(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	vars := mux.Vars(r)
+	serviceAccountID := vars["serviceaccount"]
+
+	serviceAccountAccessKeys, err := s.serviceAccountAccessKeys.ListServiceAccountAccessKeys(r.Context(), projectID, serviceAccountID)
+	if err != nil {
+		log.WithError(err).Error("list service accounts")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(serviceAccountAccessKeys)
+}
+
+func (s *Service) deleteServiceAccountAccessKey(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	vars := mux.Vars(r)
+	serviceAccountAccessKeyID := vars["serviceaccountaccesskey"]
+
+	if err := s.serviceAccountAccessKeys.DeleteServiceAccountAccessKey(r.Context(), serviceAccountAccessKeyID, projectID); err != nil {
+		log.WithError(err).Error("delete service account access key")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -962,7 +1142,7 @@ func (s *Service) getMembership(w http.ResponseWriter, r *http.Request, projectI
 			return
 		}
 
-		var roles []models.Role
+		roles := make([]models.Role, 0)
 		for _, membershipRoleBinding := range membershipRoleBindings {
 			role, err := s.roles.GetRole(r.Context(), membershipRoleBinding.RoleID, projectID)
 			if err != nil {
@@ -1011,7 +1191,7 @@ func (s *Service) listMembershipsByProject(w http.ResponseWriter, r *http.Reques
 				return
 			}
 
-			var roles []models.Role
+			roles := make([]models.Role, 0)
 			for _, membershipRoleBinding := range membershipRoleBindings {
 				role, err := s.roles.GetRole(r.Context(), membershipRoleBinding.RoleID, projectID)
 				if err != nil {
@@ -1041,7 +1221,7 @@ func (s *Service) createMembershipRoleBinding(w http.ResponseWriter, r *http.Req
 	// TODO: rename this to userID and change all instances of the other to authenticatedUserUD
 	membershipUserID := vars["user"]
 
-	membershipRoleBinding, err := s.membershipRoleBindings.CreateMembershipRoleBinding(r.Context(), membershipUserID, projectID, roleID)
+	membershipRoleBinding, err := s.membershipRoleBindings.CreateMembershipRoleBinding(r.Context(), membershipUserID, roleID, projectID)
 	if err != nil {
 		log.WithError(err).Error("create membership role binding")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -1092,7 +1272,7 @@ func (s *Service) deleteMembershipRoleBinding(w http.ResponseWriter, r *http.Req
 	// TODO: rename this to userID and change all instances of the other to authenticatedUserUD
 	membershipUserID := vars["user"]
 
-	if err := s.membershipRoleBindings.DeleteMembershipRoleBinding(r.Context(), membershipUserID, projectID, roleID); err != nil {
+	if err := s.membershipRoleBindings.DeleteMembershipRoleBinding(r.Context(), membershipUserID, roleID, projectID); err != nil {
 		log.WithError(err).Error("delete membership role binding")
 		w.WriteHeader(http.StatusInternalServerError)
 		return

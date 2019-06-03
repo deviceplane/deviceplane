@@ -92,6 +92,11 @@ const validateUserAccessKey = `
   where hash = ?
 `
 
+const listUserAccessKeys = `
+  select id, user_id from user_access_keys
+  where user_id = ?
+`
+
 const deleteUserAccessKey = `
   delete from user_access_keys
   where id = ?
@@ -196,25 +201,25 @@ const deleteMembership = `
 const createMembershipRoleBinding = `
   insert into membership_role_bindings (
     user_id,
-    project_id,
-    role_id
+    role_id,
+    project_id
   )
   values (?, ?, ?)
 `
 
 const getMembershipRoleBinding = `
-  select user_id, project_id, role_id from membership_role_bindings
-  where user_id = ? and project_id = ? and role_id = ?
+  select user_id, role_id, project_id from membership_role_bindings
+  where user_id = ? and role_id = ? and project_id = ?
 `
 
 const listMembershipRoleBindings = `
-  select user_id, project_id, role_id from membership_role_bindings
+  select user_id, role_id, project_id from membership_role_bindings
   where user_id = ? and project_id = ?
 `
 
 const deleteMembershipRoleBinding = `
   delete from membership_role_bindings
-  where user_id = ? and project_id = ? and role_id = ?
+  where user_id = ? and role_id = ? and project_id = ?
   limit 1
 `
 
@@ -275,6 +280,11 @@ const validateServiceAccountAccessKey = `
   where hash = ? and project_id = ?
 `
 
+const listServiceAccountAccessKeys = `
+  select id, project_id, service_account_id from service_account_access_keys
+  where project_id = ? and service_account_id = ?
+`
+
 const deleteServiceAccountAccessKey = `
   delete from service_account_access_keys
   where id = ? and project_id = ?
@@ -301,7 +311,7 @@ const listServiceAccountRoleBindings = `
 `
 
 const deleteServiceAccountRoleBinding = `
-  delete from service_account_membership_role_bindings
+  delete from service_account_role_bindings
   where service_account_id = ? and role_id = ? and project_id = ?
   limit 1
 `

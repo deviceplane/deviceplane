@@ -62,9 +62,9 @@ type Membership struct {
 
 type MembershipRoleBinding struct {
 	UserID    string    `json:"userId"`
-	ProjectID string    `json:"projectId"`
 	RoleID    string    `json:"roleId"`
 	CreatedAt time.Time `json:"createdAt"`
+	ProjectID string    `json:"projectId"`
 }
 
 type ServiceAccount struct {

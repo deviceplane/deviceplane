@@ -134,9 +134,9 @@ create table if not exists memberships (
 
 create table if not exists membership_role_bindings (
   user_id varchar(32) not null,
-  project_id varchar(32) not null,
   role_id varchar(32) not null,
   created_at timestamp not null default current_timestamp,
+  project_id varchar(32) not null,
 
   primary key (user_id, project_id, role_id),
   foreign key membership_role_bindings_user_id_project_id(user_id, project_id)

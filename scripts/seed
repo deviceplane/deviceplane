@@ -3,15 +3,15 @@ set -e
 
 query="
 use deviceplane;
-insert into users (id, email, password_hash, first_name, last_name) values ('usr', 'email@example.com', '5E884898DA28047151D0E56F8DC6292773603D0D6AABBDD62A11EF721D1542D8', 'First', 'Last');
-insert into user_access_keys (id, user_id, hash) values ('uky', 'usr', '2C70E12B7A0646F92279F427C7B38E7334D8E5389CFF167A1DC30E73F826B683');
-insert into projects (id, name) values ('prj', 'testproject');
-insert into memberships (user_id, project_id) values ('usr', 'prj');
-insert into roles (id, project_id, name, description, config) values ('rol', 'prj', 'role', 'role description', '{\"rules\":[{\"resources\":[\"*\"],\"actions\":[\"admin\"]}]}');
-insert into membership_role_bindings (user_id, project_id, role_id) values ('usr', 'prj', 'rol');
-insert into applications (id, project_id, name, description) values ('app', 'prj', 'testapplication', 'application description');
+insert into users (id, email, password_hash, first_name, last_name) values ('usr_xxx', 'email@example.com', '5E884898DA28047151D0E56F8DC6292773603D0D6AABBDD62A11EF721D1542D8', 'First', 'Last');
+insert into user_access_keys (id, user_id, hash) values ('uky_xxx', 'usr_xxx', '2F9EEBDF3AD52A2235460C18F4EC2524569E32DC36BB5E1F3AC2A4F17B30EC0C');
+insert into projects (id, name) values ('prj_xxx', 'testproject');
+insert into memberships (user_id, project_id) values ('usr_xxx', 'prj_xxx');
+insert into roles (id, project_id, name, description, config) values ('rol_xxx', 'prj_xxx', 'role_xxx', 'role description', '{\"rules\":[{\"resources\":[\"*\"],\"actions\":[\"admin\"]}]}');
+insert into membership_role_bindings (user_id, project_id, role_id) values ('usr_xxx', 'prj_xxx', 'rol_xxx');
+insert into applications (id, project_id, name, description) values ('app_xxx', 'prj_xxx', 'testapplication', 'application description');
 
-update users set registration_completed = 1 where id = 'usr';
+update users set registration_completed = 1 where id = 'usr_xxx';
 "
 
 echo "$query" | mysql -h 127.0.0.1 -u user -ppass -P 3306
