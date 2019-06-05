@@ -79,6 +79,10 @@ var (
 		"CreateServiceAccount",
 		"UpdateServiceAccount",
 		"DeleteServiceAccount",
+		"CreateServiceAccountAccessKey",
+		"GetServiceAccountAccessKey",
+		"ListServiceAccountAccessKeys",
+		"DeleteServiceAccountAccessKey",
 		"CreateServiceAccountRoleBinding",
 		"DeleteServiceAccountRoleBinding",
 	}...)

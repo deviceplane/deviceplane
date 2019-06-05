@@ -854,6 +854,7 @@ func (s *Store) CreateServiceAccountAccessKey(ctx context.Context, projectID, se
 		id,
 		projectID,
 		serviceAccountID,
+		hash,
 	); err != nil {
 		return nil, err
 	}
@@ -862,7 +863,7 @@ func (s *Store) CreateServiceAccountAccessKey(ctx context.Context, projectID, se
 }
 
 func (s *Store) GetServiceAccountAccessKey(ctx context.Context, id, projectID string) (*models.ServiceAccountAccessKey, error) {
-	serviceAccountAccessKeyRow := s.db.QueryRowContext(ctx, getServiceAccountAccessKey, id)
+	serviceAccountAccessKeyRow := s.db.QueryRowContext(ctx, getServiceAccountAccessKey, id, projectID)
 
 	serviceAccountAccessKey, err := s.scanServiceAccountAccessKey(serviceAccountAccessKeyRow)
 	if err == sql.ErrNoRows {
