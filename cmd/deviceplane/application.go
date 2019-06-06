@@ -20,20 +20,18 @@ var application = cli.Command{
 				},
 			},
 			Action: func(c *cli.Context) error {
-				url := c.GlobalString("url")
-				accessKey := c.GlobalString("access-key")
-				client := client.NewClient(url, accessKey, nil)
+				return withClient(c, func(client *client.Client) error {
+					project := c.String("project")
 
-				project := c.String("project")
+					application, err := client.CreateApplication(context.TODO(), project)
+					if err != nil {
+						return err
+					}
 
-				application, err := client.CreateApplication(context.TODO(), project)
-				if err != nil {
-					return err
-				}
+					fmt.Println(application.ID)
 
-				fmt.Println(application.ID)
-
-				return nil
+					return nil
+				})
 			},
 		},
 	},

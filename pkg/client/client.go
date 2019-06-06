@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/deviceplane/deviceplane/pkg/models"
@@ -18,17 +19,14 @@ const (
 )
 
 type Client struct {
-	url        string
+	url        *url.URL
 	accessKey  string
 	httpClient *http.Client
 }
 
-func NewClient(url, accessKey string, httpClient *http.Client) *Client {
+func NewClient(url *url.URL, accessKey string, httpClient *http.Client) *Client {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
-	}
-	if strings.HasSuffix(url, "/") {
-		url = url[:len(url)-1]
 	}
 	return &Client{
 		url:        url,
@@ -112,5 +110,5 @@ func (c *Client) post(ctx context.Context, in, out interface{}, s ...string) err
 }
 
 func (c *Client) getURL(s ...string) string {
-	return strings.Join(append([]string{c.url}, s...), "/")
+	return strings.Join(append([]string{c.url.String()}, s...), "/")
 }

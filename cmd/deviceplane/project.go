@@ -15,18 +15,16 @@ var project = cli.Command{
 		{
 			Name: "create",
 			Action: func(c *cli.Context) error {
-				url := c.GlobalString("url")
-				accessKey := c.GlobalString("access-key")
-				client := client.NewClient(url, accessKey, nil)
+				return withClient(c, func(client *client.Client) error {
+					project, err := client.CreateProject(context.TODO())
+					if err != nil {
+						return err
+					}
 
-				project, err := client.CreateProject(context.TODO())
-				if err != nil {
-					return err
-				}
+					fmt.Println(project.ID)
 
-				fmt.Println(project.ID)
-
-				return nil
+					return nil
+				})
 			},
 		},
 	},
