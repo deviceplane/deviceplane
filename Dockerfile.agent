@@ -1,4 +1,4 @@
-FROM arm32v7/alpine:3.9
+FROM balenalib/raspberrypi3-alpine:3.9
 RUN apk -u add ca-certificates util-linux
 
 FROM golang:1.12
