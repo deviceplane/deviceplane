@@ -9,6 +9,7 @@ import (
 
 	"github.com/apex/log"
 	agent_client "github.com/deviceplane/deviceplane/pkg/agent/client"
+	"github.com/deviceplane/deviceplane/pkg/agent/connector"
 	"github.com/deviceplane/deviceplane/pkg/agent/info"
 	"github.com/deviceplane/deviceplane/pkg/agent/supervisor"
 	"github.com/deviceplane/deviceplane/pkg/engine"
@@ -28,6 +29,7 @@ type Agent struct {
 	registrationToken string
 	stateDir          string
 	supervisor        *supervisor.Supervisor
+	connector         *connector.Connector
 	infoReporter      *info.Reporter
 }
 
@@ -47,6 +49,7 @@ func NewAgent(client *agent_client.Client, engine engine.Engine, projectID, regi
 				CurrentReleaseID: currentReleaseID,
 			})
 		}),
+		connector:    connector.NewConnector(client),
 		infoReporter: info.NewReporter(client),
 	}
 }
@@ -114,6 +117,7 @@ func (a *Agent) register() error {
 
 func (a *Agent) Run() {
 	go a.runSupervisor()
+	go a.runConnector()
 	go a.runInfoReporter()
 	select {}
 }
@@ -132,6 +136,20 @@ func (a *Agent) runSupervisor() {
 		a.supervisor.SetApplications(bundle.Applications)
 
 	cont:
+		select {
+		case <-ticker.C:
+			continue
+		}
+	}
+}
+
+func (a *Agent) runConnector() {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for {
+		a.connector.Do()
+
 		select {
 		case <-ticker.C:
 			continue

@@ -3,8 +3,11 @@ package client
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
+	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strings"
 
@@ -67,6 +70,30 @@ func (c *Client) CreateRelease(ctx context.Context, project, application, config
 		return nil, err
 	}
 	return &release, nil
+}
+
+func (c *Client) InitiateSSH(ctx context.Context, project, deviceID string) (net.Conn, error) {
+	conn, err := tls.Dial("tcp", c.url.Host, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	clientConn := httputil.NewClientConn(conn, nil)
+
+	req, err := http.NewRequest("GET", c.getURL("projects", project, "devices", deviceID, "ssh"), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.SetBasicAuth(c.accessKey, "")
+
+	if _, err = clientConn.Do(req); err != httputil.ErrPersistEOF && err != nil {
+		return nil, err
+	}
+
+	hijackedConn, _ := clientConn.Hijack()
+
+	return hijackedConn, nil
 }
 
 func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {

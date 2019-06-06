@@ -3,9 +3,13 @@ package client
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"io/ioutil"
+	"net"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"strings"
 
 	"github.com/apex/log"
@@ -17,7 +21,7 @@ const (
 )
 
 type Client struct {
-	url        string
+	url        *url.URL
 	projectID  string
 	httpClient *http.Client
 
@@ -25,12 +29,9 @@ type Client struct {
 	accessKey string
 }
 
-func NewClient(url, projectID string, httpClient *http.Client) *Client {
+func NewClient(url *url.URL, projectID string, httpClient *http.Client) *Client {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
-	}
-	if strings.HasSuffix(url, "/") {
-		url = url[:len(url)-1]
 	}
 	return &Client{
 		url:        url,
@@ -106,6 +107,34 @@ func (c *Client) SetDeviceServiceStatus(ctx context.Context, applicationID, serv
 	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "applications", applicationID, "services", service, "deviceservicestatuses")
 }
 
+func (c *Client) InitiateDeviceConnection(ctx context.Context) (net.Conn, error) {
+	conn, err := c.Dial(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	clientConn := httputil.NewClientConn(conn, nil)
+
+	req, err := http.NewRequest("GET", c.getURL("projects", c.projectID, "devices", c.deviceID, "connection"), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.SetBasicAuth(c.accessKey, "")
+
+	if _, err = clientConn.Do(req); err != httputil.ErrPersistEOF && err != nil {
+		return nil, err
+	}
+
+	hijackedConn, _ := clientConn.Hijack()
+
+	return hijackedConn, nil
+}
+
+func (c *Client) Dial(ctx context.Context) (net.Conn, error) {
+	return tls.Dial("tcp", c.url.Host, nil)
+}
+
 func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {
 	req, err := http.NewRequest("GET", c.getURL(s...), nil)
 	if err != nil {
@@ -177,5 +206,5 @@ func (c *Client) post(ctx context.Context, in, out interface{}, s ...string) err
 }
 
 func (c *Client) getURL(s ...string) string {
-	return strings.Join(append([]string{c.url}, s...), "/")
+	return strings.Join(append([]string{c.url.String()}, s...), "/")
 }

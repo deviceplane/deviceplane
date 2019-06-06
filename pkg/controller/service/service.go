@@ -7,16 +7,17 @@ import (
 	"time"
 
 	"github.com/Knetic/govaluate"
-	"github.com/segmentio/ksuid"
-	"gopkg.in/yaml.v2"
-
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/controller/authz"
+	"github.com/deviceplane/deviceplane/pkg/controller/connman"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/email"
 	"github.com/deviceplane/deviceplane/pkg/hash"
 	"github.com/deviceplane/deviceplane/pkg/models"
+	"github.com/deviceplane/deviceplane/pkg/revdial"
 	"github.com/gorilla/mux"
+	"github.com/segmentio/ksuid"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -49,9 +50,10 @@ type Service struct {
 	deviceApplicationStatuses  store.DeviceApplicationStatuses
 	deviceServiceStatuses      store.DeviceServiceStatuses
 	email                      email.Interface
-	router                     *mux.Router
 	cookieDomain               string
 	cookieSecure               bool
+	router                     *mux.Router
+	connKing                   *connman.ConnectionManager
 }
 
 func NewService(
@@ -112,6 +114,7 @@ func NewService(
 		cookieDomain:               cookieDomain,
 		cookieSecure:               cookieSecure,
 		router:                     mux.NewRouter(),
+		connKing:                   connman.New(),
 	}
 
 	s.router.HandleFunc("/health", s.health).Methods("GET")
@@ -172,6 +175,7 @@ func NewService(
 
 	s.router.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "GetDevice", s.getDevice)).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/devices", s.validateAuthorization("devices", "ListDevices", s.listDevices)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/ssh", s.validateAuthorization("devices", "SSH", s.initiateSSH)).Methods("GET")
 
 	s.router.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "SetDeviceLabel", s.setDeviceLabel)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateAuthorization("devicelabels", "GetDeviceLabel", s.getDeviceLabel)).Methods("GET")
@@ -185,6 +189,9 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/devices/{device}/info", s.withDeviceAuth(s.setDeviceInfo)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/deviceapplicationstatuses", s.withDeviceAuth(s.setDeviceApplicationStatus)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.withDeviceAuth(s.setDeviceServiceStatus)).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/connection", s.withDeviceAuth(s.initiateDeviceConnection)).Methods("GET")
+
+	s.router.Handle("/revdial", revdial.ConnHandler()).Methods("GET")
 
 	return s
 }

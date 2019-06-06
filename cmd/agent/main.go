@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/agent"
@@ -22,7 +23,7 @@ var config struct {
 }
 
 func init() {
-	config.Controller = "https://api.deviceplane.io"
+	config.Controller = "https://api.deviceplane.io:443"
 	config.StateDir = "/var/lib/deviceplane"
 	config.LogLevel = "info"
 }
@@ -41,7 +42,12 @@ func main() {
 		log.WithError(err).Fatal("create docker client")
 	}
 
-	client := agent_client.NewClient(config.Controller, config.Project, http.DefaultClient)
+	controllerURL, err := url.Parse(config.Controller)
+	if err != nil {
+		log.WithError(err).Fatal("parse controller URL")
+	}
+
+	client := agent_client.NewClient(controllerURL, config.Project, http.DefaultClient)
 	agent := agent.NewAgent(client, engine, config.Project, config.RegistrationToken, config.StateDir)
 
 	if err := agent.Initialize(); err != nil {

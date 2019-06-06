@@ -16,6 +16,10 @@ var (
 		Name:   "application",
 		EnvVar: "DEVICE_PLANE_APPLICATION",
 	}
+	deviceFlag = cli.StringFlag{
+		Name:   "device",
+		EnvVar: "DEVICE_PLANE_DEVICE",
+	}
 )
 
 func withClient(c *cli.Context, f func(*client.Client) error) error {

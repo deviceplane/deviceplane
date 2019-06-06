@@ -22,7 +22,7 @@ func main() {
 		cli.StringFlag{
 			Hidden: true,
 			Name:   "url",
-			Value:  "https://api.deviceplane.io",
+			Value:  "https://api.deviceplane.io:443",
 		},
 		cli.StringFlag{
 			Name:   "access-key",
@@ -35,6 +35,7 @@ func main() {
 		application,
 		edit,
 		deploy,
+		ssh,
 	}
 
 	if err := app.Run(os.Args); err != nil {
