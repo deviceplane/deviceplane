@@ -15,6 +15,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/hash"
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/deviceplane/deviceplane/pkg/revdial"
+	"github.com/deviceplane/deviceplane/pkg/spec"
 	"github.com/gorilla/mux"
 	"github.com/segmentio/ksuid"
 	"gopkg.in/yaml.v2"
@@ -758,6 +759,12 @@ func (s *Service) createRole(w http.ResponseWriter, r *http.Request, projectID, 
 		return
 	}
 
+	var roleConfig authz.Config
+	if err := yaml.UnmarshalStrict([]byte(createRoleRequest.Config), &roleConfig); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	role, err := s.roles.CreateRole(r.Context(), projectID, createRoleRequest.Name,
 		createRoleRequest.Description, createRoleRequest.Config)
 	if err != nil {
@@ -1441,6 +1448,12 @@ func (s *Service) createRelease(w http.ResponseWriter, r *http.Request, projectI
 	}
 	if err := json.NewDecoder(r.Body).Decode(&createReleaseRequest); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var applicationConfig map[string]spec.Service
+	if err := yaml.UnmarshalStrict([]byte(createReleaseRequest.Config), &applicationConfig); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
