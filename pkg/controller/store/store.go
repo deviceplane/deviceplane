@@ -35,7 +35,7 @@ type Sessions interface {
 var ErrSessionNotFound = errors.New("session not found")
 
 type UserAccessKeys interface {
-	CreateUserAccessKey(ctx context.Context, userID string, hash string) (*models.UserAccessKey, error)
+	CreateUserAccessKey(ctx context.Context, userID string, hash, description string) (*models.UserAccessKey, error)
 	GetUserAccessKey(ctx context.Context, id string) (*models.UserAccessKey, error)
 	ValidateUserAccessKey(ctx context.Context, hash string) (*models.UserAccessKey, error)
 	ListUserAccessKeys(ctx context.Context, userID string) ([]models.UserAccessKey, error)
@@ -102,7 +102,7 @@ type ServiceAccounts interface {
 var ErrServiceAccountNotFound = errors.New("service account not found")
 
 type ServiceAccountAccessKeys interface {
-	CreateServiceAccountAccessKey(ctx context.Context, projectID, serviceAccountID string, hash string) (*models.ServiceAccountAccessKey, error)
+	CreateServiceAccountAccessKey(ctx context.Context, projectID, serviceAccountID string, hash, description string) (*models.ServiceAccountAccessKey, error)
 	GetServiceAccountAccessKey(ctx context.Context, id, projectID string) (*models.ServiceAccountAccessKey, error)
 	ValidateServiceAccountAccessKey(ctx context.Context, hash string) (*models.ServiceAccountAccessKey, error)
 	ListServiceAccountAccessKeys(ctx context.Context, projectID, serviceAccountID string) ([]models.ServiceAccountAccessKey, error)

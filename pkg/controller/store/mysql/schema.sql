@@ -70,6 +70,7 @@ create table if not exists user_access_keys (
 
   -- SENSITIVE FIELD
   hash varchar(255) not null,
+  description longtext not null,
 
   primary key (id),
   foreign key user_access_keys_user_id(user_id)
@@ -180,6 +181,7 @@ create table if not exists service_account_access_keys (
 
   -- SENSITIVE FIELD
   hash varchar(255) not null,
+  description longtext not null,
 
   primary key (id),
   foreign key service_account_access_keys_project_id(project_id)

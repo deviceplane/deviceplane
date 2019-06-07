@@ -77,23 +77,24 @@ const createUserAccessKey = `
   insert into user_access_keys (
     id,
     user_id,
-    hash
+    hash,
+    description
   )
-  values (?, ?, ?)
+  values (?, ?, ?, ?)
 `
 
 const getUserAccessKey = `
-  select id, user_id from user_access_keys
+  select id, created_at, user_id, description from user_access_keys
   where id = ?
 `
 
 const validateUserAccessKey = `
-  select id, user_id from user_access_keys
+  select id, created_at, user_id, description from user_access_keys
   where hash = ?
 `
 
 const listUserAccessKeys = `
-  select id, user_id from user_access_keys
+  select id, created_at, user_id, description from user_access_keys
   where user_id = ?
 `
 
@@ -265,23 +266,24 @@ const createServiceAccountAccessKey = `
     id,
     project_id,
     service_account_id,
-    hash
+    hash,
+    description
   )
-  values (?, ?, ?, ?)
+  values (?, ?, ?, ?, ?)
 `
 
 const getServiceAccountAccessKey = `
-  select id, project_id, service_account_id from service_account_access_keys
+  select id, created_at, project_id, service_account_id, description from service_account_access_keys
   where id = ? and project_id = ?
 `
 
 const validateServiceAccountAccessKey = `
-  select id, project_id, service_account_id from service_account_access_keys
+  select id, created_at, project_id, service_account_id, description from service_account_access_keys
   where hash = ? and project_id = ?
 `
 
 const listServiceAccountAccessKeys = `
-  select id, project_id, service_account_id from service_account_access_keys
+  select id, created_at, project_id, service_account_id, description from service_account_access_keys
   where project_id = ? and service_account_id = ?
 `
 

@@ -979,10 +979,18 @@ func (s *Service) createServiceAccountAccessKey(w http.ResponseWriter, r *http.R
 	vars := mux.Vars(r)
 	serviceAccountID := vars["serviceaccount"]
 
+	var createServiceAccountAccessKeyRequest struct {
+		Description string `json:"description"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&createServiceAccountAccessKeyRequest); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	serviceAccountAccessKeyValue := "s" + ksuid.New().String()
 
 	serviceAccount, err := s.serviceAccountAccessKeys.CreateServiceAccountAccessKey(r.Context(),
-		projectID, serviceAccountID, serviceAccountAccessKeyValue)
+		projectID, serviceAccountID, serviceAccountAccessKeyValue, createServiceAccountAccessKeyRequest.Description)
 	if err != nil {
 		log.WithError(err).Error("create service account access key")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -990,7 +998,10 @@ func (s *Service) createServiceAccountAccessKey(w http.ResponseWriter, r *http.R
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(serviceAccount)
+	json.NewEncoder(w).Encode(models.ServiceAccountAccessKeyWithValue{
+		ServiceAccountAccessKey: *serviceAccount,
+		Value:                   serviceAccountAccessKeyValue,
+	})
 }
 
 func (s *Service) getServiceAccountAccessKey(w http.ResponseWriter, r *http.Request, projectID, userID string) {

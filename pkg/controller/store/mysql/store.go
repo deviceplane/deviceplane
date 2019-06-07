@@ -300,7 +300,7 @@ func (s *Store) scanSession(scanner scanner) (*models.Session, error) {
 	return &session, nil
 }
 
-func (s *Store) CreateUserAccessKey(ctx context.Context, userID, hash string) (*models.UserAccessKey, error) {
+func (s *Store) CreateUserAccessKey(ctx context.Context, userID, hash, description string) (*models.UserAccessKey, error) {
 	id := newUserAccessKeyID()
 
 	if _, err := s.db.ExecContext(
@@ -309,6 +309,7 @@ func (s *Store) CreateUserAccessKey(ctx context.Context, userID, hash string) (*
 		id,
 		userID,
 		hash,
+		description,
 	); err != nil {
 		return nil, err
 	}
@@ -378,7 +379,9 @@ func (s *Store) scanUserAccessKey(scanner scanner) (*models.UserAccessKey, error
 	var userAccessKey models.UserAccessKey
 	if err := scanner.Scan(
 		&userAccessKey.ID,
+		&userAccessKey.CreatedAt,
 		&userAccessKey.UserID,
+		&userAccessKey.Description,
 	); err != nil {
 		return nil, err
 	}
@@ -845,7 +848,7 @@ func (s *Store) scanServiceAccount(scanner scanner) (*models.ServiceAccount, err
 	return &serviceAccount, nil
 }
 
-func (s *Store) CreateServiceAccountAccessKey(ctx context.Context, projectID, serviceAccountID, hash string) (*models.ServiceAccountAccessKey, error) {
+func (s *Store) CreateServiceAccountAccessKey(ctx context.Context, projectID, serviceAccountID, hash, description string) (*models.ServiceAccountAccessKey, error) {
 	id := newServiceAccountAccessKeyID()
 
 	if _, err := s.db.ExecContext(
@@ -855,6 +858,7 @@ func (s *Store) CreateServiceAccountAccessKey(ctx context.Context, projectID, se
 		projectID,
 		serviceAccountID,
 		hash,
+		description,
 	); err != nil {
 		return nil, err
 	}
@@ -925,8 +929,10 @@ func (s *Store) scanServiceAccountAccessKey(scanner scanner) (*models.ServiceAcc
 	var serviceAccountAccessKey models.ServiceAccountAccessKey
 	if err := scanner.Scan(
 		&serviceAccountAccessKey.ID,
+		&serviceAccountAccessKey.CreatedAt,
 		&serviceAccountAccessKey.ProjectID,
 		&serviceAccountAccessKey.ServiceAccountID,
+		&serviceAccountAccessKey.Description,
 	); err != nil {
 		return nil, err
 	}

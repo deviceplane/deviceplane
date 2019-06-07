@@ -26,9 +26,15 @@ type Session struct {
 }
 
 type UserAccessKey struct {
-	ID        string    `json:"id"`
-	CreatedAt time.Time `json:"createdAt"`
-	UserID    string    `json:"userId"`
+	ID          string    `json:"id"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UserID      string    `json:"userId"`
+	Description string    `json:"description"`
+}
+
+type UserAccessKeyWithValue struct {
+	UserAccessKey
+	Value string `json:"value"`
 }
 
 type Project struct {
@@ -80,6 +86,12 @@ type ServiceAccountAccessKey struct {
 	CreatedAt        time.Time `json:"createdAt"`
 	ProjectID        string    `json:"projectId"`
 	ServiceAccountID string    `json:"serviceAccountId"`
+	Description      string    `json:"description"`
+}
+
+type ServiceAccountAccessKeyWithValue struct {
+	ServiceAccountAccessKey
+	Value string `json:"value"`
 }
 
 type ServiceAccountRoleBinding struct {
