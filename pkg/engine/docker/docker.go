@@ -8,12 +8,10 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/strslice"
 
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/spec"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 )
 
@@ -34,12 +32,9 @@ func NewEngine() (*Engine, error) {
 }
 
 func (e *Engine) CreateContainer(ctx context.Context, name string, s spec.Service) (string, error) {
-	resp, err := e.client.ContainerCreate(ctx, &container.Config{
-		Image:      s.Image,
-		Entrypoint: strslice.StrSlice(s.Entrypoint),
-		Cmd:        s.Command,
-		Labels:     s.Labels,
-	}, nil, nil, name)
+	config, hostConfig := convert(s)
+
+	resp, err := e.client.ContainerCreate(ctx, config, hostConfig, nil, name)
 	if err != nil {
 		return "", err
 	}
@@ -77,7 +72,7 @@ func (e *Engine) ListContainers(ctx context.Context, keyFilters map[string]struc
 
 	var instances []engine.Instance
 	for _, container := range containers {
-		instances = append(instances, convert(container))
+		instances = append(instances, convertToInstance(container))
 	}
 
 	return instances, nil
@@ -113,13 +108,4 @@ func (e *Engine) PullImage(ctx context.Context, image string) error {
 	defer out.Close()
 	_, err = io.Copy(ioutil.Discard, out)
 	return err
-}
-
-func convert(c types.Container) engine.Instance {
-	return engine.Instance{
-		ID:     c.ID,
-		Labels: c.Labels,
-		// TODO
-		Running: c.State == "running",
-	}
 }

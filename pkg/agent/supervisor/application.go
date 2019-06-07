@@ -57,6 +57,8 @@ func (s *ApplicationSupervisor) SetApplication(application models.ApplicationAnd
 	select {
 	case <-s.ctx.Done():
 		return
+	default:
+		break
 	}
 
 	var applicationConfig map[string]spec.Service

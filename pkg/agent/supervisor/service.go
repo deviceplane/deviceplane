@@ -94,7 +94,7 @@ func (s *ServiceSupervisor) reconcileLoop() {
 			// TODO: filter down to just one instance if we find more
 			instance := instances[0]
 
-			if hashLabel, ok := instance.Labels[models.HashLabel]; ok && hashLabel == service.Hash() {
+			if hashLabel, ok := instance.Labels[models.HashLabel]; ok && hashLabel == service.Hash(s.serviceName) {
 				s.sendKeepAliveService(service)
 				s.sendKeepAliveRelease(release)
 				goto cont
@@ -115,7 +115,7 @@ func (s *ServiceSupervisor) reconcileLoop() {
 		containerCreate(
 			s.ctx,
 			s.engine,
-			strings.Join([]string{s.serviceName, hash.ShortHash(s.applicationID), service.ShortHash()}, "-"),
+			strings.Join([]string{s.serviceName, hash.ShortHash(s.applicationID), service.ShortHash(s.serviceName)}, "-"),
 			service.WithStandardLabels(s.applicationID, s.serviceName),
 		)
 
@@ -187,7 +187,7 @@ func (s *ServiceSupervisor) keepAlive() {
 			instances := containerList(s.ctx, s.engine, nil, map[string]string{
 				models.ApplicationLabel: s.applicationID,
 				models.ServiceLabel:     s.serviceName,
-				models.HashLabel:        service.Hash(),
+				models.HashLabel:        service.Hash(s.serviceName),
 			}, true)
 
 			if len(instances) == 0 {
