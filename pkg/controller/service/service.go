@@ -1317,6 +1317,13 @@ func (s *Service) createApplication(w http.ResponseWriter, r *http.Request, proj
 		return
 	}
 
+	if createApplicationRequest.Settings.SchedulingRule != "" {
+		if err := validateSchedulingRule(createApplicationRequest.Settings.SchedulingRule); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
+
 	application, err := s.applications.CreateApplication(r.Context(), projectID, createApplicationRequest.Name,
 		createApplicationRequest.Description, createApplicationRequest.Settings)
 	if err != nil {
@@ -1417,6 +1424,13 @@ func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request, proj
 	if err := json.NewDecoder(r.Body).Decode(&updateApplicationRequest); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
+	}
+
+	if updateApplicationRequest.Settings.SchedulingRule != "" {
+		if err := validateSchedulingRule(updateApplicationRequest.Settings.SchedulingRule); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 	}
 
 	application, err := s.applications.UpdateApplication(r.Context(), applicationID, projectID, updateApplicationRequest.Name,
