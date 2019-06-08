@@ -818,6 +818,12 @@ func (s *Service) updateRole(w http.ResponseWriter, r *http.Request, projectID, 
 		return
 	}
 
+	var roleConfig authz.Config
+	if err := yaml.UnmarshalStrict([]byte(updateRoleRequest.Config), &roleConfig); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	role, err := s.roles.UpdateRole(r.Context(), roleID, projectID, updateRoleRequest.Name,
 		updateRoleRequest.Description, updateRoleRequest.Config)
 	if err != nil {
