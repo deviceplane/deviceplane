@@ -315,7 +315,7 @@ func (s *Service) validateAuthorization(requestedResource, requestedAction strin
 		} else {
 			project, err := s.projects.LookupProject(r.Context(), project)
 			if err == store.ErrProjectNotFound {
-				w.WriteHeader(http.StatusNotFound)
+				http.Error(w, store.ErrProjectNotFound.Error(), http.StatusNotFound)
 				return
 			} else if err != nil {
 				log.WithError(err).Error("lookup project")
@@ -330,7 +330,7 @@ func (s *Service) validateAuthorization(requestedResource, requestedAction strin
 			if _, err := s.memberships.GetMembership(r.Context(),
 				authenticatedUserID, projectID,
 			); err == store.ErrMembershipNotFound {
-				w.WriteHeader(http.StatusForbidden)
+				http.Error(w, store.ErrProjectNotFound.Error(), http.StatusNotFound)
 				return
 			} else if err != nil {
 				// TODO: better logging all around
@@ -422,7 +422,7 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 		LastName  string `json:"lastName"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&registerRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -466,7 +466,7 @@ func (s *Service) confirmRegistration(w http.ResponseWriter, r *http.Request) {
 		RegistrationTokenValue string `json:"registrationTokenValue"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&confirmRegistrationRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -493,7 +493,7 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&loginRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -667,7 +667,7 @@ func (s *Service) createProject(w http.ResponseWriter, r *http.Request, authenti
 		Name string `json:"name"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&createProjectRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -755,7 +755,7 @@ func (s *Service) createRole(w http.ResponseWriter, r *http.Request, projectID, 
 		Config      string `json:"config"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&createRoleRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -780,7 +780,7 @@ func (s *Service) createRole(w http.ResponseWriter, r *http.Request, projectID, 
 func (s *Service) getRole(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
 	role, err := s.roles.GetRole(r.Context(), roleID, projectID)
 	if err == store.ErrRoleNotFound {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, store.ErrRoleNotFound.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.WithError(err).Error("get role")
@@ -814,7 +814,7 @@ func (s *Service) updateRole(w http.ResponseWriter, r *http.Request, projectID, 
 		Config      string `json:"config"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&updateRoleRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -855,7 +855,7 @@ func (s *Service) createServiceAccount(w http.ResponseWriter, r *http.Request, p
 		Description string `json:"description"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&createServiceAccountRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -962,7 +962,7 @@ func (s *Service) updateServiceAccount(w http.ResponseWriter, r *http.Request, p
 		Description string `json:"description"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&updateServiceAccountRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -996,14 +996,14 @@ func (s *Service) createServiceAccountAccessKey(w http.ResponseWriter, r *http.R
 		Description string `json:"description"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&createServiceAccountAccessKeyRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	serviceAccountAccessKeyValue := "s" + ksuid.New().String()
 
 	serviceAccount, err := s.serviceAccountAccessKeys.CreateServiceAccountAccessKey(r.Context(),
-		projectID, serviceAccountID, serviceAccountAccessKeyValue, createServiceAccountAccessKeyRequest.Description)
+		projectID, serviceAccountID, hash.Hash(serviceAccountAccessKeyValue), createServiceAccountAccessKeyRequest.Description)
 	if err != nil {
 		log.WithError(err).Error("create service account access key")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -1023,7 +1023,7 @@ func (s *Service) getServiceAccountAccessKey(w http.ResponseWriter, r *http.Requ
 
 	serviceAccountAccessKey, err := s.serviceAccountAccessKeys.GetServiceAccountAccessKey(r.Context(), serviceAccountAccessKeyID, projectID)
 	if err == store.ErrServiceAccountAccessKeyNotFound {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, store.ErrServiceAccountAccessKeyNotFound.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.WithError(err).Error("get service account access key")
@@ -1126,7 +1126,7 @@ func (s *Service) createMembership(w http.ResponseWriter, r *http.Request, proje
 		UserID string `json:"userId"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&createMembershipRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -1149,7 +1149,7 @@ func (s *Service) getMembership(w http.ResponseWriter, r *http.Request, projectI
 
 	membership, err := s.memberships.GetMembership(r.Context(), membershipUserID, projectID)
 	if err == store.ErrMembershipNotFound {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, store.ErrMembershipNotFound.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.WithError(err).Error("get membership")
@@ -1319,7 +1319,7 @@ func (s *Service) createApplication(w http.ResponseWriter, r *http.Request, proj
 		Settings    models.ApplicationSettings `json:"settings"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&createApplicationRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -1428,7 +1428,7 @@ func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request, proj
 		Settings    models.ApplicationSettings `json:"settings"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&updateApplicationRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -1467,7 +1467,7 @@ func (s *Service) createRelease(w http.ResponseWriter, r *http.Request, projectI
 		Config string `json:"config"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&createReleaseRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -1494,7 +1494,7 @@ func (s *Service) getRelease(w http.ResponseWriter, r *http.Request, projectID, 
 
 	release, err := s.releases.GetRelease(r.Context(), releaseID, projectID, applicationID)
 	if err == store.ErrReleaseNotFound {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, store.ErrReleaseNotFound.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.WithError(err).Error("get release")
@@ -1524,7 +1524,7 @@ func (s *Service) getRelease(w http.ResponseWriter, r *http.Request, projectID, 
 func (s *Service) getLatestRelease(w http.ResponseWriter, r *http.Request, projectID string, userID, applicationID string) {
 	release, err := s.releases.GetLatestRelease(r.Context(), projectID, applicationID)
 	if err == store.ErrReleaseNotFound {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, store.ErrReleaseNotFound.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.WithError(err).Error("get latest release")
@@ -1696,7 +1696,7 @@ func (s *Service) setDeviceLabel(w http.ResponseWriter, r *http.Request, project
 		Value string `json:"value"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&setDeviceLabelRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -1801,7 +1801,7 @@ func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
 
 	var registerDeviceRequest models.RegisterDeviceRequest
 	if err := json.NewDecoder(r.Body).Decode(&registerDeviceRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -1917,7 +1917,7 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, d
 func (s *Service) setDeviceInfo(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
 	var setDeviceInfoRequest models.SetDeviceInfoRequest
 	if err := json.NewDecoder(r.Body).Decode(&setDeviceInfoRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -1936,7 +1936,7 @@ func (s *Service) setDeviceApplicationStatus(w http.ResponseWriter, r *http.Requ
 
 	var setDeviceApplicationStatusRequest models.SetDeviceApplicationStatusRequest
 	if err := json.NewDecoder(r.Body).Decode(&setDeviceApplicationStatusRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -1958,7 +1958,7 @@ func (s *Service) setDeviceServiceStatus(w http.ResponseWriter, r *http.Request,
 
 	var setDeviceServiceStatusRequest models.SetDeviceServiceStatusRequest
 	if err := json.NewDecoder(r.Body).Decode(&setDeviceServiceStatusRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 

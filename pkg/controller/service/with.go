@@ -24,7 +24,7 @@ func (s *Service) withApplication(handler func(http.ResponseWriter, *http.Reques
 		} else {
 			application, err := s.applications.LookupApplication(r.Context(), application, projectID)
 			if err == store.ErrApplicationNotFound {
-				w.WriteHeader(http.StatusNotFound)
+				http.Error(w, store.ErrApplicationNotFound.Error(), http.StatusNotFound)
 				return
 			} else if err != nil {
 				log.WithError(err).Error("lookup application")
@@ -53,7 +53,7 @@ func (s *Service) withRole(handler func(http.ResponseWriter, *http.Request, stri
 		} else {
 			role, err := s.roles.LookupRole(r.Context(), role, projectID)
 			if err == store.ErrRoleNotFound {
-				w.WriteHeader(http.StatusNotFound)
+				http.Error(w, store.ErrRoleNotFound.Error(), http.StatusNotFound)
 				return
 			} else if err != nil {
 				log.WithError(err).Error("lookup role")
@@ -82,7 +82,7 @@ func (s *Service) withServiceAccount(handler func(http.ResponseWriter, *http.Req
 		} else {
 			serviceAccount, err := s.serviceAccounts.LookupServiceAccount(r.Context(), serviceAccount, projectID)
 			if err == store.ErrServiceAccountNotFound {
-				w.WriteHeader(http.StatusNotFound)
+				http.Error(w, store.ErrServiceAccountNotFound.Error(), http.StatusNotFound)
 				return
 			} else if err != nil {
 				log.WithError(err).Error("lookup service account")

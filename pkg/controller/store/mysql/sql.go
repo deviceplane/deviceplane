@@ -279,7 +279,7 @@ const getServiceAccountAccessKey = `
 
 const validateServiceAccountAccessKey = `
   select id, created_at, project_id, service_account_id, description from service_account_access_keys
-  where hash = ? and project_id = ?
+  where hash = ?
 `
 
 const listServiceAccountAccessKeys = `

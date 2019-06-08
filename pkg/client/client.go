@@ -5,6 +5,8 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -102,15 +104,7 @@ func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {
 		return err
 	}
 
-	req.SetBasicAuth(c.accessKey, "")
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	return json.NewDecoder(resp.Body).Decode(&out)
+	return c.performRequest(req, out)
 }
 
 func (c *Client) post(ctx context.Context, in, out interface{}, s ...string) error {
@@ -125,6 +119,14 @@ func (c *Client) post(ctx context.Context, in, out interface{}, s ...string) err
 		return err
 	}
 
+	return c.performRequest(req, out)
+}
+
+func (c *Client) getURL(s ...string) string {
+	return strings.Join(append([]string{c.url.String()}, s...), "/")
+}
+
+func (c *Client) performRequest(req *http.Request, out interface{}) error {
 	req.SetBasicAuth(c.accessKey, "")
 
 	resp, err := c.httpClient.Do(req)
@@ -133,9 +135,17 @@ func (c *Client) post(ctx context.Context, in, out interface{}, s ...string) err
 	}
 	defer resp.Body.Close()
 
-	return json.NewDecoder(resp.Body).Decode(&out)
+	return c.handleResponse(resp, out)
 }
 
-func (c *Client) getURL(s ...string) string {
-	return strings.Join(append([]string{c.url.String()}, s...), "/")
+func (c *Client) handleResponse(resp *http.Response, out interface{}) error {
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return json.NewDecoder(resp.Body).Decode(&out)
+	case http.StatusBadRequest, http.StatusNotFound:
+		bytes, _ := ioutil.ReadAll(resp.Body)
+		return errors.New(string(bytes))
+	default:
+		return errors.New(resp.Status)
+	}
 }
