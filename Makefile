@@ -7,9 +7,6 @@ db-reset:
 	sleep 20
 	./scripts/seed
 
-cli:
-	go build -o ./dist/cli ./cmd/cli
-
 controller:
 	docker build -t deviceplane/deviceplane:${version} -f Dockerfile.controller .
 
@@ -27,3 +24,6 @@ cli-ci:
 
 push-cli-ci: cli-ci
 	docker push deviceplane/cli-ci:${version}
+
+cli-binaries:
+	VERSION=${version} ./scripts/build-cli-binaries

@@ -1,4 +1,10 @@
 version: 2
+
+references:
+  attach_workspace: &attach_workspace
+    attach_workspace:
+      at: /tmp/workspace
+
 jobs:
   test:
     docker:
@@ -29,6 +35,27 @@ jobs:
       - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
       - run: make push-cli-ci
 
+  build-cli-binaries:
+    docker:
+      - image: circleci/golang:1.12
+    steps:
+      - *attach_workspace
+      - checkout
+      - run: make cli-binaries
+      - run: mv dist /tmp/workspace
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - dist
+
+  upload-cli-binaries:
+    docker:
+      - image: circleci/python:2.7-jessie
+    steps:
+      - *attach_workspace
+      - run: sudo pip install awscli
+      - run: aws s3 sync /tmp/workspace/dist/cli s3://cli.deviceplane.io/
+
 workflows:
   version: 2
   test_release:
@@ -49,6 +76,18 @@ workflows:
       - release-cli-ci:
           requires:
             - test
+          filters:
+            branches:
+              only: master
+      - build-cli-binaries:
+          requires:
+            - test
+          filters:
+            branches:
+              only: master
+      - upload-cli-binaries:
+          requires:
+            - build-cli-binaries
           filters:
             branches:
               only: master

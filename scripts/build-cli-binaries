@@ -1,0 +1,24 @@
+#!/bin/bash
+set -e
+
+mkdir -p ./dist/cli
+
+OS_PLATFORM_ARG=(linux windows darwin)
+
+declare -A OS_ARCH_ARG
+OS_ARCH_ARG[linux]="amd64 arm"
+OS_ARCH_ARG[windows]="386 amd64"
+OS_ARCH_ARG[darwin]="amd64"
+
+for OS in ${OS_PLATFORM_ARG[@]}; do
+    for ARCH in ${OS_ARCH_ARG[${OS}]}; do
+        OUTPUT_BIN="dist/cli/$VERSION/$OS/$ARCH/deviceplane"
+        if test "$OS" = "windows"; then
+            OUTPUT_BIN="${OUTPUT_BIN}.exe"
+        fi
+        echo "Building binary for $OS/$ARCH..."
+        GOOS=$OS GOARCH=$ARCH CGO_ENABLED=0 go build \
+              -ldflags="-s -w" \
+              -o ${OUTPUT_BIN} ./cmd/deviceplane
+    done
+done
