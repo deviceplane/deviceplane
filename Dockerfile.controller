@@ -2,9 +2,10 @@ FROM alpine:3.9
 RUN apk --update add ca-certificates
 
 FROM golang:1.12
+ARG version
 WORKDIR /app
 COPY ./ ./
-RUN GOOS=linux CGO_ENABLED=0 go build -o ./controller ./cmd/controller
+RUN GOOS=linux CGO_ENABLED=0 go build -ldflags "-X main.version=$version" -o ./controller ./cmd/controller
 
 FROM scratch
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt

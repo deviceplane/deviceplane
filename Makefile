@@ -8,19 +8,19 @@ db-reset:
 	./scripts/seed
 
 controller:
-	docker build -t deviceplane/deviceplane:${version} -f Dockerfile.controller .
+	docker build -t deviceplane/deviceplane:${version} -f Dockerfile.controller --build-arg version=${version} .
 
 push-controller: controller
 	docker push deviceplane/deviceplane:${version}
 
 agent:
-	docker build -t deviceplane/agent:${version} -f Dockerfile.agent .
+	docker build -t deviceplane/agent:${version} -f Dockerfile.agent --build-arg version=${version} .
 
 push-agent: agent
 	docker push deviceplane/agent:${version}
 
 cli-ci:
-	docker build -t deviceplane/cli-ci:${version} -f Dockerfile.cli-ci .
+	docker build -t deviceplane/cli-ci:${version} -f Dockerfile.cli-ci --build-arg version=${version} .
 
 push-cli-ci: cli-ci
 	docker push deviceplane/cli-ci:${version}
