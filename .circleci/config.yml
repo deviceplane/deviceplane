@@ -56,6 +56,14 @@ jobs:
       - run: sudo pip install awscli
       - run: aws s3 sync /tmp/workspace/dist/cli s3://cli.deviceplane.io/
 
+  upload-cli-binary-redirects:
+    docker:
+      - image: circleci/python:2.7-jessie
+    steps:
+      - checkout
+      - run: sudo pip install awscli
+      - run: make upload-cli-binary-redirects
+
 workflows:
   version: 2
   test_release:
@@ -88,6 +96,10 @@ workflows:
       - upload-cli-binaries:
           requires:
             - build-cli-binaries
+          filters:
+            branches:
+              only: master
+      - upload-cli-binary-redirects:
           filters:
             branches:
               only: master

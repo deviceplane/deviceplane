@@ -27,3 +27,6 @@ push-cli-ci: cli-ci
 
 cli-binaries:
 	VERSION=${version} ./scripts/build-cli-binaries
+
+upload-cli-binary-redirects:
+	VERSION=${version} ./scripts/upload-cli-binary-redirects
