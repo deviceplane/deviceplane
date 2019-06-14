@@ -22,6 +22,7 @@ const (
 
 type Client struct {
 	url        *url.URL
+	url2       *url.URL
 	projectID  string
 	httpClient *http.Client
 
@@ -29,12 +30,13 @@ type Client struct {
 	accessKey string
 }
 
-func NewClient(url *url.URL, projectID string, httpClient *http.Client) *Client {
+func NewClient(url, url2 *url.URL, projectID string, httpClient *http.Client) *Client {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
 	return &Client{
 		url:        url,
+		url2:       url2,
 		projectID:  projectID,
 		httpClient: httpClient,
 	}
@@ -57,7 +59,7 @@ func (c *Client) RegisterDevice(ctx context.Context, registrationToken string) (
 	}
 	reader := bytes.NewReader(reqBytes)
 
-	req, err := http.NewRequest("POST", c.getURL("projects", c.projectID, "devices", "register"), reader)
+	req, err := http.NewRequest("POST", getURL(c.url, "projects", c.projectID, "devices", "register"), reader)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +117,7 @@ func (c *Client) InitiateDeviceConnection(ctx context.Context) (net.Conn, error)
 
 	clientConn := httputil.NewClientConn(conn, nil)
 
-	req, err := http.NewRequest("GET", c.getURL("projects", c.projectID, "devices", c.deviceID, "connection"), nil)
+	req, err := http.NewRequest("GET", getURL(c.url2, "projects", c.projectID, "devices", c.deviceID, "connection"), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -132,11 +134,11 @@ func (c *Client) InitiateDeviceConnection(ctx context.Context) (net.Conn, error)
 }
 
 func (c *Client) Dial(ctx context.Context) (net.Conn, error) {
-	return tls.Dial("tcp", c.url.Host, nil)
+	return tls.Dial("tcp", c.url2.Host, nil)
 }
 
 func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {
-	req, err := http.NewRequest("GET", c.getURL(s...), nil)
+	req, err := http.NewRequest("GET", getURL(c.url, s...), nil)
 	if err != nil {
 		return err
 	}
@@ -174,7 +176,7 @@ func (c *Client) post(ctx context.Context, in, out interface{}, s ...string) err
 	}
 	reader := bytes.NewReader(reqBytes)
 
-	req, err := http.NewRequest("POST", c.getURL(s...), reader)
+	req, err := http.NewRequest("POST", getURL(c.url, s...), reader)
 	if err != nil {
 		return err
 	}
@@ -205,6 +207,6 @@ func (c *Client) post(ctx context.Context, in, out interface{}, s ...string) err
 	return json.Unmarshal(bytes, &out)
 }
 
-func (c *Client) getURL(s ...string) string {
-	return strings.Join(append([]string{c.url.String()}, s...), "/")
+func getURL(url *url.URL, s ...string) string {
+	return strings.Join(append([]string{url.String()}, s...), "/")
 }
