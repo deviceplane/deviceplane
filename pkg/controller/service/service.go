@@ -126,8 +126,12 @@ func NewService(
 	s.router.HandleFunc("/logout", s.logout).Methods("POST")
 	s.router.HandleFunc("/me", s.withUserOrServiceAccountAuth(s.me)).Methods("GET")
 
-	s.router.HandleFunc("/users/{user}/memberships", s.withUserOrServiceAccountAuth(s.listMembershipsByUser)).Methods("GET")
-	s.router.HandleFunc("/users/{user}/memberships/full", s.withUserOrServiceAccountAuth(s.listMembershipsByUserFull)).Methods("GET")
+	s.router.HandleFunc("/memberships", s.withUserOrServiceAccountAuth(s.listMembershipsByUser)).Methods("GET")
+
+	s.router.HandleFunc("/useraccesskeys", s.withUserOrServiceAccountAuth(s.createUserAccessKey)).Methods("POST")
+	s.router.HandleFunc("/useraccesskeys/{useraccesskey}", s.withUserOrServiceAccountAuth(s.getUserAccessKey)).Methods("GET")
+	s.router.HandleFunc("/useraccesskeys", s.withUserOrServiceAccountAuth(s.listUserAccessKeys)).Methods("GET")
+	s.router.HandleFunc("/useraccesskeys/{useraccesskey}", s.withUserOrServiceAccountAuth(s.deleteUserAccessKey)).Methods("DELETE")
 
 	s.router.HandleFunc("/projects", s.withUserOrServiceAccountAuth(s.createProject)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}", s.validateAuthorization("projects", "GetProject", s.getProject)).Methods("GET")
@@ -569,6 +573,12 @@ func (s *Service) logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) me(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
+	// TODO
+	if authenticatedUserID == "" {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	user, err := s.users.GetUser(r.Context(), authenticatedUserID)
 	if err != nil {
 		log.WithError(err).Error("get user")
@@ -581,85 +591,157 @@ func (s *Service) me(w http.ResponseWriter, r *http.Request, authenticatedUserID
 }
 
 func (s *Service) listMembershipsByUser(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
-	vars := mux.Vars(r)
-	userID := vars["user"]
-
-	if userID != authenticatedUserID {
-		w.WriteHeader(http.StatusForbidden)
+	// TODO
+	if authenticatedUserID == "" {
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	memberships, err := s.memberships.ListMembershipsByUser(r.Context(), userID)
+	memberships, err := s.memberships.ListMembershipsByUser(r.Context(), authenticatedUserID)
 	if err != nil {
 		log.WithError(err).Error("list memberships by user")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	var ret interface{} = memberships
+	if _, ok := r.URL.Query()["full"]; ok {
+		var membershipsFull []models.MembershipFull1
+
+		for _, membership := range memberships {
+			user, err := s.users.GetUser(r.Context(), membership.UserID)
+			if err != nil {
+				log.WithError(err).Error("get user")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			project, err := s.projects.GetProject(r.Context(), membership.ProjectID)
+			if err != nil {
+				log.WithError(err).Error("get project")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			projectDeviceCounts, err := s.projectDeviceCounts.GetProjectDeviceCounts(r.Context(), membership.ProjectID)
+			if err != nil {
+				log.WithError(err).Error("get project device counts")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			projectApplicationCounts, err := s.projectApplicationCounts.GetProjectApplicationCounts(r.Context(), membership.ProjectID)
+			if err != nil {
+				log.WithError(err).Error("get project application counts")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			membershipsFull = append(membershipsFull, models.MembershipFull1{
+				Membership: membership,
+				User:       *user,
+				Project: models.ProjectFull{
+					Project:           *project,
+					DeviceCounts:      *projectDeviceCounts,
+					ApplicationCounts: *projectApplicationCounts,
+				},
+			})
+		}
+
+		ret = membershipsFull
+	}
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(memberships)
+	json.NewEncoder(w).Encode(ret)
 }
 
-func (s *Service) listMembershipsByUserFull(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
-	vars := mux.Vars(r)
-	userID := vars["user"]
-
-	if userID != authenticatedUserID {
-		w.WriteHeader(http.StatusForbidden)
-		return
-	}
-
-	memberships, err := s.memberships.ListMembershipsByUser(r.Context(), userID)
-	if err != nil {
-		log.WithError(err).Error("list memberships by user")
+func (s *Service) createUserAccessKey(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
+	// TODO
+	if authenticatedUserID == "" {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	var membershipsFull []models.MembershipFull1
+	var createUserAccessKeyRequest struct {
+		Description string `json:"description"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&createUserAccessKeyRequest); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-	for _, membership := range memberships {
-		user, err := s.users.GetUser(r.Context(), membership.UserID)
-		if err != nil {
-			log.WithError(err).Error("get user")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+	userAccessKeyValue := "u" + ksuid.New().String()
 
-		project, err := s.projects.GetProject(r.Context(), membership.ProjectID)
-		if err != nil {
-			log.WithError(err).Error("get project")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		projectDeviceCounts, err := s.projectDeviceCounts.GetProjectDeviceCounts(r.Context(), membership.ProjectID)
-		if err != nil {
-			log.WithError(err).Error("get project device counts")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		projectApplicationCounts, err := s.projectApplicationCounts.GetProjectApplicationCounts(r.Context(), membership.ProjectID)
-		if err != nil {
-			log.WithError(err).Error("get project application counts")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		membershipsFull = append(membershipsFull, models.MembershipFull1{
-			Membership: membership,
-			User:       *user,
-			Project: models.ProjectFull{
-				Project:           *project,
-				DeviceCounts:      *projectDeviceCounts,
-				ApplicationCounts: *projectApplicationCounts,
-			},
-		})
+	user, err := s.userAccessKeys.CreateUserAccessKey(r.Context(),
+		authenticatedUserID, hash.Hash(userAccessKeyValue), createUserAccessKeyRequest.Description)
+	if err != nil {
+		log.WithError(err).Error("create user access key")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(membershipsFull)
+	json.NewEncoder(w).Encode(models.UserAccessKeyWithValue{
+		UserAccessKey: *user,
+		Value:         userAccessKeyValue,
+	})
+}
+
+// TODO: verify that the user owns this access key
+func (s *Service) getUserAccessKey(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
+	// TODO
+	if authenticatedUserID == "" {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	vars := mux.Vars(r)
+	userAccessKeyID := vars["useraccesskey"]
+
+	userAccessKey, err := s.userAccessKeys.GetUserAccessKey(r.Context(), userAccessKeyID)
+	if err == store.ErrUserAccessKeyNotFound {
+		http.Error(w, store.ErrUserAccessKeyNotFound.Error(), http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("get user access key")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(userAccessKey)
+}
+
+func (s *Service) listUserAccessKeys(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
+	// TODO
+	if authenticatedUserID == "" {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	userAccessKeys, err := s.userAccessKeys.ListUserAccessKeys(r.Context(), authenticatedUserID)
+	if err != nil {
+		log.WithError(err).Error("list users")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(userAccessKeys)
+}
+
+// TODO: verify that the user owns this access key
+func (s *Service) deleteUserAccessKey(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
+	vars := mux.Vars(r)
+	userAccessKeyID := vars["useraccesskey"]
+
+	if err := s.userAccessKeys.DeleteUserAccessKey(r.Context(), userAccessKeyID); err != nil {
+		log.WithError(err).Error("delete user access key")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) createProject(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
