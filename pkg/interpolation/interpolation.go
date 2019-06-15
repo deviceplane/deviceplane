@@ -2,68 +2,57 @@ package interpolation
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 )
 
-func Interpolate(config map[string]interface{}, getenv func(string) string) error {
-	for k, v := range config {
-		if err := parseConfig(k, &v, func(s string) (string, error) {
-			value := getenv(s)
-			if value == "" {
-				return "", fmt.Errorf("variable %s is not defined", s)
-			}
-			return value, nil
-		}); err != nil {
-			return err
-		}
-	}
+var (
+	errInvalidInterpolation = errors.New("invalid interpolation")
+)
 
-	return nil
+func newVariableNotDefinedError(variable string) error {
+	return &variableNotDefinedError{
+		variable: variable,
+	}
 }
 
-func parseConfig(service string, data *interface{}, mapping func(string) (string, error)) error {
-	switch typedData := (*data).(type) {
-	case string:
-		var success bool
-		var err error
-		if *data, success, err = parseLine(typedData, mapping); err != nil {
-			return err
-		} else if !success {
-			return fmt.Errorf("invalid interpolation format in line '%s'", typedData)
-		}
-
-	case []interface{}:
-		for k, v := range typedData {
-			if err := parseConfig(service, &v, mapping); err != nil {
-				return err
-			}
-			typedData[k] = v
-		}
-
-	case map[interface{}]interface{}:
-		for k, v := range typedData {
-			if err := parseConfig(service, &v, mapping); err != nil {
-				return err
-			}
-			typedData[k] = v
-		}
-	}
-
-	return nil
+type variableNotDefinedError struct {
+	variable string
 }
 
-func parseLine(line string, mapping func(string) (string, error)) (string, bool, error) {
+func (e *variableNotDefinedError) Error() string {
+	return fmt.Sprintf("variable %s is not defined", e.variable)
+}
+
+func Interpolate(s string, getVariable func(string) string) (string, error) {
+	s, success, err := interpolate(s, func(variable string) (string, error) {
+		value := getVariable(variable)
+		if value == "" {
+			return "", newVariableNotDefinedError(variable)
+		}
+		return value, nil
+	})
+	if err != nil {
+		return "", err
+	}
+	if !success {
+		return "", errInvalidInterpolation
+	}
+	return s, nil
+}
+
+func interpolate(s string, getVariable func(string) (string, error)) (string, bool, error) {
 	var buffer bytes.Buffer
 
-	for pos := 0; pos < len(line); pos++ {
-		c := line[pos]
+	for pos := 0; pos < len(s); pos++ {
+		c := s[pos]
 
 		switch {
 		case c == '$':
 			var replaced string
 			var success bool
 			var err error
-			replaced, pos, success, err = parseInterpolationExpression(line, pos+1, mapping)
+			replaced, pos, success, err = parseInterpolationExpression(s, pos+1, getVariable)
 			if err != nil {
 				return "", false, err
 			}
@@ -80,45 +69,45 @@ func parseLine(line string, mapping func(string) (string, error)) (string, bool,
 	return buffer.String(), true, nil
 }
 
-func parseInterpolationExpression(line string, pos int, mapping func(string) (string, error)) (string, int, bool, error) {
-	c := line[pos]
+func parseInterpolationExpression(s string, pos int, getVariable func(string) (string, error)) (string, int, bool, error) {
+	c := s[pos]
 
 	switch {
 	case c == '$':
 		return "$", pos, true, nil
 	case c == '{':
-		return parseVariableWithBraces(line, pos+1, mapping)
+		return parseVariableWithBraces(s, pos+1, getVariable)
 	case !isNum(c) && validVariableNameChar(c):
-		return parseVariable(line, pos, mapping)
+		return parseVariable(s, pos, getVariable)
 	default:
 		return "", 0, false, nil
 	}
 }
 
-func parseVariable(line string, pos int, mapping func(string) (string, error)) (string, int, bool, error) {
+func parseVariable(s string, pos int, getVariable func(string) (string, error)) (string, int, bool, error) {
 	var buffer bytes.Buffer
 
-	for ; pos < len(line); pos++ {
-		c := line[pos]
+	for ; pos < len(s); pos++ {
+		c := s[pos]
 
 		switch {
 		case validVariableNameChar(c):
 			buffer.WriteByte(c)
 		default:
-			value, err := mapping(buffer.String())
+			value, err := getVariable(buffer.String())
 			return value, pos - 1, true, err
 		}
 	}
 
-	value, err := mapping(buffer.String())
+	value, err := getVariable(buffer.String())
 	return value, pos, true, err
 }
 
-func parseVariableWithBraces(line string, pos int, mapping func(string) (string, error)) (string, int, bool, error) {
+func parseVariableWithBraces(s string, pos int, getVariable func(string) (string, error)) (string, int, bool, error) {
 	var buffer bytes.Buffer
 
-	for ; pos < len(line); pos++ {
-		c := line[pos]
+	for ; pos < len(s); pos++ {
+		c := s[pos]
 
 		switch {
 		case c == '}':
@@ -126,7 +115,7 @@ func parseVariableWithBraces(line string, pos int, mapping func(string) (string,
 			if bufferString == "" {
 				return "", 0, false, nil
 			}
-			value, err := mapping(buffer.String())
+			value, err := getVariable(buffer.String())
 			return value, pos, true, err
 
 		case validVariableNameChar(c):

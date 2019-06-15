@@ -9,7 +9,6 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/client"
 	"github.com/deviceplane/deviceplane/pkg/interpolation"
 	"github.com/urfave/cli"
-	"gopkg.in/yaml.v2"
 )
 
 var deploy = cli.Command{
@@ -28,21 +27,12 @@ var deploy = cli.Command{
 				return err
 			}
 
-			var configMap map[string]interface{}
-			if err := yaml.Unmarshal(configBytes, &configMap); err != nil {
-				return err
-			}
-
-			if err := interpolation.Interpolate(configMap, os.Getenv); err != nil {
-				return err
-			}
-
-			configBytes, err = yaml.Marshal(configMap)
+			finalConfig, err := interpolation.Interpolate(string(configBytes), os.Getenv)
 			if err != nil {
 				return err
 			}
 
-			release, err := client.CreateRelease(context.TODO(), project, application, string(configBytes))
+			release, err := client.CreateRelease(context.TODO(), project, application, finalConfig)
 			if err != nil {
 				return err
 			}
