@@ -10,15 +10,15 @@ import (
 var (
 	projectFlag = cli.StringFlag{
 		Name:   "project",
-		EnvVar: "DEVICE_PLANE_PROJECT",
+		EnvVar: "DEVICEPLANE_PROJECT",
 	}
 	applicationFlag = cli.StringFlag{
 		Name:   "application",
-		EnvVar: "DEVICE_PLANE_APPLICATION",
+		EnvVar: "DEVICEPLANE_APPLICATION",
 	}
 	deviceFlag = cli.StringFlag{
 		Name:   "device",
-		EnvVar: "DEVICE_PLANE_DEVICE",
+		EnvVar: "DEVICEPLANE_DEVICE",
 	}
 )
 

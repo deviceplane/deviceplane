@@ -31,7 +31,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:   "access-key",
-			EnvVar: "DEVICE_PLANE_ACCESS_KEY",
+			EnvVar: "DEVICEPLANE_ACCESS_KEY",
 		},
 	}
 
