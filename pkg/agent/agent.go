@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path"
@@ -13,6 +14,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/agent/info"
 	"github.com/deviceplane/deviceplane/pkg/agent/supervisor"
 	"github.com/deviceplane/deviceplane/pkg/engine"
+	"github.com/deviceplane/deviceplane/pkg/file"
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/pkg/errors"
 )
@@ -20,6 +22,7 @@ import (
 const (
 	accessKeyFilename = "access-key"
 	deviceIDFilename  = "device-id"
+	bundleFilename    = "bundle"
 )
 
 type Agent struct {
@@ -67,7 +70,7 @@ func (a *Agent) writeFile(contents []byte, elem ...string) error {
 	if err := os.MkdirAll(a.fileLocation(), 0700); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(a.fileLocation(elem...), contents, 0644); err != nil {
+	if err := file.WriteFileAtomic(a.fileLocation(elem...), contents, 0644); err != nil {
 		return err
 	}
 	return nil
@@ -123,17 +126,50 @@ func (a *Agent) Run() {
 }
 
 func (a *Agent) runSupervisor() {
+	if bundle := a.loadSavedBundle(); bundle != nil {
+		a.supervisor.SetApplications(bundle.Applications)
+	}
+
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
 	for {
-		bundle, err := a.client.GetBundle(context.TODO())
-		if err != nil {
-			log.WithError(err).Error("get bundle")
-			goto cont
+		if bundle := a.downloadLatestBundle(); bundle != nil {
+			a.supervisor.SetApplications(bundle.Applications)
 		}
 
-		a.supervisor.SetApplications(bundle.Applications)
+		select {
+		case <-ticker.C:
+			continue
+		}
+	}
+}
+
+func (a *Agent) loadSavedBundle() *models.Bundle {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for {
+		if _, err := os.Stat(a.fileLocation(bundleFilename)); err == nil {
+			savedBundleBytes, err := ioutil.ReadFile(a.fileLocation(bundleFilename))
+			if err != nil {
+				log.WithError(err).Error("read saved bundle")
+				goto cont
+			}
+
+			var savedBundle models.Bundle
+			if err = json.Unmarshal(savedBundleBytes, &savedBundle); err != nil {
+				log.WithError(err).Error("discarding invalid saved bundle")
+				return nil
+			}
+
+			return &savedBundle
+		} else if os.IsNotExist(err) {
+			return nil
+		} else {
+			log.WithError(err).Error("check if saved bundle exists")
+			goto cont
+		}
 
 	cont:
 		select {
@@ -141,6 +177,27 @@ func (a *Agent) runSupervisor() {
 			continue
 		}
 	}
+}
+
+func (a *Agent) downloadLatestBundle() *models.Bundle {
+	bundle, err := a.client.GetBundle(context.TODO())
+	if err != nil {
+		log.WithError(err).Error("get bundle")
+		return nil
+	}
+
+	bundleBytes, err := json.Marshal(bundle)
+	if err != nil {
+		log.WithError(err).Error("marshal bundle")
+		return nil
+	}
+
+	if err = a.writeFile(bundleBytes, bundleFilename); err != nil {
+		log.WithError(err).Error("save bundle")
+		return nil
+	}
+
+	return bundle
 }
 
 func (a *Agent) runConnector() {
