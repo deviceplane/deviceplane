@@ -8,24 +8,49 @@ const createUser = `
     email,
     password_hash,
     first_name,
-    last_name
+    last_name,
+    company
   )
-  values (?, ?, ?, ?, ?)
+  values (?, ?, ?, ?, ?, ?)
 `
 
 const getUser = `
-  select id, email, first_name, last_name, registration_completed from users
+  select id, email, first_name, last_name, company, registration_completed from users
   where id = ?
 `
 
 const validateUser = `
-  select id, email, first_name, last_name, registration_completed from users
+  select id, email, first_name, last_name, company, registration_completed from users
   where email = ? and password_hash = ?
 `
 
 const markRegistrationComplete = `
   update users
   set registration_completed = true
+  where id = ?
+`
+
+const updatePasswordHash = `
+  update users
+  set password_hash = ?
+  where id = ?
+`
+
+const updateFirstName = `
+  update users
+  set first_name = ?
+  where id = ?
+`
+
+const updateLastName = `
+  update users
+  set last_name = ?
+  where id = ?
+`
+
+const updateCompany = `
+  update users
+  set company = ?
   where id = ?
 `
 

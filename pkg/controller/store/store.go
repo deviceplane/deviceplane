@@ -9,10 +9,14 @@ import (
 )
 
 type Users interface {
-	CreateUser(ctx context.Context, email, passwordHash, firstName, lastName string) (*models.User, error)
+	CreateUser(ctx context.Context, email, passwordHash, firstName, lastName, company string) (*models.User, error)
 	GetUser(ctx context.Context, id string) (*models.User, error)
 	ValidateUser(ctx context.Context, email, passwordHash string) (*models.User, error)
 	MarkRegistrationCompleted(ctx context.Context, id string) (*models.User, error)
+	UpdatePasswordHash(ctx context.Context, id, passwordHash string) (*models.User, error)
+	UpdateFirstName(ctx context.Context, id, firstName string) (*models.User, error)
+	UpdateLastName(ctx context.Context, id, lastName string) (*models.User, error)
+	UpdateCompany(ctx context.Context, id, company string) (*models.User, error)
 }
 
 var ErrUserNotFound = errors.New("user not found")

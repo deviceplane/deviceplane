@@ -15,6 +15,7 @@ create table if not exists users (
   password_hash varchar(255) not null,
   first_name varchar(100) not null,
   last_name varchar(100) not null,
+  company varchar(100) not null,
   registration_completed boolean not null default false,
 
   primary key (id),

@@ -122,9 +122,12 @@ func NewService(
 
 	s.router.HandleFunc("/register", s.register).Methods("POST")
 	s.router.HandleFunc("/completeregistration", s.confirmRegistration).Methods("POST")
+
 	s.router.HandleFunc("/login", s.login).Methods("POST")
 	s.router.HandleFunc("/logout", s.logout).Methods("POST")
-	s.router.HandleFunc("/me", s.withUserOrServiceAccountAuth(s.me)).Methods("GET")
+
+	s.router.HandleFunc("/me", s.withUserOrServiceAccountAuth(s.getMe)).Methods("GET")
+	s.router.HandleFunc("/me", s.withUserOrServiceAccountAuth(s.updateMe)).Methods("PATCH")
 
 	s.router.HandleFunc("/memberships", s.withUserOrServiceAccountAuth(s.listMembershipsByUser)).Methods("GET")
 
@@ -424,6 +427,7 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 		Password  string `json:"password"`
 		FirstName string `json:"firstName"`
 		LastName  string `json:"lastName"`
+		Company   string `json:"company"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&registerRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -431,7 +435,7 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := s.users.CreateUser(r.Context(), registerRequest.Email, hash.Hash(registerRequest.Password),
-		registerRequest.FirstName, registerRequest.LastName)
+		registerRequest.FirstName, registerRequest.LastName, registerRequest.Company)
 	if err != nil {
 		log.WithError(err).Error("create user")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -572,11 +576,69 @@ func (s *Service) logout(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Service) me(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
+func (s *Service) getMe(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
 	// TODO
 	if authenticatedUserID == "" {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
+	}
+
+	user, err := s.users.GetUser(r.Context(), authenticatedUserID)
+	if err != nil {
+		log.WithError(err).Error("get user")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(user)
+}
+
+func (s *Service) updateMe(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
+	// TODO
+	if authenticatedUserID == "" {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var updateUserRequest struct {
+		Password  *string `json:"password"`
+		FirstName *string `json:"firstName"`
+		LastName  *string `json:"lastName"`
+		Company   *string `json:"company"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&updateUserRequest); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if updateUserRequest.Password != nil {
+		if _, err := s.users.UpdatePasswordHash(r.Context(), authenticatedUserID, hash.Hash(*updateUserRequest.Password)); err != nil {
+			log.WithError(err).Error("update password hash")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+	if updateUserRequest.FirstName != nil {
+		if _, err := s.users.UpdateFirstName(r.Context(), authenticatedUserID, *updateUserRequest.FirstName); err != nil {
+			log.WithError(err).Error("update first name")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+	if updateUserRequest.LastName != nil {
+		if _, err := s.users.UpdateLastName(r.Context(), authenticatedUserID, *updateUserRequest.LastName); err != nil {
+			log.WithError(err).Error("update last name")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+	if updateUserRequest.Company != nil {
+		if _, err := s.users.UpdateCompany(r.Context(), authenticatedUserID, *updateUserRequest.Company); err != nil {
+			log.WithError(err).Error("update company")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 
 	user, err := s.users.GetUser(r.Context(), authenticatedUserID)
