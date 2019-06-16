@@ -51,6 +51,7 @@ type Projects interface {
 }
 
 var ErrProjectNotFound = errors.New("project not found")
+var ErrProjectNameAlreadyInUse = errors.New("project name already in use")
 
 type ProjectDeviceCounts interface {
 	GetProjectDeviceCounts(ctx context.Context, projectID string) (*models.ProjectDeviceCounts, error)
@@ -70,6 +71,7 @@ type Roles interface {
 }
 
 var ErrRoleNotFound = errors.New("role not found")
+var ErrRoleNameAlreadyInUse = errors.New("role name already in use")
 
 type Memberships interface {
 	CreateMembership(ctx context.Context, userID, projectID string) (*models.Membership, error)
@@ -100,6 +102,7 @@ type ServiceAccounts interface {
 }
 
 var ErrServiceAccountNotFound = errors.New("service account not found")
+var ErrServiceAccountNameAlreadyInUse = errors.New("service account name already in use")
 
 type ServiceAccountAccessKeys interface {
 	CreateServiceAccountAccessKey(ctx context.Context, projectID, serviceAccountID string, hash, description string) (*models.ServiceAccountAccessKey, error)
@@ -170,6 +173,7 @@ type Applications interface {
 }
 
 var ErrApplicationNotFound = errors.New("application not found")
+var ErrApplicationNameAlreadyInUse = errors.New("application name already in use")
 
 type ApplicationDeviceCounts interface {
 	GetApplicationDeviceCounts(ctx context.Context, projectID, applicationID string) (*models.ApplicationDeviceCounts, error)

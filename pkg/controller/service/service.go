@@ -753,6 +753,15 @@ func (s *Service) createProject(w http.ResponseWriter, r *http.Request, authenti
 		return
 	}
 
+	if _, err := s.projects.LookupProject(r.Context(), createProjectRequest.Name); err == nil {
+		http.Error(w, store.ErrProjectNameAlreadyInUse.Error(), http.StatusBadRequest)
+		return
+	} else if err != nil && err != store.ErrProjectNotFound {
+		log.WithError(err).Error("lookup project")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	project, err := s.projects.CreateProject(r.Context(), createProjectRequest.Name)
 	if err != nil {
 		log.WithError(err).Error("create project")
@@ -838,6 +847,15 @@ func (s *Service) createRole(w http.ResponseWriter, r *http.Request, projectID, 
 	}
 	if err := json.NewDecoder(r.Body).Decode(&createRoleRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if _, err := s.roles.LookupRole(r.Context(), createRoleRequest.Name, projectID); err == nil {
+		http.Error(w, store.ErrRoleNameAlreadyInUse.Error(), http.StatusBadRequest)
+		return
+	} else if err != nil && err != store.ErrRoleNotFound {
+		log.WithError(err).Error("lookup role")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -938,6 +956,15 @@ func (s *Service) createServiceAccount(w http.ResponseWriter, r *http.Request, p
 	}
 	if err := json.NewDecoder(r.Body).Decode(&createServiceAccountRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if _, err := s.serviceAccounts.LookupServiceAccount(r.Context(), createServiceAccountRequest.Name, projectID); err == nil {
+		http.Error(w, store.ErrServiceAccountNameAlreadyInUse.Error(), http.StatusBadRequest)
+		return
+	} else if err != nil && err != store.ErrServiceAccountNotFound {
+		log.WithError(err).Error("lookup service account")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -1402,6 +1429,15 @@ func (s *Service) createApplication(w http.ResponseWriter, r *http.Request, proj
 	}
 	if err := json.NewDecoder(r.Body).Decode(&createApplicationRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if _, err := s.applications.LookupApplication(r.Context(), createApplicationRequest.Name, projectID); err == nil {
+		http.Error(w, store.ErrApplicationNameAlreadyInUse.Error(), http.StatusBadRequest)
+		return
+	} else if err != nil && err != store.ErrApplicationNotFound {
+		log.WithError(err).Error("lookup application")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
