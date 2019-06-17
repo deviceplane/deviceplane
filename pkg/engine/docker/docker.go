@@ -32,7 +32,10 @@ func NewEngine() (*Engine, error) {
 }
 
 func (e *Engine) CreateContainer(ctx context.Context, name string, s spec.Service) (string, error) {
-	config, hostConfig := convert(s)
+	config, hostConfig, err := convert(s)
+	if err != nil {
+		return "", err
+	}
 
 	resp, err := e.client.ContainerCreate(ctx, config, hostConfig, nil, name)
 	if err != nil {

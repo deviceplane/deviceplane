@@ -3,13 +3,18 @@ package docker
 import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/strslice"
+	"github.com/docker/go-connections/nat"
 
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/spec"
 	"github.com/docker/docker/api/types/container"
 )
 
-func convert(s spec.Service) (*container.Config, *container.HostConfig) {
+func convert(s spec.Service) (*container.Config, *container.HostConfig, error) {
+	portBindings, err := ports(s.Ports)
+	if err != nil {
+		return nil, nil, err
+	}
 	return &container.Config{
 			Cmd:        strslice.StrSlice(s.Command),
 			Domainname: s.DomainName,
@@ -33,6 +38,7 @@ func convert(s spec.Service) (*container.Config, *container.HostConfig) {
 			NetworkMode:    container.NetworkMode(s.NetworkMode),
 			OomScoreAdj:    int(s.OomScoreAdj),
 			PidMode:        container.PidMode(s.Pid),
+			PortBindings:   *portBindings,
 			Privileged:     s.Privileged,
 			ReadonlyRootfs: s.ReadOnly,
 			Resources: container.Resources{
@@ -47,7 +53,28 @@ func convert(s spec.Service) (*container.Config, *container.HostConfig) {
 			ShmSize:     int64(s.ShmSize),
 			SecurityOpt: s.SecurityOpt,
 			UTSMode:     container.UTSMode(s.Uts),
+		}, nil
+}
+
+func ports(ports []string) (*nat.PortMap, error) {
+	_, binding, err := nat.ParsePortSpecs(ports)
+	if err != nil {
+		return nil, err
+	}
+
+	portBindings := nat.PortMap{}
+	for k, bv := range binding {
+		dcbs := make([]nat.PortBinding, len(bv))
+		for k, v := range bv {
+			dcbs[k] = nat.PortBinding{
+				HostIP:   v.HostIP,
+				HostPort: v.HostPort,
+			}
 		}
+		portBindings[nat.Port(k)] = dcbs
+	}
+
+	return &portBindings, nil
 }
 
 func convertToInstance(c types.Container) engine.Instance {

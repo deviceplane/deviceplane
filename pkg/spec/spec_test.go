@@ -38,6 +38,7 @@ func fullService() Service {
 		OomKillDisable: true,
 		OomScoreAdj:    yamltypes.StringorInt(1),
 		Pid:            "x",
+		Ports:          []string{"x", "y", "z"},
 		Privileged:     true,
 		SecurityOpt:    []string{"x", "y", "z"},
 		ShmSize:        yamltypes.MemStringorInt(1),

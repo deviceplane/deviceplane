@@ -36,6 +36,7 @@ type Service struct {
 	OomKillDisable bool                      `yaml:"oom_kill_disable,omitempty"`
 	OomScoreAdj    yamltypes.StringorInt     `yaml:"oom_score_adj,omitempty"`
 	Pid            string                    `yaml:"pid,omitempty"`
+	Ports          []string                  `yaml:"ports,omitempty"`
 	Privileged     bool                      `yaml:"privileged,omitempty"`
 	SecurityOpt    []string                  `yaml:"security_opt,omitempty"`
 	ShmSize        yamltypes.MemStringorInt  `yaml:"shm_size,omitempty"`
@@ -47,13 +48,17 @@ type Service struct {
 }
 
 func (s Service) WithStandardLabels(applicationID, serviceName string) Service {
+	// Calculate hash before adding standard labels
+	hash := s.Hash(serviceName)
+
 	// TODO
 	if s.Labels == nil {
 		s.Labels = make(map[string]string)
 	}
 	s.Labels[models.ApplicationLabel] = applicationID
 	s.Labels[models.ServiceLabel] = serviceName
-	s.Labels[models.HashLabel] = s.Hash(serviceName)
+	s.Labels[models.HashLabel] = hash
+
 	return s
 }
 
@@ -102,6 +107,7 @@ func (s Service) hash(name string, hash func(string) string) string {
 	parts = append(parts, fmt.Sprint(s.OomKillDisable))
 	parts = append(parts, fmt.Sprint(s.OomScoreAdj))
 	parts = append(parts, s.Pid)
+	parts = append(parts, s.Ports...)
 	parts = append(parts, fmt.Sprint(s.Privileged))
 	parts = append(parts, s.SecurityOpt...)
 	parts = append(parts, fmt.Sprint(s.ShmSize))
