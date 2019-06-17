@@ -1,12 +1,15 @@
 package docker
 
 import (
+	"path/filepath"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/go-connections/nat"
 
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/spec"
+	"github.com/deviceplane/deviceplane/pkg/yamltypes"
 	"github.com/docker/docker/api/types/container"
 )
 
@@ -27,6 +30,7 @@ func convert(s spec.Service) (*container.Config, *container.HostConfig, error) {
 			User:       s.User,
 			WorkingDir: s.WorkingDir,
 		}, &container.HostConfig{
+			Binds:          volumes(s.Volumes),
 			CapAdd:         strslice.StrSlice(s.CapAdd),
 			CapDrop:        strslice.StrSlice(s.CapDrop),
 			DNS:            s.DNS,
@@ -75,6 +79,21 @@ func ports(ports []string) (*nat.PortMap, error) {
 	}
 
 	return &portBindings, nil
+}
+
+func volumes(volumes *yamltypes.Volumes) []string {
+	if volumes == nil {
+		return nil
+	}
+
+	var vols []string
+	for _, v := range volumes.Volumes {
+		if filepath.IsAbs(v.Source) {
+			vols = append(vols, v.String())
+		}
+	}
+
+	return vols
 }
 
 func convertToInstance(c types.Container) engine.Instance {

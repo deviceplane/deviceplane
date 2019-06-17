@@ -40,13 +40,21 @@ func fullService() Service {
 		Pid:            "x",
 		Ports:          []string{"x", "y", "z"},
 		Privileged:     true,
+		ReadOnly:       true,
 		SecurityOpt:    []string{"x", "y", "z"},
 		ShmSize:        yamltypes.MemStringorInt(1),
 		StopSignal:     "x",
-		Uts:            "x",
-		ReadOnly:       true,
 		User:           "x",
-		WorkingDir:     "x",
+		Uts:            "x",
+		Volumes: &yamltypes.Volumes{
+			Volumes: []*yamltypes.Volume{
+				{
+					Source:      "/a",
+					Destination: "/b",
+				},
+			},
+		},
+		WorkingDir: "x",
 	}
 }
 
@@ -96,6 +104,55 @@ func TestHash(t *testing.T) {
 				"k2": "vv2",
 				"k3": "vv3",
 			})
+			return s
+		},
+		func(s Service) Service {
+			s.Volumes = &yamltypes.Volumes{
+				Volumes: []*yamltypes.Volume{
+					{
+						Source:      "/x",
+						Destination: "/b",
+					},
+				},
+			}
+			return s
+		},
+		func(s Service) Service {
+			s.Volumes = &yamltypes.Volumes{
+				Volumes: []*yamltypes.Volume{
+					{
+						Source:      "/a",
+						Destination: "/x",
+					},
+				},
+			}
+			return s
+		},
+		func(s Service) Service {
+			s.Volumes = &yamltypes.Volumes{
+				Volumes: []*yamltypes.Volume{
+					{
+						Source:      "/a",
+						Destination: "/b",
+						AccessMode:  "ro",
+					},
+				},
+			}
+			return s
+		},
+		func(s Service) Service {
+			s.Volumes = &yamltypes.Volumes{
+				Volumes: []*yamltypes.Volume{
+					{
+						Source:      "/a",
+						Destination: "/b",
+					},
+					{
+						Source:      "/c",
+						Destination: "/d",
+					},
+				},
+			}
 			return s
 		},
 	} {

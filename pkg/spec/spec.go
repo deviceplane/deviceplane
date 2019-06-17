@@ -38,12 +38,13 @@ type Service struct {
 	Pid            string                    `yaml:"pid,omitempty"`
 	Ports          []string                  `yaml:"ports,omitempty"`
 	Privileged     bool                      `yaml:"privileged,omitempty"`
+	ReadOnly       bool                      `yaml:"read_only,omitempty"`
 	SecurityOpt    []string                  `yaml:"security_opt,omitempty"`
 	ShmSize        yamltypes.MemStringorInt  `yaml:"shm_size,omitempty"`
 	StopSignal     string                    `yaml:"stop_signal,omitempty"`
-	Uts            string                    `yaml:"uts,omitempty"`
-	ReadOnly       bool                      `yaml:"read_only,omitempty"`
 	User           string                    `yaml:"user,omitempty"`
+	Uts            string                    `yaml:"uts,omitempty"`
+	Volumes        *yamltypes.Volumes        `yaml:"volumes,omitempty"`
 	WorkingDir     string                    `yaml:"working_dir,omitempty"`
 }
 
@@ -109,12 +110,13 @@ func (s Service) hash(name string, hash func(string) string) string {
 	parts = append(parts, s.Pid)
 	parts = append(parts, s.Ports...)
 	parts = append(parts, fmt.Sprint(s.Privileged))
+	parts = append(parts, fmt.Sprint(s.ReadOnly))
 	parts = append(parts, s.SecurityOpt...)
 	parts = append(parts, fmt.Sprint(s.ShmSize))
 	parts = append(parts, s.StopSignal)
-	parts = append(parts, s.Uts)
-	parts = append(parts, fmt.Sprint(s.ReadOnly))
 	parts = append(parts, s.User)
+	parts = append(parts, s.Uts)
+	parts = append(parts, s.Volumes.HashString())
 	parts = append(parts, s.WorkingDir)
 
 	return hash(strings.Join(parts, ":"))
