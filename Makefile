@@ -14,10 +14,10 @@ push-controller: controller
 	docker push deviceplane/deviceplane:${version}
 
 agent:
-	docker build -t deviceplane/agent:${version} -f Dockerfile.agent --build-arg version=${version} .
+	VERSION=${version} ./scripts/build-agent
 
 push-agent: agent
-	docker push deviceplane/agent:${version}
+	docker manifest push deviceplane/agent:${version}
 
 cli-ci:
 	docker build -t deviceplane/cli-ci:${version} -f Dockerfile.cli-ci --build-arg version=${version} .
