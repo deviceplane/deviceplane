@@ -88,7 +88,7 @@ func main() {
 		Handler: handlers.CORS(
 			handlers.AllowCredentials(),
 			handlers.AllowedHeaders([]string{"Content-Type"}),
-			handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE"}),
+			handlers.AllowedMethods([]string{"GET", "POST", "PUT", "PATCH", "DELETE"}),
 			handlers.AllowedOrigins([]string{config.AllowedOrigin}),
 		)(svc),
 	}
