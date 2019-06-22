@@ -15,12 +15,12 @@ const createUser = `
 `
 
 const getUser = `
-  select id, email, first_name, last_name, company, registration_completed from users
+  select id, created_at, email, first_name, last_name, company, registration_completed from users
   where id = ?
 `
 
 const validateUser = `
-  select id, email, first_name, last_name, company, registration_completed from users
+  select id, created_at, email, first_name, last_name, company, registration_completed from users
   where email = ? and password_hash = ?
 `
 
@@ -64,12 +64,12 @@ const createRegistrationToken = `
 `
 
 const getRegistrationToken = `
-  select id, user_id from registration_tokens
+  select id, created_at, user_id from registration_tokens
   where id = ?
 `
 
 const validateRegistrationToken = `
-  select id, user_id from registration_tokens
+  select id, created_at, user_id from registration_tokens
   where hash = ?
 `
 
@@ -83,12 +83,12 @@ const createSession = `
 `
 
 const getSession = `
-  select id, user_id from sessions
+  select id, created_at, user_id from sessions
   where id = ?
 `
 
 const validateSession = `
-  select id, user_id from sessions
+  select id, created_at, user_id from sessions
   where hash = ?
 `
 
@@ -138,12 +138,12 @@ const createProject = `
 `
 
 const getProject = `
-  select id, name from projects
+  select id, created_at, name from projects
   where id = ?
 `
 
 const lookupProject = `
-  select id, name from projects
+  select id, created_at, name from projects
   where name = ?
 `
 
@@ -169,17 +169,17 @@ const createRole = `
 `
 
 const getRole = `
-  select id, project_id, name, description, config from roles
+  select id, created_at, project_id, name, description, config from roles
   where id = ? and project_id = ?
 `
 
 const lookupRole = `
-  select id, project_id, name, description, config from roles
+  select id, created_at, project_id, name, description, config from roles
   where name = ? and project_id = ?
 `
 
 const listRoles = `
-  select id, project_id, name, description, config from roles
+  select id, created_at, project_id, name, description, config from roles
   where project_id = ?
 `
 
@@ -204,17 +204,17 @@ const createMembership = `
 `
 
 const getMembership = `
-  select user_id, project_id from memberships
+  select user_id, project_id, created_at from memberships
   where user_id = ? and project_id = ?
 `
 
 const listMembershipsByUser = `
-  select user_id, project_id from memberships
+  select user_id, project_id, created_at from memberships
   where user_id = ?
 `
 
 const listMembershipsByProject = `
-  select user_id, project_id from memberships
+  select user_id, project_id, created_at from memberships
   where project_id = ?
 `
 
@@ -234,12 +234,12 @@ const createMembershipRoleBinding = `
 `
 
 const getMembershipRoleBinding = `
-  select user_id, role_id, project_id from membership_role_bindings
+  select user_id, role_id, created_at, project_id from membership_role_bindings
   where user_id = ? and role_id = ? and project_id = ?
 `
 
 const listMembershipRoleBindings = `
-  select user_id, role_id, project_id from membership_role_bindings
+  select user_id, role_id, created_at, project_id from membership_role_bindings
   where user_id = ? and project_id = ?
 `
 
@@ -260,17 +260,17 @@ const createServiceAccount = `
 `
 
 const getServiceAccount = `
-  select id, project_id, name, description from service_accounts
+  select id, created_at, project_id, name, description from service_accounts
   where id = ? and project_id = ?
 `
 
 const lookupServiceAccount = `
-  select id, project_id, name, description from service_accounts
+  select id, created_at, project_id, name, description from service_accounts
   where name = ? and project_id = ?
 `
 
 const listServiceAccounts = `
-  select id, project_id, name, description from service_accounts
+  select id, created_at, project_id, name, description from service_accounts
   where project_id = ?
 `
 
@@ -328,12 +328,12 @@ const createServiceAccountRoleBinding = `
 `
 
 const getServiceAccountRoleBinding = `
-  select service_account_id, role_id, project_id from service_account_role_bindings
+  select service_account_id, role_id, created_at, project_id from service_account_role_bindings
   where service_account_id = ? and role_id = ? and project_id = ?
 `
 
 const listServiceAccountRoleBindings = `
-  select service_account_id, role_id, project_id from service_account_role_bindings
+  select service_account_id, role_id, created_at, project_id from service_account_role_bindings
   where service_account_id = ? and project_id = ?
 `
 
@@ -353,12 +353,12 @@ const createDevice = `
 `
 
 const getDevice = `
-  select id, project_id, name, info from devices
+  select id, created_at, project_id, name, info from devices
   where id = ? and project_id = ?
 `
 
 const listDevices = `
-  select id, project_id, name, info from devices
+  select id, created_at, project_id, name, info from devices
   where project_id = ?
 `
 
@@ -380,12 +380,12 @@ var setDeviceLabel = fmt.Sprintf(`
 `, "`", "`")
 
 var getDeviceLabel = fmt.Sprintf(`
-  select %skey%s, device_id, project_id, value from device_labels
+  select %skey%s, device_id, created_at, project_id, value from device_labels
   where %skey%s = ? and device_id = ? and project_id = ?
 `, "`", "`", "`", "`")
 
 var listDeviceLabels = fmt.Sprintf(`
-  select %skey%s, device_id, project_id, value from device_labels
+  select %skey%s, device_id, created_at, project_id, value from device_labels
   where device_id = ? and project_id = ?
 `, "`", "`")
 
@@ -404,7 +404,7 @@ const createDeviceRegistrationToken = `
 `
 
 const getDeviceRegistrationToken = `
-  select id, project_id, device_access_key_id from device_registration_tokens
+  select id, created_at, project_id, device_access_key_id from device_registration_tokens
   where id = ? and project_id = ?
 `
 
@@ -425,12 +425,12 @@ const createDeviceAccessKey = `
 `
 
 const getDeviceAccessKey = `
-  select id, project_id, device_id from device_access_keys
+  select id, created_at, project_id, device_id from device_access_keys
   where id = ? and project_id = ?
 `
 
 const validateDeviceAccessKey = `
-  select id, project_id, device_id from device_access_keys
+  select id, created_at, project_id, device_id from device_access_keys
   where project_id = ? and hash = ?
 `
 
@@ -446,17 +446,17 @@ const createApplication = `
 `
 
 const getApplication = `
-  select id, project_id, name, description, settings from applications
+  select id, created_at, project_id, name, description, settings from applications
   where id = ? and project_id = ?
 `
 
 const lookupApplication = `
-  select id, project_id, name, description, settings from applications
+  select id, created_at, project_id, name, description, settings from applications
   where name = ? and project_id = ?
 `
 
 const listApplications = `
-  select id, project_id, name, description, settings from applications
+  select id, created_at, project_id, name, description, settings from applications
   where project_id = ?
 `
 

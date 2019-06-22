@@ -232,6 +232,7 @@ func (s *Store) scanUser(scanner scanner) (*models.User, error) {
 	var user models.User
 	if err := scanner.Scan(
 		&user.ID,
+		&user.CreatedAt,
 		&user.Email,
 		&user.FirstName,
 		&user.LastName,
@@ -289,6 +290,7 @@ func (s *Store) scanRegistrationToken(scanner scanner) (*models.RegistrationToke
 	var registrationToken models.RegistrationToken
 	if err := scanner.Scan(
 		&registrationToken.ID,
+		&registrationToken.CreatedAt,
 		&registrationToken.UserID,
 	); err != nil {
 		return nil, err
@@ -347,6 +349,7 @@ func (s *Store) scanSession(scanner scanner) (*models.Session, error) {
 	var session models.Session
 	if err := scanner.Scan(
 		&session.ID,
+		&session.CreatedAt,
 		&session.UserID,
 	); err != nil {
 		return nil, err
@@ -487,6 +490,7 @@ func (s *Store) scanProject(scanner scanner) (*models.Project, error) {
 	var project models.Project
 	if err := scanner.Scan(
 		&project.ID,
+		&project.CreatedAt,
 		&project.Name,
 	); err != nil {
 		return nil, err
@@ -637,6 +641,7 @@ func (s *Store) scanRole(scanner scanner) (*models.Role, error) {
 	var role models.Role
 	if err := scanner.Scan(
 		&role.ID,
+		&role.CreatedAt,
 		&role.ProjectID,
 		&role.Name,
 		&role.Description,
@@ -719,6 +724,7 @@ func (s *Store) scanMembership(scanner scanner) (*models.Membership, error) {
 	if err := scanner.Scan(
 		&membership.UserID,
 		&membership.ProjectID,
+		&membership.CreatedAt,
 	); err != nil {
 		return nil, err
 	}
@@ -791,6 +797,7 @@ func (s *Store) scanMembershipRoleBinding(scanner scanner) (*models.MembershipRo
 	if err := scanner.Scan(
 		&membershipRoleBinding.UserID,
 		&membershipRoleBinding.RoleID,
+		&membershipRoleBinding.CreatedAt,
 		&membershipRoleBinding.ProjectID,
 	); err != nil {
 		return nil, err
@@ -893,6 +900,7 @@ func (s *Store) scanServiceAccount(scanner scanner) (*models.ServiceAccount, err
 	var serviceAccount models.ServiceAccount
 	if err := scanner.Scan(
 		&serviceAccount.ID,
+		&serviceAccount.CreatedAt,
 		&serviceAccount.ProjectID,
 		&serviceAccount.Name,
 		&serviceAccount.Description,
@@ -1059,6 +1067,7 @@ func (s *Store) scanServiceAccountRoleBinding(scanner scanner) (*models.ServiceA
 	if err := scanner.Scan(
 		&serviceAccountRoleBinding.ServiceAccountID,
 		&serviceAccountRoleBinding.RoleID,
+		&serviceAccountRoleBinding.CreatedAt,
 		&serviceAccountRoleBinding.ProjectID,
 	); err != nil {
 		return nil, err
@@ -1143,6 +1152,7 @@ func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 	var infoString string
 	if err := scanner.Scan(
 		&device.ID,
+		&device.CreatedAt,
 		&device.ProjectID,
 		&device.Name,
 		&infoString,
@@ -1228,6 +1238,7 @@ func (s *Store) scanDeviceLabel(scanner scanner) (*models.DeviceLabel, error) {
 	if err := scanner.Scan(
 		&deviceLabel.Key,
 		&deviceLabel.DeviceID,
+		&deviceLabel.CreatedAt,
 		&deviceLabel.ProjectID,
 		&deviceLabel.Value,
 	); err != nil {
@@ -1282,6 +1293,7 @@ func (s *Store) scanDeviceRegistrationToken(scanner scanner) (*models.DeviceRegi
 	var deviceRegistrationToken models.DeviceRegistrationToken
 	if err := scanner.Scan(
 		&deviceRegistrationToken.ID,
+		&deviceRegistrationToken.CreatedAt,
 		&deviceRegistrationToken.ProjectID,
 		&deviceRegistrationToken.DeviceAccessKeyID,
 	); err != nil {
@@ -1337,6 +1349,7 @@ func (s *Store) scanDeviceAccessKey(scanner scanner) (*models.DeviceAccessKey, e
 	var deviceAccessKey models.DeviceAccessKey
 	if err := scanner.Scan(
 		&deviceAccessKey.ID,
+		&deviceAccessKey.CreatedAt,
 		&deviceAccessKey.ProjectID,
 		&deviceAccessKey.DeviceID,
 	); err != nil {
@@ -1455,6 +1468,7 @@ func (s *Store) scanApplication(scanner scanner) (*models.Application, error) {
 	var settingsString string
 	if err := scanner.Scan(
 		&application.ID,
+		&application.CreatedAt,
 		&application.ProjectID,
 		&application.Name,
 		&application.Description,
