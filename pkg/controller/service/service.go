@@ -505,12 +505,12 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := s.users.ValidateUser(r.Context(), loginRequest.Email, hash.Hash(loginRequest.Password))
+	user, err := s.users.ValidateUserWithEmail(r.Context(), loginRequest.Email, hash.Hash(loginRequest.Password))
 	if err == store.ErrUserNotFound {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	} else if err != nil {
-		log.WithError(err).Error("validate user")
+		log.WithError(err).Error("validate user with email")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -602,10 +602,11 @@ func (s *Service) updateMe(w http.ResponseWriter, r *http.Request, authenticated
 	}
 
 	var updateUserRequest struct {
-		Password  *string `json:"password"`
-		FirstName *string `json:"firstName"`
-		LastName  *string `json:"lastName"`
-		Company   *string `json:"company"`
+		Password        *string `json:"password"`
+		CurrentPassword *string `json:"currentPassword"`
+		FirstName       *string `json:"firstName"`
+		LastName        *string `json:"lastName"`
+		Company         *string `json:"company"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&updateUserRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -613,6 +614,20 @@ func (s *Service) updateMe(w http.ResponseWriter, r *http.Request, authenticated
 	}
 
 	if updateUserRequest.Password != nil {
+		if updateUserRequest.CurrentPassword == nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		if _, err := s.users.ValidateUser(r.Context(), authenticatedUserID, hash.Hash(*updateUserRequest.CurrentPassword)); err == store.ErrUserNotFound {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		} else if err != nil {
+			log.WithError(err).Error("validate user")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		if _, err := s.users.UpdatePasswordHash(r.Context(), authenticatedUserID, hash.Hash(*updateUserRequest.Password)); err != nil {
 			log.WithError(err).Error("update password hash")
 			w.WriteHeader(http.StatusInternalServerError)

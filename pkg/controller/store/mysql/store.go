@@ -151,8 +151,21 @@ func (s *Store) GetUser(ctx context.Context, id string) (*models.User, error) {
 	return user, nil
 }
 
-func (s *Store) ValidateUser(ctx context.Context, email, passwordHash string) (*models.User, error) {
-	userRow := s.db.QueryRowContext(ctx, validateUser, email, passwordHash)
+func (s *Store) ValidateUser(ctx context.Context, id, passwordHash string) (*models.User, error) {
+	userRow := s.db.QueryRowContext(ctx, validateUser, id, passwordHash)
+
+	user, err := s.scanUser(userRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrUserNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *Store) ValidateUserWithEmail(ctx context.Context, email, passwordHash string) (*models.User, error) {
+	userRow := s.db.QueryRowContext(ctx, validateUserWithEmail, email, passwordHash)
 
 	user, err := s.scanUser(userRow)
 	if err == sql.ErrNoRows {
