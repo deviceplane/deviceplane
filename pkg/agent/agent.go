@@ -130,7 +130,7 @@ func (a *Agent) runSupervisor() {
 		a.supervisor.SetApplications(bundle.Applications)
 	}
 
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
 	for {
