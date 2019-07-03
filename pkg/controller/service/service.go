@@ -153,6 +153,7 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/memberships", s.validateAuthorization("memberships", "CreateMembership", s.createMembership)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/memberships/{user}", s.validateAuthorization("memberships", "GetMembership", s.getMembership)).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/memberships", s.validateAuthorization("memberships", "ListMembershipsByProject", s.listMembershipsByProject)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/memberships/{user}", s.validateAuthorization("memberships", "DeleteMembership", s.deleteMembership)).Methods("DELETE")
 
 	s.router.HandleFunc("/projects/{project}/memberships/{user}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "CreateMembershipRoleBinding", s.withRole(s.createMembershipRoleBinding))).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/memberships/{user}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "GetMembershipRoleBinding", s.withRole(s.getMembershipRoleBinding))).Methods("GET")
@@ -1454,6 +1455,20 @@ func (s *Service) listMembershipsByProject(w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(ret)
+}
+
+func (s *Service) deleteMembership(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	vars := mux.Vars(r)
+	// TODO: rename this to userID and change all instances of the other to authenticatedUserUD
+	membershipUserID := vars["user"]
+
+	if err := s.memberships.DeleteMembership(r.Context(), membershipUserID, projectID); err != nil {
+		log.WithError(err).Error("delete membership")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) createMembershipRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
