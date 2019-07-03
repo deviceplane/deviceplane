@@ -17,12 +17,17 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/revdial"
 	"github.com/deviceplane/deviceplane/pkg/spec"
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"gopkg.in/yaml.v2"
 )
 
 const (
 	sessionCookie = "dp_sess"
+)
+
+var (
+	errEmailAlreadyTaken = errors.New("email already taken")
 )
 
 type Service struct {
@@ -431,6 +436,15 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.NewDecoder(r.Body).Decode(&registerRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if _, err := s.users.LookupUser(r.Context(), registerRequest.Email); err == nil {
+		http.Error(w, errEmailAlreadyTaken.Error(), http.StatusBadRequest)
+		return
+	} else if err != store.ErrUserNotFound {
+		log.WithError(err).Error("lookup user")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -1309,15 +1323,24 @@ func (s *Service) deleteServiceAccountRoleBinding(w http.ResponseWriter, r *http
 
 func (s *Service) createMembership(w http.ResponseWriter, r *http.Request, projectID, userID string) {
 	var createMembershipRequest struct {
-		UserID string `json:"userId"`
+		Email string `json:"email"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&createMembershipRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	membership, err := s.memberships.CreateMembership(r.Context(),
-		createMembershipRequest.UserID, projectID)
+	user, err := s.users.LookupUser(r.Context(), createMembershipRequest.Email)
+	if err == store.ErrUserNotFound {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("lookup user")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	membership, err := s.memberships.CreateMembership(r.Context(), user.ID, projectID)
 	if err != nil {
 		log.WithError(err).Error("create membership")
 		w.WriteHeader(http.StatusInternalServerError)

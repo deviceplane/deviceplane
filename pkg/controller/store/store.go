@@ -11,6 +11,7 @@ import (
 type Users interface {
 	CreateUser(ctx context.Context, email, passwordHash, firstName, lastName, company string) (*models.User, error)
 	GetUser(ctx context.Context, id string) (*models.User, error)
+	LookupUser(ctx context.Context, email string) (*models.User, error)
 	ValidateUser(ctx context.Context, id, passwordHash string) (*models.User, error)
 	ValidateUserWithEmail(ctx context.Context, email, passwordHash string) (*models.User, error)
 	MarkRegistrationCompleted(ctx context.Context, id string) (*models.User, error)

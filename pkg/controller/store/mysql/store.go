@@ -151,6 +151,19 @@ func (s *Store) GetUser(ctx context.Context, id string) (*models.User, error) {
 	return user, nil
 }
 
+func (s *Store) LookupUser(ctx context.Context, email string) (*models.User, error) {
+	userRow := s.db.QueryRowContext(ctx, lookupUser, email)
+
+	user, err := s.scanUser(userRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrUserNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
 func (s *Store) ValidateUser(ctx context.Context, id, passwordHash string) (*models.User, error) {
 	userRow := s.db.QueryRowContext(ctx, validateUser, id, passwordHash)
 
