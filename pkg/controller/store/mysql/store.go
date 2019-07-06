@@ -20,6 +20,7 @@ type scanner interface {
 const (
 	userPrefix                    = "usr"
 	registrationTokenPrefix       = "reg"
+	passwordRecoveryTokenPrefix   = "pwr"
 	sessionPrefix                 = "ses"
 	userAccessKeyPrefix           = "uky"
 	projectPrefix                 = "prj"
@@ -39,6 +40,10 @@ func newUserID() string {
 
 func newRegistrationTokenID() string {
 	return fmt.Sprintf("%s_%s", registrationTokenPrefix, ksuid.New().String())
+}
+
+func newPasswordRecoveryTokenID() string {
+	return fmt.Sprintf("%s_%s", passwordRecoveryTokenPrefix, ksuid.New().String())
 }
 
 func newSessionID() string {
@@ -88,6 +93,7 @@ func newReleaseID() string {
 var (
 	_ store.Users                      = &Store{}
 	_ store.RegistrationTokens         = &Store{}
+	_ store.PasswordRecoveryTokens     = &Store{}
 	_ store.Sessions                   = &Store{}
 	_ store.UserAccessKeys             = &Store{}
 	_ store.Projects                   = &Store{}
@@ -322,6 +328,61 @@ func (s *Store) scanRegistrationToken(scanner scanner) (*models.RegistrationToke
 		return nil, err
 	}
 	return &registrationToken, nil
+}
+
+func (s *Store) CreatePasswordRecoveryToken(ctx context.Context, userID, hash string) (*models.PasswordRecoveryToken, error) {
+	id := newPasswordRecoveryTokenID()
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		createPasswordRecoveryToken,
+		id,
+		userID,
+		hash,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetPasswordRecoveryToken(ctx, id)
+}
+
+func (s *Store) GetPasswordRecoveryToken(ctx context.Context, id string) (*models.PasswordRecoveryToken, error) {
+	passwordRecoveryTokenRow := s.db.QueryRowContext(ctx, getPasswordRecoveryToken, id)
+
+	passwordRecoveryToken, err := s.scanPasswordRecoveryToken(passwordRecoveryTokenRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrPasswordRecoveryTokenNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return passwordRecoveryToken, nil
+}
+
+func (s *Store) ValidatePasswordRecoveryToken(ctx context.Context, hash string) (*models.PasswordRecoveryToken, error) {
+	passwordRecoveryTokenRow := s.db.QueryRowContext(ctx, validatePasswordRecoveryToken, hash)
+
+	passwordRecoveryToken, err := s.scanPasswordRecoveryToken(passwordRecoveryTokenRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrPasswordRecoveryTokenNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return passwordRecoveryToken, nil
+}
+
+func (s *Store) scanPasswordRecoveryToken(scanner scanner) (*models.PasswordRecoveryToken, error) {
+	var passwordRecoveryToken models.PasswordRecoveryToken
+	if err := scanner.Scan(
+		&passwordRecoveryToken.ID,
+		&passwordRecoveryToken.CreatedAt,
+		&passwordRecoveryToken.ExpiresAt,
+		&passwordRecoveryToken.UserID,
+	); err != nil {
+		return nil, err
+	}
+	return &passwordRecoveryToken, nil
 }
 
 func (s *Store) CreateSession(ctx context.Context, userID, hash string) (*models.Session, error) {

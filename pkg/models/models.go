@@ -16,8 +16,15 @@ type User struct {
 
 type RegistrationToken struct {
 	ID        string    `json:"id"`
-	UserID    string    `json:"userId"`
 	CreatedAt time.Time `json:"createdAt"`
+	UserID    string    `json:"userId"`
+}
+
+type PasswordRecoveryToken struct {
+	ID        string    `json:"id"`
+	CreatedAt time.Time `json:"createdAt"`
+	ExpiresAt time.Time `json:"expiresAt"`
+	UserID    string    `json:"userId"`
 }
 
 type Session struct {

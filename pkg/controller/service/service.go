@@ -28,10 +28,12 @@ const (
 
 var (
 	errEmailAlreadyTaken = errors.New("email already taken")
+	errTokenExpired      = errors.New("token expired")
 )
 
 type Service struct {
 	users                      store.Users
+	passwordRecoveryTokens     store.PasswordRecoveryTokens
 	registrationTokens         store.RegistrationTokens
 	userAccessKeys             store.UserAccessKeys
 	sessions                   store.Sessions
@@ -65,6 +67,7 @@ type Service struct {
 func NewService(
 	users store.Users,
 	registrationTokens store.RegistrationTokens,
+	passwordRecoveryTokens store.PasswordRecoveryTokens,
 	sessions store.Sessions,
 	userAccessKeys store.UserAccessKeys,
 	projects store.Projects,
@@ -94,6 +97,7 @@ func NewService(
 	s := &Service{
 		users:                      users,
 		registrationTokens:         registrationTokens,
+		passwordRecoveryTokens:     passwordRecoveryTokens,
 		sessions:                   sessions,
 		userAccessKeys:             userAccessKeys,
 		projects:                   projects,
@@ -127,6 +131,10 @@ func NewService(
 
 	s.router.HandleFunc("/register", s.register).Methods("POST")
 	s.router.HandleFunc("/completeregistration", s.confirmRegistration).Methods("POST")
+
+	s.router.HandleFunc("/recoverpassword", s.recoverPassword).Methods("POST")
+	s.router.HandleFunc("/passwordrecoverytokens/{passwordrecoverytokenvalue}", s.getPasswordRecoveryToken).Methods("GET")
+	s.router.HandleFunc("/changepassword", s.changePassword).Methods("POST")
 
 	s.router.HandleFunc("/login", s.login).Methods("POST")
 	s.router.HandleFunc("/logout", s.logout).Methods("POST")
@@ -508,6 +516,115 @@ func (s *Service) confirmRegistration(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.newSession(w, r, registrationToken.UserID)
+}
+
+func (s *Service) recoverPassword(w http.ResponseWriter, r *http.Request) {
+	var recoverPasswordRequest struct {
+		Email string `json:"email"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&recoverPasswordRequest); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	user, err := s.users.LookupUser(r.Context(), recoverPasswordRequest.Email)
+	if err == store.ErrUserNotFound {
+		http.Error(w, store.ErrUserNotFound.Error(), http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("lookup user")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	passwordRecoveryTokenValue := ksuid.New().String()
+
+	if _, err := s.passwordRecoveryTokens.CreatePasswordRecoveryToken(r.Context(),
+		user.ID, hash.Hash(passwordRecoveryTokenValue)); err != nil {
+		log.WithError(err).Error("create password recovery token")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	name := user.FirstName + " " + user.LastName
+
+	if err := s.email.Send(email.Request{
+		FromName:         "Device Plane",
+		FromAddress:      "noreply@deviceplane.io",
+		ToName:           name,
+		ToAddress:        user.Email,
+		Subject:          "Device Plane Password Recovery",
+		PlainTextContent: "Please go to the following URL to recover your password. https://app.deviceplane.io/recover/" + passwordRecoveryTokenValue,
+		HTMLContent:      "Please go to the following URL to recover your password. https://app.deviceplane.io/recover/" + passwordRecoveryTokenValue,
+	}); err != nil {
+		log.WithError(err).Error("send recovery email")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Service) getPasswordRecoveryToken(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	passwordRecoveryTokenValue := vars["passwordrecoverytokenvalue"]
+
+	passwordRecoveryToken, err := s.passwordRecoveryTokens.ValidatePasswordRecoveryToken(r.Context(), hash.Hash(passwordRecoveryTokenValue))
+	if err == store.ErrPasswordRecoveryTokenNotFound {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("validate password recovery token")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(passwordRecoveryToken)
+}
+
+func (s *Service) changePassword(w http.ResponseWriter, r *http.Request) {
+	var changePasswordRequest struct {
+		PasswordRecoveryTokenValue string `json:"passwordRecoveryTokenValue"`
+		Password                   string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&changePasswordRequest); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	passwordRecoveryToken, err := s.passwordRecoveryTokens.ValidatePasswordRecoveryToken(r.Context(),
+		hash.Hash(changePasswordRequest.PasswordRecoveryTokenValue))
+	if err == store.ErrPasswordRecoveryTokenNotFound {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("validate password recovery token")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if time.Now().After(passwordRecoveryToken.ExpiresAt) {
+		http.Error(w, errTokenExpired.Error(), http.StatusForbidden)
+		return
+	}
+
+	if _, err := s.users.UpdatePasswordHash(r.Context(),
+		passwordRecoveryToken.UserID, hash.Hash(changePasswordRequest.Password)); err != nil {
+		log.WithError(err).Error("update password hash")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	user, err := s.users.GetUser(r.Context(), passwordRecoveryToken.UserID)
+	if err != nil {
+		log.WithError(err).Error("get user")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(user)
 }
 
 func (s *Service) login(w http.ResponseWriter, r *http.Request) {

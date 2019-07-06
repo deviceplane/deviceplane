@@ -83,6 +83,26 @@ const validateRegistrationToken = `
   where hash = ?
 `
 
+const createPasswordRecoveryToken = `
+  insert into password_recovery_tokens (
+    id,
+    expires_at,
+    user_id,
+    hash
+  )
+  values (?, now() + interval 1 hour, ?, ?)
+`
+
+const getPasswordRecoveryToken = `
+  select id, created_at, expires_at, user_id from password_recovery_tokens
+  where id = ?
+`
+
+const validatePasswordRecoveryToken = `
+  select id, created_at, expires_at, user_id from password_recovery_tokens
+  where hash = ?
+`
+
 const createSession = `
   insert into sessions (
     id,

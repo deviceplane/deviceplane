@@ -41,6 +41,24 @@ create table if not exists registration_tokens (
   on delete cascade
 );
 
+--
+-- PasswordRecoveryTokens
+--
+
+create table if not exists password_recovery_tokens (
+  id varchar(32) not null,
+  created_at timestamp not null default current_timestamp,
+  expires_at timestamp not null,
+  user_id varchar(32) not null,
+
+  -- SENSITIVE FIELD
+  hash varchar(255) not null,
+
+  primary key (id),
+  foreign key password_recovery_tokens_user_id(user_id)
+  references users(id)
+  on delete cascade
+);
 
 --
 -- Sessions

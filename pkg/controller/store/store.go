@@ -31,6 +31,14 @@ type RegistrationTokens interface {
 
 var ErrRegistrationTokenNotFound = errors.New("registration token not found")
 
+type PasswordRecoveryTokens interface {
+	CreatePasswordRecoveryToken(ctx context.Context, userID, hash string) (*models.PasswordRecoveryToken, error)
+	GetPasswordRecoveryToken(ctx context.Context, id string) (*models.PasswordRecoveryToken, error)
+	ValidatePasswordRecoveryToken(ctx context.Context, hash string) (*models.PasswordRecoveryToken, error)
+}
+
+var ErrPasswordRecoveryTokenNotFound = errors.New("password recovery token not found")
+
 type Sessions interface {
 	CreateSession(ctx context.Context, userID string, hash string) (*models.Session, error)
 	GetSession(ctx context.Context, id string) (*models.Session, error)
