@@ -85,7 +85,29 @@ func (s *ServiceSupervisor) reconcileLoop() {
 		service := s.service
 		s.lock.RUnlock()
 
-		instances := containerList(s.ctx, s.engine, nil, map[string]string{
+		ctx, cancel := context.WithCancel(s.ctx)
+
+		startCanceler := func() {
+			go func() {
+				ticker := time.NewTicker(time.Second)
+				defer ticker.Stop()
+
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case <-ticker.C:
+						s.lock.RLock()
+						if s.service.Hash(s.serviceName) != service.Hash(s.serviceName) {
+							cancel()
+						}
+						s.lock.RUnlock()
+					}
+				}
+			}()
+		}
+
+		instances := containerList(ctx, s.engine, nil, map[string]string{
 			models.ApplicationLabel: s.applicationID,
 			models.ServiceLabel:     s.serviceName,
 		}, true)
@@ -100,20 +122,22 @@ func (s *ServiceSupervisor) reconcileLoop() {
 				goto cont
 			}
 
-			imagePull(s.ctx, s.engine, service.Image)
+			startCanceler()
+			imagePull(ctx, s.engine, service.Image)
 
 			s.sendKeepAliveDeactivate()
 
-			containerStop(s.ctx, s.engine, instance.ID)
-			containerRemove(s.ctx, s.engine, instance.ID)
+			containerStop(ctx, s.engine, instance.ID)
+			containerRemove(ctx, s.engine, instance.ID)
 		} else {
-			imagePull(s.ctx, s.engine, service.Image)
+			startCanceler()
+			imagePull(ctx, s.engine, service.Image)
 		}
 
 		s.sendKeepAliveDeactivate()
 
 		containerCreate(
-			s.ctx,
+			ctx,
 			s.engine,
 			strings.Join([]string{s.serviceName, hash.ShortHash(s.applicationID), service.ShortHash(s.serviceName)}, "-"),
 			service.WithStandardLabels(s.applicationID, s.serviceName),
@@ -121,6 +145,8 @@ func (s *ServiceSupervisor) reconcileLoop() {
 
 		s.sendKeepAliveService(service)
 		s.sendKeepAliveRelease(release)
+
+		cancel()
 
 	cont:
 		select {
