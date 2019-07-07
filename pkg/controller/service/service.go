@@ -488,8 +488,6 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) confirmRegistration(w http.ResponseWriter, r *http.Request) {
@@ -561,8 +559,6 @@ func (s *Service) recoverPassword(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) getPasswordRecoveryToken(w http.ResponseWriter, r *http.Request) {
@@ -579,8 +575,7 @@ func (s *Service) getPasswordRecoveryToken(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(passwordRecoveryToken)
+	respond(w, passwordRecoveryToken)
 }
 
 func (s *Service) changePassword(w http.ResponseWriter, r *http.Request) {
@@ -623,8 +618,7 @@ func (s *Service) changePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(user)
+	respond(w, user)
 }
 
 func (s *Service) login(w http.ResponseWriter, r *http.Request) {
@@ -674,8 +668,6 @@ func (s *Service) newSession(w http.ResponseWriter, r *http.Request, userID stri
 		Secure:   s.cookieSecure,
 		HttpOnly: true,
 	})
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) logout(w http.ResponseWriter, r *http.Request) {
@@ -699,7 +691,6 @@ func (s *Service) logout(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	case http.ErrNoCookie:
-		w.WriteHeader(http.StatusOK)
 		return
 	default:
 		log.WithError(err).Error("get session cookie")
@@ -722,8 +713,7 @@ func (s *Service) getMe(w http.ResponseWriter, r *http.Request, authenticatedUse
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(user)
+	respond(w, user)
 }
 
 func (s *Service) updateMe(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
@@ -795,8 +785,7 @@ func (s *Service) updateMe(w http.ResponseWriter, r *http.Request, authenticated
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(user)
+	respond(w, user)
 }
 
 func (s *Service) listMembershipsByUser(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
@@ -860,8 +849,7 @@ func (s *Service) listMembershipsByUser(w http.ResponseWriter, r *http.Request, 
 		ret = membershipsFull
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ret)
+	respond(w, ret)
 }
 
 func (s *Service) createUserAccessKey(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
@@ -889,8 +877,7 @@ func (s *Service) createUserAccessKey(w http.ResponseWriter, r *http.Request, au
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(models.UserAccessKeyWithValue{
+	respond(w, models.UserAccessKeyWithValue{
 		UserAccessKey: *user,
 		Value:         userAccessKeyValue,
 	})
@@ -917,8 +904,7 @@ func (s *Service) getUserAccessKey(w http.ResponseWriter, r *http.Request, authe
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(userAccessKey)
+	respond(w, userAccessKey)
 }
 
 func (s *Service) listUserAccessKeys(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
@@ -935,8 +921,7 @@ func (s *Service) listUserAccessKeys(w http.ResponseWriter, r *http.Request, aut
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(userAccessKeys)
+	respond(w, userAccessKeys)
 }
 
 // TODO: verify that the user owns this access key
@@ -949,8 +934,6 @@ func (s *Service) deleteUserAccessKey(w http.ResponseWriter, r *http.Request, au
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) createProject(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
@@ -1032,8 +1015,7 @@ func (s *Service) createProject(w http.ResponseWriter, r *http.Request, authenti
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(project)
+	respond(w, project)
 }
 
 func (s *Service) getProject(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1044,8 +1026,7 @@ func (s *Service) getProject(w http.ResponseWriter, r *http.Request, projectID, 
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(project)
+	respond(w, project)
 }
 
 func (s *Service) createRole(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1082,8 +1063,7 @@ func (s *Service) createRole(w http.ResponseWriter, r *http.Request, projectID, 
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(role)
+	respond(w, role)
 }
 
 func (s *Service) getRole(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
@@ -1097,8 +1077,7 @@ func (s *Service) getRole(w http.ResponseWriter, r *http.Request, projectID, use
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(role)
+	respond(w, role)
 }
 
 func (s *Service) listRoles(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1109,8 +1088,7 @@ func (s *Service) listRoles(w http.ResponseWriter, r *http.Request, projectID, u
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(roles)
+	respond(w, roles)
 }
 
 func (s *Service) updateRole(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1141,8 +1119,7 @@ func (s *Service) updateRole(w http.ResponseWriter, r *http.Request, projectID, 
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(role)
+	respond(w, role)
 }
 
 func (s *Service) deleteRole(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1154,8 +1131,6 @@ func (s *Service) deleteRole(w http.ResponseWriter, r *http.Request, projectID, 
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) createServiceAccount(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1185,8 +1160,7 @@ func (s *Service) createServiceAccount(w http.ResponseWriter, r *http.Request, p
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(serviceAccount)
+	respond(w, serviceAccount)
 }
 
 func (s *Service) getServiceAccount(w http.ResponseWriter, r *http.Request, projectID, userID, serviceAccountID string) {
@@ -1226,8 +1200,7 @@ func (s *Service) getServiceAccount(w http.ResponseWriter, r *http.Request, proj
 		}
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ret)
+	respond(w, ret)
 }
 
 func (s *Service) listServiceAccounts(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1270,8 +1243,7 @@ func (s *Service) listServiceAccounts(w http.ResponseWriter, r *http.Request, pr
 		ret = serviceAccountsFull
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ret)
+	respond(w, ret)
 }
 
 func (s *Service) updateServiceAccount(w http.ResponseWriter, r *http.Request, projectID, userID, serviceAccountID string) {
@@ -1292,8 +1264,7 @@ func (s *Service) updateServiceAccount(w http.ResponseWriter, r *http.Request, p
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(serviceAccount)
+	respond(w, serviceAccount)
 }
 
 func (s *Service) deleteServiceAccount(w http.ResponseWriter, r *http.Request, projectID, userID, serviceAccountID string) {
@@ -1302,8 +1273,6 @@ func (s *Service) deleteServiceAccount(w http.ResponseWriter, r *http.Request, p
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) createServiceAccountAccessKey(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1328,8 +1297,7 @@ func (s *Service) createServiceAccountAccessKey(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(models.ServiceAccountAccessKeyWithValue{
+	respond(w, models.ServiceAccountAccessKeyWithValue{
 		ServiceAccountAccessKey: *serviceAccount,
 		Value:                   serviceAccountAccessKeyValue,
 	})
@@ -1349,8 +1317,7 @@ func (s *Service) getServiceAccountAccessKey(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(serviceAccountAccessKey)
+	respond(w, serviceAccountAccessKey)
 }
 
 func (s *Service) listServiceAccountAccessKeys(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1364,8 +1331,7 @@ func (s *Service) listServiceAccountAccessKeys(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(serviceAccountAccessKeys)
+	respond(w, serviceAccountAccessKeys)
 }
 
 func (s *Service) deleteServiceAccountAccessKey(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1377,8 +1343,6 @@ func (s *Service) deleteServiceAccountAccessKey(w http.ResponseWriter, r *http.R
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) createServiceAccountRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
@@ -1392,8 +1356,7 @@ func (s *Service) createServiceAccountRoleBinding(w http.ResponseWriter, r *http
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(serviceAccountRoleBinding)
+	respond(w, serviceAccountRoleBinding)
 }
 
 func (s *Service) getServiceAccountRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
@@ -1407,8 +1370,7 @@ func (s *Service) getServiceAccountRoleBinding(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(serviceAccountRoleBinding)
+	respond(w, serviceAccountRoleBinding)
 }
 
 func (s *Service) listServiceAccountRoleBindings(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1422,8 +1384,7 @@ func (s *Service) listServiceAccountRoleBindings(w http.ResponseWriter, r *http.
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(serviceAccountRoleBindings)
+	respond(w, serviceAccountRoleBindings)
 }
 
 func (s *Service) deleteServiceAccountRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
@@ -1435,8 +1396,6 @@ func (s *Service) deleteServiceAccountRoleBinding(w http.ResponseWriter, r *http
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) createMembership(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1465,8 +1424,7 @@ func (s *Service) createMembership(w http.ResponseWriter, r *http.Request, proje
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(membership)
+	respond(w, membership)
 }
 
 func (s *Service) getMembership(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1518,8 +1476,7 @@ func (s *Service) getMembership(w http.ResponseWriter, r *http.Request, projectI
 		}
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ret)
+	respond(w, ret)
 }
 
 func (s *Service) listMembershipsByProject(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1570,8 +1527,7 @@ func (s *Service) listMembershipsByProject(w http.ResponseWriter, r *http.Reques
 		ret = membershipsFull
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ret)
+	respond(w, ret)
 }
 
 func (s *Service) deleteMembership(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1584,8 +1540,6 @@ func (s *Service) deleteMembership(w http.ResponseWriter, r *http.Request, proje
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) createMembershipRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
@@ -1600,8 +1554,7 @@ func (s *Service) createMembershipRoleBinding(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(membershipRoleBinding)
+	respond(w, membershipRoleBinding)
 }
 
 func (s *Service) getMembershipRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
@@ -1619,8 +1572,7 @@ func (s *Service) getMembershipRoleBinding(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(membershipRoleBinding)
+	respond(w, membershipRoleBinding)
 }
 
 func (s *Service) listMembershipRoleBindings(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1635,8 +1587,7 @@ func (s *Service) listMembershipRoleBindings(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(membershipRoleBindings)
+	respond(w, membershipRoleBindings)
 }
 
 func (s *Service) deleteMembershipRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
@@ -1649,8 +1600,6 @@ func (s *Service) deleteMembershipRoleBinding(w http.ResponseWriter, r *http.Req
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) createApplication(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1688,8 +1637,7 @@ func (s *Service) createApplication(w http.ResponseWriter, r *http.Request, proj
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(application)
+	respond(w, application)
 }
 
 func (s *Service) getApplication(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
@@ -1726,8 +1674,7 @@ func (s *Service) getApplication(w http.ResponseWriter, r *http.Request, project
 		}
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ret)
+	respond(w, ret)
 }
 
 func (s *Service) listApplications(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1767,8 +1714,7 @@ func (s *Service) listApplications(w http.ResponseWriter, r *http.Request, proje
 		ret = applicationsFull
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ret)
+	respond(w, ret)
 }
 
 func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
@@ -1797,8 +1743,7 @@ func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request, proj
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(application)
+	respond(w, application)
 }
 
 func (s *Service) deleteApplication(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
@@ -1807,8 +1752,6 @@ func (s *Service) deleteApplication(w http.ResponseWriter, r *http.Request, proj
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 // TOOD: this has a vulnerability!
@@ -1834,8 +1777,7 @@ func (s *Service) createRelease(w http.ResponseWriter, r *http.Request, projectI
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(release)
+	respond(w, release)
 }
 
 func (s *Service) getRelease(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
@@ -1867,8 +1809,7 @@ func (s *Service) getRelease(w http.ResponseWriter, r *http.Request, projectID, 
 		}
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ret)
+	respond(w, ret)
 }
 
 func (s *Service) getLatestRelease(w http.ResponseWriter, r *http.Request, projectID string, userID, applicationID string) {
@@ -1897,8 +1838,7 @@ func (s *Service) getLatestRelease(w http.ResponseWriter, r *http.Request, proje
 		}
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ret)
+	respond(w, ret)
 }
 
 func (s *Service) listReleases(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
@@ -1929,8 +1869,7 @@ func (s *Service) listReleases(w http.ResponseWriter, r *http.Request, projectID
 		ret = releasesFull
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ret)
+	respond(w, ret)
 }
 
 func (s *Service) listDevices(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -1966,8 +1905,7 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request, projectID,
 		ret = devicesFull
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ret)
+	respond(w, ret)
 }
 
 func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -2033,8 +1971,7 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, u
 		}
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ret)
+	respond(w, ret)
 }
 
 func (s *Service) setDeviceLabel(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -2058,8 +1995,7 @@ func (s *Service) setDeviceLabel(w http.ResponseWriter, r *http.Request, project
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(deviceLabel)
+	respond(w, deviceLabel)
 }
 
 func (s *Service) getDeviceLabel(w http.ResponseWriter, r *http.Request, projectID string, userID string) {
@@ -2074,8 +2010,7 @@ func (s *Service) getDeviceLabel(w http.ResponseWriter, r *http.Request, project
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(deviceLabel)
+	respond(w, deviceLabel)
 }
 
 func (s *Service) listDeviceLabels(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -2089,8 +2024,7 @@ func (s *Service) listDeviceLabels(w http.ResponseWriter, r *http.Request, proje
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(deviceLabels)
+	respond(w, deviceLabels)
 }
 
 func (s *Service) deleteDeviceLabel(w http.ResponseWriter, r *http.Request, projectID string, userID string) {
@@ -2103,8 +2037,6 @@ func (s *Service) deleteDeviceLabel(w http.ResponseWriter, r *http.Request, proj
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) createDeviceRegistrationToken(w http.ResponseWriter, r *http.Request, projectID, userID string) {
@@ -2115,8 +2047,7 @@ func (s *Service) createDeviceRegistrationToken(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(deviceRegistrationToken)
+	respond(w, deviceRegistrationToken)
 }
 
 func (s *Service) withDeviceAuth(handler func(http.ResponseWriter, *http.Request, string, string)) func(http.ResponseWriter, *http.Request) {
@@ -2189,8 +2120,7 @@ func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(models.RegisterDeviceResponse{
+	respond(w, models.RegisterDeviceResponse{
 		DeviceID:             device.ID,
 		DeviceAccessKeyValue: deviceAccessKeyValue,
 	})
@@ -2260,8 +2190,7 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, d
 		})
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bundle)
+	respond(w, bundle)
 }
 
 func (s *Service) setDeviceInfo(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
@@ -2276,8 +2205,6 @@ func (s *Service) setDeviceInfo(w http.ResponseWriter, r *http.Request, projectI
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) setDeviceApplicationStatus(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
@@ -2297,8 +2224,6 @@ func (s *Service) setDeviceApplicationStatus(w http.ResponseWriter, r *http.Requ
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Service) setDeviceServiceStatus(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
@@ -2319,6 +2244,4 @@ func (s *Service) setDeviceServiceStatus(w http.ResponseWriter, r *http.Request,
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
