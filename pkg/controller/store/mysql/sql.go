@@ -581,3 +581,8 @@ const getDeviceServiceStatuses = `
   select project_id, device_id, application_id, service, current_release_id from device_service_statuses
   where project_id = ? and device_id = ? and application_id = ?
 `
+
+const deleteDeviceServiceStatus = `
+  delete from device_service_statuses
+  where project_id = ? and device_id = ? and application_id = ? and service = ?
+`

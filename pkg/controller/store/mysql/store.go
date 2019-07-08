@@ -1790,6 +1790,18 @@ func (s *Store) GetDeviceServiceStatuses(ctx context.Context, projectID, deviceI
 	return deviceServiceStatuses, nil
 }
 
+func (s *Store) DeleteDeviceServiceStatus(ctx context.Context, projectID, deviceID, applicationID, service string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		deleteDeviceServiceStatus,
+		projectID,
+		deviceID,
+		applicationID,
+		service,
+	)
+	return err
+}
+
 func (s *Store) scanDeviceServiceStatus(scanner scanner) (*models.DeviceServiceStatus, error) {
 	var deviceServiceStatus models.DeviceServiceStatus
 	if err := scanner.Scan(

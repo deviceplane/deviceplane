@@ -50,7 +50,7 @@ func NewApplicationSupervisor(
 	}
 }
 
-func (s *ApplicationSupervisor) SetApplication(application models.ApplicationAndLatestRelease) {
+func (s *ApplicationSupervisor) SetApplication(application models.ApplicationFull2) {
 	s.stopLock.Lock()
 	defer s.stopLock.Unlock()
 

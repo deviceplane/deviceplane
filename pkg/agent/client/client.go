@@ -109,6 +109,10 @@ func (c *Client) SetDeviceServiceStatus(ctx context.Context, applicationID, serv
 	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "applications", applicationID, "services", service, "deviceservicestatuses")
 }
 
+func (c *Client) DeleteDeviceServiceStatus(ctx context.Context, applicationID, service string) error {
+	return c.delete(ctx, nil, "projects", c.projectID, "devices", c.deviceID, "applications", applicationID, "services", service, "deviceservicestatuses")
+}
+
 func (c *Client) InitiateDeviceConnection(ctx context.Context) (net.Conn, error) {
 	conn, err := c.Dial(ctx)
 	if err != nil {
@@ -199,6 +203,38 @@ func (c *Client) post(ctx context.Context, in, out interface{}, s ...string) err
 		"code":   resp.StatusCode,
 		"body":   string(bytes),
 	}).Debug("POST response")
+
+	if len(bytes) == 0 {
+		return nil
+	}
+
+	return json.Unmarshal(bytes, &out)
+}
+
+func (c *Client) delete(ctx context.Context, out interface{}, s ...string) error {
+	req, err := http.NewRequest("DELETE", getURL(c.url, s...), nil)
+	if err != nil {
+		return err
+	}
+
+	req.SetBasicAuth(c.accessKey, "")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	bytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	log.WithFields(log.Fields{
+		"status": resp.Status,
+		"code":   resp.StatusCode,
+		"body":   string(bytes),
+	}).Debug("DELETE response")
 
 	if len(bytes) == 0 {
 		return nil

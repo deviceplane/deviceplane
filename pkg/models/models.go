@@ -226,7 +226,7 @@ type DeviceApplicationStatusInfo struct {
 	ServiceStatuses   []DeviceServiceStatus    `json:"serviceStatuses"`
 }
 
-type ApplicationFull struct {
+type ApplicationFull1 struct {
 	Application
 	LatestRelease *Release                `json:"latestRelease"`
 	DeviceCounts  ApplicationDeviceCounts `json:"deviceCounts"`
@@ -238,13 +238,14 @@ type ReleaseFull struct {
 }
 
 type Bundle struct {
-	ID           string                        `json:"id"`
-	Applications []ApplicationAndLatestRelease `json:"applications"`
+	ID           string             `json:"id"`
+	Applications []ApplicationFull2 `json:"applications"`
 }
 
-type ApplicationAndLatestRelease struct {
-	Application   Application `json:"application"`
-	LatestRelease *Release    `json:"latestRelease"`
+type ApplicationFull2 struct {
+	Application     Application           `json:"application"`
+	LatestRelease   Release               `json:"latestRelease"`
+	ServiceStatuses []DeviceServiceStatus `json:"serviceStatuses"`
 }
 
 type DeviceInfo struct {

@@ -42,13 +42,9 @@ func NewSupervisor(
 	}
 }
 
-func (s *Supervisor) SetApplications(applications []models.ApplicationAndLatestRelease) {
+func (s *Supervisor) SetApplications(applications []models.ApplicationFull2) {
 	applicationIDs := make(map[string]struct{})
 	for _, application := range applications {
-		if application.LatestRelease == nil {
-			continue
-		}
-
 		s.lock.Lock()
 		applicationSupervisor, ok := s.applicationSupervisors[application.Application.ID]
 		if !ok {

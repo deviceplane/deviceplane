@@ -217,6 +217,7 @@ type DeviceServiceStatuses interface {
 	SetDeviceServiceStatus(ctx context.Context, projectID, deviceID, applicationID, service, currentReleaseID string) error
 	GetDeviceServiceStatus(ctx context.Context, projectID, deviceID, applicationID, service string) (*models.DeviceServiceStatus, error)
 	GetDeviceServiceStatuses(ctx context.Context, projectID, deviceID, applicationID string) ([]models.DeviceServiceStatus, error)
+	DeleteDeviceServiceStatus(ctx context.Context, projectID, deviceID, applicationID, service string) error
 }
 
 var ErrDeviceServiceStatusNotFound = errors.New("device service status not found")

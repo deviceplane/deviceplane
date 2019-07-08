@@ -211,6 +211,7 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/devices/{device}/info", s.withDeviceAuth(s.setDeviceInfo)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/deviceapplicationstatuses", s.withDeviceAuth(s.setDeviceApplicationStatus)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.withDeviceAuth(s.setDeviceServiceStatus)).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.withDeviceAuth(s.deleteDeviceServiceStatus)).Methods("DELETE")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/connection", s.withDeviceAuth(s.initiateDeviceConnection)).Methods("GET")
 
 	s.router.Handle("/revdial", revdial.ConnHandler()).Methods("GET")
@@ -1667,7 +1668,7 @@ func (s *Service) getApplication(w http.ResponseWriter, r *http.Request, project
 			return
 		}
 
-		ret = models.ApplicationFull{
+		ret = models.ApplicationFull1{
 			Application:   *application,
 			LatestRelease: latestRelease,
 			DeviceCounts:  *applicationDeviceCounts,
@@ -1687,7 +1688,7 @@ func (s *Service) listApplications(w http.ResponseWriter, r *http.Request, proje
 
 	var ret interface{} = applications
 	if _, ok := r.URL.Query()["full"]; ok {
-		var applicationsFull []models.ApplicationFull
+		var applicationsFull []models.ApplicationFull1
 
 		for _, application := range applications {
 			latestRelease, err := s.releases.GetLatestRelease(r.Context(), projectID, application.ID)
@@ -1704,7 +1705,7 @@ func (s *Service) listApplications(w http.ResponseWriter, r *http.Request, proje
 				return
 			}
 
-			applicationsFull = append(applicationsFull, models.ApplicationFull{
+			applicationsFull = append(applicationsFull, models.ApplicationFull1{
 				Application:   application,
 				LatestRelease: latestRelease,
 				DeviceCounts:  *applicationDeviceCounts,
@@ -1955,7 +1956,7 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, u
 				r.Context(), projectID, device.ID, application.ID)
 			if err == nil {
 				applicationStatusInfo.ServiceStatuses = deviceServiceStatuses
-			} else if err != store.ErrDeviceServiceStatusNotFound {
+			} else {
 				log.WithError(err).Error("get device service statuses")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
@@ -2149,15 +2150,6 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, d
 
 	var bundle models.Bundle
 	for i, application := range applications {
-		release, err := s.releases.GetLatestRelease(r.Context(), projectID, application.ID)
-		if err == store.ErrReleaseNotFound {
-			continue
-		} else if err != nil {
-			log.WithError(err).Error("get latest release")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
 		if application.Settings.SchedulingRule != "" {
 			expression, err := govaluate.NewEvaluableExpression(application.Settings.SchedulingRule)
 			if err != nil {
@@ -2184,9 +2176,27 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, d
 			}
 		}
 
-		bundle.Applications = append(bundle.Applications, models.ApplicationAndLatestRelease{
-			Application:   applications[i],
-			LatestRelease: release,
+		release, err := s.releases.GetLatestRelease(r.Context(), projectID, application.ID)
+		if err == store.ErrReleaseNotFound {
+			continue
+		} else if err != nil {
+			log.WithError(err).Error("get latest release")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		deviceServiceStatuses, err := s.deviceServiceStatuses.GetDeviceServiceStatuses(
+			r.Context(), projectID, deviceID, application.ID)
+		if err != nil {
+			log.WithError(err).Error("get device service statuses")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		bundle.Applications = append(bundle.Applications, models.ApplicationFull2{
+			Application:     applications[i],
+			LatestRelease:   *release,
+			ServiceStatuses: deviceServiceStatuses,
 		})
 	}
 
@@ -2241,6 +2251,20 @@ func (s *Service) setDeviceServiceStatus(w http.ResponseWriter, r *http.Request,
 		applicationID, service, setDeviceServiceStatusRequest.CurrentReleaseID,
 	); err != nil {
 		log.WithError(err).Error("set device service status")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Service) deleteDeviceServiceStatus(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
+	vars := mux.Vars(r)
+	applicationID := vars["application"]
+	service := vars["service"]
+
+	if err := s.deviceServiceStatuses.DeleteDeviceServiceStatus(r.Context(),
+		projectID, deviceID, applicationID, service,
+	); err != nil {
+		log.WithError(err).Error("delete device service status")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

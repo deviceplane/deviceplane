@@ -12,6 +12,7 @@ import (
 	agent_client "github.com/deviceplane/deviceplane/pkg/agent/client"
 	"github.com/deviceplane/deviceplane/pkg/agent/connector"
 	"github.com/deviceplane/deviceplane/pkg/agent/info"
+	"github.com/deviceplane/deviceplane/pkg/agent/status"
 	"github.com/deviceplane/deviceplane/pkg/agent/supervisor"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/file"
@@ -26,14 +27,15 @@ const (
 )
 
 type Agent struct {
-	client            *agent_client.Client // TODO: interface
-	engine            engine.Engine
-	projectID         string
-	registrationToken string
-	stateDir          string
-	supervisor        *supervisor.Supervisor
-	connector         *connector.Connector
-	infoReporter      *info.Reporter
+	client                 *agent_client.Client // TODO: interface
+	engine                 engine.Engine
+	projectID              string
+	registrationToken      string
+	stateDir               string
+	supervisor             *supervisor.Supervisor
+	statusGarbageCollector *status.GarbageCollector
+	connector              *connector.Connector
+	infoReporter           *info.Reporter
 }
 
 func NewAgent(client *agent_client.Client, engine engine.Engine, projectID, registrationToken, stateDir string) *Agent {
@@ -52,8 +54,9 @@ func NewAgent(client *agent_client.Client, engine engine.Engine, projectID, regi
 				CurrentReleaseID: currentReleaseID,
 			})
 		}),
-		connector:    connector.NewConnector(client),
-		infoReporter: info.NewReporter(client),
+		statusGarbageCollector: status.NewGarbageCollector(client.DeleteDeviceServiceStatus),
+		connector:              connector.NewConnector(client),
+		infoReporter:           info.NewReporter(client),
 	}
 }
 
@@ -119,13 +122,13 @@ func (a *Agent) register() error {
 }
 
 func (a *Agent) Run() {
-	go a.runSupervisor()
+	go a.runBundleDownloader()
 	go a.runConnector()
 	go a.runInfoReporter()
 	select {}
 }
 
-func (a *Agent) runSupervisor() {
+func (a *Agent) runBundleDownloader() {
 	if bundle := a.loadSavedBundle(); bundle != nil {
 		a.supervisor.SetApplications(bundle.Applications)
 	}
@@ -136,6 +139,7 @@ func (a *Agent) runSupervisor() {
 	for {
 		if bundle := a.downloadLatestBundle(); bundle != nil {
 			a.supervisor.SetApplications(bundle.Applications)
+			a.statusGarbageCollector.SetBundle(*bundle)
 		}
 
 		select {
