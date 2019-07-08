@@ -54,7 +54,7 @@ func (gc *GarbageCollector) Stop() {
 }
 
 func (gc *GarbageCollector) serviceStatusGarbageCollector() {
-	ticker := time.NewTicker(time.Minute)
+	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
 	for {
