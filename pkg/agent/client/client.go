@@ -105,6 +105,10 @@ func (c *Client) SetDeviceApplicationStatus(ctx context.Context, applicationID s
 	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "applications", applicationID, "deviceapplicationstatuses")
 }
 
+func (c *Client) DeleteDeviceApplicationStatus(ctx context.Context, applicationID string) error {
+	return c.delete(ctx, nil, "projects", c.projectID, "devices", c.deviceID, "applications", applicationID, "deviceapplicationstatuses")
+}
+
 func (c *Client) SetDeviceServiceStatus(ctx context.Context, applicationID, service string, req models.SetDeviceServiceStatusRequest) error {
 	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "applications", applicationID, "services", service, "deviceservicestatuses")
 }

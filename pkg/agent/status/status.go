@@ -12,10 +12,12 @@ import (
 )
 
 type GarbageCollector struct {
-	deleteServiceStatus func(ctx context.Context, applicationID, service string) error
+	deleteApplicationStatus func(ctx context.Context, applicationID string) error
+	deleteServiceStatus     func(ctx context.Context, applicationID, service string) error
 
-	bundle                            models.Bundle
-	serviceStatusGarbageCollectorDone chan struct{}
+	bundle                                models.Bundle
+	applicationStatusGarbageCollectorDone chan struct{}
+	serviceStatusGarbageCollectorDone     chan struct{}
 
 	once   sync.Once
 	lock   sync.RWMutex
@@ -24,13 +26,16 @@ type GarbageCollector struct {
 }
 
 func NewGarbageCollector(
+	deleteApplicationStatus func(ctx context.Context, applicationID string) error,
 	deleteServiceStatus func(ctx context.Context, applicationID, service string) error,
 ) *GarbageCollector {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &GarbageCollector{
-		deleteServiceStatus: deleteServiceStatus,
+		deleteApplicationStatus: deleteApplicationStatus,
+		deleteServiceStatus:     deleteServiceStatus,
 
-		serviceStatusGarbageCollectorDone: make(chan struct{}),
+		applicationStatusGarbageCollectorDone: make(chan struct{}),
+		serviceStatusGarbageCollectorDone:     make(chan struct{}),
 
 		ctx:    ctx,
 		cancel: cancel,
@@ -43,6 +48,7 @@ func (gc *GarbageCollector) SetBundle(bundle models.Bundle) {
 	gc.lock.Unlock()
 
 	gc.once.Do(func() {
+		go gc.applicationStatusGarbageCollector()
 		go gc.serviceStatusGarbageCollector()
 	})
 }
@@ -50,7 +56,42 @@ func (gc *GarbageCollector) SetBundle(bundle models.Bundle) {
 func (gc *GarbageCollector) Stop() {
 	gc.cancel()
 	// TODO: don't do this if SetBundle was never called
+	<-gc.applicationStatusGarbageCollectorDone
 	<-gc.serviceStatusGarbageCollectorDone
+}
+
+func (gc *GarbageCollector) applicationStatusGarbageCollector() {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for {
+		gc.lock.RLock()
+		bundle := gc.bundle
+		gc.lock.RUnlock()
+
+		applications := make(map[string]struct{})
+		for _, application := range bundle.Applications {
+			applications[application.Application.ID] = struct{}{}
+		}
+
+		for _, applicationStatus := range bundle.ApplicationStatuses {
+			if _, ok := applications[applicationStatus.ApplicationID]; !ok {
+				if err := gc.deleteApplicationStatus(gc.ctx, applicationStatus.ApplicationID); err != nil {
+					log.WithField("application", applicationStatus.ApplicationID).
+						WithError(err).
+						Error("delete application status")
+				}
+			}
+		}
+
+		select {
+		case <-gc.ctx.Done():
+			gc.applicationStatusGarbageCollectorDone <- struct{}{}
+			return
+		case <-ticker.C:
+			continue
+		}
+	}
 }
 
 func (gc *GarbageCollector) serviceStatusGarbageCollector() {
@@ -63,7 +104,6 @@ func (gc *GarbageCollector) serviceStatusGarbageCollector() {
 		gc.lock.RUnlock()
 
 		services := make(map[string]map[string]struct{})
-		serviceStatuses := make(map[string]map[string]struct{})
 		for _, application := range bundle.Applications {
 			var applicationConfig map[string]spec.Service
 			if err := yaml.Unmarshal([]byte(application.LatestRelease.Config), &applicationConfig); err != nil {
@@ -72,26 +112,38 @@ func (gc *GarbageCollector) serviceStatusGarbageCollector() {
 			}
 
 			services[application.Application.ID] = make(map[string]struct{})
-			serviceStatuses[application.Application.ID] = make(map[string]struct{})
-
 			for serviceName := range applicationConfig {
 				services[application.Application.ID][serviceName] = struct{}{}
 			}
+		}
 
-			for _, serviceStatus := range application.ServiceStatuses {
-				serviceStatuses[application.Application.ID][serviceStatus.Service] = struct{}{}
+		serviceStatuses := make(map[string]map[string]struct{})
+		for _, serviceStatus := range bundle.ServiceStatuses {
+			if _, ok := serviceStatuses[serviceStatus.ApplicationID]; !ok {
+				serviceStatuses[serviceStatus.ApplicationID] = make(map[string]struct{})
+			}
+			serviceStatuses[serviceStatus.ApplicationID][serviceStatus.Service] = struct{}{}
+		}
+
+		deleteServiceStatus := func(applicationID, service string) {
+			if err := gc.deleteServiceStatus(gc.ctx, applicationID, service); err != nil {
+				log.WithField("application", applicationID).
+					WithField("service", service).
+					WithError(err).
+					Error("delete service status")
 			}
 		}
 
 		for applicationID, serviceStatuses := range serviceStatuses {
-			for service := range serviceStatuses {
-				if _, ok := services[applicationID][service]; !ok {
-					if err := gc.deleteServiceStatus(gc.ctx, applicationID, service); err != nil {
-						log.WithField("service", service).
-							WithField("application", applicationID).
-							WithError(err).
-							Error("delete service status")
+			if services, ok := services[applicationID]; ok {
+				for service := range serviceStatuses {
+					if _, ok = services[service]; !ok {
+						deleteServiceStatus(applicationID, service)
 					}
+				}
+			} else {
+				for service := range serviceStatuses {
+					deleteServiceStatus(applicationID, service)
 				}
 			}
 		}

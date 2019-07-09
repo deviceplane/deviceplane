@@ -559,6 +559,16 @@ const getDeviceApplicationStatus = `
   where project_id = ? and device_id = ? and application_id = ?
 `
 
+const listDeviceApplicationStatuses = `
+  select project_id, device_id, application_id, current_release_id from device_application_statuses
+  where project_id = ? and device_id = ?
+`
+
+const deleteDeviceApplicationStatus = `
+  delete from device_application_statuses
+  where project_id = ? and device_id = ? and application_id = ?
+`
+
 const setDeviceServiceStatus = `
   insert into device_service_statuses (
     project_id,
@@ -580,6 +590,11 @@ const getDeviceServiceStatus = `
 const getDeviceServiceStatuses = `
   select project_id, device_id, application_id, service, current_release_id from device_service_statuses
   where project_id = ? and device_id = ? and application_id = ?
+`
+
+const listDeviceServiceStatuses = `
+  select project_id, device_id, application_id, service, current_release_id from device_service_statuses
+  where project_id = ? and device_id = ?
 `
 
 const deleteDeviceServiceStatus = `

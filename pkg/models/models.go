@@ -238,14 +238,15 @@ type ReleaseFull struct {
 }
 
 type Bundle struct {
-	ID           string             `json:"id"`
-	Applications []ApplicationFull2 `json:"applications"`
+	ID                  string                    `json:"id"`
+	Applications        []ApplicationFull2        `json:"applications"`
+	ApplicationStatuses []DeviceApplicationStatus `json:"applicationStatuses"`
+	ServiceStatuses     []DeviceServiceStatus     `json:"serviceStatuses"`
 }
 
 type ApplicationFull2 struct {
-	Application     Application           `json:"application"`
-	LatestRelease   Release               `json:"latestRelease"`
-	ServiceStatuses []DeviceServiceStatus `json:"serviceStatuses"`
+	Application   Application `json:"application"`
+	LatestRelease Release     `json:"latestRelease"`
 }
 
 type DeviceInfo struct {

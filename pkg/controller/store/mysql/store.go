@@ -1727,6 +1727,40 @@ func (s *Store) GetDeviceApplicationStatus(ctx context.Context, projectID, devic
 	return deviceApplicationStatus, nil
 }
 
+func (s *Store) ListDeviceApplicationStatuses(ctx context.Context, projectID, deviceID string) ([]models.DeviceApplicationStatus, error) {
+	deviceApplicationStatusRows, err := s.db.QueryContext(ctx, listDeviceApplicationStatuses, projectID, deviceID)
+	if err != nil {
+		return nil, errors.Wrap(err, "query device application statuses")
+	}
+	defer deviceApplicationStatusRows.Close()
+
+	deviceApplicationStatuses := make([]models.DeviceApplicationStatus, 0)
+	for deviceApplicationStatusRows.Next() {
+		deviceApplicationStatus, err := s.scanDeviceApplicationStatus(deviceApplicationStatusRows)
+		if err != nil {
+			return nil, err
+		}
+		deviceApplicationStatuses = append(deviceApplicationStatuses, *deviceApplicationStatus)
+	}
+
+	if err := deviceApplicationStatusRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return deviceApplicationStatuses, nil
+}
+
+func (s *Store) DeleteDeviceApplicationStatus(ctx context.Context, projectID, deviceID, applicationID string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		deleteDeviceApplicationStatus,
+		projectID,
+		deviceID,
+		applicationID,
+	)
+	return err
+}
+
 func (s *Store) scanDeviceApplicationStatus(scanner scanner) (*models.DeviceApplicationStatus, error) {
 	var deviceApplicationStatus models.DeviceApplicationStatus
 	if err := scanner.Scan(
@@ -1769,6 +1803,29 @@ func (s *Store) GetDeviceServiceStatus(ctx context.Context, projectID, deviceID,
 
 func (s *Store) GetDeviceServiceStatuses(ctx context.Context, projectID, deviceID, applicationID string) ([]models.DeviceServiceStatus, error) {
 	deviceServiceStatusRows, err := s.db.QueryContext(ctx, getDeviceServiceStatuses, projectID, deviceID, applicationID)
+	if err != nil {
+		return nil, errors.Wrap(err, "query device service statuses")
+	}
+	defer deviceServiceStatusRows.Close()
+
+	deviceServiceStatuses := make([]models.DeviceServiceStatus, 0)
+	for deviceServiceStatusRows.Next() {
+		deviceServiceStatus, err := s.scanDeviceServiceStatus(deviceServiceStatusRows)
+		if err != nil {
+			return nil, err
+		}
+		deviceServiceStatuses = append(deviceServiceStatuses, *deviceServiceStatus)
+	}
+
+	if err := deviceServiceStatusRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return deviceServiceStatuses, nil
+}
+
+func (s *Store) ListDeviceServiceStatuses(ctx context.Context, projectID, deviceID string) ([]models.DeviceServiceStatus, error) {
+	deviceServiceStatusRows, err := s.db.QueryContext(ctx, listDeviceServiceStatuses, projectID, deviceID)
 	if err != nil {
 		return nil, errors.Wrap(err, "query device service statuses")
 	}

@@ -209,6 +209,8 @@ type ReleaseDeviceCounts interface {
 type DeviceApplicationStatuses interface {
 	SetDeviceApplicationStatus(ctx context.Context, projectID, deviceID, applicationID, currentReleaseID string) error
 	GetDeviceApplicationStatus(ctx context.Context, projectID, deviceID, applicationID string) (*models.DeviceApplicationStatus, error)
+	ListDeviceApplicationStatuses(ctx context.Context, projectID, deviceID string) ([]models.DeviceApplicationStatus, error)
+	DeleteDeviceApplicationStatus(ctx context.Context, projectID, deviceID, applicationID string) error
 }
 
 var ErrDeviceApplicationStatusNotFound = errors.New("device application status not found")
@@ -217,6 +219,7 @@ type DeviceServiceStatuses interface {
 	SetDeviceServiceStatus(ctx context.Context, projectID, deviceID, applicationID, service, currentReleaseID string) error
 	GetDeviceServiceStatus(ctx context.Context, projectID, deviceID, applicationID, service string) (*models.DeviceServiceStatus, error)
 	GetDeviceServiceStatuses(ctx context.Context, projectID, deviceID, applicationID string) ([]models.DeviceServiceStatus, error)
+	ListDeviceServiceStatuses(ctx context.Context, projectID, deviceID string) ([]models.DeviceServiceStatus, error)
 	DeleteDeviceServiceStatus(ctx context.Context, projectID, deviceID, applicationID, service string) error
 }
 

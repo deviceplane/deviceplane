@@ -210,6 +210,7 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/devices/{device}/bundle", s.withDeviceAuth(s.getBundle)).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/info", s.withDeviceAuth(s.setDeviceInfo)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/deviceapplicationstatuses", s.withDeviceAuth(s.setDeviceApplicationStatus)).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/deviceapplicationstatuses", s.withDeviceAuth(s.deleteDeviceApplicationStatus)).Methods("DELETE")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.withDeviceAuth(s.setDeviceServiceStatus)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.withDeviceAuth(s.deleteDeviceServiceStatus)).Methods("DELETE")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/connection", s.withDeviceAuth(s.initiateDeviceConnection)).Methods("GET")
@@ -2185,19 +2186,30 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, d
 			return
 		}
 
-		deviceServiceStatuses, err := s.deviceServiceStatuses.GetDeviceServiceStatuses(
-			r.Context(), projectID, deviceID, application.ID)
-		if err != nil {
-			log.WithError(err).Error("get device service statuses")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
 		bundle.Applications = append(bundle.Applications, models.ApplicationFull2{
-			Application:     applications[i],
-			LatestRelease:   *release,
-			ServiceStatuses: deviceServiceStatuses,
+			Application:   applications[i],
+			LatestRelease: *release,
 		})
+	}
+
+	deviceApplicationStatuses, err := s.deviceApplicationStatuses.ListDeviceApplicationStatuses(
+		r.Context(), projectID, deviceID)
+	if err == nil {
+		bundle.ApplicationStatuses = deviceApplicationStatuses
+	} else {
+		log.WithError(err).Error("list device application statuses")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	deviceServiceStatuses, err := s.deviceServiceStatuses.ListDeviceServiceStatuses(
+		r.Context(), projectID, deviceID)
+	if err == nil {
+		bundle.ServiceStatuses = deviceServiceStatuses
+	} else {
+		log.WithError(err).Error("list device service statuses")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	respond(w, bundle)
@@ -2231,6 +2243,19 @@ func (s *Service) setDeviceApplicationStatus(w http.ResponseWriter, r *http.Requ
 		applicationID, setDeviceApplicationStatusRequest.CurrentReleaseID,
 	); err != nil {
 		log.WithError(err).Error("set device application status")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Service) deleteDeviceApplicationStatus(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
+	vars := mux.Vars(r)
+	applicationID := vars["application"]
+
+	if err := s.deviceApplicationStatuses.DeleteDeviceApplicationStatus(r.Context(),
+		projectID, deviceID, applicationID,
+	); err != nil {
+		log.WithError(err).Error("delete device application status")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

@@ -54,7 +54,7 @@ func NewAgent(client *agent_client.Client, engine engine.Engine, projectID, regi
 				CurrentReleaseID: currentReleaseID,
 			})
 		}),
-		statusGarbageCollector: status.NewGarbageCollector(client.DeleteDeviceServiceStatus),
+		statusGarbageCollector: status.NewGarbageCollector(client.DeleteDeviceApplicationStatus, client.DeleteDeviceServiceStatus),
 		connector:              connector.NewConnector(client),
 		infoReporter:           info.NewReporter(client),
 	}
