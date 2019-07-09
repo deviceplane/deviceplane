@@ -64,6 +64,7 @@ var (
 		"UpdateApplication",
 		"DeleteApplication",
 		"CreateRelease",
+		"DeleteDevice",
 		"SSH",
 		"SetDeviceLabel",
 		"DeleteDeviceLabel",

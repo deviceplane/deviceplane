@@ -392,6 +392,11 @@ const listDevices = `
   where project_id = ?
 `
 
+const deleteDevice = `
+  delete from devices
+  where id = ? and project_id = ?
+`
+
 const setDeviceInfo = `
   update devices
   set info = ?

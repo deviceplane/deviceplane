@@ -142,6 +142,7 @@ type Devices interface {
 	GetDevice(ctx context.Context, id, projectID string) (*models.Device, error)
 	ListDevices(ctx context.Context, projectID string) ([]models.Device, error)
 	SetDeviceInfo(ctx context.Context, id, projectID string, deviceInfo models.DeviceInfo) (*models.Device, error)
+	DeleteDevice(ctx context.Context, id, projectID string) error
 }
 
 var ErrDeviceNotFound = errors.New("device not found")

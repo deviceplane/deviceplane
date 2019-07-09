@@ -1234,6 +1234,16 @@ func (s *Store) SetDeviceInfo(ctx context.Context, id, projectID string, deviceI
 	return s.GetDevice(ctx, id, projectID)
 }
 
+func (s *Store) DeleteDevice(ctx context.Context, id, projectID string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		deleteDevice,
+		id,
+		projectID,
+	)
+	return err
+}
+
 func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 	var device models.Device
 	var infoString string

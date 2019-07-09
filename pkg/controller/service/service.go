@@ -197,6 +197,7 @@ func NewService(
 
 	s.router.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "GetDevice", s.getDevice)).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/devices", s.validateAuthorization("devices", "ListDevices", s.listDevices)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "DeleteDevice", s.deleteDevice)).Methods("DELETE")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/ssh", s.validateAuthorization("devices", "SSH", s.initiateSSH)).Methods("GET")
 
 	s.router.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "SetDeviceLabel", s.setDeviceLabel)).Methods("POST")
@@ -1915,7 +1916,10 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, u
 	deviceID := vars["device"]
 
 	device, err := s.devices.GetDevice(r.Context(), deviceID, projectID)
-	if err != nil {
+	if err == store.ErrDeviceNotFound {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
 		log.WithError(err).Error("get device")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -1974,6 +1978,17 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, u
 	}
 
 	respond(w, ret)
+}
+
+func (s *Service) deleteDevice(w http.ResponseWriter, r *http.Request, projectID string, userID string) {
+	vars := mux.Vars(r)
+	deviceID := vars["device"]
+
+	if err := s.devices.DeleteDevice(r.Context(), deviceID, projectID); err != nil {
+		log.WithError(err).Error("delete device")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *Service) setDeviceLabel(w http.ResponseWriter, r *http.Request, projectID, userID string) {
