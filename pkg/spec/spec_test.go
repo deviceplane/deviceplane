@@ -11,10 +11,10 @@ func fullService() Service {
 	return Service{
 		CapAdd:      []string{"x", "y", "z"},
 		CapDrop:     []string{"x", "y", "z"},
+		Command:     yamltypes.Command([]string{"x", "y", "z"}),
 		CPUSet:      "x",
 		CPUShares:   yamltypes.StringorInt(1),
 		CPUQuota:    yamltypes.StringorInt(1),
-		Command:     yamltypes.Command([]string{"x", "y", "z"}),
 		DNS:         yamltypes.Stringorslice([]string{"x", "y", "z"}),
 		DNSOpts:     []string{"x", "y", "z"},
 		DNSSearch:   yamltypes.Stringorslice([]string{"x", "y", "z"}),

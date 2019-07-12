@@ -13,10 +13,10 @@ import (
 type Service struct {
 	CapAdd         []string                  `yaml:"cap_add,omitempty"`
 	CapDrop        []string                  `yaml:"cap_drop,omitempty"`
+	Command        yamltypes.Command         `yaml:"command,flow,omitempty"`
 	CPUSet         string                    `yaml:"cpuset,omitempty"`
 	CPUShares      yamltypes.StringorInt     `yaml:"cpu_shares,omitempty"`
 	CPUQuota       yamltypes.StringorInt     `yaml:"cpu_quota,omitempty"`
-	Command        yamltypes.Command         `yaml:"command,flow,omitempty"`
 	DNS            yamltypes.Stringorslice   `yaml:"dns,omitempty"`
 	DNSOpts        []string                  `yaml:"dns_opt,omitempty"`
 	DNSSearch      yamltypes.Stringorslice   `yaml:"dns_search,omitempty"`
@@ -85,10 +85,10 @@ func (s Service) hash(name string, hash func(string) string) string {
 	parts = append(parts, name)
 	parts = append(parts, s.CapAdd...)
 	parts = append(parts, s.CapDrop...)
+	parts = append(parts, s.Command...)
 	parts = append(parts, s.CPUSet)
 	parts = append(parts, fmt.Sprint(s.CPUShares))
 	parts = append(parts, fmt.Sprint(s.CPUQuota))
-	parts = append(parts, s.Command...)
 	parts = append(parts, s.DNS...)
 	parts = append(parts, s.DNSOpts...)
 	parts = append(parts, s.DNSSearch...)

@@ -1767,6 +1767,11 @@ func (s *Service) createRelease(w http.ResponseWriter, r *http.Request, projectI
 		return
 	}
 
+	if err := spec.Validate([]byte(createReleaseRequest.Config)); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	var applicationConfig map[string]spec.Service
 	if err := yaml.UnmarshalStrict([]byte(createReleaseRequest.Config), &applicationConfig); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
