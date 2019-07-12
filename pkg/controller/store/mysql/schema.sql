@@ -36,6 +36,7 @@ create table if not exists registration_tokens (
 
   primary key (id),
   unique(user_id),
+  unique(hash),
   foreign key registration_tokens_user_id(user_id)
   references users(id)
   on delete cascade
@@ -55,6 +56,7 @@ create table if not exists password_recovery_tokens (
   hash varchar(255) not null,
 
   primary key (id),
+  unique(hash),
   foreign key password_recovery_tokens_user_id(user_id)
   references users(id)
   on delete cascade
@@ -73,6 +75,7 @@ create table if not exists sessions (
   hash varchar(255) not null,
 
   primary key (id),
+  unique(hash),
   foreign key sessions_user_id(user_id)
   references users(id)
   on delete cascade
@@ -92,6 +95,7 @@ create table if not exists user_access_keys (
   description longtext not null,
 
   primary key (id),
+  unique(hash),
   foreign key user_access_keys_user_id(user_id)
   references users(id)
   on delete cascade
@@ -203,6 +207,7 @@ create table if not exists service_account_access_keys (
   description longtext not null,
 
   primary key (id),
+  unique(hash),
   foreign key service_account_access_keys_project_id(project_id)
   references projects(id)
   on delete cascade,
@@ -292,6 +297,7 @@ create table if not exists device_access_keys (
   hash varchar(255) not null,
 
   primary key (id),
+  unique(hash),
   foreign key device_access_keys_device_id(device_id)
   references devices(id)
   on delete cascade
