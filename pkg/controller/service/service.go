@@ -339,7 +339,7 @@ func (s *Service) validateAuthorization(requestedResource, requestedAction strin
 		} else {
 			project, err := s.projects.LookupProject(r.Context(), project)
 			if err == store.ErrProjectNotFound {
-				http.Error(w, store.ErrProjectNotFound.Error(), http.StatusNotFound)
+				http.Error(w, err.Error(), http.StatusNotFound)
 				return
 			} else if err != nil {
 				log.WithError(err).Error("lookup project")
@@ -354,7 +354,7 @@ func (s *Service) validateAuthorization(requestedResource, requestedAction strin
 			if _, err := s.memberships.GetMembership(r.Context(),
 				authenticatedUserID, projectID,
 			); err == store.ErrMembershipNotFound {
-				http.Error(w, store.ErrProjectNotFound.Error(), http.StatusNotFound)
+				http.Error(w, err.Error(), http.StatusNotFound)
 				return
 			} else if err != nil {
 				// TODO: better logging all around
@@ -530,7 +530,7 @@ func (s *Service) recoverPassword(w http.ResponseWriter, r *http.Request) {
 
 	user, err := s.users.LookupUser(r.Context(), recoverPasswordRequest.Email)
 	if err == store.ErrUserNotFound {
-		http.Error(w, store.ErrUserNotFound.Error(), http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.WithError(err).Error("lookup user")
@@ -636,7 +636,7 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 
 	user, err := s.users.ValidateUserWithEmail(r.Context(), loginRequest.Email, hash.Hash(loginRequest.Password))
 	if err == store.ErrUserNotFound {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.WithError(err).Error("validate user with email")
@@ -899,7 +899,7 @@ func (s *Service) getUserAccessKey(w http.ResponseWriter, r *http.Request, authe
 
 	userAccessKey, err := s.userAccessKeys.GetUserAccessKey(r.Context(), userAccessKeyID)
 	if err == store.ErrUserAccessKeyNotFound {
-		http.Error(w, store.ErrUserAccessKeyNotFound.Error(), http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.WithError(err).Error("get user access key")
@@ -1072,7 +1072,7 @@ func (s *Service) createRole(w http.ResponseWriter, r *http.Request, projectID, 
 func (s *Service) getRole(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
 	role, err := s.roles.GetRole(r.Context(), roleID, projectID)
 	if err == store.ErrRoleNotFound {
-		http.Error(w, store.ErrRoleNotFound.Error(), http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.WithError(err).Error("get role")
@@ -1169,7 +1169,7 @@ func (s *Service) createServiceAccount(w http.ResponseWriter, r *http.Request, p
 func (s *Service) getServiceAccount(w http.ResponseWriter, r *http.Request, projectID, userID, serviceAccountID string) {
 	serviceAccount, err := s.serviceAccounts.GetServiceAccount(r.Context(), serviceAccountID, projectID)
 	if err == store.ErrServiceAccountNotFound {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.WithError(err).Error("get service account")
@@ -1312,7 +1312,7 @@ func (s *Service) getServiceAccountAccessKey(w http.ResponseWriter, r *http.Requ
 
 	serviceAccountAccessKey, err := s.serviceAccountAccessKeys.GetServiceAccountAccessKey(r.Context(), serviceAccountAccessKeyID, projectID)
 	if err == store.ErrServiceAccountAccessKeyNotFound {
-		http.Error(w, store.ErrServiceAccountAccessKeyNotFound.Error(), http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.WithError(err).Error("get service account access key")
@@ -1412,7 +1412,7 @@ func (s *Service) createMembership(w http.ResponseWriter, r *http.Request, proje
 
 	user, err := s.users.LookupUser(r.Context(), createMembershipRequest.Email)
 	if err == store.ErrUserNotFound {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.WithError(err).Error("lookup user")
@@ -1437,7 +1437,7 @@ func (s *Service) getMembership(w http.ResponseWriter, r *http.Request, projectI
 
 	membership, err := s.memberships.GetMembership(r.Context(), membershipUserID, projectID)
 	if err == store.ErrMembershipNotFound {
-		http.Error(w, store.ErrMembershipNotFound.Error(), http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.WithError(err).Error("get membership")
@@ -1567,7 +1567,7 @@ func (s *Service) getMembershipRoleBinding(w http.ResponseWriter, r *http.Reques
 
 	membershipRoleBinding, err := s.membershipRoleBindings.GetMembershipRoleBinding(r.Context(), membershipUserID, roleID, projectID)
 	if err == store.ErrMembershipRoleBindingNotFound {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.WithError(err).Error("get membership role binding")
@@ -1646,7 +1646,7 @@ func (s *Service) createApplication(w http.ResponseWriter, r *http.Request, proj
 func (s *Service) getApplication(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
 	application, err := s.applications.GetApplication(r.Context(), applicationID, projectID)
 	if err == store.ErrApplicationNotFound {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.WithError(err).Error("get application")
@@ -1794,7 +1794,7 @@ func (s *Service) getRelease(w http.ResponseWriter, r *http.Request, projectID, 
 
 	release, err := s.releases.GetRelease(r.Context(), releaseID, projectID, applicationID)
 	if err == store.ErrReleaseNotFound {
-		http.Error(w, store.ErrReleaseNotFound.Error(), http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.WithError(err).Error("get release")
@@ -1823,7 +1823,7 @@ func (s *Service) getRelease(w http.ResponseWriter, r *http.Request, projectID, 
 func (s *Service) getLatestRelease(w http.ResponseWriter, r *http.Request, projectID string, userID, applicationID string) {
 	release, err := s.releases.GetLatestRelease(r.Context(), projectID, applicationID)
 	if err == store.ErrReleaseNotFound {
-		http.Error(w, store.ErrReleaseNotFound.Error(), http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.WithError(err).Error("get latest release")
@@ -1922,7 +1922,7 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, u
 
 	device, err := s.devices.GetDevice(r.Context(), deviceID, projectID)
 	if err == store.ErrDeviceNotFound {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
 		log.WithError(err).Error("get device")
