@@ -1,4 +1,4 @@
-FROM balenalib/armv7hf-alpine:3.9
+FROM arm32v6/alpine:3.10
 RUN apk -u add ca-certificates util-linux
 
 FROM golang:1.12
