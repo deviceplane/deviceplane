@@ -83,6 +83,9 @@ workflows:
       - release-agent:
           requires:
             - test
+          filters:
+            branches:
+              only: master
       - release-cli-ci:
           requires:
             - test
