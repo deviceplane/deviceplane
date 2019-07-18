@@ -39,7 +39,12 @@ func (c *Connector) Do() {
 	})
 
 	ssh.Handle(func(s ssh.Session) {
-		cmd := exec.Command("nsenter", "-t", "1", "-m", "-u", "-i", "-n", "-p")
+		var cmd *exec.Cmd
+		if _, err = os.Stat("/usr/bin/nsenter"); os.IsNotExist(err) {
+			cmd = exec.Command("/bin/sh")
+		} else {
+			cmd = exec.Command("/usr/bin/nsenter", "-t", "1", "-m", "-u", "-i", "-n", "-p")
+		}
 
 		ptyReq, winCh, isPty := s.Pty()
 		if !isPty {

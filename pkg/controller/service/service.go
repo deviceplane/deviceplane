@@ -17,6 +17,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/revdial"
 	"github.com/deviceplane/deviceplane/pkg/spec"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"gopkg.in/yaml.v2"
@@ -61,6 +62,7 @@ type Service struct {
 	cookieDomain               string
 	cookieSecure               bool
 	router                     *mux.Router
+	upgrader                   websocket.Upgrader
 	connKing                   *connman.ConnectionManager
 }
 
@@ -124,7 +126,15 @@ func NewService(
 		cookieDomain:               cookieDomain,
 		cookieSecure:               cookieSecure,
 		router:                     mux.NewRouter(),
-		connKing:                   connman.New(),
+		upgrader: websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+			CheckOrigin: func(r *http.Request) bool {
+				// TODO
+				return true
+			},
+		},
+		connKing: connman.New(),
 	}
 
 	s.router.HandleFunc("/health", s.health).Methods("GET")
@@ -199,6 +209,7 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/devices", s.validateAuthorization("devices", "ListDevices", s.listDevices)).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "DeleteDevice", s.deleteDevice)).Methods("DELETE")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/ssh", s.validateAuthorization("devices", "SSH", s.initiateSSH)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/wssh", s.validateAuthorization("devices", "SSH", s.initiateWebSocketSSH)).Methods("GET")
 
 	s.router.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "SetDeviceLabel", s.setDeviceLabel)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateAuthorization("devicelabels", "GetDeviceLabel", s.getDeviceLabel)).Methods("GET")

@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -142,7 +143,14 @@ func (c *Client) InitiateDeviceConnection(ctx context.Context) (net.Conn, error)
 }
 
 func (c *Client) Dial(ctx context.Context) (net.Conn, error) {
-	return tls.Dial("tcp", c.url2.Host, nil)
+	switch c.url2.Scheme {
+	case "http":
+		return net.Dial("tcp", c.url2.Host)
+	case "https":
+		return tls.Dial("tcp", c.url2.Host, nil)
+	default:
+		return nil, errors.New("invalid scheme")
+	}
 }
 
 func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {
