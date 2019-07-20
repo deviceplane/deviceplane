@@ -30,7 +30,7 @@ var config struct {
 	RedisConns     int           `conf:"redis-conns"`
 	CookieDomain   string        `conf:"cookie-domain"`
 	CookieSecure   bool          `conf:"cookie-secure"`
-	AllowedOrigins []string      `conf:"allowed-origin"`
+	AllowedOrigins []string      `conf:"allowed-origins"`
 }
 
 func init() {
