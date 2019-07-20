@@ -387,6 +387,11 @@ const getDevice = `
   where id = ? and project_id = ?
 `
 
+const lookupDevice = `
+  select id, created_at, project_id, name, info from devices
+  where name = ? and project_id = ?
+`
+
 const listDevices = `
   select id, created_at, project_id, name, info from devices
   where project_id = ?

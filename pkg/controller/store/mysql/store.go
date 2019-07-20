@@ -1190,6 +1190,19 @@ func (s *Store) GetDevice(ctx context.Context, id, projectID string) (*models.De
 	return device, nil
 }
 
+func (s *Store) LookupDevice(ctx context.Context, name, projectID string) (*models.Device, error) {
+	deviceRow := s.db.QueryRowContext(ctx, lookupDevice, name, projectID)
+
+	device, err := s.scanDevice(deviceRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrDeviceNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return device, nil
+}
+
 func (s *Store) ListDevices(ctx context.Context, projectID string) ([]models.Device, error) {
 	deviceRows, err := s.db.QueryContext(ctx, listDevices, projectID)
 	if err != nil {

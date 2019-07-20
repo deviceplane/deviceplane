@@ -9,35 +9,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func (s *Service) withApplication(handler func(http.ResponseWriter, *http.Request, string, string, string)) func(http.ResponseWriter, *http.Request, string, string) {
-	return func(w http.ResponseWriter, r *http.Request, projectID, userID string) {
-		vars := mux.Vars(r)
-		application := vars["application"]
-		if application == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		var applicationID string
-		if strings.Contains(application, "_") {
-			applicationID = application
-		} else {
-			application, err := s.applications.LookupApplication(r.Context(), application, projectID)
-			if err == store.ErrApplicationNotFound {
-				http.Error(w, store.ErrApplicationNotFound.Error(), http.StatusNotFound)
-				return
-			} else if err != nil {
-				log.WithError(err).Error("lookup application")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			applicationID = application.ID
-		}
-
-		handler(w, r, projectID, userID, applicationID)
-	}
-}
-
 func (s *Service) withRole(handler func(http.ResponseWriter, *http.Request, string, string, string)) func(http.ResponseWriter, *http.Request, string, string) {
 	return func(w http.ResponseWriter, r *http.Request, projectID, userID string) {
 		vars := mux.Vars(r)
@@ -53,7 +24,7 @@ func (s *Service) withRole(handler func(http.ResponseWriter, *http.Request, stri
 		} else {
 			role, err := s.roles.LookupRole(r.Context(), role, projectID)
 			if err == store.ErrRoleNotFound {
-				http.Error(w, store.ErrRoleNotFound.Error(), http.StatusNotFound)
+				http.Error(w, err.Error(), http.StatusNotFound)
 				return
 			} else if err != nil {
 				log.WithError(err).Error("lookup role")
@@ -82,7 +53,7 @@ func (s *Service) withServiceAccount(handler func(http.ResponseWriter, *http.Req
 		} else {
 			serviceAccount, err := s.serviceAccounts.LookupServiceAccount(r.Context(), serviceAccount, projectID)
 			if err == store.ErrServiceAccountNotFound {
-				http.Error(w, store.ErrServiceAccountNotFound.Error(), http.StatusNotFound)
+				http.Error(w, err.Error(), http.StatusNotFound)
 				return
 			} else if err != nil {
 				log.WithError(err).Error("lookup service account")
@@ -93,5 +64,63 @@ func (s *Service) withServiceAccount(handler func(http.ResponseWriter, *http.Req
 		}
 
 		handler(w, r, projectID, userID, serviceAccountID)
+	}
+}
+
+func (s *Service) withApplication(handler func(http.ResponseWriter, *http.Request, string, string, string)) func(http.ResponseWriter, *http.Request, string, string) {
+	return func(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+		vars := mux.Vars(r)
+		application := vars["application"]
+		if application == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		var applicationID string
+		if strings.Contains(application, "_") {
+			applicationID = application
+		} else {
+			application, err := s.applications.LookupApplication(r.Context(), application, projectID)
+			if err == store.ErrApplicationNotFound {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			} else if err != nil {
+				log.WithError(err).Error("lookup application")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			applicationID = application.ID
+		}
+
+		handler(w, r, projectID, userID, applicationID)
+	}
+}
+
+func (s *Service) withDevice(handler func(http.ResponseWriter, *http.Request, string, string, string)) func(http.ResponseWriter, *http.Request, string, string) {
+	return func(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+		vars := mux.Vars(r)
+		device := vars["device"]
+		if device == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		var deviceID string
+		if strings.Contains(device, "_") {
+			deviceID = device
+		} else {
+			device, err := s.devices.LookupDevice(r.Context(), device, projectID)
+			if err == store.ErrDeviceNotFound {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			} else if err != nil {
+				log.WithError(err).Error("lookup device")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			deviceID = device.ID
+		}
+
+		handler(w, r, projectID, userID, deviceID)
 	}
 }

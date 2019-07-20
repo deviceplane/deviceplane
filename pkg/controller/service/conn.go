@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
 
@@ -16,11 +15,8 @@ func (s *Service) initiateDeviceConnection(w http.ResponseWriter, r *http.Reques
 	})
 }
 
-func (s *Service) initiateSSH(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) initiateSSH(w http.ResponseWriter, r *http.Request, projectID, userID, deviceID string) {
 	withHijackedHTTPConnection(w, func(conn net.Conn) {
-		vars := mux.Vars(r)
-		deviceID := vars["device"]
-
 		s.connKing.Join(projectID+deviceID, conn)
 	})
 }
@@ -85,11 +81,8 @@ func (c *rwc) Close() error {
 	return c.c.Close()
 }
 
-func (s *Service) initiateWebSocketSSH(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) initiateWebSocketSSH(w http.ResponseWriter, r *http.Request, projectID, userID, deviceID string) {
 	s.withHijackedWebSocketConnection(w, r, func(conn *websocket.Conn) {
-		vars := mux.Vars(r)
-		deviceID := vars["device"]
-
 		s.connKing.Join(projectID+deviceID, &rwc{
 			c: conn,
 		})

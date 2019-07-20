@@ -206,16 +206,16 @@ func NewService(
 	s.router.HandleFunc("/projects/{project}/applications/{application}/releases/{release}", s.validateAuthorization("releases", "GetRelease", s.withApplication(s.getRelease))).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateAuthorization("releases", "ListReleases", s.withApplication(s.listReleases))).Methods("GET")
 
-	s.router.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "GetDevice", s.getDevice)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "GetDevice", s.withDevice(s.getDevice))).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/devices", s.validateAuthorization("devices", "ListDevices", s.listDevices)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "DeleteDevice", s.deleteDevice)).Methods("DELETE")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/ssh", s.validateAuthorization("devices", "SSH", s.initiateSSH)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/wssh", s.validateAuthorization("devices", "SSH", s.initiateWebSocketSSH)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "DeleteDevice", s.withDevice(s.deleteDevice))).Methods("DELETE")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/ssh", s.validateAuthorization("devices", "SSH", s.withDevice(s.initiateSSH))).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/wssh", s.validateAuthorization("devices", "SSH", s.withDevice(s.initiateWebSocketSSH))).Methods("GET")
 
-	s.router.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "SetDeviceLabel", s.setDeviceLabel)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateAuthorization("devicelabels", "GetDeviceLabel", s.getDeviceLabel)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "ListDeviceLabels", s.listDeviceLabels)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateAuthorization("devicelabels", "DeleteDeviceLabel", s.deleteDeviceLabel)).Methods("DELETE")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "SetDeviceLabel", s.withDevice(s.setDeviceLabel))).Methods("POST")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateAuthorization("devicelabels", "GetDeviceLabel", s.withDevice(s.getDeviceLabel))).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "ListDeviceLabels", s.withDevice(s.listDeviceLabels))).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateAuthorization("devicelabels", "DeleteDeviceLabel", s.withDevice(s.deleteDeviceLabel))).Methods("DELETE")
 
 	s.router.HandleFunc("/projects/{project}/deviceregistrationtokens", s.validateAuthorization("deviceregistrationtokens", "CreateDeviceRegistrationToken", s.createDeviceRegistrationToken)).Methods("POST")
 
@@ -1928,10 +1928,7 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request, projectID,
 	respond(w, ret)
 }
 
-func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, userID string) {
-	vars := mux.Vars(r)
-	deviceID := vars["device"]
-
+func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, userID, deviceID string) {
 	device, err := s.devices.GetDevice(r.Context(), deviceID, projectID)
 	if err == store.ErrDeviceNotFound {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -1997,10 +1994,7 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, u
 	respond(w, ret)
 }
 
-func (s *Service) deleteDevice(w http.ResponseWriter, r *http.Request, projectID string, userID string) {
-	vars := mux.Vars(r)
-	deviceID := vars["device"]
-
+func (s *Service) deleteDevice(w http.ResponseWriter, r *http.Request, projectID string, userID, deviceID string) {
 	if err := s.devices.DeleteDevice(r.Context(), deviceID, projectID); err != nil {
 		log.WithError(err).Error("delete device")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -2008,10 +2002,7 @@ func (s *Service) deleteDevice(w http.ResponseWriter, r *http.Request, projectID
 	}
 }
 
-func (s *Service) setDeviceLabel(w http.ResponseWriter, r *http.Request, projectID, userID string) {
-	vars := mux.Vars(r)
-	deviceID := vars["device"]
-
+func (s *Service) setDeviceLabel(w http.ResponseWriter, r *http.Request, projectID, userID, deviceID string) {
 	var setDeviceLabelRequest struct {
 		Key   string `json:"key"`
 		Value string `json:"value"`
@@ -2032,9 +2023,8 @@ func (s *Service) setDeviceLabel(w http.ResponseWriter, r *http.Request, project
 	respond(w, deviceLabel)
 }
 
-func (s *Service) getDeviceLabel(w http.ResponseWriter, r *http.Request, projectID string, userID string) {
+func (s *Service) getDeviceLabel(w http.ResponseWriter, r *http.Request, projectID string, userID, deviceID string) {
 	vars := mux.Vars(r)
-	deviceID := vars["device"]
 	key := vars["key"]
 
 	deviceLabel, err := s.deviceLabels.GetDeviceLabel(r.Context(), key, deviceID, projectID)
@@ -2047,10 +2037,7 @@ func (s *Service) getDeviceLabel(w http.ResponseWriter, r *http.Request, project
 	respond(w, deviceLabel)
 }
 
-func (s *Service) listDeviceLabels(w http.ResponseWriter, r *http.Request, projectID, userID string) {
-	vars := mux.Vars(r)
-	deviceID := vars["device"]
-
+func (s *Service) listDeviceLabels(w http.ResponseWriter, r *http.Request, projectID, userID, deviceID string) {
 	deviceLabels, err := s.deviceLabels.ListDeviceLabels(r.Context(), deviceID, projectID)
 	if err != nil {
 		log.WithError(err).Error("list device labels")
@@ -2061,9 +2048,8 @@ func (s *Service) listDeviceLabels(w http.ResponseWriter, r *http.Request, proje
 	respond(w, deviceLabels)
 }
 
-func (s *Service) deleteDeviceLabel(w http.ResponseWriter, r *http.Request, projectID string, userID string) {
+func (s *Service) deleteDeviceLabel(w http.ResponseWriter, r *http.Request, projectID string, userID, deviceID string) {
 	vars := mux.Vars(r)
-	deviceID := vars["device"]
 	key := vars["key"]
 
 	if err := s.deviceLabels.DeleteDeviceLabel(r.Context(), key, deviceID, projectID); err != nil {
