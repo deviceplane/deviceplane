@@ -129,6 +129,7 @@ create table if not exists roles (
   config longtext not null,
 
   primary key (id),
+  unique(name, project_id),
   foreign key roles_project_id(project_id)
   references projects(id)
   on delete cascade
@@ -251,6 +252,7 @@ create table if not exists devices (
   info longtext not null,
 
   primary key (id),
+  unique(name, project_id),
   foreign key devices_project_id(project_id)
   references projects(id)
   on delete cascade

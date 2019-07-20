@@ -138,7 +138,7 @@ type ServiceAccountRoleBindings interface {
 var ErrServiceAccountRoleBindingNotFound = errors.New("service account role binding not found")
 
 type Devices interface {
-	CreateDevice(ctx context.Context, projectID string) (*models.Device, error)
+	CreateDevice(ctx context.Context, projectID, name string) (*models.Device, error)
 	GetDevice(ctx context.Context, id, projectID string) (*models.Device, error)
 	ListDevices(ctx context.Context, projectID string) ([]models.Device, error)
 	SetDeviceInfo(ctx context.Context, id, projectID string, deviceInfo models.DeviceInfo) (*models.Device, error)

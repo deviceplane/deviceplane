@@ -14,6 +14,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/email"
 	"github.com/deviceplane/deviceplane/pkg/hash"
 	"github.com/deviceplane/deviceplane/pkg/models"
+	"github.com/deviceplane/deviceplane/pkg/namesgenerator"
 	"github.com/deviceplane/deviceplane/pkg/revdial"
 	"github.com/deviceplane/deviceplane/pkg/spec"
 	"github.com/gorilla/mux"
@@ -2131,7 +2132,7 @@ func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	device, err := s.devices.CreateDevice(r.Context(), projectID)
+	device, err := s.devices.CreateDevice(r.Context(), projectID, namesgenerator.GetRandomName())
 	if err != nil {
 		log.WithError(err).Error("create device")
 		w.WriteHeader(http.StatusInternalServerError)

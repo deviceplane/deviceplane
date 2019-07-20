@@ -8,7 +8,6 @@ import (
 
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/models"
-	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 )
@@ -1162,9 +1161,8 @@ func (s *Store) scanServiceAccountRoleBinding(scanner scanner) (*models.ServiceA
 	return &serviceAccountRoleBinding, nil
 }
 
-func (s *Store) CreateDevice(ctx context.Context, projectID string) (*models.Device, error) {
+func (s *Store) CreateDevice(ctx context.Context, projectID, name string) (*models.Device, error) {
 	id := newDeviceID()
-	name := namesgenerator.GetRandomName(0)
 
 	if _, err := s.db.ExecContext(
 		ctx,
