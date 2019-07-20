@@ -23,14 +23,14 @@ var version = "dev"
 var name = "deviceplane-controller"
 
 var config struct {
-	Addr          string        `conf:"addr"`
-	MySQLPrimary  string        `conf:"mysql-primary"`
-	Redis         string        `conf:"redis"`
-	RedisTimeout  time.Duration `conf:"redis-timeout"`
-	RedisConns    int           `conf:"redis-conns"`
-	CookieDomain  string        `conf:"cookie-domain"`
-	CookieSecure  bool          `conf:"cookie-secure"`
-	AllowedOrigin string        `conf:"allowed-origin"`
+	Addr           string        `conf:"addr"`
+	MySQLPrimary   string        `conf:"mysql-primary"`
+	Redis          string        `conf:"redis"`
+	RedisTimeout   time.Duration `conf:"redis-timeout"`
+	RedisConns     int           `conf:"redis-conns"`
+	CookieDomain   string        `conf:"cookie-domain"`
+	CookieSecure   bool          `conf:"cookie-secure"`
+	AllowedOrigins []string      `conf:"allowed-origin"`
 }
 
 func init() {
@@ -41,7 +41,7 @@ func init() {
 	config.RedisConns = 10
 	config.CookieDomain = "localhost"
 	config.CookieSecure = false
-	config.AllowedOrigin = "http://localhost:3000"
+	config.AllowedOrigins = []string{"http://localhost:3000"}
 }
 
 func main() {
@@ -89,7 +89,7 @@ func main() {
 			handlers.AllowCredentials(),
 			handlers.AllowedHeaders([]string{"Content-Type"}),
 			handlers.AllowedMethods([]string{"GET", "POST", "PUT", "PATCH", "DELETE"}),
-			handlers.AllowedOrigins([]string{config.AllowedOrigin}),
+			handlers.AllowedOrigins(config.AllowedOrigins),
 		)(svc),
 	}
 
