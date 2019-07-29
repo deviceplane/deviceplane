@@ -3,6 +3,9 @@ package main
 import (
 	"net/http"
 	"net/url"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/agent"
@@ -31,6 +34,9 @@ func init() {
 }
 
 func main() {
+	// Start zombie reaper
+	go reaper()
+
 	conf.Load(&config)
 
 	lvl, err := log.ParseLevel(config.LogLevel)
@@ -62,4 +68,22 @@ func main() {
 	}
 
 	agent.Run()
+}
+
+// reaper reaps zombie processes
+// This is needed because SSH spawns child processes that can die
+// https://en.wikipedia.org/wiki/Zombie_process
+func reaper() {
+	c := make(chan os.Signal, 2048)
+	signal.Notify(c, syscall.SIGCHLD)
+
+	for range c {
+		for {
+			if pid, err := syscall.Wait4(
+				-1, nil, syscall.WNOHANG, nil,
+			); err != nil || pid <= 0 {
+				break
+			}
+		}
+	}
 }

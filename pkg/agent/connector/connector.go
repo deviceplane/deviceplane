@@ -39,11 +39,14 @@ func (c *Connector) Do() {
 	})
 
 	ssh.Handle(func(s ssh.Session) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
 		var cmd *exec.Cmd
 		if _, err = os.Stat("/usr/bin/nsenter"); os.IsNotExist(err) {
-			cmd = exec.Command("/bin/sh")
+			cmd = exec.CommandContext(ctx, "/bin/sh")
 		} else {
-			cmd = exec.Command("/usr/bin/nsenter", "-t", "1", "-m", "-u", "-i", "-n", "-p")
+			cmd = exec.CommandContext(ctx, "/usr/bin/nsenter", "-t", "1", "-m", "-u", "-i", "-n", "-p")
 		}
 
 		ptyReq, winCh, isPty := s.Pty()
@@ -61,7 +64,12 @@ func (c *Connector) Do() {
 
 		go func() {
 			for win := range winCh {
-				setWinsize(f, win.Width, win.Height)
+				syscall.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(syscall.TIOCSWINSZ),
+					uintptr(unsafe.Pointer(&struct {
+						h, w, x, y uint16
+					}{
+						uint16(win.Height), uint16(win.Width), 0, 0,
+					})))
 			}
 		}()
 
@@ -70,11 +78,6 @@ func (c *Connector) Do() {
 	})
 
 	if err = ssh.Serve(listener, nil); err != nil {
-		log.WithError(err).Error("SSH server")
+		log.WithError(err).Error("serve SSH")
 	}
-}
-
-func setWinsize(f *os.File, w, h int) {
-	syscall.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(syscall.TIOCSWINSZ),
-		uintptr(unsafe.Pointer(&struct{ h, w, x, y uint16 }{uint16(h), uint16(w), 0, 0})))
 }
