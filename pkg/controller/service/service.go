@@ -162,6 +162,8 @@ func NewService(
 
 	s.router.HandleFunc("/projects", s.withUserOrServiceAccountAuth(s.createProject)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}", s.validateAuthorization("projects", "GetProject", s.getProject)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}", s.validateAuthorization("projects", "UpdateProject", s.updateProject)).Methods("PUT")
+	s.router.HandleFunc("/projects/{project}", s.validateAuthorization("projects", "DeleteProject", s.deleteProject)).Methods("DELETE")
 
 	s.router.HandleFunc("/projects/{project}/roles", s.validateAuthorization("roles", "CreateRole", s.createRole)).Methods("POST")
 	s.router.HandleFunc("/projects/{project}/roles/{role}", s.validateAuthorization("roles", "GetRole", s.withRole(s.getRole))).Methods("GET")
@@ -1043,6 +1045,42 @@ func (s *Service) getProject(w http.ResponseWriter, r *http.Request, projectID, 
 	}
 
 	respond(w, project)
+}
+
+func (s *Service) updateProject(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	var updateProjectRequest struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&updateProjectRequest); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if _, err := s.projects.LookupProject(r.Context(), updateProjectRequest.Name); err == nil {
+		http.Error(w, store.ErrProjectNameAlreadyInUse.Error(), http.StatusBadRequest)
+		return
+	} else if err != nil && err != store.ErrProjectNotFound {
+		log.WithError(err).Error("lookup project")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	project, err := s.projects.UpdateProject(r.Context(), projectID, updateProjectRequest.Name)
+	if err != nil {
+		log.WithError(err).Error("update project")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	respond(w, project)
+}
+
+func (s *Service) deleteProject(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+	if err := s.projects.DeleteProject(r.Context(), projectID); err != nil {
+		log.WithError(err).Error("delete project")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *Service) createRole(w http.ResponseWriter, r *http.Request, projectID, userID string) {

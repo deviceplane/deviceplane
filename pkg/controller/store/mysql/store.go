@@ -572,6 +572,28 @@ func (s *Store) LookupProject(ctx context.Context, name string) (*models.Project
 	return project, nil
 }
 
+func (s *Store) UpdateProject(ctx context.Context, id, name string) (*models.Project, error) {
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateProject,
+		name,
+		id,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetProject(ctx, id)
+}
+
+func (s *Store) DeleteProject(ctx context.Context, id string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		deleteProject,
+		id,
+	)
+	return err
+}
+
 func (s *Store) scanProject(scanner scanner) (*models.Project, error) {
 	var project models.Project
 	if err := scanner.Scan(

@@ -177,6 +177,18 @@ const lookupProject = `
   where name = ?
 `
 
+const updateProject = `
+  update projects
+  set name = ?
+  where id = ?
+`
+
+const deleteProject = `
+  delete from projects
+  where id = ?
+  limit 1
+`
+
 const getProjectDeviceCounts = `
   select count(*) from devices
   where project_id = ?

@@ -72,6 +72,8 @@ var (
 		"CreateDeviceRegistrationToken",
 	}...)
 	adminActions = append(writeActions, []string{
+		"UpdateProject",
+		"DeleteProject",
 		"CreateRole",
 		"UpdateRole",
 		"DeleteRole",

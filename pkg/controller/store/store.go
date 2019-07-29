@@ -62,6 +62,8 @@ type Projects interface {
 	CreateProject(ctx context.Context, name string) (*models.Project, error)
 	GetProject(ctx context.Context, id string) (*models.Project, error)
 	LookupProject(ctx context.Context, name string) (*models.Project, error)
+	UpdateProject(ctx context.Context, id, name string) (*models.Project, error)
+	DeleteProject(ctx context.Context, id string) error
 }
 
 var ErrProjectNotFound = errors.New("project not found")
