@@ -142,11 +142,13 @@ type Devices interface {
 	GetDevice(ctx context.Context, id, projectID string) (*models.Device, error)
 	LookupDevice(ctx context.Context, name, projectID string) (*models.Device, error)
 	ListDevices(ctx context.Context, projectID string) ([]models.Device, error)
+	UpdateDeviceName(ctx context.Context, id, projectID, name string) (*models.Device, error)
 	SetDeviceInfo(ctx context.Context, id, projectID string, deviceInfo models.DeviceInfo) (*models.Device, error)
 	DeleteDevice(ctx context.Context, id, projectID string) error
 }
 
 var ErrDeviceNotFound = errors.New("device not found")
+var ErrDeviceNameAlreadyInUse = errors.New("device name already in use")
 
 type DeviceStatuses interface {
 	ResetDeviceStatus(ctx context.Context, deviceID string, ttl time.Duration) error

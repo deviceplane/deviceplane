@@ -1226,6 +1226,20 @@ func (s *Store) ListDevices(ctx context.Context, projectID string) ([]models.Dev
 	return devices, nil
 }
 
+func (s *Store) UpdateDeviceName(ctx context.Context, id, projectID, name string) (*models.Device, error) {
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateDeviceName,
+		name,
+		id,
+		projectID,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetDevice(ctx, id, projectID)
+}
+
 func (s *Store) SetDeviceInfo(ctx context.Context, id, projectID string, deviceInfo models.DeviceInfo) (*models.Device, error) {
 	infoBytes, err := json.Marshal(deviceInfo)
 	if err != nil {

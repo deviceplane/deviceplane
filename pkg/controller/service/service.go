@@ -208,6 +208,7 @@ func NewService(
 
 	s.router.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "GetDevice", s.withDevice(s.getDevice))).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/devices", s.validateAuthorization("devices", "ListDevices", s.listDevices)).Methods("GET")
+	s.router.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "UpdateDevice", s.withDevice(s.updateDevice))).Methods("PATCH")
 	s.router.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "DeleteDevice", s.withDevice(s.deleteDevice))).Methods("DELETE")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/ssh", s.validateAuthorization("devices", "SSH", s.withDevice(s.initiateSSH))).Methods("GET")
 	s.router.HandleFunc("/projects/{project}/devices/{device}/wssh", s.validateAuthorization("devices", "SSH", s.withDevice(s.initiateWebSocketSSH))).Methods("GET")
@@ -1126,6 +1127,15 @@ func (s *Service) updateRole(w http.ResponseWriter, r *http.Request, projectID, 
 		return
 	}
 
+	if _, err := s.roles.LookupRole(r.Context(), updateRoleRequest.Name, projectID); err == nil {
+		http.Error(w, store.ErrRoleNameAlreadyInUse.Error(), http.StatusBadRequest)
+		return
+	} else if err != nil && err != store.ErrRoleNotFound {
+		log.WithError(err).Error("lookup role")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	role, err := s.roles.UpdateRole(r.Context(), roleID, projectID, updateRoleRequest.Name,
 		updateRoleRequest.Description, updateRoleRequest.Config)
 	if err != nil {
@@ -1268,6 +1278,15 @@ func (s *Service) updateServiceAccount(w http.ResponseWriter, r *http.Request, p
 	}
 	if err := json.NewDecoder(r.Body).Decode(&updateServiceAccountRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if _, err := s.serviceAccounts.LookupServiceAccount(r.Context(), updateServiceAccountRequest.Name, projectID); err == nil {
+		http.Error(w, store.ErrServiceAccountNameAlreadyInUse.Error(), http.StatusBadRequest)
+		return
+	} else if err != nil && err != store.ErrServiceAccountNotFound {
+		log.WithError(err).Error("lookup service account")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -1750,6 +1769,15 @@ func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request, proj
 		}
 	}
 
+	if _, err := s.applications.LookupApplication(r.Context(), updateApplicationRequest.Name, projectID); err == nil {
+		http.Error(w, store.ErrApplicationNameAlreadyInUse.Error(), http.StatusBadRequest)
+		return
+	} else if err != nil && err != store.ErrApplicationNotFound {
+		log.WithError(err).Error("lookup application")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	application, err := s.applications.UpdateApplication(r.Context(), applicationID, projectID, updateApplicationRequest.Name,
 		updateApplicationRequest.Description, updateApplicationRequest.Settings)
 	if err != nil {
@@ -1992,6 +2020,34 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, u
 	}
 
 	respond(w, ret)
+}
+
+func (s *Service) updateDevice(w http.ResponseWriter, r *http.Request, projectID, userID, deviceID string) {
+	var updateDeviceRequest struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&updateDeviceRequest); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if _, err := s.devices.LookupDevice(r.Context(), updateDeviceRequest.Name, projectID); err == nil {
+		http.Error(w, store.ErrDeviceNameAlreadyInUse.Error(), http.StatusBadRequest)
+		return
+	} else if err != nil && err != store.ErrDeviceNotFound {
+		log.WithError(err).Error("lookup device")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	device, err := s.devices.UpdateDeviceName(r.Context(), deviceID, projectID, updateDeviceRequest.Name)
+	if err != nil {
+		log.WithError(err).Error("update device name")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	respond(w, device)
 }
 
 func (s *Service) deleteDevice(w http.ResponseWriter, r *http.Request, projectID string, userID, deviceID string) {
