@@ -437,14 +437,7 @@ func (s *Service) validateAuthorization(requestedResource, requestedAction strin
 			configs = append(configs, config)
 		}
 
-		accessGranted, err := authz.Evaluate(requestedResource, requestedAction, configs)
-		if err != nil {
-			log.WithError(err).Error("evaluate authz")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		if !accessGranted {
+		if !authz.Evaluate(requestedResource, requestedAction, configs) {
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}

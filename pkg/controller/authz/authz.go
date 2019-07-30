@@ -93,7 +93,7 @@ var (
 	}...)
 )
 
-func Evaluate(requestedResource, requestedAction string, configs []Config) (bool, error) {
+func Evaluate(requestedResource, requestedAction string, configs []Config) bool {
 	oneAllow := false
 	for _, config := range configs {
 		for _, rule := range config.Rules {
@@ -109,7 +109,7 @@ func Evaluate(requestedResource, requestedAction string, configs []Config) (bool
 			}
 		}
 	}
-	return oneAllow, nil
+	return oneAllow
 }
 
 func resolveRule(rule Rule) Rule {

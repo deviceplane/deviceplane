@@ -6,34 +6,131 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TODO: test this
-// TODO: yeah we totally don't handle this properly
-//		ag, _ := Evaluate("applications", "CreateMembership", []Config{AdminAllRole})
-//		require.True(t, ag)
-
 func TestEvaluate(t *testing.T) {
-	t.Run("read", func(t *testing.T) {
-		ag, _ := Evaluate("applications", "GetApplication", []Config{ReadAllRole})
-		require.True(t, ag)
-		ag, _ = Evaluate("applications", "CreateApplication", []Config{ReadAllRole})
-		require.False(t, ag)
-		ag, _ = Evaluate("memberships", "CreateMembership", []Config{ReadAllRole})
-		require.False(t, ag)
+	t.Run("default", func(t *testing.T) {
+		for _, scenario := range []struct {
+			resource string
+			action   string
+			configs  []Config
+		}{
+			{
+				"applications",
+				"GetApplication",
+				[]Config{ReadAllRole},
+			},
+			{
+				"applications",
+				"GetApplication",
+				[]Config{WriteAllRole},
+			},
+			{
+				"applications",
+				"CreateApplication",
+				[]Config{WriteAllRole},
+			},
+			{
+				"applications",
+				"GetApplication",
+				[]Config{AdminAllRole},
+			},
+			{
+				"applications",
+				"CreateApplication",
+				[]Config{AdminAllRole},
+			},
+			{
+				"memberships",
+				"CreateMembership",
+				[]Config{AdminAllRole},
+			},
+		} {
+			require.True(t, Evaluate(scenario.resource, scenario.action, scenario.configs))
+		}
+
+		for _, scenario := range []struct {
+			resource string
+			action   string
+			configs  []Config
+		}{
+			{
+				"applications",
+				"CreateApplication",
+				[]Config{ReadAllRole},
+			},
+			{
+				"memberships",
+				"CreateMembership",
+				[]Config{ReadAllRole},
+			},
+			{
+				"memberships",
+				"CreateMembership",
+				[]Config{WriteAllRole},
+			},
+		} {
+			require.False(t, Evaluate(scenario.resource, scenario.action, scenario.configs))
+		}
 	})
-	t.Run("write", func(t *testing.T) {
-		ag, _ := Evaluate("applications", "GetApplication", []Config{WriteAllRole})
-		require.True(t, ag)
-		ag, _ = Evaluate("applications", "CreateApplication", []Config{WriteAllRole})
-		require.True(t, ag)
-		ag, _ = Evaluate("memberships", "CreateMembership", []Config{WriteAllRole})
-		require.False(t, ag)
-	})
-	t.Run("admin", func(t *testing.T) {
-		ag, _ := Evaluate("applications", "GetApplication", []Config{AdminAllRole})
-		require.True(t, ag)
-		ag, _ = Evaluate("applications", "CreateApplication", []Config{AdminAllRole})
-		require.True(t, ag)
-		ag, _ = Evaluate("memberships", "CreateMembership", []Config{AdminAllRole})
-		require.True(t, ag)
+
+	t.Run("custom", func(t *testing.T) {
+		for _, scenario := range []struct {
+			resource string
+			action   string
+			configs  []Config
+		}{
+			{
+				"applications",
+				"GetApplication",
+				[]Config{
+					{
+						Rules: []Rule{
+							{
+								Resources: []string{"applications"},
+								Actions:   []string{"GetApplication"},
+							},
+						},
+					},
+				},
+			},
+		} {
+			require.True(t, Evaluate(scenario.resource, scenario.action, scenario.configs))
+		}
+
+		for _, scenario := range []struct {
+			resource string
+			action   string
+			configs  []Config
+		}{
+			{
+				"applications",
+				"CreateApplication",
+				[]Config{
+					{
+						Rules: []Rule{
+							{
+								Resources: []string{"applications"},
+								Actions:   []string{"GetApplication"},
+							},
+						},
+					},
+				},
+			},
+			{
+				"applications",
+				"GetApplication",
+				[]Config{
+					{
+						Rules: []Rule{
+							{
+								Resources: []string{"releases"},
+								Actions:   []string{"GetApplication"},
+							},
+						},
+					},
+				},
+			},
+		} {
+			require.False(t, Evaluate(scenario.resource, scenario.action, scenario.configs))
+		}
 	})
 }
