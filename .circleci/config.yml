@@ -105,6 +105,8 @@ workflows:
             branches:
               only: master
       - upload-cli-binary-redirects:
+          requires:
+            - build-cli-binaries
           filters:
             branches:
               only: master
