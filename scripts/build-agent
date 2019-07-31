@@ -1,14 +1,14 @@
 #!/bin/bash
 set -e
 
-docker build -t deviceplane/agent:amd64-${VERSION} -f dockerfiles/agent/amd64/Dockerfile --build-arg version=${VERSION} .
-docker build -t deviceplane/agent:arm32v6-${VERSION} -f dockerfiles/agent/arm32v6/Dockerfile --build-arg version=${VERSION} .
-docker build -t deviceplane/agent:arm64v8-${VERSION} -f dockerfiles/agent/arm64v8/Dockerfile --build-arg version=${VERSION} .
+docker build -t deviceplane/agent:amd64-${AGENT_VERSION} -f dockerfiles/agent/amd64/Dockerfile --build-arg version=${AGENT_VERSION} .
+docker build -t deviceplane/agent:arm32v6-${AGENT_VERSION} -f dockerfiles/agent/arm32v6/Dockerfile --build-arg version=${AGENT_VERSION} .
+docker build -t deviceplane/agent:arm64v8-${AGENT_VERSION} -f dockerfiles/agent/arm64v8/Dockerfile --build-arg version=${AGENT_VERSION} .
 
-docker push deviceplane/agent:amd64-${VERSION}
-docker push deviceplane/agent:arm32v6-${VERSION}
-docker push deviceplane/agent:arm64v8-${VERSION}
+docker push deviceplane/agent:amd64-${AGENT_VERSION}
+docker push deviceplane/agent:arm32v6-${AGENT_VERSION}
+docker push deviceplane/agent:arm64v8-${AGENT_VERSION}
 
-docker manifest create deviceplane/agent:${VERSION} deviceplane/agent:amd64-${VERSION} deviceplane/agent:arm32v6-${VERSION} deviceplane/agent:arm64v8-${VERSION}
-docker manifest annotate deviceplane/agent:${VERSION} deviceplane/agent:arm32v6-${VERSION} --os linux --arch arm
-docker manifest annotate deviceplane/agent:${VERSION} deviceplane/agent:arm64v8-${VERSION} --os linux --arch arm64 --variant armv8
+docker manifest create deviceplane/agent:${AGENT_VERSION} deviceplane/agent:amd64-${AGENT_VERSION} deviceplane/agent:arm32v6-${AGENT_VERSION} deviceplane/agent:arm64v8-${AGENT_VERSION}
+docker manifest annotate deviceplane/agent:${AGENT_VERSION} deviceplane/agent:arm32v6-${AGENT_VERSION} --os linux --arch arm
+docker manifest annotate deviceplane/agent:${AGENT_VERSION} deviceplane/agent:arm64v8-${AGENT_VERSION} --os linux --arch arm64 --variant armv8
