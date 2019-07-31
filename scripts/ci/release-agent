@@ -2,6 +2,6 @@
 set -ex
 
 if git log -1 | grep -q "Release agent"; then
-  AGENT_VERSION=$(git log -1 | grep "Release agent" | cut -d ' ' -f3)
+  AGENT_VERSION=$(git log -1 --pretty=%B | grep "Release agent" | cut -d ' ' -f3)
   make push-agent
 fi
