@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible
+	github.com/Microsoft/go-winio v0.4.13 // indirect
 	github.com/apex/log v1.1.0
 	github.com/cobaugh/osrelease v0.0.0-20181218015638-a93a0a55a249
 	github.com/docker/distribution v2.7.1+incompatible // indirect
@@ -26,7 +27,7 @@ require (
 	github.com/sendgrid/sendgrid-go v3.4.1+incompatible
 	github.com/stretchr/testify v1.3.0
 	github.com/urfave/cli v1.20.0
-	golang.org/x/build v0.0.0-20190604154314-6c34d49dff48
+	golang.org/x/build v0.0.0-20190604154314-6c34d49dff48 // indirect
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	gopkg.in/yaml.v2 v2.2.2
 )

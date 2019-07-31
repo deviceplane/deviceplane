@@ -2,7 +2,7 @@ FROM golang:1.12
 ARG version
 WORKDIR /app
 COPY ./ ./
-RUN GOOS=linux CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=$version" -o ./deviceplane ./cmd/deviceplane
+RUN GOOS=linux CGO_ENABLED=0 go build -mod vendor -ldflags "-s -w -X main.version=$version" -o ./deviceplane ./cmd/deviceplane
 
 FROM alpine:3.9
 RUN apk --update add git openssh tar gzip ca-certificates \
