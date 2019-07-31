@@ -31,7 +31,7 @@ jobs:
           mkdir -p ~/.docker && echo '{"experimental":"enabled"}' > ~/.docker/config.json
       - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
       - run: docker run --rm --privileged multiarch/qemu-user-static:register --reset
-      - run: make push-agent
+      - run: git log -1 | grep -q "Release agent" && make push-agent
 
   release-cli-ci:
     machine: true
