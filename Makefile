@@ -1,5 +1,3 @@
-version= $(shell git describe --tags --always --dirty="-dev")
-
 db-reset:
 	docker-compose down
 	docker-compose build
@@ -20,13 +18,13 @@ push-agent: agent
 	docker manifest push deviceplane/agent:${AGENT_VERSION}
 
 cli-ci:
-	docker build -t deviceplane/cli-ci:${version} -f dockerfiles/cli-ci/Dockerfile --build-arg version=${version} .
+	./scripts/build-cli-ci
 
 push-cli-ci: cli-ci
-	docker push deviceplane/cli-ci:${version}
+	docker push deviceplane/cli-ci:${CLI_VERSION}
 
 cli-binaries:
-	VERSION=${version} ./scripts/build-cli-binaries
+	./scripts/build-cli-binaries
 
 upload-cli-binary-redirects:
-	VERSION=${version} ./scripts/upload-cli-binary-redirects
+	./scripts/upload-cli-binary-redirects

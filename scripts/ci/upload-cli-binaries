@@ -1,0 +1,10 @@
+#!/bin/bash
+set -ex
+
+mkdir -p ./dist/cli
+
+if ! git log -1 | grep -q "Release CLI"; then
+  exit 0
+fi
+
+aws s3 sync /tmp/workspace/dist/cli s3://cli.deviceplane.io/

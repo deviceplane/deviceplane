@@ -38,7 +38,7 @@ jobs:
     steps:
       - checkout
       - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
-      - run: make push-cli-ci
+      - run: ./scripts/ci/push-cli-ci
 
   build-cli-binaries:
     docker:
@@ -46,7 +46,7 @@ jobs:
     steps:
       - *attach_workspace
       - checkout
-      - run: make cli-binaries
+      - run: ./scripts/ci/build-cli-binaries
       - run: mv dist /tmp/workspace
       - persist_to_workspace:
           root: /tmp/workspace
@@ -58,16 +58,14 @@ jobs:
       - image: circleci/python:2.7-jessie
     steps:
       - *attach_workspace
-      - run: sudo pip install awscli
-      - run: aws s3 sync /tmp/workspace/dist/cli s3://cli.deviceplane.io/
+      - run: ./scripts/ci/upload-cli-binaries
 
   upload-cli-binary-redirects:
     docker:
       - image: circleci/python:2.7-jessie
     steps:
       - checkout
-      - run: sudo pip install awscli
-      - run: make upload-cli-binary-redirects
+      - run: ./scripts/ci/upload-cli-binary-redirects
 
 workflows:
   version: 2
