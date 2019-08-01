@@ -17,11 +17,11 @@ agent:
 push-agent: agent
 	docker manifest push deviceplane/agent:${AGENT_VERSION}
 
-cli-ci:
-	./scripts/build-cli-ci
+cli:
+	./scripts/build-cli
 
-push-cli-ci: cli-ci
-	docker push deviceplane/cli-ci:${CLI_VERSION}
+push-cli: cli
+	docker push deviceplane/cli:${CLI_VERSION}
 
 cli-binaries:
 	./scripts/build-cli-binaries

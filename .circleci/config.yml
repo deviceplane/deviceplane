@@ -33,12 +33,12 @@ jobs:
       - run: docker run --rm --privileged multiarch/qemu-user-static:register --reset
       - run: ./scripts/ci/release-agent
 
-  release-cli-ci:
+  release-cli:
     machine: true
     steps:
       - checkout
       - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
-      - run: ./scripts/ci/release-cli-ci
+      - run: ./scripts/ci/release-cli
 
   build-cli-binaries:
     docker:
@@ -85,7 +85,7 @@ workflows:
           filters:
             branches:
               only: master
-      - release-cli-ci:
+      - release-cli:
           requires:
             - test
           filters:

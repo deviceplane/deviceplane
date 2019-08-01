@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e
+
+docker build -t deviceplane/cli:${CLI_VERSION} -f dockerfiles/cli/Dockerfile --build-arg version=${CLI_VERSION} .
