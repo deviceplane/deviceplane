@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ex
 
-if git log -1 | grep -q "Release agent"; then
+if ! git log -1 | grep -q "Release agent"; then
   exit 0
 fi
 
