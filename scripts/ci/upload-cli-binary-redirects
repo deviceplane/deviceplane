@@ -8,4 +8,4 @@ if ! git log -1 | grep -q "Release CLI"; then
 fi
 
 sudo pip install awscli
-CLI_VERSION=$(git log -1 --pretty=%B | grep "Release CLI" | cut -d ' ' -f3) upload-cli-binary-redirects
+CLI_VERSION=$(git log -1 --pretty=%B | grep "Release CLI" | cut -d ' ' -f3) make upload-cli-binary-redirects
