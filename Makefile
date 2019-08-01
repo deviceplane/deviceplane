@@ -11,7 +11,7 @@ controller:
 	./scripts/build-controller
 
 push-controller: controller
-	docker push deviceplane/deviceplane:${AGENT_VERSION}
+	docker push deviceplane/deviceplane:${CONTROLLER_VERSION}
 
 agent:
 	./scripts/build-agent
