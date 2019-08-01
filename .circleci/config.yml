@@ -38,7 +38,7 @@ jobs:
     steps:
       - checkout
       - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
-      - run: ./scripts/ci/push-cli-ci
+      - run: ./scripts/ci/release-cli-ci
 
   build-cli-binaries:
     docker:
