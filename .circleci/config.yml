@@ -18,7 +18,7 @@ jobs:
     steps:
       - checkout
       - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
-      - run: make push-controller
+      - run: ./scripts/ci/release-controller
 
   release-agent:
     machine:
