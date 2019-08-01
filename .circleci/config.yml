@@ -58,6 +58,7 @@ jobs:
       - image: circleci/python:2.7-jessie
     steps:
       - *attach_workspace
+      - checkout
       - run: ./scripts/ci/upload-cli-binaries
 
   upload-cli-binary-redirects:
