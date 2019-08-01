@@ -8,10 +8,10 @@ db-reset:
 	./scripts/seed
 
 controller:
-	docker build -t deviceplane/deviceplane:${version} -f dockerfiles/controller/Dockerfile --build-arg version=${version} .
+	./scripts/build-controller
 
 push-controller: controller
-	docker push deviceplane/deviceplane:${version}
+	docker push deviceplane/deviceplane:${AGENT_VERSION}
 
 agent:
 	./scripts/build-agent

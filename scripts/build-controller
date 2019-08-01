@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e
+
+docker build -t deviceplane/deviceplane:${CONTROLLER_VERSION} -f dockerfiles/controller/Dockerfile --build-arg version=${CONTROLLER_VERSION} .
