@@ -2198,7 +2198,7 @@ func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
-	if err := s.devices.UpdateDeviceLastSeenAt(r.Context(), projectID, deviceID); err != nil {
+	if err := s.devices.UpdateDeviceLastSeenAt(r.Context(), deviceID, projectID); err != nil {
 		log.WithError(err).Error("update device last seen at")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
