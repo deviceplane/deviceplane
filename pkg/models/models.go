@@ -110,11 +110,13 @@ type ServiceAccountRoleBinding struct {
 }
 
 type Device struct {
-	ID        string     `json:"id"`
-	CreatedAt time.Time  `json:"createdAt"`
-	ProjectID string     `json:"projectId"`
-	Name      string     `json:"name"`
-	Info      DeviceInfo `json:"info"`
+	ID         string       `json:"id"`
+	CreatedAt  time.Time    `json:"createdAt"`
+	ProjectID  string       `json:"projectId"`
+	Name       string       `json:"name"`
+	Info       DeviceInfo   `json:"info"`
+	LastSeenAt time.Time    `json:"lastSeenAt"`
+	Status     DeviceStatus `json:"status"`
 }
 
 type DeviceStatus string
@@ -209,14 +211,8 @@ type ServiceAccountFull struct {
 	Roles []Role `json:"roles"`
 }
 
-type DeviceFull1 struct {
+type DeviceFull struct {
 	Device
-	Status DeviceStatus `json:"status"`
-}
-
-type DeviceFull2 struct {
-	Device
-	Status                DeviceStatus                  `json:"status"`
 	ApplicationStatusInfo []DeviceApplicationStatusInfo `json:"applicationStatusInfo"`
 }
 

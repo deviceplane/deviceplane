@@ -49,7 +49,6 @@ type Service struct {
 	serviceAccountAccessKeys   store.ServiceAccountAccessKeys
 	serviceAccountRoleBindings store.ServiceAccountRoleBindings
 	devices                    store.Devices
-	deviceStatuses             store.DeviceStatuses
 	deviceLabels               store.DeviceLabels
 	deviceRegistrationTokens   store.DeviceRegistrationTokens
 	deviceAccessKeys           store.DeviceAccessKeys
@@ -83,7 +82,6 @@ func NewService(
 	serviceAccountAccessKeys store.ServiceAccountAccessKeys,
 	serviceAccountRoleBindings store.ServiceAccountRoleBindings,
 	devices store.Devices,
-	deviceStatuses store.DeviceStatuses,
 	deviceLabels store.DeviceLabels,
 	deviceRegistrationTokens store.DeviceRegistrationTokens,
 	deviceAccessKeys store.DeviceAccessKeys,
@@ -113,7 +111,6 @@ func NewService(
 		serviceAccountAccessKeys:   serviceAccountAccessKeys,
 		serviceAccountRoleBindings: serviceAccountRoleBindings,
 		devices:                    devices,
-		deviceStatuses:             deviceStatuses,
 		deviceLabels:               deviceLabels,
 		deviceRegistrationTokens:   deviceRegistrationTokens,
 		deviceAccessKeys:           deviceAccessKeys,
@@ -1959,32 +1956,7 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request, projectID,
 		return
 	}
 
-	var ret interface{} = devices
-	if _, ok := r.URL.Query()["full"]; ok {
-		var deviceIDs []string
-		for _, device := range devices {
-			deviceIDs = append(deviceIDs, device.ID)
-		}
-
-		deviceStatuses, err := s.deviceStatuses.GetDeviceStatuses(r.Context(), deviceIDs)
-		if err != nil {
-			log.WithError(err).Error("get device statuses")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		var devicesFull []models.DeviceFull1
-		for i, device := range devices {
-			devicesFull = append(devicesFull, models.DeviceFull1{
-				Device: device,
-				Status: deviceStatuses[i],
-			})
-		}
-
-		ret = devicesFull
-	}
-
-	respond(w, ret)
+	respond(w, devices)
 }
 
 func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, userID, deviceID string) {
@@ -2000,13 +1972,6 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, u
 
 	var ret interface{} = device
 	if _, ok := r.URL.Query()["full"]; ok {
-		deviceStatus, err := s.deviceStatuses.GetDeviceStatus(r.Context(), device.ID)
-		if err != nil {
-			log.WithError(err).Error("get device status")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
 		applications, err := s.applications.ListApplications(r.Context(), projectID)
 		if err != nil {
 			log.WithError(err).Error("list applications")
@@ -2043,9 +2008,8 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, u
 			allApplicationStatusInfo = append(allApplicationStatusInfo, applicationStatusInfo)
 		}
 
-		ret = models.DeviceFull2{
+		ret = models.DeviceFull{
 			Device:                *device,
-			Status:                deviceStatus,
 			ApplicationStatusInfo: allApplicationStatusInfo,
 		}
 	}
@@ -2234,8 +2198,8 @@ func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
-	if err := s.deviceStatuses.ResetDeviceStatus(r.Context(), deviceID, time.Minute); err != nil {
-		log.WithError(err).Error("reset device status")
+	if err := s.devices.UpdateDeviceLastSeenAt(r.Context(), projectID, deviceID); err != nil {
+		log.WithError(err).Error("update device last seen at")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

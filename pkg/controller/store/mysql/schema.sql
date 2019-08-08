@@ -250,6 +250,7 @@ create table if not exists devices (
 
   name varchar(100) not null,
   info longtext not null,
+  last_seen_at timestamp not null default current_timestamp,
 
   primary key (id),
   unique(name, project_id),
@@ -311,7 +312,7 @@ create table if not exists device_access_keys (
 
 create table if not exists applications (
   id varchar(32) not null,
-  created_at timestamp not null default current_timestamp, 
+  created_at timestamp not null default current_timestamp,
   project_id varchar(32) not null,
 
   name varchar(100) not null,
@@ -331,7 +332,7 @@ create table if not exists applications (
 
 create table if not exists releases (
   id varchar(32) not null,
-  created_at timestamp not null default current_timestamp, 
+  created_at timestamp not null default current_timestamp,
   project_id varchar(32) not null,
   application_id varchar(32) not null,
   config longtext not null,

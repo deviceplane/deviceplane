@@ -9,10 +9,8 @@ import (
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/controller/service"
 	sendgrid_email "github.com/deviceplane/deviceplane/pkg/email/sendgrid"
-	"github.com/gomodule/redigo/redis"
 
 	mysql_store "github.com/deviceplane/deviceplane/pkg/controller/store/mysql"
-	redis_store "github.com/deviceplane/deviceplane/pkg/controller/store/redis"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/handlers"
 	"github.com/segmentio/conf"
@@ -54,33 +52,11 @@ func main() {
 
 	sqlStore := mysql_store.NewStore(db)
 
-	redisPool := &redis.Pool{
-		MaxIdle:   config.RedisConns,
-		MaxActive: config.RedisConns,
-		Wait:      true,
-		Dial: func() (redis.Conn, error) {
-			return redis.Dial("tcp", config.Redis,
-				redis.DialConnectTimeout(config.RedisTimeout),
-				redis.DialReadTimeout(config.RedisTimeout),
-				redis.DialWriteTimeout(config.RedisTimeout),
-			)
-		},
-		TestOnBorrow: func(c redis.Conn, t time.Time) (err error) {
-			if time.Since(t) < time.Minute {
-				return nil
-			}
-			_, err = c.Do("PING")
-			return err
-		},
-	}
-
-	redisStore := redis_store.NewStore(redisPool)
-
 	sendgridClient := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
 	sendgridEmail := sendgrid_email.NewEmail(sendgridClient)
 
 	svc := service.NewService(sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
-		sqlStore, sqlStore, sqlStore, redisStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
+		sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
 		sendgridEmail, config.CookieDomain, config.CookieSecure)
 
 	server := &http.Server{

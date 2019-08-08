@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/models"
@@ -1281,6 +1282,19 @@ func (s *Store) SetDeviceInfo(ctx context.Context, id, projectID string, deviceI
 	return s.GetDevice(ctx, id, projectID)
 }
 
+func (s *Store) UpdateDeviceLastSeenAt(ctx context.Context, projectID, deviceID string) error {
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateDeviceLastSeenAt,
+		projectID,
+		deviceID,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *Store) DeleteDevice(ctx context.Context, id, projectID string) error {
 	_, err := s.db.ExecContext(
 		ctx,
@@ -1300,14 +1314,23 @@ func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 		&device.ProjectID,
 		&device.Name,
 		&infoString,
+		&device.LastSeenAt,
 	); err != nil {
 		return nil, err
 	}
+
 	if infoString != "" {
 		if err := json.Unmarshal([]byte(infoString), &device.Info); err != nil {
 			return nil, err
 		}
 	}
+
+	if time.Now().After(device.LastSeenAt.Add(time.Minute)) {
+		device.Status = models.DeviceStatusOffline
+	} else {
+		device.Status = models.DeviceStatusOnline
+	}
+
 	return &device, nil
 }
 
