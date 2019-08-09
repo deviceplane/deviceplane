@@ -14,6 +14,8 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/agent/info"
 	"github.com/deviceplane/deviceplane/pkg/agent/status"
 	"github.com/deviceplane/deviceplane/pkg/agent/supervisor"
+	"github.com/deviceplane/deviceplane/pkg/agent/variables"
+	"github.com/deviceplane/deviceplane/pkg/agent/variables/fsnotify"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/file"
 	"github.com/deviceplane/deviceplane/pkg/models"
@@ -29,6 +31,7 @@ const (
 type Agent struct {
 	client                 *agent_client.Client // TODO: interface
 	engine                 engine.Engine
+	variables              variables.Interface
 	projectID              string
 	registrationToken      string
 	stateDir               string
@@ -55,7 +58,6 @@ func NewAgent(client *agent_client.Client, engine engine.Engine, projectID, regi
 			})
 		}),
 		statusGarbageCollector: status.NewGarbageCollector(client.DeleteDeviceApplicationStatus, client.DeleteDeviceServiceStatus),
-		connector:              connector.NewConnector(client),
 		infoReporter:           info.NewReporter(client),
 	}
 }
@@ -104,6 +106,12 @@ func (a *Agent) Initialize() error {
 	a.client.SetAccessKey(string(accessKeyBytes))
 	a.client.SetDeviceID(string(deviceIDBytes))
 
+	if err = a.initializeVariables(); err != nil {
+		return err
+	}
+
+	a.connector = connector.NewConnector(a.client, a.variables)
+
 	return nil
 }
 
@@ -118,6 +126,23 @@ func (a *Agent) register() error {
 	if err := a.writeFile([]byte(registerDeviceResponse.DeviceID), deviceIDFilename); err != nil {
 		return errors.Wrap(err, "failed to save device ID")
 	}
+	return nil
+}
+
+func (a *Agent) initializeVariables() error {
+	variablesDir := path.Join(a.stateDir, "variables")
+
+	if err := os.MkdirAll(variablesDir, 0700); err != nil {
+		return err
+	}
+
+	variables := fsnotify.NewVariables(variablesDir)
+	if err := variables.Start(); err != nil {
+		return errors.Wrap(err, "start fsnotify variables detector")
+	}
+
+	a.variables = variables
+
 	return nil
 }
 

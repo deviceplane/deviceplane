@@ -8,26 +8,34 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"github.com/apex/log"
 	agent_client "github.com/deviceplane/deviceplane/pkg/agent/client"
+	"github.com/deviceplane/deviceplane/pkg/agent/variables"
 	"github.com/deviceplane/deviceplane/pkg/revdial"
 	"github.com/gliderlabs/ssh"
 	"github.com/kr/pty"
 )
 
 type Connector struct {
-	client *agent_client.Client // TODO: interface
+	client    *agent_client.Client // TODO: interface
+	variables variables.Interface
 }
 
-func NewConnector(client *agent_client.Client) *Connector {
+func NewConnector(client *agent_client.Client, variables variables.Interface) *Connector {
 	return &Connector{
-		client: client,
+		client:    client,
+		variables: variables,
 	}
 }
 
 func (c *Connector) Do() {
+	if c.variables.GetDisableSSH() {
+		return
+	}
+
 	conn, err := c.client.InitiateDeviceConnection(context.TODO())
 	if err != nil {
 		log.WithError(err).Error("initiate connection")
@@ -38,8 +46,29 @@ func (c *Connector) Do() {
 		return c.client.Dial(ctx)
 	})
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				if c.variables.GetDisableSSH() {
+					listener.Close()
+				}
+				if listener.Closed() {
+					cancel()
+					return
+				}
+			}
+		}
+	}()
+
 	ssh.Handle(func(s ssh.Session) {
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
 		var cmd *exec.Cmd

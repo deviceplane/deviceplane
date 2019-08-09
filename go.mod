@@ -12,6 +12,7 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.3.3
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568
+	github.com/fsnotify/fsnotify v1.4.7
 	github.com/gliderlabs/ssh v0.1.1
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/gomodule/redigo v2.0.0+incompatible
