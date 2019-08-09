@@ -41,13 +41,12 @@ github.com/docker/go-connections/tlsconfig
 github.com/docker/go-units
 # github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568
 github.com/flynn/go-shlex
+# github.com/fsnotify/fsnotify v1.4.7
+github.com/fsnotify/fsnotify
 # github.com/gliderlabs/ssh v0.1.1
 github.com/gliderlabs/ssh
 # github.com/go-sql-driver/mysql v1.4.1
 github.com/go-sql-driver/mysql
-# github.com/gomodule/redigo v2.0.0+incompatible
-github.com/gomodule/redigo/redis
-github.com/gomodule/redigo/internal
 # github.com/gorilla/handlers v1.4.0
 github.com/gorilla/handlers
 # github.com/gorilla/mux v1.7.1
@@ -103,9 +102,9 @@ golang.org/x/net/internal/socks
 # golang.org/x/sync v0.0.0-20190423024810-112230192c58
 golang.org/x/sync/errgroup
 # golang.org/x/sys v0.0.0-20190507160741-ecd444e8653b
+golang.org/x/sys/unix
 golang.org/x/sys/cpu
 golang.org/x/sys/windows
-golang.org/x/sys/unix
 # google.golang.org/appengine v1.5.0
 google.golang.org/appengine/cloudsql
 # gopkg.in/go-playground/mold.v2 v2.2.0

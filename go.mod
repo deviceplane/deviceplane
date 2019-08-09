@@ -15,7 +15,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/gliderlabs/ssh v0.1.1
 	github.com/go-sql-driver/mysql v1.4.1
-	github.com/gomodule/redigo v2.0.0+incompatible
+	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/gorilla/handlers v1.4.0
 	github.com/gorilla/mux v1.7.1
 	github.com/gorilla/websocket v1.4.0
