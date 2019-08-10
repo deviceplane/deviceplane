@@ -4,6 +4,7 @@ import (
 	"os"
 	"path"
 	"sync"
+	"time"
 
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/agent/variables"
@@ -13,13 +14,12 @@ import (
 type Variables struct {
 	dir           string
 	lock          sync.RWMutex
-	getDisableSSH bool
+	getDisableSSH *bool
 }
 
 func NewVariables(dir string) *Variables {
 	return &Variables{
-		dir:           dir,
-		getDisableSSH: false,
+		dir: dir,
 	}
 }
 
@@ -27,6 +27,10 @@ func (v *Variables) Start() error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return err
+	}
+
+	if err = v.refresh(); err != nil {
+		log.WithError(err).Error("variables refresh")
 	}
 
 	go func() {
@@ -58,9 +62,9 @@ func (v *Variables) refresh() error {
 	defer v.lock.Unlock()
 
 	if err == nil {
-		v.getDisableSSH = true
+		v.getDisableSSH = &[]bool{true}[0]
 	} else if os.IsNotExist(err) {
-		v.getDisableSSH = false
+		v.getDisableSSH = &[]bool{false}[0]
 	} else {
 		return err
 	}
@@ -69,5 +73,25 @@ func (v *Variables) refresh() error {
 }
 
 func (v *Variables) GetDisableSSH() bool {
-	return v.getDisableSSH
+	v.lock.Lock()
+	if v.getDisableSSH != nil {
+		v.lock.Unlock()
+		return *v.getDisableSSH
+	}
+	v.lock.Unlock()
+
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			v.lock.Lock()
+			if v.getDisableSSH != nil {
+				v.lock.Unlock()
+				return *v.getDisableSSH
+			}
+			v.lock.Unlock()
+		}
+	}
 }
