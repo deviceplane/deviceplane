@@ -1,5 +1,6 @@
 dist/
 cmd/agent/agent
+cmd/agent/conf
 cmd/agent/state
 cmd/controller/controller
 cmd/deviceplane/deviceplane

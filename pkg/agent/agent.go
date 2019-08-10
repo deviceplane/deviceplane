@@ -34,6 +34,7 @@ type Agent struct {
 	variables              variables.Interface
 	projectID              string
 	registrationToken      string
+	confDir                string
 	stateDir               string
 	supervisor             *supervisor.Supervisor
 	statusGarbageCollector *status.GarbageCollector
@@ -41,12 +42,13 @@ type Agent struct {
 	infoReporter           *info.Reporter
 }
 
-func NewAgent(client *agent_client.Client, engine engine.Engine, projectID, registrationToken, stateDir string) *Agent {
+func NewAgent(client *agent_client.Client, engine engine.Engine, projectID, registrationToken, confDir, stateDir string) *Agent {
 	return &Agent{
 		client:            client,
 		engine:            engine,
 		projectID:         projectID,
 		registrationToken: registrationToken,
+		confDir:           confDir,
 		stateDir:          stateDir,
 		supervisor: supervisor.NewSupervisor(engine, func(ctx context.Context, applicationID, currentReleaseID string) error {
 			return client.SetDeviceApplicationStatus(ctx, applicationID, models.SetDeviceApplicationStatusRequest{
@@ -106,10 +108,12 @@ func (a *Agent) Initialize() error {
 	a.client.SetAccessKey(string(accessKeyBytes))
 	a.client.SetDeviceID(string(deviceIDBytes))
 
-	if err = a.initializeVariables(); err != nil {
-		return err
+	variables := fsnotify.NewVariables(a.confDir)
+	if err := variables.Start(); err != nil {
+		return errors.Wrap(err, "start fsnotify variables detector")
 	}
 
+	a.variables = variables
 	a.connector = connector.NewConnector(a.client, a.variables)
 
 	return nil
@@ -126,23 +130,6 @@ func (a *Agent) register() error {
 	if err := a.writeFile([]byte(registerDeviceResponse.DeviceID), deviceIDFilename); err != nil {
 		return errors.Wrap(err, "failed to save device ID")
 	}
-	return nil
-}
-
-func (a *Agent) initializeVariables() error {
-	variablesDir := path.Join(a.stateDir, "variables")
-
-	if err := os.MkdirAll(variablesDir, 0700); err != nil {
-		return err
-	}
-
-	variables := fsnotify.NewVariables(variablesDir)
-	if err := variables.Start(); err != nil {
-		return errors.Wrap(err, "start fsnotify variables detector")
-	}
-
-	a.variables = variables
-
 	return nil
 }
 

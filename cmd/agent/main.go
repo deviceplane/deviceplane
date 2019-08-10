@@ -22,6 +22,7 @@ var config struct {
 	Controller2       string `conf:"controller2"`
 	Project           string `conf:"project"`
 	RegistrationToken string `conf:"registration-token"`
+	ConfDir           string `conf:"conf-dir"`
 	StateDir          string `conf:"state-dir"`
 	LogLevel          string `conf:"log-level"`
 }
@@ -29,6 +30,7 @@ var config struct {
 func init() {
 	config.Controller = "https://api.deviceplane.io:443"
 	config.Controller2 = "https://api2.deviceplane.io:443"
+	config.ConfDir = "/etc/deviceplane"
 	config.StateDir = "/var/lib/deviceplane"
 	config.LogLevel = "info"
 }
@@ -61,7 +63,8 @@ func main() {
 	}
 
 	client := agent_client.NewClient(controllerURL, controller2URL, config.Project, http.DefaultClient)
-	agent := agent.NewAgent(client, engine, config.Project, config.RegistrationToken, config.StateDir)
+	agent := agent.NewAgent(client, engine, config.Project, config.RegistrationToken,
+		config.ConfDir, config.StateDir)
 
 	if err := agent.Initialize(); err != nil {
 		log.WithError(err).Fatal("failure while initializing agent")
