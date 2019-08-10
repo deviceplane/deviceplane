@@ -114,7 +114,7 @@ func (a *Agent) Initialize() error {
 	}
 
 	a.variables = variables
-	a.connector = connector.NewConnector(a.client, a.variables)
+	a.connector = connector.NewConnector(a.client, a.variables, a.confDir)
 
 	return nil
 }

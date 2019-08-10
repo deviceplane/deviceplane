@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
+	"path"
 	"syscall"
 	"time"
 	"unsafe"
@@ -17,17 +19,27 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/revdial"
 	"github.com/gliderlabs/ssh"
 	"github.com/kr/pty"
+	gossh "golang.org/x/crypto/ssh"
+)
+
+const (
+	authorizedKeysFilename = "authorized_keys"
 )
 
 type Connector struct {
 	client    *agent_client.Client // TODO: interface
 	variables variables.Interface
+	confDir   string
 }
 
-func NewConnector(client *agent_client.Client, variables variables.Interface) *Connector {
+func NewConnector(
+	client *agent_client.Client, variables variables.Interface,
+	confDir string,
+) *Connector {
 	return &Connector{
 		client:    client,
 		variables: variables,
+		confDir:   confDir,
 	}
 }
 
@@ -45,6 +57,7 @@ func (c *Connector) Do() {
 	listener := revdial.NewListener(conn, func(ctx context.Context) (net.Conn, error) {
 		return c.client.Dial(ctx)
 	})
+	defer listener.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -106,7 +119,31 @@ func (c *Connector) Do() {
 		io.Copy(s, f)
 	})
 
-	if err = ssh.Serve(listener, nil); err != nil {
+	authorizedKeysLocation := path.Join(c.confDir, authorizedKeysFilename)
+
+	var options []ssh.Option
+	if _, err := os.Stat(authorizedKeysLocation); err == nil {
+		authorizedKeyBytes, err := ioutil.ReadFile(authorizedKeysLocation)
+		if err != nil {
+			log.WithError(err).Error("read authorized keys")
+			return
+		}
+		authorizedKey, _, _, _, err := gossh.ParseAuthorizedKey(authorizedKeyBytes)
+		if err != nil {
+			log.WithError(err).Error("parse authorized keys")
+			return
+		}
+		options = []ssh.Option{
+			ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
+				return ssh.KeysEqual(key, authorizedKey)
+			}),
+		}
+	} else if !os.IsNotExist(err) {
+		log.WithError(err).Error("check for authorized keys")
+		return
+	}
+
+	if err = ssh.Serve(listener, nil, options...); err != nil {
 		log.WithError(err).Error("serve SSH")
 	}
 }
