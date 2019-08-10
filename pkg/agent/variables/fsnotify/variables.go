@@ -73,12 +73,18 @@ func (v *Variables) refresh() error {
 }
 
 func (v *Variables) GetDisableSSH() bool {
-	v.lock.Lock()
-	if v.getDisableSSH != nil {
-		v.lock.Unlock()
-		return *v.getDisableSSH
+	return v.getField(func() *bool {
+		return v.getDisableSSH
+	})
+}
+
+func (v *Variables) getField(getField func() *bool) bool {
+	v.lock.RLock()
+	field := getField()
+	v.lock.RUnlock()
+	if field != nil {
+		return *field
 	}
-	v.lock.Unlock()
 
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
@@ -86,12 +92,12 @@ func (v *Variables) GetDisableSSH() bool {
 	for {
 		select {
 		case <-ticker.C:
-			v.lock.Lock()
-			if v.getDisableSSH != nil {
-				v.lock.Unlock()
-				return *v.getDisableSSH
+			v.lock.RLock()
+			field := getField()
+			v.lock.RUnlock()
+			if field != nil {
+				return *field
 			}
-			v.lock.Unlock()
 		}
 	}
 }
