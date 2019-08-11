@@ -9,8 +9,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func (s *Service) withRole(handler func(http.ResponseWriter, *http.Request, string, string, string)) func(http.ResponseWriter, *http.Request, string, string) {
-	return func(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) withRole(handler func(http.ResponseWriter, *http.Request, string, string, string, string)) func(http.ResponseWriter, *http.Request, string, string, string) {
+	return func(w http.ResponseWriter, r *http.Request, projectID, authenticatedUserID, authenticatedServiceAccountID string) {
 		vars := mux.Vars(r)
 		role := vars["role"]
 		if role == "" {
@@ -34,12 +34,12 @@ func (s *Service) withRole(handler func(http.ResponseWriter, *http.Request, stri
 			roleID = role.ID
 		}
 
-		handler(w, r, projectID, userID, roleID)
+		handler(w, r, projectID, authenticatedUserID, authenticatedServiceAccountID, roleID)
 	}
 }
 
-func (s *Service) withServiceAccount(handler func(http.ResponseWriter, *http.Request, string, string, string)) func(http.ResponseWriter, *http.Request, string, string) {
-	return func(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) withServiceAccount(handler func(http.ResponseWriter, *http.Request, string, string, string, string)) func(http.ResponseWriter, *http.Request, string, string, string) {
+	return func(w http.ResponseWriter, r *http.Request, projectID, authenticatedUserID, authenticatedServiceAccountID string) {
 		vars := mux.Vars(r)
 		serviceAccount := vars["serviceaccount"]
 		if serviceAccount == "" {
@@ -63,12 +63,12 @@ func (s *Service) withServiceAccount(handler func(http.ResponseWriter, *http.Req
 			serviceAccountID = serviceAccount.ID
 		}
 
-		handler(w, r, projectID, userID, serviceAccountID)
+		handler(w, r, projectID, authenticatedUserID, authenticatedServiceAccountID, serviceAccountID)
 	}
 }
 
-func (s *Service) withApplication(handler func(http.ResponseWriter, *http.Request, string, string, string)) func(http.ResponseWriter, *http.Request, string, string) {
-	return func(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) withApplication(handler func(http.ResponseWriter, *http.Request, string, string, string, string)) func(http.ResponseWriter, *http.Request, string, string, string) {
+	return func(w http.ResponseWriter, r *http.Request, projectID, authenticatedUserID, authenticatedServiceAccountID string) {
 		vars := mux.Vars(r)
 		application := vars["application"]
 		if application == "" {
@@ -92,12 +92,12 @@ func (s *Service) withApplication(handler func(http.ResponseWriter, *http.Reques
 			applicationID = application.ID
 		}
 
-		handler(w, r, projectID, userID, applicationID)
+		handler(w, r, projectID, authenticatedUserID, authenticatedServiceAccountID, applicationID)
 	}
 }
 
-func (s *Service) withDevice(handler func(http.ResponseWriter, *http.Request, string, string, string)) func(http.ResponseWriter, *http.Request, string, string) {
-	return func(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) withDevice(handler func(http.ResponseWriter, *http.Request, string, string, string, string)) func(http.ResponseWriter, *http.Request, string, string, string) {
+	return func(w http.ResponseWriter, r *http.Request, projectID, authenticatedUserID, authenticatedServiceAccountID string) {
 		vars := mux.Vars(r)
 		device := vars["device"]
 		if device == "" {
@@ -121,6 +121,6 @@ func (s *Service) withDevice(handler func(http.ResponseWriter, *http.Request, st
 			deviceID = device.ID
 		}
 
-		handler(w, r, projectID, userID, deviceID)
+		handler(w, r, projectID, authenticatedUserID, authenticatedServiceAccountID, deviceID)
 	}
 }

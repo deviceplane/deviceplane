@@ -194,7 +194,7 @@ type ApplicationDeviceCounts interface {
 }
 
 type Releases interface {
-	CreateRelease(ctx context.Context, projectID, applicationID, config string) (*models.Release, error)
+	CreateRelease(ctx context.Context, projectID, applicationID, config, createdByUserID, createdByServiceAccountID string) (*models.Release, error)
 	GetRelease(ctx context.Context, id, projectID, applicationID string) (*models.Release, error)
 	GetLatestRelease(ctx context.Context, projectID, applicationID string) (*models.Release, error)
 	ListReleases(ctx context.Context, projectID, applicationID string) ([]models.Release, error)

@@ -335,7 +335,7 @@ func (s *Service) withUserOrServiceAccountAuth(handler func(http.ResponseWriter,
 	}
 }
 
-func (s *Service) validateAuthorization(requestedResource, requestedAction string, handler func(http.ResponseWriter, *http.Request, string, string)) func(http.ResponseWriter, *http.Request) {
+func (s *Service) validateAuthorization(requestedResource, requestedAction string, handler func(http.ResponseWriter, *http.Request, string, string, string)) func(http.ResponseWriter, *http.Request) {
 	return s.withUserOrServiceAccountAuth(func(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
 		vars := mux.Vars(r)
 		project := vars["project"]
@@ -439,7 +439,7 @@ func (s *Service) validateAuthorization(requestedResource, requestedAction strin
 			return
 		}
 
-		handler(w, r, projectID, authenticatedUserID)
+		handler(w, r, projectID, authenticatedUserID, authenticatedServiceAccountID)
 	})
 }
 
@@ -1026,7 +1026,9 @@ func (s *Service) createProject(w http.ResponseWriter, r *http.Request, authenti
 	respond(w, project)
 }
 
-func (s *Service) getProject(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) getProject(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	project, err := s.projects.GetProject(r.Context(), projectID)
 	if err != nil {
 		log.WithError(err).Error("get project")
@@ -1037,7 +1039,9 @@ func (s *Service) getProject(w http.ResponseWriter, r *http.Request, projectID, 
 	respond(w, project)
 }
 
-func (s *Service) updateProject(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) updateProject(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	var updateProjectRequest struct {
 		Name string `json:"name"`
 	}
@@ -1065,7 +1069,9 @@ func (s *Service) updateProject(w http.ResponseWriter, r *http.Request, projectI
 	respond(w, project)
 }
 
-func (s *Service) deleteProject(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) deleteProject(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	if err := s.projects.DeleteProject(r.Context(), projectID); err != nil {
 		log.WithError(err).Error("delete project")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -1073,7 +1079,9 @@ func (s *Service) deleteProject(w http.ResponseWriter, r *http.Request, projectI
 	}
 }
 
-func (s *Service) createRole(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) createRole(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	var createRoleRequest struct {
 		Name        string `json:"name"`
 		Description string `json:"description"`
@@ -1110,7 +1118,10 @@ func (s *Service) createRole(w http.ResponseWriter, r *http.Request, projectID, 
 	respond(w, role)
 }
 
-func (s *Service) getRole(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
+func (s *Service) getRole(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	roleID string,
+) {
 	role, err := s.roles.GetRole(r.Context(), roleID, projectID)
 	if err == store.ErrRoleNotFound {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -1124,7 +1135,9 @@ func (s *Service) getRole(w http.ResponseWriter, r *http.Request, projectID, use
 	respond(w, role)
 }
 
-func (s *Service) listRoles(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) listRoles(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	roles, err := s.roles.ListRoles(r.Context(), projectID)
 	if err != nil {
 		log.WithError(err).Error("list roles")
@@ -1135,7 +1148,9 @@ func (s *Service) listRoles(w http.ResponseWriter, r *http.Request, projectID, u
 	respond(w, roles)
 }
 
-func (s *Service) updateRole(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) updateRole(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	vars := mux.Vars(r)
 	roleID := vars["role"]
 
@@ -1175,7 +1190,9 @@ func (s *Service) updateRole(w http.ResponseWriter, r *http.Request, projectID, 
 	respond(w, role)
 }
 
-func (s *Service) deleteRole(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) deleteRole(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	vars := mux.Vars(r)
 	roleID := vars["role"]
 
@@ -1186,7 +1203,9 @@ func (s *Service) deleteRole(w http.ResponseWriter, r *http.Request, projectID, 
 	}
 }
 
-func (s *Service) createServiceAccount(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) createServiceAccount(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	var createServiceAccountRequest struct {
 		Name        string `json:"name"`
 		Description string `json:"description"`
@@ -1216,7 +1235,10 @@ func (s *Service) createServiceAccount(w http.ResponseWriter, r *http.Request, p
 	respond(w, serviceAccount)
 }
 
-func (s *Service) getServiceAccount(w http.ResponseWriter, r *http.Request, projectID, userID, serviceAccountID string) {
+func (s *Service) getServiceAccount(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	serviceAccountID string,
+) {
 	serviceAccount, err := s.serviceAccounts.GetServiceAccount(r.Context(), serviceAccountID, projectID)
 	if err == store.ErrServiceAccountNotFound {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -1256,7 +1278,9 @@ func (s *Service) getServiceAccount(w http.ResponseWriter, r *http.Request, proj
 	respond(w, ret)
 }
 
-func (s *Service) listServiceAccounts(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) listServiceAccounts(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	serviceAccounts, err := s.serviceAccounts.ListServiceAccounts(r.Context(), projectID)
 	if err != nil {
 		log.WithError(err).Error("list service accounts")
@@ -1299,7 +1323,10 @@ func (s *Service) listServiceAccounts(w http.ResponseWriter, r *http.Request, pr
 	respond(w, ret)
 }
 
-func (s *Service) updateServiceAccount(w http.ResponseWriter, r *http.Request, projectID, userID, serviceAccountID string) {
+func (s *Service) updateServiceAccount(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	serviceAccountID string,
+) {
 	var updateServiceAccountRequest struct {
 		Name        string `json:"name"`
 		Description string `json:"description"`
@@ -1329,7 +1356,10 @@ func (s *Service) updateServiceAccount(w http.ResponseWriter, r *http.Request, p
 	respond(w, serviceAccount)
 }
 
-func (s *Service) deleteServiceAccount(w http.ResponseWriter, r *http.Request, projectID, userID, serviceAccountID string) {
+func (s *Service) deleteServiceAccount(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	serviceAccountID string,
+) {
 	if err := s.serviceAccounts.DeleteServiceAccount(r.Context(), serviceAccountID, projectID); err != nil {
 		log.WithError(err).Error("delete service account")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -1337,7 +1367,9 @@ func (s *Service) deleteServiceAccount(w http.ResponseWriter, r *http.Request, p
 	}
 }
 
-func (s *Service) createServiceAccountAccessKey(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) createServiceAccountAccessKey(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	vars := mux.Vars(r)
 	serviceAccountID := vars["serviceaccount"]
 
@@ -1365,7 +1397,9 @@ func (s *Service) createServiceAccountAccessKey(w http.ResponseWriter, r *http.R
 	})
 }
 
-func (s *Service) getServiceAccountAccessKey(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) getServiceAccountAccessKey(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	vars := mux.Vars(r)
 	serviceAccountAccessKeyID := vars["serviceaccountaccesskey"]
 
@@ -1382,7 +1416,9 @@ func (s *Service) getServiceAccountAccessKey(w http.ResponseWriter, r *http.Requ
 	respond(w, serviceAccountAccessKey)
 }
 
-func (s *Service) listServiceAccountAccessKeys(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) listServiceAccountAccessKeys(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	vars := mux.Vars(r)
 	serviceAccountID := vars["serviceaccount"]
 
@@ -1396,7 +1432,9 @@ func (s *Service) listServiceAccountAccessKeys(w http.ResponseWriter, r *http.Re
 	respond(w, serviceAccountAccessKeys)
 }
 
-func (s *Service) deleteServiceAccountAccessKey(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) deleteServiceAccountAccessKey(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	vars := mux.Vars(r)
 	serviceAccountAccessKeyID := vars["serviceaccountaccesskey"]
 
@@ -1407,7 +1445,10 @@ func (s *Service) deleteServiceAccountAccessKey(w http.ResponseWriter, r *http.R
 	}
 }
 
-func (s *Service) createServiceAccountRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
+func (s *Service) createServiceAccountRoleBinding(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	roleID string,
+) {
 	vars := mux.Vars(r)
 	serviceAccountID := vars["serviceaccount"]
 
@@ -1421,7 +1462,10 @@ func (s *Service) createServiceAccountRoleBinding(w http.ResponseWriter, r *http
 	respond(w, serviceAccountRoleBinding)
 }
 
-func (s *Service) getServiceAccountRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
+func (s *Service) getServiceAccountRoleBinding(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	roleID string,
+) {
 	vars := mux.Vars(r)
 	serviceAccountID := vars["serviceaccount"]
 
@@ -1435,7 +1479,9 @@ func (s *Service) getServiceAccountRoleBinding(w http.ResponseWriter, r *http.Re
 	respond(w, serviceAccountRoleBinding)
 }
 
-func (s *Service) listServiceAccountRoleBindings(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) listServiceAccountRoleBindings(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	vars := mux.Vars(r)
 	serviceAccountID := vars["serviceaccount"]
 
@@ -1449,7 +1495,10 @@ func (s *Service) listServiceAccountRoleBindings(w http.ResponseWriter, r *http.
 	respond(w, serviceAccountRoleBindings)
 }
 
-func (s *Service) deleteServiceAccountRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
+func (s *Service) deleteServiceAccountRoleBinding(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	roleID string,
+) {
 	vars := mux.Vars(r)
 	serviceAccountID := vars["serviceaccount"]
 
@@ -1460,7 +1509,9 @@ func (s *Service) deleteServiceAccountRoleBinding(w http.ResponseWriter, r *http
 	}
 }
 
-func (s *Service) createMembership(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) createMembership(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	var createMembershipRequest struct {
 		Email string `json:"email"`
 	}
@@ -1489,12 +1540,13 @@ func (s *Service) createMembership(w http.ResponseWriter, r *http.Request, proje
 	respond(w, membership)
 }
 
-func (s *Service) getMembership(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) getMembership(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	vars := mux.Vars(r)
-	// TODO: rename this to userID and change all instances of the other to authenticatedUserUD
-	membershipUserID := vars["user"]
+	userID := vars["user"]
 
-	membership, err := s.memberships.GetMembership(r.Context(), membershipUserID, projectID)
+	membership, err := s.memberships.GetMembership(r.Context(), userID, projectID)
 	if err == store.ErrMembershipNotFound {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -1513,7 +1565,7 @@ func (s *Service) getMembership(w http.ResponseWriter, r *http.Request, projectI
 			return
 		}
 
-		membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), membershipUserID, projectID)
+		membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), userID, projectID)
 		if err != nil {
 			log.WithError(err).Error("list membership role bindings")
 			w.WriteHeader(http.StatusInternalServerError)
@@ -1541,7 +1593,9 @@ func (s *Service) getMembership(w http.ResponseWriter, r *http.Request, projectI
 	respond(w, ret)
 }
 
-func (s *Service) listMembershipsByProject(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) listMembershipsByProject(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	memberships, err := s.memberships.ListMembershipsByProject(r.Context(), projectID)
 	if err != nil {
 		log.WithError(err).Error("list memberships by project")
@@ -1592,24 +1646,27 @@ func (s *Service) listMembershipsByProject(w http.ResponseWriter, r *http.Reques
 	respond(w, ret)
 }
 
-func (s *Service) deleteMembership(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) deleteMembership(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	vars := mux.Vars(r)
-	// TODO: rename this to userID and change all instances of the other to authenticatedUserUD
-	membershipUserID := vars["user"]
+	userID := vars["user"]
 
-	if err := s.memberships.DeleteMembership(r.Context(), membershipUserID, projectID); err != nil {
+	if err := s.memberships.DeleteMembership(r.Context(), userID, projectID); err != nil {
 		log.WithError(err).Error("delete membership")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
 
-func (s *Service) createMembershipRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
+func (s *Service) createMembershipRoleBinding(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	roleID string,
+) {
 	vars := mux.Vars(r)
-	// TODO: rename this to userID and change all instances of the other to authenticatedUserUD
-	membershipUserID := vars["user"]
+	userID := vars["user"]
 
-	membershipRoleBinding, err := s.membershipRoleBindings.CreateMembershipRoleBinding(r.Context(), membershipUserID, roleID, projectID)
+	membershipRoleBinding, err := s.membershipRoleBindings.CreateMembershipRoleBinding(r.Context(), userID, roleID, projectID)
 	if err != nil {
 		log.WithError(err).Error("create membership role binding")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -1619,12 +1676,14 @@ func (s *Service) createMembershipRoleBinding(w http.ResponseWriter, r *http.Req
 	respond(w, membershipRoleBinding)
 }
 
-func (s *Service) getMembershipRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
+func (s *Service) getMembershipRoleBinding(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	roleID string,
+) {
 	vars := mux.Vars(r)
-	// TODO: rename this to userID and change all instances of the other to authenticatedUserUD
-	membershipUserID := vars["user"]
+	userID := vars["user"]
 
-	membershipRoleBinding, err := s.membershipRoleBindings.GetMembershipRoleBinding(r.Context(), membershipUserID, roleID, projectID)
+	membershipRoleBinding, err := s.membershipRoleBindings.GetMembershipRoleBinding(r.Context(), userID, roleID, projectID)
 	if err == store.ErrMembershipRoleBindingNotFound {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -1637,12 +1696,13 @@ func (s *Service) getMembershipRoleBinding(w http.ResponseWriter, r *http.Reques
 	respond(w, membershipRoleBinding)
 }
 
-func (s *Service) listMembershipRoleBindings(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) listMembershipRoleBindings(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	vars := mux.Vars(r)
-	// TODO: rename this to userID and change all instances of the other to authenticatedUserUD
-	membershipUserID := vars["user"]
+	userID := vars["user"]
 
-	membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), membershipUserID, projectID)
+	membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), userID, projectID)
 	if err != nil {
 		log.WithError(err).Error("list membership role bindings")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -1652,19 +1712,23 @@ func (s *Service) listMembershipRoleBindings(w http.ResponseWriter, r *http.Requ
 	respond(w, membershipRoleBindings)
 }
 
-func (s *Service) deleteMembershipRoleBinding(w http.ResponseWriter, r *http.Request, projectID, userID, roleID string) {
+func (s *Service) deleteMembershipRoleBinding(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	roleID string,
+) {
 	vars := mux.Vars(r)
-	// TODO: rename this to userID and change all instances of the other to authenticatedUserUD
-	membershipUserID := vars["user"]
+	userID := vars["user"]
 
-	if err := s.membershipRoleBindings.DeleteMembershipRoleBinding(r.Context(), membershipUserID, roleID, projectID); err != nil {
+	if err := s.membershipRoleBindings.DeleteMembershipRoleBinding(r.Context(), userID, roleID, projectID); err != nil {
 		log.WithError(err).Error("delete membership role binding")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
 
-func (s *Service) createApplication(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) createApplication(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	var createApplicationRequest struct {
 		Name        string                     `json:"name"`
 		Description string                     `json:"description"`
@@ -1702,7 +1766,10 @@ func (s *Service) createApplication(w http.ResponseWriter, r *http.Request, proj
 	respond(w, application)
 }
 
-func (s *Service) getApplication(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
+func (s *Service) getApplication(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	applicationID string,
+) {
 	application, err := s.applications.GetApplication(r.Context(), applicationID, projectID)
 	if err == store.ErrApplicationNotFound {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -1739,7 +1806,9 @@ func (s *Service) getApplication(w http.ResponseWriter, r *http.Request, project
 	respond(w, ret)
 }
 
-func (s *Service) listApplications(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) listApplications(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	applications, err := s.applications.ListApplications(r.Context(), projectID)
 	if err != nil {
 		log.WithError(err).Error("list applications")
@@ -1779,7 +1848,10 @@ func (s *Service) listApplications(w http.ResponseWriter, r *http.Request, proje
 	respond(w, ret)
 }
 
-func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
+func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	applicationID string,
+) {
 	var updateApplicationRequest struct {
 		Name        string                     `json:"name"`
 		Description string                     `json:"description"`
@@ -1817,7 +1889,10 @@ func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request, proj
 	respond(w, application)
 }
 
-func (s *Service) deleteApplication(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
+func (s *Service) deleteApplication(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	applicationID string,
+) {
 	if err := s.applications.DeleteApplication(r.Context(), applicationID, projectID); err != nil {
 		log.WithError(err).Error("delete application")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -1826,7 +1901,10 @@ func (s *Service) deleteApplication(w http.ResponseWriter, r *http.Request, proj
 }
 
 // TOOD: this has a vulnerability!
-func (s *Service) createRelease(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
+func (s *Service) createRelease(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	applicationID string,
+) {
 	var createReleaseRequest struct {
 		Config string `json:"config"`
 	}
@@ -1846,7 +1924,10 @@ func (s *Service) createRelease(w http.ResponseWriter, r *http.Request, projectI
 		return
 	}
 
-	release, err := s.releases.CreateRelease(r.Context(), projectID, applicationID, createReleaseRequest.Config)
+	release, err := s.releases.CreateRelease(r.Context(),
+		projectID, applicationID,
+		createReleaseRequest.Config, authenticatedUserID, authenticatedServiceAccountID,
+	)
 	if err != nil {
 		log.WithError(err).Error("create release")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -1856,7 +1937,10 @@ func (s *Service) createRelease(w http.ResponseWriter, r *http.Request, projectI
 	respond(w, release)
 }
 
-func (s *Service) getRelease(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
+func (s *Service) getRelease(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	applicationID string,
+) {
 	vars := mux.Vars(r)
 	releaseID := vars["release"]
 
@@ -1872,23 +1956,21 @@ func (s *Service) getRelease(w http.ResponseWriter, r *http.Request, projectID, 
 
 	var ret interface{} = release
 	if _, ok := r.URL.Query()["full"]; ok {
-		releaseDeviceCounts, err := s.releaseDeviceCounts.GetReleaseDeviceCounts(r.Context(), projectID, applicationID, releaseID)
+		ret, err = s.getReleaseFull(r.Context(), *release)
 		if err != nil {
-			log.WithError(err).Error("get release device counts")
+			log.WithError(err).Error("get release full")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
-		}
-
-		ret = models.ReleaseFull{
-			Release:      *release,
-			DeviceCounts: *releaseDeviceCounts,
 		}
 	}
 
 	respond(w, ret)
 }
 
-func (s *Service) getLatestRelease(w http.ResponseWriter, r *http.Request, projectID string, userID, applicationID string) {
+func (s *Service) getLatestRelease(w http.ResponseWriter, r *http.Request,
+	projectID string, authenticatedUserID, authenticatedServiceAccountID,
+	applicationID string,
+) {
 	release, err := s.releases.GetLatestRelease(r.Context(), projectID, applicationID)
 	if err == store.ErrReleaseNotFound {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -1901,23 +1983,21 @@ func (s *Service) getLatestRelease(w http.ResponseWriter, r *http.Request, proje
 
 	var ret interface{} = release
 	if _, ok := r.URL.Query()["full"]; ok {
-		releaseDeviceCounts, err := s.releaseDeviceCounts.GetReleaseDeviceCounts(r.Context(), projectID, applicationID, release.ID)
+		ret, err = s.getReleaseFull(r.Context(), *release)
 		if err != nil {
-			log.WithError(err).Error("get release device counts")
+			log.WithError(err).Error("get release full")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
-		}
-
-		ret = models.ReleaseFull{
-			Release:      *release,
-			DeviceCounts: *releaseDeviceCounts,
 		}
 	}
 
 	respond(w, ret)
 }
 
-func (s *Service) listReleases(w http.ResponseWriter, r *http.Request, projectID, userID, applicationID string) {
+func (s *Service) listReleases(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	applicationID string,
+) {
 	releases, err := s.releases.ListReleases(r.Context(), projectID, applicationID)
 	if err != nil {
 		log.WithError(err).Error("list releases")
@@ -1928,27 +2008,24 @@ func (s *Service) listReleases(w http.ResponseWriter, r *http.Request, projectID
 	var ret interface{} = releases
 	if _, ok := r.URL.Query()["full"]; ok {
 		var releasesFull []models.ReleaseFull
-
 		for _, release := range releases {
-			releaseDeviceCounts, err := s.releaseDeviceCounts.GetReleaseDeviceCounts(r.Context(), projectID, applicationID, release.ID)
+			releaseFull, err := s.getReleaseFull(r.Context(), release)
 			if err != nil {
-				log.WithError(err).Error("get release device counts")
+				log.WithError(err).Error("get release full")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			releasesFull = append(releasesFull, models.ReleaseFull{
-				Release:      release,
-				DeviceCounts: *releaseDeviceCounts,
-			})
+			releasesFull = append(releasesFull, *releaseFull)
 		}
-
 		ret = releasesFull
 	}
 
 	respond(w, ret)
 }
 
-func (s *Service) listDevices(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) listDevices(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	devices, err := s.devices.ListDevices(r.Context(), projectID)
 	if err != nil {
 		log.WithError(err).Error("list devices")
@@ -1959,7 +2036,10 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request, projectID,
 	respond(w, devices)
 }
 
-func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, userID, deviceID string) {
+func (s *Service) getDevice(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	deviceID string,
+) {
 	device, err := s.devices.GetDevice(r.Context(), deviceID, projectID)
 	if err == store.ErrDeviceNotFound {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -2017,7 +2097,10 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request, projectID, u
 	respond(w, ret)
 }
 
-func (s *Service) updateDevice(w http.ResponseWriter, r *http.Request, projectID, userID, deviceID string) {
+func (s *Service) updateDevice(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	deviceID string,
+) {
 	var updateDeviceRequest struct {
 		Name string `json:"name"`
 	}
@@ -2045,7 +2128,10 @@ func (s *Service) updateDevice(w http.ResponseWriter, r *http.Request, projectID
 	respond(w, device)
 }
 
-func (s *Service) deleteDevice(w http.ResponseWriter, r *http.Request, projectID string, userID, deviceID string) {
+func (s *Service) deleteDevice(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	deviceID string,
+) {
 	if err := s.devices.DeleteDevice(r.Context(), deviceID, projectID); err != nil {
 		log.WithError(err).Error("delete device")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -2053,7 +2139,10 @@ func (s *Service) deleteDevice(w http.ResponseWriter, r *http.Request, projectID
 	}
 }
 
-func (s *Service) setDeviceLabel(w http.ResponseWriter, r *http.Request, projectID, userID, deviceID string) {
+func (s *Service) setDeviceLabel(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	deviceID string,
+) {
 	var setDeviceLabelRequest struct {
 		Key   string `json:"key"`
 		Value string `json:"value"`
@@ -2074,7 +2163,10 @@ func (s *Service) setDeviceLabel(w http.ResponseWriter, r *http.Request, project
 	respond(w, deviceLabel)
 }
 
-func (s *Service) getDeviceLabel(w http.ResponseWriter, r *http.Request, projectID string, userID, deviceID string) {
+func (s *Service) getDeviceLabel(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	deviceID string,
+) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 
@@ -2088,7 +2180,10 @@ func (s *Service) getDeviceLabel(w http.ResponseWriter, r *http.Request, project
 	respond(w, deviceLabel)
 }
 
-func (s *Service) listDeviceLabels(w http.ResponseWriter, r *http.Request, projectID, userID, deviceID string) {
+func (s *Service) listDeviceLabels(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	deviceID string,
+) {
 	deviceLabels, err := s.deviceLabels.ListDeviceLabels(r.Context(), deviceID, projectID)
 	if err != nil {
 		log.WithError(err).Error("list device labels")
@@ -2099,7 +2194,10 @@ func (s *Service) listDeviceLabels(w http.ResponseWriter, r *http.Request, proje
 	respond(w, deviceLabels)
 }
 
-func (s *Service) deleteDeviceLabel(w http.ResponseWriter, r *http.Request, projectID string, userID, deviceID string) {
+func (s *Service) deleteDeviceLabel(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	deviceID string,
+) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 
@@ -2110,7 +2208,9 @@ func (s *Service) deleteDeviceLabel(w http.ResponseWriter, r *http.Request, proj
 	}
 }
 
-func (s *Service) createDeviceRegistrationToken(w http.ResponseWriter, r *http.Request, projectID, userID string) {
+func (s *Service) createDeviceRegistrationToken(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
 	deviceRegistrationToken, err := s.deviceRegistrationTokens.CreateDeviceRegistrationToken(r.Context(), projectID)
 	if err != nil {
 		log.WithError(err).Error("create device registration token")

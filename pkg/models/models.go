@@ -162,11 +162,13 @@ type ApplicationDeviceCounts struct {
 }
 
 type Release struct {
-	ID            string    `json:"id"`
-	CreatedAt     time.Time `json:"createdAt"`
-	ProjectID     string    `json:"projectId"`
-	ApplicationID string    `json:"applicationId"`
-	Config        string    `json:"config"`
+	ID                        string    `json:"id"`
+	CreatedAt                 time.Time `json:"createdAt"`
+	ProjectID                 string    `json:"projectId"`
+	ApplicationID             string    `json:"applicationId"`
+	Config                    string    `json:"config"`
+	CreatedByUserID           *string   `json:"createdByUserId"`
+	CreatedByServiceAccountID *string   `json:"createdByServiceAccountId"`
 }
 
 type ReleaseDeviceCounts struct {
@@ -230,7 +232,9 @@ type ApplicationFull1 struct {
 
 type ReleaseFull struct {
 	Release
-	DeviceCounts ReleaseDeviceCounts `json:"deviceCounts"`
+	CreatedByUser           *User               `json:"createdByUser"`
+	CreatedByServiceAccount *ServiceAccount     `json:"createdByServiceAccount"`
+	DeviceCounts            ReleaseDeviceCounts `json:"deviceCounts"`
 }
 
 type Bundle struct {

@@ -15,7 +15,10 @@ func (s *Service) initiateDeviceConnection(w http.ResponseWriter, r *http.Reques
 	})
 }
 
-func (s *Service) initiateSSH(w http.ResponseWriter, r *http.Request, projectID, userID, deviceID string) {
+func (s *Service) initiateSSH(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	deviceID string,
+) {
 	withHijackedHTTPConnection(w, func(conn net.Conn) {
 		s.connKing.Join(projectID+deviceID, conn)
 	})
@@ -81,7 +84,10 @@ func (c *rwc) Close() error {
 	return c.c.Close()
 }
 
-func (s *Service) initiateWebSocketSSH(w http.ResponseWriter, r *http.Request, projectID, userID, deviceID string) {
+func (s *Service) initiateWebSocketSSH(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	deviceID string,
+) {
 	s.withHijackedWebSocketConnection(w, r, func(conn *websocket.Conn) {
 		s.connKing.Join(projectID+deviceID, &rwc{
 			c: conn,

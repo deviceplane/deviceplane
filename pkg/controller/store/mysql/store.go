@@ -1674,8 +1674,17 @@ func (s *Store) scanApplicationDeviceCountRow(scanner scanner) (int, error) {
 	return count, nil
 }
 
-func (s *Store) CreateRelease(ctx context.Context, projectID, applicationID, config string) (*models.Release, error) {
+func (s *Store) CreateRelease(ctx context.Context, projectID, applicationID, config, createdByUserID, createdByServiceAccountID string) (*models.Release, error) {
 	id := newReleaseID()
+
+	var createdByUserIDNullable *string
+	if createdByUserID != "" {
+		createdByUserIDNullable = &createdByUserID
+	}
+	var createdByServiceAccountIDNullable *string
+	if createdByServiceAccountID != "" {
+		createdByServiceAccountIDNullable = &createdByServiceAccountID
+	}
 
 	if _, err := s.db.ExecContext(
 		ctx,
@@ -1684,6 +1693,8 @@ func (s *Store) CreateRelease(ctx context.Context, projectID, applicationID, con
 		projectID,
 		applicationID,
 		config,
+		createdByUserIDNullable,
+		createdByServiceAccountIDNullable,
 	); err != nil {
 		return nil, err
 	}
@@ -1752,6 +1763,8 @@ func (s *Store) scanRelease(scanner scanner) (*models.Release, error) {
 		&release.ProjectID,
 		&release.ApplicationID,
 		&release.Config,
+		&release.CreatedByUserID,
+		&release.CreatedByServiceAccountID,
 	); err != nil {
 		return nil, err
 	}

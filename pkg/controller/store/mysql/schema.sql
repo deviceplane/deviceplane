@@ -335,12 +335,21 @@ create table if not exists releases (
   created_at timestamp not null default current_timestamp,
   project_id varchar(32) not null,
   application_id varchar(32) not null,
+
   config longtext not null,
+  created_by_user_id varchar(32),
+  created_by_service_account_id varchar(32),
 
   primary key (id),
   foreign key releases_application_id(application_id)
   references applications(id)
-  on delete cascade
+  on delete cascade,
+  foreign key releases_created_by_user_id(created_by_user_id)
+  references users(id)
+  on delete set null,
+  foreign key releases_created_by_service_account_id(created_by_service_account_id)
+  references service_accounts(id)
+  on delete set null
 );
 
 --
