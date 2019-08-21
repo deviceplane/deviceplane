@@ -24,6 +24,11 @@ import (
 
 const (
 	authorizedKeysFilename = "authorized_keys"
+
+	// Simple script to start a preferred shell
+	// On Debian and Ubuntu /bin/sh links to dash, whereas bash is what's actually preferred
+	// This is fairly hacky and there's likely a better approach to determining the preffered shell
+	entrypoint = `if [ "$(readlink /bin/sh)" = "dash" ] && [ -f "/bin/bash" ]; then exec /bin/bash; else exec /bin/sh; fi`
 )
 
 type Connector struct {
@@ -86,9 +91,9 @@ func (c *Connector) Do() {
 
 		var cmd *exec.Cmd
 		if _, err = os.Stat("/usr/bin/nsenter"); os.IsNotExist(err) {
-			cmd = exec.CommandContext(ctx, "/bin/sh")
+			cmd = exec.CommandContext(ctx, "/bin/sh", "-c", entrypoint)
 		} else {
-			cmd = exec.CommandContext(ctx, "/usr/bin/nsenter", "-t", "1", "-m", "-u", "-i", "-n", "-p")
+			cmd = exec.CommandContext(ctx, "/usr/bin/nsenter", "-t", "1", "-a", "/bin/sh", "-c", entrypoint)
 		}
 
 		ptyReq, winCh, isPty := s.Pty()
