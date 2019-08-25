@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -445,13 +444,13 @@ func (s *Service) validateAuthorization(requestedResource, requestedAction strin
 
 func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 	var registerRequest struct {
-		Email     string `json:"email"`
-		Password  string `json:"password"`
-		FirstName string `json:"firstName"`
-		LastName  string `json:"lastName"`
-		Company   string `json:"company"`
+		Email     string `json:"email" validate:"email"`
+		Password  string `json:"password" validate:"password"`
+		FirstName string `json:"firstName" validate:"required,min=1,max=100"`
+		LastName  string `json:"lastName" validate:"required,min=1,max=100"`
+		Company   string `json:"company" validate:"max=100"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&registerRequest); err != nil {
+	if err := read(r, &registerRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -500,9 +499,9 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) confirmRegistration(w http.ResponseWriter, r *http.Request) {
 	var confirmRegistrationRequest struct {
-		RegistrationTokenValue string `json:"registrationTokenValue"`
+		RegistrationTokenValue string `json:"registrationTokenValue" validate:"required,min=1,max=1000"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&confirmRegistrationRequest); err != nil {
+	if err := read(r, &confirmRegistrationRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -526,9 +525,9 @@ func (s *Service) confirmRegistration(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) recoverPassword(w http.ResponseWriter, r *http.Request) {
 	var recoverPasswordRequest struct {
-		Email string `json:"email"`
+		Email string `json:"email" validate:"email"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&recoverPasswordRequest); err != nil {
+	if err := read(r, &recoverPasswordRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -588,10 +587,10 @@ func (s *Service) getPasswordRecoveryToken(w http.ResponseWriter, r *http.Reques
 
 func (s *Service) changePassword(w http.ResponseWriter, r *http.Request) {
 	var changePasswordRequest struct {
-		PasswordRecoveryTokenValue string `json:"passwordRecoveryTokenValue"`
-		Password                   string `json:"password"`
+		PasswordRecoveryTokenValue string `json:"passwordRecoveryTokenValue" validate:"required,min=1,max=1000"`
+		Password                   string `json:"password" validate:"password"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&changePasswordRequest); err != nil {
+	if err := read(r, &changePasswordRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -631,10 +630,10 @@ func (s *Service) changePassword(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 	var loginRequest struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Email    string `json:"email" validate:"email"`
+		Password string `json:"password" validate:"password"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&loginRequest); err != nil {
+	if err := read(r, &loginRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -731,6 +730,7 @@ func (s *Service) updateMe(w http.ResponseWriter, r *http.Request, authenticated
 		return
 	}
 
+	// TODO: validation
 	var updateUserRequest struct {
 		Password        *string `json:"password"`
 		CurrentPassword *string `json:"currentPassword"`
@@ -738,7 +738,7 @@ func (s *Service) updateMe(w http.ResponseWriter, r *http.Request, authenticated
 		LastName        *string `json:"lastName"`
 		Company         *string `json:"company"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&updateUserRequest); err != nil {
+	if err := read(r, &updateUserRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -868,9 +868,9 @@ func (s *Service) createUserAccessKey(w http.ResponseWriter, r *http.Request, au
 	}
 
 	var createUserAccessKeyRequest struct {
-		Description string `json:"description"`
+		Description string `json:"description" validate:"description"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&createUserAccessKeyRequest); err != nil {
+	if err := read(r, &createUserAccessKeyRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -946,9 +946,9 @@ func (s *Service) deleteUserAccessKey(w http.ResponseWriter, r *http.Request, au
 
 func (s *Service) createProject(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
 	var createProjectRequest struct {
-		Name string `json:"name"`
+		Name string `json:"name" validate:"name"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&createProjectRequest); err != nil {
+	if err := read(r, &createProjectRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -1043,9 +1043,9 @@ func (s *Service) updateProject(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID string,
 ) {
 	var updateProjectRequest struct {
-		Name string `json:"name"`
+		Name string `json:"name" validate:"name"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&updateProjectRequest); err != nil {
+	if err := read(r, &updateProjectRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -1083,11 +1083,11 @@ func (s *Service) createRole(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID string,
 ) {
 	var createRoleRequest struct {
-		Name        string `json:"name"`
-		Description string `json:"description"`
-		Config      string `json:"config"`
+		Name        string `json:"name" validate:"name"`
+		Description string `json:"description" validate:"description"`
+		Config      string `json:"config" validate:"config"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&createRoleRequest); err != nil {
+	if err := read(r, &createRoleRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -1155,11 +1155,11 @@ func (s *Service) updateRole(w http.ResponseWriter, r *http.Request,
 	roleID := vars["role"]
 
 	var updateRoleRequest struct {
-		Name        string `json:"name"`
-		Description string `json:"description"`
-		Config      string `json:"config"`
+		Name        string `json:"name" validate:"name"`
+		Description string `json:"description" validate:"description"`
+		Config      string `json:"config" validate:"config"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&updateRoleRequest); err != nil {
+	if err := read(r, &updateRoleRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -1207,10 +1207,10 @@ func (s *Service) createServiceAccount(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID string,
 ) {
 	var createServiceAccountRequest struct {
-		Name        string `json:"name"`
-		Description string `json:"description"`
+		Name        string `json:"name" validate:"name"`
+		Description string `json:"description" validate:"description"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&createServiceAccountRequest); err != nil {
+	if err := read(r, &createServiceAccountRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -1328,10 +1328,10 @@ func (s *Service) updateServiceAccount(w http.ResponseWriter, r *http.Request,
 	serviceAccountID string,
 ) {
 	var updateServiceAccountRequest struct {
-		Name        string `json:"name"`
-		Description string `json:"description"`
+		Name        string `json:"name" validate:"name"`
+		Description string `json:"description" validate:"description"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&updateServiceAccountRequest); err != nil {
+	if err := read(r, &updateServiceAccountRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -1374,9 +1374,9 @@ func (s *Service) createServiceAccountAccessKey(w http.ResponseWriter, r *http.R
 	serviceAccountID := vars["serviceaccount"]
 
 	var createServiceAccountAccessKeyRequest struct {
-		Description string `json:"description"`
+		Description string `json:"description" validate:"description"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&createServiceAccountAccessKeyRequest); err != nil {
+	if err := read(r, &createServiceAccountAccessKeyRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -1513,9 +1513,9 @@ func (s *Service) createMembership(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID string,
 ) {
 	var createMembershipRequest struct {
-		Email string `json:"email"`
+		Email string `json:"email" validate:"email"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&createMembershipRequest); err != nil {
+	if err := read(r, &createMembershipRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -1730,11 +1730,11 @@ func (s *Service) createApplication(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID string,
 ) {
 	var createApplicationRequest struct {
-		Name        string                     `json:"name"`
-		Description string                     `json:"description"`
-		Settings    models.ApplicationSettings `json:"settings"`
+		Name        string                     `json:"name" validate:"name"`
+		Description string                     `json:"description" validate:"description"`
+		Settings    models.ApplicationSettings `json:"settings"` // TODO: validation
 	}
-	if err := json.NewDecoder(r.Body).Decode(&createApplicationRequest); err != nil {
+	if err := read(r, &createApplicationRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -1853,11 +1853,11 @@ func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request,
 	applicationID string,
 ) {
 	var updateApplicationRequest struct {
-		Name        string                     `json:"name"`
-		Description string                     `json:"description"`
-		Settings    models.ApplicationSettings `json:"settings"`
+		Name        string                     `json:"name" validate:"name"`
+		Description string                     `json:"description" validate:"description"`
+		Settings    models.ApplicationSettings `json:"settings"` // TODO: validation
 	}
-	if err := json.NewDecoder(r.Body).Decode(&updateApplicationRequest); err != nil {
+	if err := read(r, &updateApplicationRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -1906,9 +1906,9 @@ func (s *Service) createRelease(w http.ResponseWriter, r *http.Request,
 	applicationID string,
 ) {
 	var createReleaseRequest struct {
-		Config string `json:"config"`
+		Config string `json:"config" validate:"config"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&createReleaseRequest); err != nil {
+	if err := read(r, &createReleaseRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -2102,9 +2102,9 @@ func (s *Service) updateDevice(w http.ResponseWriter, r *http.Request,
 	deviceID string,
 ) {
 	var updateDeviceRequest struct {
-		Name string `json:"name"`
+		Name string `json:"name" validate:"name"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&updateDeviceRequest); err != nil {
+	if err := read(r, &updateDeviceRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -2144,10 +2144,10 @@ func (s *Service) setDeviceLabel(w http.ResponseWriter, r *http.Request,
 	deviceID string,
 ) {
 	var setDeviceLabelRequest struct {
-		Key   string `json:"key"`
-		Value string `json:"value"`
+		Key   string `json:"key" validate:"labelkey"`
+		Value string `json:"value" validate:"labelvalue"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&setDeviceLabelRequest); err != nil {
+	if err := read(r, &setDeviceLabelRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -2252,7 +2252,7 @@ func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
 	projectID := vars["project"]
 
 	var registerDeviceRequest models.RegisterDeviceRequest
-	if err := json.NewDecoder(r.Body).Decode(&registerDeviceRequest); err != nil {
+	if err := read(r, &registerDeviceRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -2386,7 +2386,7 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, d
 
 func (s *Service) setDeviceInfo(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
 	var setDeviceInfoRequest models.SetDeviceInfoRequest
-	if err := json.NewDecoder(r.Body).Decode(&setDeviceInfoRequest); err != nil {
+	if err := read(r, &setDeviceInfoRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -2403,7 +2403,7 @@ func (s *Service) setDeviceApplicationStatus(w http.ResponseWriter, r *http.Requ
 	applicationID := vars["application"]
 
 	var setDeviceApplicationStatusRequest models.SetDeviceApplicationStatusRequest
-	if err := json.NewDecoder(r.Body).Decode(&setDeviceApplicationStatusRequest); err != nil {
+	if err := read(r, &setDeviceApplicationStatusRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -2436,7 +2436,7 @@ func (s *Service) setDeviceServiceStatus(w http.ResponseWriter, r *http.Request,
 	service := vars["service"]
 
 	var setDeviceServiceStatusRequest models.SetDeviceServiceStatusRequest
-	if err := json.NewDecoder(r.Body).Decode(&setDeviceServiceStatusRequest); err != nil {
+	if err := read(r, &setDeviceServiceStatusRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

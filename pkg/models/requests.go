@@ -1,15 +1,7 @@
 package models
 
-type SetApplicationSettingsRequest struct {
-	ApplicationSettings ApplicationSettings `json:"applicationSettings"`
-}
-
-type CreateRelease struct {
-	Config string `json:"config"`
-}
-
 type RegisterDeviceRequest struct {
-	DeviceRegistrationTokenID string `json:"deviceRegistrationTokenId"`
+	DeviceRegistrationTokenID string `json:"deviceRegistrationTokenId" validate:"id"`
 }
 
 type RegisterDeviceResponse struct {
@@ -18,13 +10,13 @@ type RegisterDeviceResponse struct {
 }
 
 type SetDeviceInfoRequest struct {
-	DeviceInfo DeviceInfo `json:"deviceInfo"`
+	DeviceInfo DeviceInfo `json:"deviceInfo"` // TODO: validate
 }
 
 type SetDeviceApplicationStatusRequest struct {
-	CurrentReleaseID string `json:"currentReleaseId"`
+	CurrentReleaseID string `json:"currentReleaseId" validate:"id"`
 }
 
 type SetDeviceServiceStatusRequest struct {
-	CurrentReleaseID string `json:"currentReleaseId"`
+	CurrentReleaseID string `json:"currentReleaseId" validate:"id"`
 }
