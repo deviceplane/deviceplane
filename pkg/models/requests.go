@@ -1,5 +1,9 @@
 package models
 
+type CreateReleaseRequest struct {
+	Config string `json:"config" validate:"config"`
+}
+
 type RegisterDeviceRequest struct {
 	DeviceRegistrationTokenID string `json:"deviceRegistrationTokenId" validate:"id"`
 }

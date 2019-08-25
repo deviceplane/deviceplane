@@ -1905,9 +1905,7 @@ func (s *Service) createRelease(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID,
 	applicationID string,
 ) {
-	var createReleaseRequest struct {
-		Config string `json:"config" validate:"config"`
-	}
+	var createReleaseRequest models.CreateReleaseRequest
 	if err := read(r, &createReleaseRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
