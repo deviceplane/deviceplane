@@ -1,9 +1,12 @@
-db-reset:
+db-reset: state-reset
 	docker-compose down
 	docker-compose build
 	docker-compose up -d
 	sleep 20
 	./scripts/seed
+
+state-reset:
+	rm -rf ./cmd/controller/state
 
 controller:
 	./scripts/build-controller
