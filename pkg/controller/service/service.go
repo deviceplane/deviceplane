@@ -812,7 +812,7 @@ func (s *Service) listMembershipsByUser(w http.ResponseWriter, r *http.Request, 
 
 	var ret interface{} = memberships
 	if _, ok := r.URL.Query()["full"]; ok {
-		var membershipsFull []models.MembershipFull1
+		membershipsFull := make([]models.MembershipFull1, 0)
 
 		for _, membership := range memberships {
 			user, err := s.users.GetUser(r.Context(), membership.UserID)
@@ -1605,7 +1605,7 @@ func (s *Service) listMembershipsByProject(w http.ResponseWriter, r *http.Reques
 
 	var ret interface{} = memberships
 	if _, ok := r.URL.Query()["full"]; ok {
-		var membershipsFull []models.MembershipFull2
+		membershipsFull := make([]models.MembershipFull2, 0)
 
 		for _, membership := range memberships {
 			user, err := s.users.GetUser(r.Context(), membership.UserID)
@@ -1818,7 +1818,7 @@ func (s *Service) listApplications(w http.ResponseWriter, r *http.Request,
 
 	var ret interface{} = applications
 	if _, ok := r.URL.Query()["full"]; ok {
-		var applicationsFull []models.ApplicationFull1
+		applicationsFull := make([]models.ApplicationFull1, 0)
 
 		for _, application := range applications {
 			latestRelease, err := s.releases.GetLatestRelease(r.Context(), projectID, application.ID)
@@ -2005,7 +2005,7 @@ func (s *Service) listReleases(w http.ResponseWriter, r *http.Request,
 
 	var ret interface{} = releases
 	if _, ok := r.URL.Query()["full"]; ok {
-		var releasesFull []models.ReleaseFull
+		releasesFull := make([]models.ReleaseFull, 0)
 		for _, release := range releases {
 			releaseFull, err := s.getReleaseFull(r.Context(), release)
 			if err != nil {
@@ -2057,7 +2057,7 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request,
 			return
 		}
 
-		var allApplicationStatusInfo []models.DeviceApplicationStatusInfo
+		allApplicationStatusInfo := make([]models.DeviceApplicationStatusInfo, 0)
 		for _, application := range applications {
 			applicationStatusInfo := models.DeviceApplicationStatusInfo{
 				Application: application,
