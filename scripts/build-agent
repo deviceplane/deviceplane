@@ -11,4 +11,4 @@ docker push deviceplane/agent:arm64v8-${AGENT_VERSION}
 
 docker manifest create deviceplane/agent:${AGENT_VERSION} deviceplane/agent:amd64-${AGENT_VERSION} deviceplane/agent:arm32v6-${AGENT_VERSION} deviceplane/agent:arm64v8-${AGENT_VERSION}
 docker manifest annotate deviceplane/agent:${AGENT_VERSION} deviceplane/agent:arm32v6-${AGENT_VERSION} --os linux --arch arm
-docker manifest annotate deviceplane/agent:${AGENT_VERSION} deviceplane/agent:arm64v8-${AGENT_VERSION} --os linux --arch arm64 --variant armv8
+docker manifest annotate deviceplane/agent:${AGENT_VERSION} deviceplane/agent:arm64v8-${AGENT_VERSION} --os linux --arch arm64
