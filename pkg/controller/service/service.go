@@ -1050,7 +1050,8 @@ func (s *Service) updateProject(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	if _, err := s.projects.LookupProject(r.Context(), updateProjectRequest.Name); err == nil {
+	if project, err := s.projects.LookupProject(r.Context(),
+		updateProjectRequest.Name); err == nil && project.ID != projectID {
 		http.Error(w, store.ErrProjectNameAlreadyInUse.Error(), http.StatusBadRequest)
 		return
 	} else if err != nil && err != store.ErrProjectNotFound {
@@ -1170,7 +1171,8 @@ func (s *Service) updateRole(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	if _, err := s.roles.LookupRole(r.Context(), updateRoleRequest.Name, projectID); err == nil {
+	if role, err := s.roles.LookupRole(r.Context(),
+		updateRoleRequest.Name, projectID); err == nil && role.ID != roleID {
 		http.Error(w, store.ErrRoleNameAlreadyInUse.Error(), http.StatusBadRequest)
 		return
 	} else if err != nil && err != store.ErrRoleNotFound {
@@ -1336,7 +1338,8 @@ func (s *Service) updateServiceAccount(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	if _, err := s.serviceAccounts.LookupServiceAccount(r.Context(), updateServiceAccountRequest.Name, projectID); err == nil {
+	if serviceAccount, err := s.serviceAccounts.LookupServiceAccount(r.Context(),
+		updateServiceAccountRequest.Name, projectID); err == nil && serviceAccount.ID != serviceAccountID {
 		http.Error(w, store.ErrServiceAccountNameAlreadyInUse.Error(), http.StatusBadRequest)
 		return
 	} else if err != nil && err != store.ErrServiceAccountNotFound {
@@ -1869,7 +1872,8 @@ func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request,
 		}
 	}
 
-	if _, err := s.applications.LookupApplication(r.Context(), updateApplicationRequest.Name, projectID); err == nil {
+	if application, err := s.applications.LookupApplication(r.Context(),
+		updateApplicationRequest.Name, projectID); err == nil && application.ID != applicationID {
 		http.Error(w, store.ErrApplicationNameAlreadyInUse.Error(), http.StatusBadRequest)
 		return
 	} else if err != nil && err != store.ErrApplicationNotFound {
@@ -2107,7 +2111,8 @@ func (s *Service) updateDevice(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	if _, err := s.devices.LookupDevice(r.Context(), updateDeviceRequest.Name, projectID); err == nil {
+	if device, err := s.devices.LookupDevice(r.Context(),
+		updateDeviceRequest.Name, projectID); err == nil && device.ID != deviceID {
 		http.Error(w, store.ErrDeviceNameAlreadyInUse.Error(), http.StatusBadRequest)
 		return
 	} else if err != nil && err != store.ErrDeviceNotFound {
