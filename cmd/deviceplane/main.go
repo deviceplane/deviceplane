@@ -22,12 +22,12 @@ func main() {
 		cli.StringFlag{
 			Hidden: true,
 			Name:   "url",
-			Value:  "https://api.deviceplane.io:443",
+			Value:  "https://api.deviceplane.com:443",
 		},
 		cli.StringFlag{
 			Hidden: true,
 			Name:   "url2",
-			Value:  "https://api2.deviceplane.io:443",
+			Value:  "https://api2.deviceplane.com:443",
 		},
 		cli.StringFlag{
 			Name:   "access-key",

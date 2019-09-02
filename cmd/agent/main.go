@@ -28,8 +28,8 @@ var config struct {
 }
 
 func init() {
-	config.Controller = "https://api.deviceplane.io:443"
-	config.Controller2 = "https://api2.deviceplane.io:443"
+	config.Controller = "https://api.deviceplane.com:443"
+	config.Controller2 = "https://api2.deviceplane.com:443"
 	config.ConfDir = "/etc/deviceplane"
 	config.StateDir = "/var/lib/deviceplane"
 	config.LogLevel = "info"
