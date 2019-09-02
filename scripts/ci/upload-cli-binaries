@@ -8,4 +8,4 @@ if ! git log -1 | grep -q "Release CLI"; then
 fi
 
 sudo pip install awscli
-aws s3 sync /tmp/workspace/dist/cli s3://cli.deviceplane.io/
+aws s3 sync /tmp/workspace/dist/cli s3://cli.deviceplane.com/
