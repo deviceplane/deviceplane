@@ -8,15 +8,15 @@ import (
 )
 
 var (
-	vldr                = validator.New()
-	standardRegexString = regexp.MustCompile("^[a-zA-Z0-9_]+$")
-	once                sync.Once
+	vldr          = validator.New()
+	standardRegex = regexp.MustCompile("^[a-zA-Z0-9_-]+$")
+	once          sync.Once
 )
 
 func Validate(s interface{}) error {
 	once.Do(func() {
 		vldr.RegisterValidation("standard", func(fl validator.FieldLevel) bool {
-			return standardRegexString.Match([]byte(fl.Field().String()))
+			return standardRegex.Match([]byte(fl.Field().String()))
 		})
 		vldr.RegisterAlias("id", "required,min=1,max=32,standard")
 		vldr.RegisterAlias("name", "required,min=1,max=100,standard")
