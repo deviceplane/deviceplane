@@ -68,6 +68,8 @@ github.com/opencontainers/go-digest
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
+# github.com/rakyll/statik v0.1.6
+github.com/rakyll/statik/fs
 # github.com/segmentio/conf v1.1.0
 github.com/segmentio/conf
 # github.com/segmentio/go-snakecase v1.1.0

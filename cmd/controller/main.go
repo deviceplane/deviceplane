@@ -8,11 +8,12 @@ import (
 
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/controller/service"
-	sendgrid_email "github.com/deviceplane/deviceplane/pkg/email/sendgrid"
-
 	mysql_store "github.com/deviceplane/deviceplane/pkg/controller/store/mysql"
+	sendgrid_email "github.com/deviceplane/deviceplane/pkg/email/sendgrid"
+	_ "github.com/deviceplane/deviceplane/pkg/statik"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/handlers"
+	"github.com/rakyll/statik/fs"
 	"github.com/segmentio/conf"
 	"github.com/sendgrid/sendgrid-go"
 )
@@ -45,6 +46,11 @@ func init() {
 func main() {
 	conf.Load(&config)
 
+	statikFS, err := fs.New()
+	if err != nil {
+		log.WithError(err).Fatal("statik")
+	}
+
 	db, err := tryConnect(config.MySQLPrimary)
 	if err != nil {
 		log.WithError(err).Fatal("connect to MySQL primary")
@@ -57,7 +63,7 @@ func main() {
 
 	svc := service.NewService(sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
 		sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
-		sendgridEmail, config.CookieDomain, config.CookieSecure)
+		sendgridEmail, config.CookieDomain, config.CookieSecure, statikFS)
 
 	server := &http.Server{
 		Addr: config.Addr,

@@ -9,6 +9,7 @@ import (
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/controller/authz"
 	"github.com/deviceplane/deviceplane/pkg/controller/connman"
+	"github.com/deviceplane/deviceplane/pkg/controller/spaserver"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/email"
 	"github.com/deviceplane/deviceplane/pkg/hash"
@@ -93,6 +94,7 @@ func NewService(
 	email email.Interface,
 	cookieDomain string,
 	cookieSecure bool,
+	fileSystem http.FileSystem,
 ) *Service {
 	s := &Service{
 		users:                      users,
@@ -134,100 +136,110 @@ func NewService(
 		connKing: connman.New(),
 	}
 
+	apiRouter := s.router.PathPrefix("/api").Subrouter()
+
+	apiRouter.HandleFunc("/register", s.register).Methods("POST")
+	apiRouter.HandleFunc("/completeregistration", s.confirmRegistration).Methods("POST")
+
+	apiRouter.HandleFunc("/recoverpassword", s.recoverPassword).Methods("POST")
+	apiRouter.HandleFunc("/passwordrecoverytokens/{passwordrecoverytokenvalue}", s.getPasswordRecoveryToken).Methods("GET")
+	apiRouter.HandleFunc("/changepassword", s.changePassword).Methods("POST")
+
+	apiRouter.HandleFunc("/login", s.login).Methods("POST")
+	apiRouter.HandleFunc("/logout", s.logout).Methods("POST")
+
+	apiRouter.HandleFunc("/me", s.withUserOrServiceAccountAuth(s.getMe)).Methods("GET")
+	apiRouter.HandleFunc("/me", s.withUserOrServiceAccountAuth(s.updateMe)).Methods("PATCH")
+
+	apiRouter.HandleFunc("/memberships", s.withUserOrServiceAccountAuth(s.listMembershipsByUser)).Methods("GET")
+
+	apiRouter.HandleFunc("/useraccesskeys", s.withUserOrServiceAccountAuth(s.createUserAccessKey)).Methods("POST")
+	apiRouter.HandleFunc("/useraccesskeys/{useraccesskey}", s.withUserOrServiceAccountAuth(s.getUserAccessKey)).Methods("GET")
+	apiRouter.HandleFunc("/useraccesskeys", s.withUserOrServiceAccountAuth(s.listUserAccessKeys)).Methods("GET")
+	apiRouter.HandleFunc("/useraccesskeys/{useraccesskey}", s.withUserOrServiceAccountAuth(s.deleteUserAccessKey)).Methods("DELETE")
+
+	apiRouter.HandleFunc("/projects", s.withUserOrServiceAccountAuth(s.createProject)).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}", s.validateAuthorization("projects", "GetProject", s.getProject)).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}", s.validateAuthorization("projects", "UpdateProject", s.updateProject)).Methods("PUT")
+	apiRouter.HandleFunc("/projects/{project}", s.validateAuthorization("projects", "DeleteProject", s.deleteProject)).Methods("DELETE")
+
+	apiRouter.HandleFunc("/projects/{project}/roles", s.validateAuthorization("roles", "CreateRole", s.createRole)).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/roles/{role}", s.validateAuthorization("roles", "GetRole", s.withRole(s.getRole))).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/roles", s.validateAuthorization("roles", "ListRoles", s.listRoles)).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/roles/{role}", s.validateAuthorization("roles", "UpdateRole", s.updateRole)).Methods("PUT")
+	apiRouter.HandleFunc("/projects/{project}/roles/{role}", s.validateAuthorization("roles", "DeleteRole", s.deleteRole)).Methods("DELETE")
+
+	apiRouter.HandleFunc("/projects/{project}/memberships", s.validateAuthorization("memberships", "CreateMembership", s.createMembership)).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/memberships/{user}", s.validateAuthorization("memberships", "GetMembership", s.getMembership)).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/memberships", s.validateAuthorization("memberships", "ListMembershipsByProject", s.listMembershipsByProject)).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/memberships/{user}", s.validateAuthorization("memberships", "DeleteMembership", s.deleteMembership)).Methods("DELETE")
+
+	apiRouter.HandleFunc("/projects/{project}/memberships/{user}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "CreateMembershipRoleBinding", s.withRole(s.createMembershipRoleBinding))).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/memberships/{user}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "GetMembershipRoleBinding", s.withRole(s.getMembershipRoleBinding))).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/memberships/{user}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "ListMembershipRoleBindings", s.listMembershipRoleBindings)).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/memberships/{user}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "DeleteMembershipRoleBinding", s.withRole(s.deleteMembershipRoleBinding))).Methods("DELETE")
+
+	apiRouter.HandleFunc("/projects/{project}/serviceaccounts", s.validateAuthorization("serviceaccounts", "CreateServiceAccount", s.createServiceAccount)).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}", s.validateAuthorization("serviceaccounts", "GetServiceAccount", s.withServiceAccount(s.getServiceAccount))).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/serviceaccounts", s.validateAuthorization("serviceaccounts", "ListServiceAccounts", s.listServiceAccounts)).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}", s.validateAuthorization("serviceaccounts", "UpdateServiceAccount", s.withServiceAccount(s.updateServiceAccount))).Methods("PUT")
+	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}", s.validateAuthorization("serviceaccounts", "DeleteServiceAccount", s.withServiceAccount(s.deleteServiceAccount))).Methods("DELETE")
+
+	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountaccesskeys", s.validateAuthorization("serviceaccountaccesskeys", "CreateServiceAccountAccessKey", s.createServiceAccountAccessKey)).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountaccesskeys/{serviceaccountaccesskey}", s.validateAuthorization("serviceaccountaccesskeys", "GetServiceAccountAccessKey", s.getServiceAccountAccessKey)).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountaccesskeys", s.validateAuthorization("serviceaccountsaccesskeys", "ListServiceAccountAccessKeys", s.listServiceAccountAccessKeys)).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountaccesskeys/{serviceaccountaccesskey}", s.validateAuthorization("serviceaccountaccesskeys", "DeleteServiceAccountAccessKey", s.deleteServiceAccountAccessKey)).Methods("DELETE")
+
+	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.validateAuthorization("serviceaccountrolebindings", "CreateServiceAccountRoleBinding", s.withRole(s.createServiceAccountRoleBinding))).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.validateAuthorization("serviceaccountrolebindings", "GetServiceAccountRoleBinding", s.withRole(s.getServiceAccountRoleBinding))).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountrolebindings", s.validateAuthorization("serviceaccountrolebindings", "ListMembershipRoleBindings", s.listServiceAccountRoleBindings)).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.validateAuthorization("serviceaccountrolebindings", "DeleteServiceAccountRoleBinding", s.withRole(s.deleteServiceAccountRoleBinding))).Methods("DELETE")
+
+	apiRouter.HandleFunc("/projects/{project}/applications", s.validateAuthorization("applications", "CreateApplication", s.createApplication)).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/applications/{application}", s.validateAuthorization("applications", "GetApplication", s.withApplication(s.getApplication))).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/applications", s.validateAuthorization("applications", "ListApplications", s.listApplications)).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/applications/{application}", s.validateAuthorization("applications", "UpdateApplication", s.withApplication(s.updateApplication))).Methods("PUT")
+	apiRouter.HandleFunc("/projects/{project}/applications/{application}", s.validateAuthorization("applications", "DeleteApplication", s.withApplication(s.deleteApplication))).Methods("DELETE")
+
+	apiRouter.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateAuthorization("releases", "CreateRelease", s.withApplication(s.createRelease))).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/applications/{application}/releases/latest", s.validateAuthorization("releases", "GetLatestRelease", s.withApplication(s.getLatestRelease))).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/applications/{application}/releases/{release}", s.validateAuthorization("releases", "GetRelease", s.withApplication(s.getRelease))).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateAuthorization("releases", "ListReleases", s.withApplication(s.listReleases))).Methods("GET")
+
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "GetDevice", s.withDevice(s.getDevice))).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/devices", s.validateAuthorization("devices", "ListDevices", s.listDevices)).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "UpdateDevice", s.withDevice(s.updateDevice))).Methods("PATCH")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "DeleteDevice", s.withDevice(s.deleteDevice))).Methods("DELETE")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/ssh", s.validateAuthorization("devices", "SSH", s.withDevice(s.initiateSSH))).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/wssh", s.validateAuthorization("devices", "SSH", s.withDevice(s.initiateWebSocketSSH))).Methods("GET")
+
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "SetDeviceLabel", s.withDevice(s.setDeviceLabel))).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateAuthorization("devicelabels", "GetDeviceLabel", s.withDevice(s.getDeviceLabel))).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "ListDeviceLabels", s.withDevice(s.listDeviceLabels))).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateAuthorization("devicelabels", "DeleteDeviceLabel", s.withDevice(s.deleteDeviceLabel))).Methods("DELETE")
+
+	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens", s.validateAuthorization("deviceregistrationtokens", "CreateDeviceRegistrationToken", s.createDeviceRegistrationToken)).Methods("POST")
+
+	apiRouter.HandleFunc("/projects/{project}/devices/register", s.registerDevice).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/bundle", s.withDeviceAuth(s.getBundle)).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/info", s.withDeviceAuth(s.setDeviceInfo)).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/deviceapplicationstatuses", s.withDeviceAuth(s.setDeviceApplicationStatus)).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/deviceapplicationstatuses", s.withDeviceAuth(s.deleteDeviceApplicationStatus)).Methods("DELETE")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.withDeviceAuth(s.setDeviceServiceStatus)).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.withDeviceAuth(s.deleteDeviceServiceStatus)).Methods("DELETE")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/connection", s.withDeviceAuth(s.initiateDeviceConnection)).Methods("GET")
+
+	s.router.PathPrefix("/api").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	})
+
+	// TODO: scope under /api?
+	s.router.Handle("/revdial", revdial.ConnHandler()).Methods("GET")
+
+	// TODO: scope under /api?
 	s.router.HandleFunc("/health", s.health).Methods("GET")
 
-	s.router.HandleFunc("/register", s.register).Methods("POST")
-	s.router.HandleFunc("/completeregistration", s.confirmRegistration).Methods("POST")
-
-	s.router.HandleFunc("/recoverpassword", s.recoverPassword).Methods("POST")
-	s.router.HandleFunc("/passwordrecoverytokens/{passwordrecoverytokenvalue}", s.getPasswordRecoveryToken).Methods("GET")
-	s.router.HandleFunc("/changepassword", s.changePassword).Methods("POST")
-
-	s.router.HandleFunc("/login", s.login).Methods("POST")
-	s.router.HandleFunc("/logout", s.logout).Methods("POST")
-
-	s.router.HandleFunc("/me", s.withUserOrServiceAccountAuth(s.getMe)).Methods("GET")
-	s.router.HandleFunc("/me", s.withUserOrServiceAccountAuth(s.updateMe)).Methods("PATCH")
-
-	s.router.HandleFunc("/memberships", s.withUserOrServiceAccountAuth(s.listMembershipsByUser)).Methods("GET")
-
-	s.router.HandleFunc("/useraccesskeys", s.withUserOrServiceAccountAuth(s.createUserAccessKey)).Methods("POST")
-	s.router.HandleFunc("/useraccesskeys/{useraccesskey}", s.withUserOrServiceAccountAuth(s.getUserAccessKey)).Methods("GET")
-	s.router.HandleFunc("/useraccesskeys", s.withUserOrServiceAccountAuth(s.listUserAccessKeys)).Methods("GET")
-	s.router.HandleFunc("/useraccesskeys/{useraccesskey}", s.withUserOrServiceAccountAuth(s.deleteUserAccessKey)).Methods("DELETE")
-
-	s.router.HandleFunc("/projects", s.withUserOrServiceAccountAuth(s.createProject)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}", s.validateAuthorization("projects", "GetProject", s.getProject)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}", s.validateAuthorization("projects", "UpdateProject", s.updateProject)).Methods("PUT")
-	s.router.HandleFunc("/projects/{project}", s.validateAuthorization("projects", "DeleteProject", s.deleteProject)).Methods("DELETE")
-
-	s.router.HandleFunc("/projects/{project}/roles", s.validateAuthorization("roles", "CreateRole", s.createRole)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/roles/{role}", s.validateAuthorization("roles", "GetRole", s.withRole(s.getRole))).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/roles", s.validateAuthorization("roles", "ListRoles", s.listRoles)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/roles/{role}", s.validateAuthorization("roles", "UpdateRole", s.updateRole)).Methods("PUT")
-	s.router.HandleFunc("/projects/{project}/roles/{role}", s.validateAuthorization("roles", "DeleteRole", s.deleteRole)).Methods("DELETE")
-
-	s.router.HandleFunc("/projects/{project}/memberships", s.validateAuthorization("memberships", "CreateMembership", s.createMembership)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/memberships/{user}", s.validateAuthorization("memberships", "GetMembership", s.getMembership)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/memberships", s.validateAuthorization("memberships", "ListMembershipsByProject", s.listMembershipsByProject)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/memberships/{user}", s.validateAuthorization("memberships", "DeleteMembership", s.deleteMembership)).Methods("DELETE")
-
-	s.router.HandleFunc("/projects/{project}/memberships/{user}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "CreateMembershipRoleBinding", s.withRole(s.createMembershipRoleBinding))).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/memberships/{user}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "GetMembershipRoleBinding", s.withRole(s.getMembershipRoleBinding))).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/memberships/{user}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "ListMembershipRoleBindings", s.listMembershipRoleBindings)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/memberships/{user}/roles/{role}/membershiprolebindings", s.validateAuthorization("membershiprolebindings", "DeleteMembershipRoleBinding", s.withRole(s.deleteMembershipRoleBinding))).Methods("DELETE")
-
-	s.router.HandleFunc("/projects/{project}/serviceaccounts", s.validateAuthorization("serviceaccounts", "CreateServiceAccount", s.createServiceAccount)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}", s.validateAuthorization("serviceaccounts", "GetServiceAccount", s.withServiceAccount(s.getServiceAccount))).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/serviceaccounts", s.validateAuthorization("serviceaccounts", "ListServiceAccounts", s.listServiceAccounts)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}", s.validateAuthorization("serviceaccounts", "UpdateServiceAccount", s.withServiceAccount(s.updateServiceAccount))).Methods("PUT")
-	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}", s.validateAuthorization("serviceaccounts", "DeleteServiceAccount", s.withServiceAccount(s.deleteServiceAccount))).Methods("DELETE")
-
-	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountaccesskeys", s.validateAuthorization("serviceaccountaccesskeys", "CreateServiceAccountAccessKey", s.createServiceAccountAccessKey)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountaccesskeys/{serviceaccountaccesskey}", s.validateAuthorization("serviceaccountaccesskeys", "GetServiceAccountAccessKey", s.getServiceAccountAccessKey)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountaccesskeys", s.validateAuthorization("serviceaccountsaccesskeys", "ListServiceAccountAccessKeys", s.listServiceAccountAccessKeys)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountaccesskeys/{serviceaccountaccesskey}", s.validateAuthorization("serviceaccountaccesskeys", "DeleteServiceAccountAccessKey", s.deleteServiceAccountAccessKey)).Methods("DELETE")
-
-	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.validateAuthorization("serviceaccountrolebindings", "CreateServiceAccountRoleBinding", s.withRole(s.createServiceAccountRoleBinding))).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.validateAuthorization("serviceaccountrolebindings", "GetServiceAccountRoleBinding", s.withRole(s.getServiceAccountRoleBinding))).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountrolebindings", s.validateAuthorization("serviceaccountrolebindings", "ListMembershipRoleBindings", s.listServiceAccountRoleBindings)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.validateAuthorization("serviceaccountrolebindings", "DeleteServiceAccountRoleBinding", s.withRole(s.deleteServiceAccountRoleBinding))).Methods("DELETE")
-
-	s.router.HandleFunc("/projects/{project}/applications", s.validateAuthorization("applications", "CreateApplication", s.createApplication)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/applications/{application}", s.validateAuthorization("applications", "GetApplication", s.withApplication(s.getApplication))).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/applications", s.validateAuthorization("applications", "ListApplications", s.listApplications)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/applications/{application}", s.validateAuthorization("applications", "UpdateApplication", s.withApplication(s.updateApplication))).Methods("PUT")
-	s.router.HandleFunc("/projects/{project}/applications/{application}", s.validateAuthorization("applications", "DeleteApplication", s.withApplication(s.deleteApplication))).Methods("DELETE")
-
-	s.router.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateAuthorization("releases", "CreateRelease", s.withApplication(s.createRelease))).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/applications/{application}/releases/latest", s.validateAuthorization("releases", "GetLatestRelease", s.withApplication(s.getLatestRelease))).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/applications/{application}/releases/{release}", s.validateAuthorization("releases", "GetRelease", s.withApplication(s.getRelease))).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateAuthorization("releases", "ListReleases", s.withApplication(s.listReleases))).Methods("GET")
-
-	s.router.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "GetDevice", s.withDevice(s.getDevice))).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/devices", s.validateAuthorization("devices", "ListDevices", s.listDevices)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "UpdateDevice", s.withDevice(s.updateDevice))).Methods("PATCH")
-	s.router.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "DeleteDevice", s.withDevice(s.deleteDevice))).Methods("DELETE")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/ssh", s.validateAuthorization("devices", "SSH", s.withDevice(s.initiateSSH))).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/wssh", s.validateAuthorization("devices", "SSH", s.withDevice(s.initiateWebSocketSSH))).Methods("GET")
-
-	s.router.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "SetDeviceLabel", s.withDevice(s.setDeviceLabel))).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateAuthorization("devicelabels", "GetDeviceLabel", s.withDevice(s.getDeviceLabel))).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "ListDeviceLabels", s.withDevice(s.listDeviceLabels))).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateAuthorization("devicelabels", "DeleteDeviceLabel", s.withDevice(s.deleteDeviceLabel))).Methods("DELETE")
-
-	s.router.HandleFunc("/projects/{project}/deviceregistrationtokens", s.validateAuthorization("deviceregistrationtokens", "CreateDeviceRegistrationToken", s.createDeviceRegistrationToken)).Methods("POST")
-
-	s.router.HandleFunc("/projects/{project}/devices/register", s.registerDevice).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/bundle", s.withDeviceAuth(s.getBundle)).Methods("GET")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/info", s.withDeviceAuth(s.setDeviceInfo)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/deviceapplicationstatuses", s.withDeviceAuth(s.setDeviceApplicationStatus)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/deviceapplicationstatuses", s.withDeviceAuth(s.deleteDeviceApplicationStatus)).Methods("DELETE")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.withDeviceAuth(s.setDeviceServiceStatus)).Methods("POST")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.withDeviceAuth(s.deleteDeviceServiceStatus)).Methods("DELETE")
-	s.router.HandleFunc("/projects/{project}/devices/{device}/connection", s.withDeviceAuth(s.initiateDeviceConnection)).Methods("GET")
-
-	s.router.Handle("/revdial", revdial.ConnHandler()).Methods("GET")
+	s.router.PathPrefix("/").Handler(spaserver.NewSPAFileServer(fileSystem))
 
 	return s
 }

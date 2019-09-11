@@ -1,0 +1,35 @@
+{
+  "name": "deviceplane",
+  "version": "0.1.0",
+  "private": true,
+  "homepage": "https://app.deviceplane.com",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "evergreen-ui": "^4.12.0",
+    "moment": "^2.22.2",
+    "react": "^16.8.2",
+    "react-ace": "^6.2.0",
+    "react-dom": "^16.8.2",
+    "react-router": "^5.0.0",
+    "react-router-dom": "^5.0.0",
+    "react-scripts": "2.1.5",
+    "ssh2": "^0.5.3",
+    "websocket-stream": "^5.5.0",
+    "xterm": "^2.2.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
+}
