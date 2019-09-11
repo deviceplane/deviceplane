@@ -38,7 +38,7 @@ const usernameRegex = /^[a-zA-Z]+$/;
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?!.*\s).{8,100}$/;
 const nameRegex = /^[a-z0-9-]+$/;
 
-const agentVersion = '1.1.8';
+const agentVersion = '1.2.0';
 
 function checkName(objectName, name) {
   if (name === '') {
