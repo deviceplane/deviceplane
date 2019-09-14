@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import './App.css';
 import config from './config.js';
-import './xterm.css';
+import segment from './segment.js';
+import DeviceSsh from './components/DeviceSsh.js';
 import Editor from './components/Editor.js';
 import InnerCard from './components/InnerCard.js';
 import CustomSpinner from './components/CustomSpinner.js';
@@ -15,19 +16,6 @@ import 'brace/theme/chrome';
 import axios from 'axios';
 import moment from 'moment';
 import logo from './logo.png';
-
-
-var process = require('process');
- 
-// Hacks to get ssh2 working in browser
-process.binding = function () { return {} };
-process.version = '1.0.0';
- 
-var Client = require('ssh2/lib/client');
-var ws = require('websocket-stream');
-var xterm = require('xterm');
-require('xterm/lib/addons/fit/fit');
-
 
 const emailRegex = /^([a-zA-Z0-9_.-])+@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
 const usernameRegex = /^[a-zA-Z]+$/;
@@ -67,18 +55,6 @@ function convertErrorMessage(errorMessage) {
 
 function is4xx(status) {
   return status >= 400 && status < 500
-}
-
-function identify(userId, traits) {
-  window.analytics.identify(userId, traits);
-}
-
-function track(event) {
-  window.analytics.track(event, window.analytics.user().traits());
-}
-
-function page() {
-  window.analytics.page();
 }
 
 class TopHeader extends Component {
@@ -585,7 +561,7 @@ class AddMember extends Component {
       withCredentials: true
     })
     .then((response) => {
-      track('Member Added');
+      segment.track('Member Added');
 
       const userId = response.data.userId;
       const roleBindings = this.state.roleBindings;
@@ -1229,7 +1205,7 @@ class CreateServiceAccount extends Component {
       withCredentials: true
     })
     .then((response) => {
-      track('Service Account Created');
+      segment.track('Service Account Created');
       this.props.history.push(`/${this.props.projectName}/iam/serviceaccounts/`)
     })
     .catch((error) => {
@@ -1606,7 +1582,7 @@ class CreateRole extends Component {
       withCredentials: true
     })
     .then((response) => {
-      track('Role Created');
+      segment.track('Role Created');
       this.props.history.push(`/${this.props.projectName}/iam/roles/`)
     })
     .catch((error) => {
@@ -1915,70 +1891,6 @@ class DeviceOverview extends Component {
           )}
         </Pane>
       </React.Fragment>
-    );
-  }
-}
-
-class DeviceSsh extends Component {
-  componentDidMount() {
-    page();
-
-    var conn = new Client();
-    var term = new xterm();
-    var wndopts = { term: 'xterm' };
-    
-    window.term = term;
-    
-    // Store current size for initialization
-    term.on('resize', function (rev) {
-      wndopts.rows = rev.rows;
-      wndopts.cols = rev.cols;
-    });
-    
-    term.on('title', function (title) {
-      document.title = title;
-    });
-    
-    conn.on('ready', function() {
-      conn.shell(wndopts, function(err, stream) {
-        if (err) throw err;
-        stream.on('close', function() {
-          conn.end();
-        }).on('data', function(data) {
-          term.write(data.toString());
-        }).stderr.on('data', function(data) {
-          term.write(data.toString());
-        });
-        term.on('key', function (key, kev) {
-          stream.write(key);
-        });
-        term.on('resize', function (rev) {
-          stream.setWindow(rev.rows, rev.cols, 480, 640);
-        });
-      });
-    }).on('error', function (err) {
-      term.write(err.toString());
-    }).on('close', function () {
-      term.write('\r\nConnection lost.\r\n');
-    });
-    
-    term.open(document.getElementById('terminal'));
-    term.fit();
-    window.onresize = term.fit.bind(term);
-
-    conn.connect({
-      sock: ws(`${config.wsEndpoint}/projects/${this.props.projectName}/devices/${this.props.device.id}/wssh`, ['binary']),
-      username: ''
-    });
-  }
-
-  render() {
-    return (
-      <Pane
-        id="terminal"
-        margin={majorScale(4)}
-        height="100%"
-      />
     );
   }
 }
@@ -2441,7 +2353,7 @@ class AddDevice extends Component {
   }
 
   componentDidMount() {
-    page();
+    segment.page();
 
     this.getRegistrationToken();
     axios.get(`${config.endpoint}/projects/${this.props.projectName}`, {
@@ -3024,7 +2936,7 @@ class CreateApplication extends Component {
       withCredentials: true
     })
     .then((response) => {
-      track('Application Created');
+      segment.track('Application Created');
       this.props.history.push(`/${this.props.projectName}/applications/${this.state.name}`)
     })
     .catch((error) => {
@@ -3129,7 +3041,7 @@ class CreateRelease extends Component {
         withCredentials: true
       })
       .then((response) => {
-        track('Release Created');
+        segment.track('Release Created');
         this.props.history.push(`/${this.props.projectName}/applications/${this.props.applicationName}`)
       })
       .catch((error) => {
@@ -3302,7 +3214,7 @@ class Release extends Component {
       this.setState({
         showConfirmDialog: false
       });
-      //track('Release Created');
+      // segment.track('Release Created');
       this.props.history.push(`/${this.props.projectName}/applications/${this.props.applicationName}`)
     })
     .catch((error) => {
@@ -3994,7 +3906,7 @@ class CreateProject extends Component {
       withCredentials: true
     })
     .then((response) => {
-      track('Project Created');
+      segment.track('Project Created');
       this.props.history.push(`/${response.data.name}`);
     })
     .catch((error) => {
@@ -5155,7 +5067,7 @@ class Authenticated extends Component {
     })
     .then((response) => {
       const user = response.data;
-      identify(user.id, {
+      segment.identify(user.id, {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
