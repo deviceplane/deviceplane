@@ -10,7 +10,7 @@ Run the controller with `go run cmd/controller/main.go`. By default it runs on p
 
 Run the [UI](https://github.com/deviceplane/app) with `npm start`. The login is `email@example.com` / `password`.
 
-Run the agent with `go run cmd/agent/main.go --controller=http://localhost:8080 --controller2=http://localhost:8080 --project=prj_xxx --conf-dir=./cmd/agent/conf --state-dir=./cmd/agent/state --log-level=debug --registration-token=drt_1Lgz2FGL4jSvjqdZB3Bd7Z2ZdGn`. You will need to change the registration token for this command. To create a new one click on "Add Device" on the devices page.
+Run the agent with `go run cmd/agent/main.go --controller=http://localhost:8080/api --controller2=http://localhost:8080/api --project=prj_xxx --conf-dir=./cmd/agent/conf --state-dir=./cmd/agent/state --log-level=debug --registration-token=drt_1Lgz2FGL4jSvjqdZB3Bd7Z2ZdGn`. You will need to change the registration token for this command. To create a new one click on "Add Device" on the devices page.
 
 ## Releasing
 
