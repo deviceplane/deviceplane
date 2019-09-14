@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import './App.css';
+import config from './config.js';
 import './xterm.css';
 import Editor from './components/Editor.js';
 import InnerCard from './components/InnerCard.js';
@@ -28,17 +29,10 @@ var xterm = require('xterm');
 require('xterm/lib/addons/fit/fit');
 
 
-const endpointBase = window.location.port ? `${window.location.hostname}:${window.location.port}/api` : `${window.location.hostname}/api`;
-const endpoint = `${window.location.protocol}//${endpointBase}`;
-const wsEndpoint = window.location.protocol === 'http:' ? `ws://${endpointBase}` : `wss://${endpointBase}`;
-const cliEndpoint = 'https://cli.deviceplane.com';
-
 const emailRegex = /^([a-zA-Z0-9_.-])+@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
 const usernameRegex = /^[a-zA-Z]+$/;
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?!.*\s).{8,100}$/;
 const nameRegex = /^[a-z0-9-]+$/;
-
-const agentVersion = '1.2.0';
 
 function checkName(objectName, name) {
   if (name === '') {
@@ -238,7 +232,7 @@ class Members extends Component {
   }
 
   componentDidMount() {
-    axios.get(`${endpoint}/projects/${this.props.projectName}/memberships?full`, {
+    axios.get(`${config.endpoint}/projects/${this.props.projectName}/memberships?full`, {
       withCredentials: true
     })
     .then((response) => {
@@ -309,7 +303,7 @@ class Member extends Component {
   }
 
   componentDidMount() {
-    axios.get(`${endpoint}/projects/${this.props.projectName}/memberships/${this.props.userId}?full`, {
+    axios.get(`${config.endpoint}/projects/${this.props.projectName}/memberships/${this.props.userId}?full`, {
       withCredentials: true
     })
     .then((response) => {
@@ -321,7 +315,7 @@ class Member extends Component {
     .catch((error) => {
       console.log(error);
     });
-    axios.get(`${endpoint}/projects/${this.props.projectName}/roles`, {
+    axios.get(`${config.endpoint}/projects/${this.props.projectName}/roles`, {
       withCredentials: true
     })
     .then((response) => {
@@ -432,7 +426,7 @@ class Member extends Component {
   }
 
   addRole = (roleId) => {
-    axios.post(`${endpoint}/projects/${this.props.projectName}/memberships/${this.state.member.userId}/roles/${roleId}/membershiprolebindings`, {
+    axios.post(`${config.endpoint}/projects/${this.props.projectName}/memberships/${this.state.member.userId}/roles/${roleId}/membershiprolebindings`, {
     }, {
         withCredentials: true
     })
@@ -444,7 +438,7 @@ class Member extends Component {
   }
 
   removeRole = (roleId) => {
-    axios.delete(`${endpoint}/projects/${this.props.projectName}/memberships/${this.state.member.userId}/roles/${roleId}/membershiprolebindings`, {
+    axios.delete(`${config.endpoint}/projects/${this.props.projectName}/memberships/${this.state.member.userId}/roles/${roleId}/membershiprolebindings`, {
       withCredentials: true
     })
     .catch((error) => {
@@ -455,7 +449,7 @@ class Member extends Component {
   }
 
   handleRemove = () => {
-    axios.delete(`${endpoint}/projects/${this.props.projectName}/memberships/${this.state.member.userId}`, {
+    axios.delete(`${config.endpoint}/projects/${this.props.projectName}/memberships/${this.state.member.userId}`, {
       withCredentials: true
     })
     .then((response) => {
@@ -523,7 +517,7 @@ class AddMember extends Component {
   }
 
   componentDidMount() {
-    axios.get(`${endpoint}/projects/${this.props.projectName}/roles`, {
+    axios.get(`${config.endpoint}/projects/${this.props.projectName}/roles`, {
       withCredentials: true
     })
     .then((response) => {
@@ -585,7 +579,7 @@ class AddMember extends Component {
       });
     }
 
-    axios.post(`${endpoint}/projects/${this.props.projectName}/memberships`, {
+    axios.post(`${config.endpoint}/projects/${this.props.projectName}/memberships`, {
       email: this.state.email
     }, {
       withCredentials: true
@@ -624,7 +618,7 @@ class AddMember extends Component {
   }
 
   addRole = (userId, roleId) => {
-    axios.post(`${endpoint}/projects/${this.props.projectName}/memberships/${userId}/roles/${roleId}/membershiprolebindings`, {
+    axios.post(`${config.endpoint}/projects/${this.props.projectName}/memberships/${userId}/roles/${roleId}/membershiprolebindings`, {
     }, {
         withCredentials: true
       })
@@ -709,7 +703,7 @@ class ServiceAccounts extends Component {
   }
 
   componentDidMount() {
-    axios.get(`${endpoint}/projects/${this.props.projectName}/serviceaccounts?full`, {
+    axios.get(`${config.endpoint}/projects/${this.props.projectName}/serviceaccounts?full`, {
       withCredentials: true
     })
     .then((response) => {
@@ -778,7 +772,7 @@ class ServiceAccount extends Component {
   }
 
   componentDidMount() {
-    axios.get(`${endpoint}/projects/${this.props.projectName}/serviceaccounts/${this.props.serviceAccountName}?full`, {
+    axios.get(`${config.endpoint}/projects/${this.props.projectName}/serviceaccounts/${this.props.serviceAccountName}?full`, {
       withCredentials: true
     })
     .then((response) => {
@@ -792,7 +786,7 @@ class ServiceAccount extends Component {
     .catch((error) => {
       console.log(error);
     });
-    axios.get(`${endpoint}/projects/${this.props.projectName}/roles`, {
+    axios.get(`${config.endpoint}/projects/${this.props.projectName}/roles`, {
       withCredentials: true
     })
     .then((response) => {
@@ -869,7 +863,7 @@ class ServiceAccount extends Component {
       return
     }
 
-    axios.put(`${endpoint}/projects/${this.props.projectName}/serviceaccounts/${this.state.serviceAccount.id}`, {
+    axios.put(`${config.endpoint}/projects/${this.props.projectName}/serviceaccounts/${this.state.serviceAccount.id}`, {
       name: this.state.name,
       description: this.state.description
     }, {
@@ -938,7 +932,7 @@ class ServiceAccount extends Component {
   }
 
   addRole = (roleId) => {
-    axios.post(`${endpoint}/projects/${this.props.projectName}/serviceaccounts/${this.state.serviceAccount.id}/roles/${roleId}/serviceaccountrolebindings`, {
+    axios.post(`${config.endpoint}/projects/${this.props.projectName}/serviceaccounts/${this.state.serviceAccount.id}/roles/${roleId}/serviceaccountrolebindings`, {
     }, {
       withCredentials: true
     })
@@ -950,7 +944,7 @@ class ServiceAccount extends Component {
   }
 
   removeRole = (roleId) => {
-    axios.delete(`${endpoint}/projects/${this.props.projectName}/serviceaccounts/${this.state.serviceAccount.id}/roles/${roleId}/serviceaccountrolebindings`, {
+    axios.delete(`${config.endpoint}/projects/${this.props.projectName}/serviceaccounts/${this.state.serviceAccount.id}/roles/${roleId}/serviceaccountrolebindings`, {
       withCredentials: true
     })
     .catch((error) => {
@@ -961,7 +955,7 @@ class ServiceAccount extends Component {
   }
 
   handleDelete(){
-    axios.delete(`${endpoint}/projects/${this.props.projectName}/serviceaccounts/${this.state.serviceAccount.id}`, {
+    axios.delete(`${config.endpoint}/projects/${this.props.projectName}/serviceaccounts/${this.state.serviceAccount.id}`, {
       withCredentials: true
     })
     .then((response) => {
@@ -1055,7 +1049,7 @@ class ServiceAccountAccessKeys extends Component {
   }
 
   loadAccessKeys() {
-    axios.get(`${endpoint}/projects/${this.props.projectName}/serviceaccounts/${this.props.serviceAccount.id}/serviceaccountaccesskeys`, {
+    axios.get(`${config.endpoint}/projects/${this.props.projectName}/serviceaccounts/${this.props.serviceAccount.id}/serviceaccountaccesskeys`, {
       withCredentials: true
     })
     .then((response) => {
@@ -1069,7 +1063,7 @@ class ServiceAccountAccessKeys extends Component {
   }
 
   createAccessKey() {
-    axios.post(`${endpoint}/projects/${this.props.projectName}/serviceaccounts/${this.props.serviceAccount.id}/serviceaccountaccesskeys`, {
+    axios.post(`${config.endpoint}/projects/${this.props.projectName}/serviceaccounts/${this.props.serviceAccount.id}/serviceaccountaccesskeys`, {
     }, {
       withCredentials: true
     })
@@ -1092,7 +1086,7 @@ class ServiceAccountAccessKeys extends Component {
   }
 
   deleteAccessKey = (event) => {
-    axios.delete(`${endpoint}/projects/${this.props.projectName}/serviceaccounts/${this.props.serviceAccount.id}/serviceaccountaccesskeys/${event.target.id}`, {
+    axios.delete(`${config.endpoint}/projects/${this.props.projectName}/serviceaccounts/${this.props.serviceAccount.id}/serviceaccountaccesskeys/${event.target.id}`, {
       withCredentials: true
     })
     .then((response) => {
@@ -1228,7 +1222,7 @@ class CreateServiceAccount extends Component {
       return
     }
 
-    axios.post(`${endpoint}/projects/${this.props.projectName}/serviceaccounts`, {
+    axios.post(`${config.endpoint}/projects/${this.props.projectName}/serviceaccounts`, {
       name: this.state.name,
       description: this.state.description
     }, {
@@ -1330,7 +1324,7 @@ class Roles extends Component {
   }
 
   componentDidMount() {
-    axios.get(`${endpoint}/projects/${this.props.projectName}/roles`, {
+    axios.get(`${config.endpoint}/projects/${this.props.projectName}/roles`, {
       withCredentials: true
     })
     .then((response) => {
@@ -1399,7 +1393,7 @@ class Role extends Component {
   }
 
   componentDidMount() {
-    axios.get(`${endpoint}/projects/${this.props.projectName}/roles/${this.props.roleName}`, {
+    axios.get(`${config.endpoint}/projects/${this.props.projectName}/roles/${this.props.roleName}`, {
       withCredentials: true
     })
     .then((response) => {
@@ -1442,7 +1436,7 @@ class Role extends Component {
       return
     }
 
-    axios.put(`${endpoint}/projects/${this.props.projectName}/roles/${this.state.role.id}`, {
+    axios.put(`${config.endpoint}/projects/${this.props.projectName}/roles/${this.state.role.id}`, {
       name: this.state.name,
       description: this.state.description,
       config: this.state.config
@@ -1466,7 +1460,7 @@ class Role extends Component {
   }
 
   handleDelete() {
-    axios.delete(`${endpoint}/projects/${this.props.projectName}/roles/${this.state.role.id}`, {
+    axios.delete(`${config.endpoint}/projects/${this.props.projectName}/roles/${this.state.role.id}`, {
       withCredentials: true
     })
     .then((response) => {
@@ -1604,7 +1598,7 @@ class CreateRole extends Component {
       return
     }
 
-    axios.post(`${endpoint}/projects/${this.props.projectName}/roles`, {
+    axios.post(`${config.endpoint}/projects/${this.props.projectName}/roles`, {
       name: this.state.name,
       description: this.state.description,
       config: this.state.config
@@ -1691,7 +1685,7 @@ class Devices extends Component {
   }
 
   componentDidMount() {
-    axios.get(`${endpoint}/projects/${this.props.projectName}/devices?full`, {
+    axios.get(`${config.endpoint}/projects/${this.props.projectName}/devices?full`, {
       withCredentials: true
     })
     .then((response) => {
@@ -1776,7 +1770,7 @@ class Device extends Component {
   }
 
   componentDidMount() {
-    axios.get(`${endpoint}/projects/${this.props.projectName}/devices/${this.props.deviceName}?full`, {
+    axios.get(`${config.endpoint}/projects/${this.props.projectName}/devices/${this.props.deviceName}?full`, {
       withCredentials: true
     })
     .then((response) => {
@@ -1973,7 +1967,7 @@ class DeviceSsh extends Component {
     window.onresize = term.fit.bind(term);
 
     conn.connect({
-      sock: ws(`${wsEndpoint}/projects/${this.props.projectName}/devices/${this.props.device.id}/wssh`, ['binary']),
+      sock: ws(`${config.wsEndpoint}/projects/${this.props.projectName}/devices/${this.props.device.id}/wssh`, ['binary']),
       username: ''
     });
   }
@@ -2037,7 +2031,7 @@ class DeviceLabels extends Component {
   }
 
   componentDidMount() {
-    axios.get(`${endpoint}/projects/${this.props.projectName}/devices/${this.props.device.id}/labels`, {
+    axios.get(`${config.endpoint}/projects/${this.props.projectName}/devices/${this.props.device.id}/labels`, {
       withCredentials: true
     })
     .then((response) => {
@@ -2144,7 +2138,7 @@ class DeviceLabels extends Component {
     });
 
     if ((keyValidationMessage === null && valueValidationMessage === null && key !== null && value !== null)) {
-      axios.post(`${endpoint}/projects/${this.props.projectName}/devices/${this.props.device.id}/labels`, {
+      axios.post(`${config.endpoint}/projects/${this.props.projectName}/devices/${this.props.device.id}/labels`, {
         key: key,
         value: value
       }, {
@@ -2165,7 +2159,7 @@ class DeviceLabels extends Component {
 
   deleteDeviceLabel = (key, i) => {
     if (key !== '') {
-      axios.delete(`${endpoint}/projects/${this.props.projectName}/devices/${this.props.device.id}/labels/${key}`, {
+      axios.delete(`${config.endpoint}/projects/${this.props.projectName}/devices/${this.props.device.id}/labels/${key}`, {
         withCredentials: true
       })
       .then((response) => {
@@ -2341,7 +2335,7 @@ class DeviceSettings extends Component {
       return
     }
 
-    axios.patch(`${endpoint}/projects/${this.props.projectName}/devices/${this.props.device.id}`, {
+    axios.patch(`${config.endpoint}/projects/${this.props.projectName}/devices/${this.props.device.id}`, {
       name: this.state.name
     }, {
         withCredentials: true
@@ -2363,7 +2357,7 @@ class DeviceSettings extends Component {
   }
 
   handleRemove = () => {
-    axios.delete(`${endpoint}/projects/${this.props.projectName}/devices/${this.props.device.id}`, {
+    axios.delete(`${config.endpoint}/projects/${this.props.projectName}/devices/${this.props.device.id}`, {
       withCredentials: true
     })
     .then((response) => {
@@ -2450,7 +2444,7 @@ class AddDevice extends Component {
     page();
 
     this.getRegistrationToken();
-    axios.get(`${endpoint}/projects/${this.props.projectName}`, {
+    axios.get(`${config.endpoint}/projects/${this.props.projectName}`, {
       withCredentials: true
     })
     .then((response) => {
@@ -2464,7 +2458,7 @@ class AddDevice extends Component {
   }
 
   getRegistrationToken = () => {
-    axios.post(`${endpoint}/projects/${this.props.projectName}/deviceregistrationtokens`, null, {
+    axios.post(`${config.endpoint}/projects/${this.props.projectName}/deviceregistrationtokens`, null, {
       withCredentials: true
     })
     .then((response) => {
@@ -2533,7 +2527,7 @@ class AddDevice extends Component {
                   background="#234361"
                 >
                   <Code fontFamily="mono" color="white">
-                    docker run -d --restart=always --privileged --net=host --pid=host -v /etc/deviceplane:/etc/deviceplane -v /var/lib/deviceplane:/var/lib/deviceplane -v /var/run/docker.sock:/var/run/docker.sock -v /etc/os-release:/etc/os-release deviceplane/agent:{agentVersion} --project={this.state.project.id} --registration-token={this.state.deviceRegistrationToken.id}
+                    docker run -d --restart=always --privileged --net=host --pid=host -v /etc/deviceplane:/etc/deviceplane -v /var/lib/deviceplane:/var/lib/deviceplane -v /var/run/docker.sock:/var/run/docker.sock -v /etc/os-release:/etc/os-release deviceplane/agent:{config.agentVersion} --project={this.state.project.id} --registration-token={this.state.deviceRegistrationToken.id}
                   </Code>
                 </Card>
               </Card>
@@ -2554,7 +2548,7 @@ class Applications extends Component {
   }
 
   componentDidMount() {
-    axios.get(`${endpoint}/projects/${this.props.projectName}/applications?full`, {
+    axios.get(`${config.endpoint}/projects/${this.props.projectName}/applications?full`, {
       withCredentials: true
     })
     .then((response) => {
@@ -2623,7 +2617,7 @@ class Application extends Component {
   }
 
   componentDidMount() {
-    axios.get(`${endpoint}/projects/${this.props.projectName}/applications/${this.props.applicationName}?full`, {
+    axios.get(`${config.endpoint}/projects/${this.props.projectName}/applications/${this.props.applicationName}?full`, {
       withCredentials: true
     })
     .then((response) => {
@@ -2789,7 +2783,7 @@ class ApplicationScheduling extends Component {
       backendError: null
     });
 
-    axios.put(`${endpoint}/projects/${this.props.projectName}/applications/${this.props.application.name}`, {
+    axios.put(`${config.endpoint}/projects/${this.props.projectName}/applications/${this.props.application.name}`, {
       name: this.props.application.name,
       description: this.props.application.description,
       settings: {
@@ -2885,7 +2879,7 @@ class ApplicationSettings extends Component {
       return
     }
 
-    axios.put(`${endpoint}/projects/${this.props.projectName}/applications/${this.props.application.name}`, {
+    axios.put(`${config.endpoint}/projects/${this.props.projectName}/applications/${this.props.application.name}`, {
       name: this.state.name,
       description: this.state.description,
       settings: this.props.application.settings
@@ -2909,7 +2903,7 @@ class ApplicationSettings extends Component {
   }
 
   handleDelete() {
-    axios.delete(`${endpoint}/projects/${this.props.projectName}/applications/${this.props.application.name}`, {
+    axios.delete(`${config.endpoint}/projects/${this.props.projectName}/applications/${this.props.application.name}`, {
       withCredentials: true
     })
     .then((response) => {
@@ -3023,7 +3017,7 @@ class CreateApplication extends Component {
       return
     }
 
-    axios.post(`${endpoint}/projects/${this.props.projectName}/applications`, {
+    axios.post(`${config.endpoint}/projects/${this.props.projectName}/applications`, {
       name: this.state.name,
       description: this.state.description
     }, {
@@ -3104,7 +3098,7 @@ class CreateRelease extends Component {
   }
 
   componentDidMount() {
-    axios.get(`${endpoint}/projects/${this.props.projectName}/applications/${this.props.applicationName}/releases/latest`, {
+    axios.get(`${config.endpoint}/projects/${this.props.projectName}/applications/${this.props.applicationName}/releases/latest`, {
       withCredentials: true
     })
     .then((response) => {
@@ -3129,7 +3123,7 @@ class CreateRelease extends Component {
       return
     }
 
-    axios.post(`${endpoint}/projects/${this.props.projectName}/applications/${this.props.applicationName}/releases`, {
+    axios.post(`${config.endpoint}/projects/${this.props.projectName}/applications/${this.props.applicationName}/releases`, {
       config: this.state.config
     }, {
         withCredentials: true
@@ -3197,7 +3191,7 @@ class Releases extends Component {
   }
 
   componentDidMount() {
-    axios.get(`${endpoint}/projects/${this.props.projectName}/applications/${this.props.applicationName}/releases?full`, {
+    axios.get(`${config.endpoint}/projects/${this.props.projectName}/applications/${this.props.applicationName}/releases?full`, {
       withCredentials: true
     })
     .then((response) => {
@@ -3348,7 +3342,7 @@ class Register extends Component {
     });
 
     if (firstNameValidationMessage === null && lastNameValidationMessage === null && emailValidationMessage === null && passwordValidationMessage === null && passwordConfirmationValidationMessage === null) {
-      axios.post(`${endpoint}/register`, {
+      axios.post(`${config.endpoint}/register`, {
         email: this.state.email,
         password: this.state.password,
         firstName: this.state.firstName,
@@ -3526,7 +3520,7 @@ class ChangePassword extends Component {
     });
 
     if (currentPasswordValidationMessage === null && passwordValidationMessage === null && passwordConfirmationValidationMessage === null) {
-      axios.patch(`${endpoint}/me`, {
+      axios.patch(`${config.endpoint}/me`, {
         password: this.state.password,
         currentPassword: this.state.currentPassword
       }, {
@@ -3631,7 +3625,7 @@ class ResetPassword extends Component {
     });
 
     if (emailValidationMessage === null) {
-      axios.post(`${endpoint}/recoverpassword`, {
+      axios.post(`${config.endpoint}/recoverpassword`, {
         email: this.state.email
       })
       .then((response) => {
@@ -3756,7 +3750,7 @@ class Login extends Component {
     });
 
     if (emailValidationMessage === null && passwordValidationMessage === null) {
-      axios.post(`${endpoint}/login`, {
+      axios.post(`${config.endpoint}/login`, {
         email: this.state.email,
         password: this.state.password
       }, {
@@ -3869,7 +3863,7 @@ class CreateProject extends Component {
       return
     }
 
-    axios.post(`${endpoint}/projects`, {
+    axios.post(`${config.endpoint}/projects`, {
       name: this.state.name
     }, {
       withCredentials: true
@@ -3942,7 +3936,7 @@ class ProjectSelector extends Component {
   }
 
   componentDidMount() {
-    axios.get(`${endpoint}/memberships?full`, {
+    axios.get(`${config.endpoint}/memberships?full`, {
       withCredentials: true
     })
     .then((response) => {
@@ -4047,7 +4041,7 @@ class ProjectSettings extends Component {
       return
     }
 
-    axios.put(`${endpoint}/projects/${this.props.projectName}`, {
+    axios.put(`${config.endpoint}/projects/${this.props.projectName}`, {
       name: this.state.name,
     }, {
       withCredentials: true
@@ -4073,7 +4067,7 @@ class ProjectSettings extends Component {
       backendError: null
     });
 
-    axios.delete(`${endpoint}/projects/${this.props.projectName}`, {
+    axios.delete(`${config.endpoint}/projects/${this.props.projectName}`, {
       withCredentials: true
     })
     .then((response) => {
@@ -4166,7 +4160,7 @@ class UserAvatar extends Component {
   }
 
   handleLogout() {
-    axios.post(`${endpoint}/logout`, null, {
+    axios.post(`${config.endpoint}/logout`, null, {
       withCredentials: true
     })
     .then((response) => {
@@ -4320,7 +4314,7 @@ class EditProfile extends Component {
     });
 
     if (!invalidFirstName && !invalidLastName) {
-      axios.patch(`${endpoint}/me`, {
+      axios.patch(`${config.endpoint}/me`, {
         firstName: this.state.firstName,
         lastName: this.state.lastName,
         company: this.state.company
@@ -4401,11 +4395,11 @@ class CliDownload extends Component {
           flexDirection="column"
           margin={majorScale(4)}
         >
-          <Button marginBottom={majorScale(3)} justifyContent="center" is="a" href={`${cliEndpoint}/latest/darwin/amd64/deviceplane`}>MacOS</Button>
-          <Button marginBottom={majorScale(3)} justifyContent="center" is="a" href={`${cliEndpoint}/latest/windows/amd64/deviceplane.exe`}>Windows</Button>
-          <Button marginBottom={majorScale(3)} justifyContent="center" is="a" href={`${cliEndpoint}/latest/linux/amd64/deviceplane`}>Linux AMD64</Button>
-          <Button marginBottom={majorScale(3)} justifyContent="center" is="a" href={`${cliEndpoint}/latest/linux/arm/deviceplane`}>Linux ARM</Button>
-          <Button marginBottom={majorScale(3)} justifyContent="center" is="a" href={`${cliEndpoint}/latest/linux/arm64/deviceplane`}>Linux ARM64</Button>
+          <Button marginBottom={majorScale(3)} justifyContent="center" is="a" href={`${config.cliEndpoint}/latest/darwin/amd64/deviceplane`}>MacOS</Button>
+          <Button marginBottom={majorScale(3)} justifyContent="center" is="a" href={`${config.cliEndpoint}/latest/windows/amd64/deviceplane.exe`}>Windows</Button>
+          <Button marginBottom={majorScale(3)} justifyContent="center" is="a" href={`${config.cliEndpoint}/latest/linux/amd64/deviceplane`}>Linux AMD64</Button>
+          <Button marginBottom={majorScale(3)} justifyContent="center" is="a" href={`${config.cliEndpoint}/latest/linux/arm/deviceplane`}>Linux ARM</Button>
+          <Button marginBottom={majorScale(3)} justifyContent="center" is="a" href={`${config.cliEndpoint}/latest/linux/arm64/deviceplane`}>Linux ARM64</Button>
         </Pane>
       </React.Fragment>
     );
@@ -4428,7 +4422,7 @@ class UserAccessKeys extends Component {
   }
 
   loadAccessKeys() {
-    axios.get(`${endpoint}/useraccesskeys`, {
+    axios.get(`${config.endpoint}/useraccesskeys`, {
       withCredentials: true
     })
     .then((response) => {
@@ -4446,7 +4440,7 @@ class UserAccessKeys extends Component {
       backendError: null
     });
 
-    axios.post(`${endpoint}/useraccesskeys`, {
+    axios.post(`${config.endpoint}/useraccesskeys`, {
     }, {
       withCredentials: true
     })
@@ -4473,7 +4467,7 @@ class UserAccessKeys extends Component {
       backendError: null
     });
 
-    axios.delete(`${endpoint}/useraccesskeys/${event.target.id}`, {
+    axios.delete(`${config.endpoint}/useraccesskeys/${event.target.id}`, {
       withCredentials: true
     })
     .then((response) => {
@@ -4814,7 +4808,7 @@ class InnerOogie extends Component {
 
 class Confirm extends Component {
   componentDidMount() {
-    axios.post(`${endpoint}/completeregistration`, {
+    axios.post(`${config.endpoint}/completeregistration`, {
       registrationTokenValue: this.props.token
     }, {
       withCredentials: true
@@ -4846,7 +4840,7 @@ class PasswordRecovery extends Component {
   }
 
   componentDidMount() {
-    axios.get(`${endpoint}/passwordrecoverytokens/${this.props.token}`)
+    axios.get(`${config.endpoint}/passwordrecoverytokens/${this.props.token}`)
     .then((response) => {
       this.setState({
         invalidToken: this.isTokenExpired(response.data.expiresAt)
@@ -4897,7 +4891,7 @@ class PasswordRecovery extends Component {
     });
 
     if (passwordValidationMessage === null && passwordConfirmationValidationMessage === null) {
-      axios.post(`${endpoint}/changepassword`, {
+      axios.post(`${config.endpoint}/changepassword`, {
         passwordRecoveryTokenValue: this.props.token,
         password: this.state.password
       })
@@ -5031,7 +5025,7 @@ class Authenticated extends Component {
   }
 
   componentDidMount() {
-    axios.get(`${endpoint}/me`, {
+    axios.get(`${config.endpoint}/me`, {
       withCredentials: true
     })
     .then((response) => {
@@ -5077,7 +5071,7 @@ class Unauthenticated extends Component {
   }
 
   componentDidMount() {
-    axios.get(`${endpoint}/me`, {
+    axios.get(`${config.endpoint}/me`, {
       withCredentials: true
     })
     .then((response) => {
