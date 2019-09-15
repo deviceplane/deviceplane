@@ -22,22 +22,16 @@ var version = "dev"
 var name = "deviceplane-controller"
 
 var config struct {
-	Addr           string        `conf:"addr"`
-	MySQLPrimary   string        `conf:"mysql-primary"`
-	Redis          string        `conf:"redis"`
-	RedisTimeout   time.Duration `conf:"redis-timeout"`
-	RedisConns     int           `conf:"redis-conns"`
-	CookieDomain   string        `conf:"cookie-domain"`
-	CookieSecure   bool          `conf:"cookie-secure"`
-	AllowedOrigins []string      `conf:"allowed-origins"`
+	Addr           string   `conf:"addr"`
+	MySQLPrimary   string   `conf:"mysql-primary"`
+	CookieDomain   string   `conf:"cookie-domain"`
+	CookieSecure   bool     `conf:"cookie-secure"`
+	AllowedOrigins []string `conf:"allowed-origins"`
 }
 
 func init() {
 	config.Addr = ":8080"
 	config.MySQLPrimary = "user:pass@tcp(localhost:3306)/deviceplane?parseTime=true"
-	config.Redis = "localhost:6379"
-	config.RedisTimeout = 5 * time.Second
-	config.RedisConns = 10
 	config.CookieDomain = "localhost"
 	config.CookieSecure = false
 	config.AllowedOrigins = []string{"http://localhost:3000"}
