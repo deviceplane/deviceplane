@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import './App.css';
 import config from './config.js';
 import segment from './segment.js';
+import utils from './utils.js';
 import DeviceSsh from './components/DeviceSsh.js';
 import Editor from './components/Editor.js';
 import InnerCard from './components/InnerCard.js';
@@ -10,52 +11,10 @@ import { Textarea, Button, TextInput, TextInputField, Pane, Tablist, SidebarTab,
   Table, Heading, Avatar, Icon, Popover, Text, Code, Card, Label, Dialog, BackButton,
   Menu, IconButton, Badge, majorScale, minorScale, toaster, Link, Checkbox,
   Alert, SideSheet, TabNavigation } from 'evergreen-ui'
-import { BrowserRouter as Router, Route, Redirect, Switch } from "react-router-dom";
-import 'brace/mode/yaml';
-import 'brace/theme/chrome';
+import { BrowserRouter as Router, Route, Redirect, Switch } from 'react-router-dom';
 import axios from 'axios';
 import moment from 'moment';
 import logo from './logo.png';
-
-const emailRegex = /^([a-zA-Z0-9_.-])+@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
-const usernameRegex = /^[a-zA-Z]+$/;
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?!.*\s).{8,100}$/;
-const nameRegex = /^[a-z0-9-]+$/;
-
-function checkName(objectName, name) {
-  if (name === '') {
-    return 'Please enter a name.'
-  }
-
-  if (!nameRegex.test(name)) {
-    return 'Invalid ' + objectName + ' name. Name can only contain lowercase letters, numbers and -.'
-  }
-
-  if (name.length > 100) {
-    return 'The ' + objectName + ' name must be less than 100 characters.'
-  }
-
-  return null
-}
-
-function checkConfig(objectName, config) {
-  if (config === '') {
-    return 'Please enter a ' + objectName + '.'
-  }
-
-  return null;
-}
-
-function convertErrorMessage(errorMessage) {
-  if (errorMessage !== '') {
-    return errorMessage.charAt(0).toUpperCase() + errorMessage.slice(1).trim() + '.'
-  }
-  return ''
-}
-
-function is4xx(status) {
-  return status >= 400 && status < 500
-}
 
 class TopHeader extends Component {
   render() {
@@ -542,7 +501,7 @@ class AddMember extends Component {
       backendError: null
     });
 
-    if (!emailRegex.test(this.state.email)) {
+    if (!utils.emailRegex.test(this.state.email)) {
       this.setState({
         emailValidationMessage: 'Please enter a valid email.'
       });
@@ -582,9 +541,9 @@ class AddMember extends Component {
       }
     })
     .catch((error) => {
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         console.log(error);
@@ -828,7 +787,7 @@ class ServiceAccount extends Component {
 
   handleUpdate() {
     var noError = true;
-    var nameValidationMessage = checkName("service account", this.state.name)
+    var nameValidationMessage = utils.checkName("service account", this.state.name)
 
     //always set validation message for name
     this.setState({
@@ -1050,9 +1009,9 @@ class ServiceAccountAccessKeys extends Component {
       });
     })
     .catch((error) => {
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         toaster.danger('Access key was not created successfully.');
@@ -1070,9 +1029,9 @@ class ServiceAccountAccessKeys extends Component {
       this.loadAccessKeys();
     })
     .catch((error) => {
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         toaster.danger('Access key was not deleted.');
@@ -1186,7 +1145,7 @@ class CreateServiceAccount extends Component {
   }
 
   handleSubmit() {
-    var nameValidationMessage = checkName("service account", this.state.name)
+    var nameValidationMessage = utils.checkName("service account", this.state.name)
 
     //always set validation message for name
     this.setState({
@@ -1209,9 +1168,9 @@ class CreateServiceAccount extends Component {
       this.props.history.push(`/${this.props.projectName}/iam/serviceaccounts/`)
     })
     .catch((error) => {
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         toaster.danger('Service Account was not created.')
@@ -1400,7 +1359,7 @@ class Role extends Component {
   }
 
   handleUpdate() {
-    var nameValidationMessage = checkName("role", this.state.name)
+    var nameValidationMessage = utils.checkName("role", this.state.name)
 
     //always set validation message for name
     this.setState({
@@ -1424,9 +1383,9 @@ class Role extends Component {
       this.props.history.push(`/${this.props.projectName}/iam/roles`);
     })
     .catch((error) => {
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         toaster.danger('Role was not updated.')
@@ -1450,9 +1409,9 @@ class Role extends Component {
       this.setState({
         showDeleteDialog: false
       });
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         toaster.danger('Role was not deleted.');
@@ -1554,8 +1513,8 @@ class CreateRole extends Component {
   }
 
   handleSubmit() {
-    var nameValidationMessage = checkName("role", this.state.name)
-    var configError = checkConfig("role config", this.state.config)
+    var nameValidationMessage = utils.checkName("role", this.state.name)
+    var configError = utils.checkConfig("role config", this.state.config)
 
     //always set validation message for name
     this.setState({
@@ -1586,9 +1545,9 @@ class CreateRole extends Component {
       this.props.history.push(`/${this.props.projectName}/iam/roles/`)
     })
     .catch((error) => {
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         toaster.danger('Role was not created.');
@@ -2030,8 +1989,8 @@ class DeviceLabels extends Component {
 
   setDeviceLabel = (key, value, i) => {
     var updatedLabels = this.state.labels
-    var keyValidationMessage = checkName("key", key);
-    var valueValidationMessage = checkName("value", value);
+    var keyValidationMessage = utils.checkName("key", key);
+    var valueValidationMessage = utils.checkName("value", value);
 
     if (keyValidationMessage === null) {
       for (var j = 0; j < updatedLabels.length; j++) {
@@ -2235,7 +2194,7 @@ class DeviceSettings extends Component {
   }
 
   handleUpdate = () => {
-    var nameValidationMessage = checkName("device", this.state.name)
+    var nameValidationMessage = utils.checkName("device", this.state.name)
 
     //always set validation message for name
     this.setState({
@@ -2257,9 +2216,9 @@ class DeviceSettings extends Component {
       this.props.history.push(`/${this.props.projectName}/devices/${this.state.name}`);
     })
     .catch((error) => {
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         toaster.danger('Device was not updated.')
@@ -2280,9 +2239,9 @@ class DeviceSettings extends Component {
       this.setState({
         showRemoveDialog: false
       });
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         toaster.danger('Device was not removed.')
@@ -2709,9 +2668,9 @@ class ApplicationScheduling extends Component {
       this.props.history.push(`/${this.props.projectName}/applications/${this.props.application.name}`);
     })
     .catch((error) => {
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         console.log(error);
@@ -2779,7 +2738,7 @@ class ApplicationSettings extends Component {
   }
 
   handleUpdate = () => {
-    var nameValidationMessage = checkName("application", this.state.name)
+    var nameValidationMessage = utils.checkName("application", this.state.name)
 
     //always set validation message for name
     this.setState({
@@ -2803,9 +2762,9 @@ class ApplicationSettings extends Component {
       this.props.history.push(`/${this.props.projectName}/applications/${this.state.name}`);
     })
     .catch((error) => {
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         toaster.danger('Application was not updated.')
@@ -2829,9 +2788,9 @@ class ApplicationSettings extends Component {
       this.setState({
         showDeleteDialog: false
       });
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         toaster.danger('Application was not deleted.')
@@ -2917,7 +2876,7 @@ class CreateApplication extends Component {
   }
 
   handleSubmit = () => {
-    var nameValidationMessage = checkName("application", this.state.name)
+    var nameValidationMessage = utils.checkName("application", this.state.name)
 
     //always set validation message for name
     this.setState({
@@ -2940,9 +2899,9 @@ class CreateApplication extends Component {
       this.props.history.push(`/${this.props.projectName}/applications/${this.state.name}`)
     })
     .catch((error) => {
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         toaster.danger('Application was not created.')
@@ -3025,7 +2984,7 @@ class CreateRelease extends Component {
   }
 
   handleSubmit() {
-    var configError = checkConfig("release", this.state.config)
+    var configError = utils.checkConfig("release", this.state.config)
 
     this.setState({
       backendError: configError
@@ -3045,9 +3004,9 @@ class CreateRelease extends Component {
         this.props.history.push(`/${this.props.projectName}/applications/${this.props.applicationName}`)
       })
       .catch((error) => {
-        if (is4xx(error.response.status)) {
+        if (utils.is4xx(error.response.status)) {
           this.setState({
-            backendError: convertErrorMessage(error.response.data)
+            backendError: utils.convertErrorMessage(error.response.data)
           });
         } else {
           console.log(error);
@@ -3221,9 +3180,9 @@ class Release extends Component {
       this.setState({
         showConfirmDialog: false
       });
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         console.log(error);
@@ -3349,19 +3308,19 @@ class Register extends Component {
     var passwordConfirmationValidationMessage = null;
 
 
-    if (!usernameRegex.test(this.state.firstName)) {
+    if (!utils.usernameRegex.test(this.state.firstName)) {
       firstNameValidationMessage = 'Please enter a valid first name. Only letters are allowed.'
     }
 
-    if (!usernameRegex.test(this.state.lastName)) {
+    if (!utils.usernameRegex.test(this.state.lastName)) {
       lastNameValidationMessage = 'Please enter a valid last name. Only letters are allowed.'
     }
 
-    if (!emailRegex.test(this.state.email)) {
+    if (!utils.emailRegex.test(this.state.email)) {
       emailValidationMessage = 'Please enter a valid email.'
     }
 
-    if (!passwordRegex.test(this.state.password)) {
+    if (!utils.passwordRegex.test(this.state.password)) {
       passwordValidationMessage = 'Please enter a valid password.'
     }
 
@@ -3393,9 +3352,9 @@ class Register extends Component {
         this.props.history.push(`/login`)
       })
       .catch((error) => {
-        if (is4xx(error.response.status)) {
+        if (utils.is4xx(error.response.status)) {
           this.setState({
-            registerError: convertErrorMessage(error.response.data)
+            registerError: utils.convertErrorMessage(error.response.data)
           });
         } else {
           toaster.danger('Something went wrong with your registration. Please contact us at support@deviceplane.com.')
@@ -3533,11 +3492,11 @@ class ChangePassword extends Component {
       currentPasswordValidationMessage = 'Please enter your current password.'
     }
 
-    if (!passwordRegex.test(this.state.password)) {
+    if (!utils.passwordRegex.test(this.state.password)) {
       passwordValidationMessage = 'Please enter a valid password.'
     }
 
-    if (!passwordRegex.test(this.state.passwordConfirmation)) {
+    if (!utils.passwordRegex.test(this.state.passwordConfirmation)) {
       passwordConfirmationValidationMessage = 'Please enter a valid password.'
     }
 
@@ -3572,9 +3531,9 @@ class ChangePassword extends Component {
         toaster.success('Password updated.');
       })
       .catch((error) => {
-        if (is4xx(error.response.status)) {
+        if (utils.is4xx(error.response.status)) {
           this.setState({
-            changePasswordError: convertErrorMessage(error.response.data)
+            changePasswordError: utils.convertErrorMessage(error.response.data)
           });
         } else {
           toaster.danger('Password was not updated.')
@@ -3652,7 +3611,7 @@ class ResetPassword extends Component {
     var emailValidationMessage = null;
     var showUserNotFound = false;
 
-    if (!emailRegex.test(this.state.email)) {
+    if (!utils.emailRegex.test(this.state.email)) {
       emailValidationMessage = 'Please enter a valid email.'
     }
 
@@ -3772,7 +3731,7 @@ class Login extends Component {
     var passwordValidationMessage = null;
     var submitError = null;
 
-    if (!emailRegex.test(this.state.email)) {
+    if (!utils.emailRegex.test(this.state.email)) {
       emailValidationMessage = 'Please enter a valid email.'
     }
 
@@ -3888,7 +3847,7 @@ class CreateProject extends Component {
   }
 
   handleSubmit = () => {
-    var nameValidationMessage = checkName("project", this.state.name)
+    var nameValidationMessage = utils.checkName("project", this.state.name)
 
     //always set validation message for name
     this.setState({
@@ -3910,9 +3869,9 @@ class CreateProject extends Component {
       this.props.history.push(`/${response.data.name}`);
     })
     .catch((error) => {
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         toaster.danger('Project was not created.')
@@ -4066,7 +4025,7 @@ class ProjectSettings extends Component {
   }
 
   handleUpdate = () => {
-    var nameValidationMessage = checkName("project", this.state.name)
+    var nameValidationMessage = utils.checkName("project", this.state.name)
 
     //always set validation message for name
     this.setState({
@@ -4088,9 +4047,9 @@ class ProjectSettings extends Component {
       this.props.history.push(`/${this.state.name}/settings`);
     })
     .catch((error) => {
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         toaster.danger('Project was not updated.')
@@ -4118,9 +4077,9 @@ class ProjectSettings extends Component {
       this.setState({
         showDeleteDialog: false
       });
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         toaster.danger('Project was not deleted.')
@@ -4332,12 +4291,12 @@ class EditProfile extends Component {
     var invalidFirstName = false;
     var invalidLastName = false;
 
-    if (!usernameRegex.test(this.state.firstName)) {
+    if (!utils.usernameRegex.test(this.state.firstName)) {
       firstNameValidationMessage = 'Please enter a valid first name. Only letters are allowed.'
       invalidFirstName = true
     }
 
-    if (!usernameRegex.test(this.state.lastName)) {
+    if (!utils.usernameRegex.test(this.state.lastName)) {
       lastNameValidationMessage = 'Please enter a valid last name. Only letters are allowed.'
       invalidLastName = true
     }
@@ -4362,9 +4321,9 @@ class EditProfile extends Component {
         toaster.success('Profile updated.');
       })
       .catch((error) => {
-        if (is4xx(error.response.status)) {
+        if (utils.is4xx(error.response.status)) {
           this.setState({
-            backendError: convertErrorMessage(error.response.data)
+            backendError: utils.convertErrorMessage(error.response.data)
           });
         } else {
           toaster.danger('Profile was not updated.')
@@ -4488,9 +4447,9 @@ class UserAccessKeys extends Component {
       });
     })
     .catch((error) => {
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         toaster.danger('Access key was not created successfully.');
@@ -4512,9 +4471,9 @@ class UserAccessKeys extends Component {
       this.loadAccessKeys();
     })
     .catch((error) => {
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
-          backendError: convertErrorMessage(error.response.data)
+          backendError: utils.convertErrorMessage(error.response.data)
         });
       } else {
         toaster.danger('Access key was not deleted.');
@@ -4913,7 +4872,7 @@ class PasswordRecovery extends Component {
     var passwordValidationMessage = null;
     var passwordConfirmationValidationMessage = null;
 
-    if (!passwordRegex.test(this.state.password)) {
+    if (!utils.passwordRegex.test(this.state.password)) {
       passwordValidationMessage = 'Please enter a valid password.'
     }
 
@@ -4937,9 +4896,9 @@ class PasswordRecovery extends Component {
         this.props.history.push(`/login`)
       })
       .catch((error) => {
-        if (is4xx(error.response.status)) {
+        if (utils.is4xx(error.response.status)) {
           this.setState({
-            passwordRecoveryError: convertErrorMessage(error.response.data)
+            passwordRecoveryError: utils.convertErrorMessage(error.response.data)
           });
         } else {
           toaster.danger('Something went wrong with changing your password. Please contact us at support@deviceplane.com.')
@@ -5077,7 +5036,7 @@ class Authenticated extends Component {
       });
     })
     .catch((error) => {
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.props.history.push('/login');
       } else {
         console.log(error);
@@ -5115,7 +5074,7 @@ class Unauthenticated extends Component {
       this.props.history.push('/');
     })
     .catch((error) => {
-      if (is4xx(error.response.status)) {
+      if (utils.is4xx(error.response.status)) {
         this.setState({
           authenticationCheckCompleted: true
         });

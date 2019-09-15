@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import './../App.css';
 import AceEditor from 'react-ace';
+import 'brace/mode/yaml';
+import 'brace/theme/chrome';
 
 export default class Editor extends Component {
   render() {
