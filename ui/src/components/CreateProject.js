@@ -23,7 +23,9 @@ export default class CreateProject extends Component {
     });
   }
 
-  handleSubmit = () => {
+  handleSubmit = (event) => {
+    event.preventDefault();
+
     var nameValidationMessage = utils.checkName("project", this.state.name)
 
     //always set validation message for name
@@ -77,6 +79,7 @@ export default class CreateProject extends Component {
           <InnerCard>
             <Pane
               padding={majorScale(4)}
+              is="form"
             >
               {this.state.backendError && (
                 <Alert marginBottom={majorScale(2)} paddingTop={majorScale(2)} paddingBottom={majorScale(2)} intent="warning" title={this.state.backendError} />
@@ -89,7 +92,7 @@ export default class CreateProject extends Component {
                 validationMessage={this.state.nameValidationMessage}
               />
               <Pane display="flex" flex="row">
-                <Button appearance="primary" onClick={() => this.handleSubmit()}>Submit</Button>
+                <Button appearance="primary" onClick={this.handleSubmit}>Submit</Button>
                 <Button marginLeft={majorScale(2)} onClick={() => this.handleCancel()}>Cancel</Button>
               </Pane>
             </Pane>
