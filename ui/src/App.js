@@ -2843,7 +2843,9 @@ class CreateApplication extends Component {
     });
   }
 
-  handleSubmit = () => {
+  handleSubmit = (event) => {
+    event.preventDefault();
+
     var nameValidationMessage = utils.checkName("application", this.state.name)
 
     //always set validation message for name
@@ -2891,6 +2893,7 @@ class CreateApplication extends Component {
           <InnerCard>
             <Pane
               padding={majorScale(4)}
+              is="form"
             >
               {this.state.backendError && (
                 <Alert marginBottom={majorScale(2)} paddingTop={majorScale(2)} paddingBottom={majorScale(2)} intent="warning" title={this.state.backendError} />
@@ -2915,7 +2918,7 @@ class CreateApplication extends Component {
                 onChange={this.handleUpdateDescription}
               />
               <Pane display="flex" flex="row">
-                <Button marginTop={majorScale(2)} appearance="primary" onClick={() => this.handleSubmit()}>Submit</Button>
+                <Button marginTop={majorScale(2)} appearance="primary" onClick={this.handleSubmit}>Submit</Button>
                 <Button marginTop={majorScale(2)} marginLeft={majorScale(2)} onClick={() => this.handleCancel()}>Cancel</Button>
               </Pane>
             </Pane>
