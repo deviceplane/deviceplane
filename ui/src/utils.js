@@ -2,12 +2,20 @@ const emailRegex = /^([a-zA-Z0-9_.-])+@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/
 const usernameRegex = /^[a-zA-Z]+$/;
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?!.*\s).{8,100}$/;
 const nameRegex = /^[a-z0-9-]+$/;
+const minEightCharRegex = /^.{8,100}$/;
+const lowercaseRegex = /^(?=.*[a-z]).{1,100}$/;
+const uppercaseRegex = /^(?=.*[A-Z]).{1,100}$/;
+const noSpacesRegex = /^(?!.*\s).{1,100}$/;
 
 export default {
   emailRegex: emailRegex,
   usernameRegex: usernameRegex,
   passwordRegex: passwordRegex,
   nameRegex: nameRegex,
+  minEightCharRegex: minEightCharRegex,
+  lowercaseRegex: lowercaseRegex,
+  uppercaseRegex: uppercaseRegex,
+  noSpacesRegex: noSpacesRegex,
 
   checkName: (objectName, name) => {
     if (name === '') {
