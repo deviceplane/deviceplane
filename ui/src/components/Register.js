@@ -291,7 +291,7 @@ export default class Register extends Component {
             isInvalid={this.state.passwordConfirmationValidationMessage !== null}
             validationMessage={this.state.passwordConfirmationValidationMessage}
           />
-          <Button appearance="primary" justifyContent="center" onClick={this.handleSubmit}>Submit</Button>
+          <Button width="100%" appearance="primary" justifyContent="center" onClick={this.handleSubmit}>Submit</Button>
         </Pane>
         <Pane
           display="flex"
