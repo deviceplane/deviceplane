@@ -22,7 +22,9 @@ export default class ResetPassword extends Component {
     });
   }
 
-  handleSubmit = () => {
+  handleSubmit = (event) => {
+    event.preventDefault();
+
     var emailValidationMessage = null;
     var showUserNotFound = false;
 
@@ -85,14 +87,18 @@ export default class ResetPassword extends Component {
           {this.state.showUserNotFound && (
             <Alert marginBottom={majorScale(2)} paddingTop={majorScale(2)} paddingBottom={majorScale(2)} intent="warning" title="User doesn't exist">There is no user with that email address.</Alert>
           )}
-          <TextInputField
-            label="Email"
-            onChange={this.handleUpdateEmail}
-            value={this.state.email}
-            isInvalid={this.state.emailValidationMessage !== null}
-            validationMessage={this.state.emailValidationMessage}
-          />
-          <Button appearance="primary" justifyContent="center" onClick={this.handleSubmit}>Send Reset Password Email</Button>
+          <Pane is="form">
+            <TextInputField
+              label="Email"
+              onChange={this.handleUpdateEmail}
+              value={this.state.email}
+              isInvalid={this.state.emailValidationMessage !== null}
+              validationMessage={this.state.emailValidationMessage}
+            />
+            <Pane>
+              <Button width="100%" appearance="primary" justifyContent="center" onClick={this.handleSubmit}>Send Reset Password Email</Button>
+            </Pane>
+          </Pane>
         </React.Fragment>
         <Pane
           display="flex"
