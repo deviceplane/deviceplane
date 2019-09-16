@@ -3,6 +3,7 @@ module github.com/deviceplane/deviceplane
 go 1.12
 
 require (
+	github.com/DataDog/datadog-go v2.2.0+incompatible
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/Microsoft/go-winio v0.4.13 // indirect
 	github.com/apex/log v1.1.0

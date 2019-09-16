@@ -11,7 +11,7 @@ import (
 
 func (s *Service) initiateDeviceConnection(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
 	withHijackedHTTPConnection(w, func(conn net.Conn) {
-		s.connKing.Set(projectID+deviceID, conn)
+		s.connman.Set(projectID+deviceID, conn)
 	})
 }
 
@@ -20,7 +20,7 @@ func (s *Service) initiateSSH(w http.ResponseWriter, r *http.Request,
 	deviceID string,
 ) {
 	withHijackedHTTPConnection(w, func(conn net.Conn) {
-		s.connKing.Join(projectID+deviceID, conn)
+		s.connman.Join(projectID+deviceID, conn)
 	})
 }
 
@@ -89,7 +89,7 @@ func (s *Service) initiateWebSocketSSH(w http.ResponseWriter, r *http.Request,
 	deviceID string,
 ) {
 	s.withHijackedWebSocketConnection(w, r, func(conn *websocket.Conn) {
-		s.connKing.Join(projectID+deviceID, &rwc{
+		s.connman.Join(projectID+deviceID, &rwc{
 			c: conn,
 		})
 	})

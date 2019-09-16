@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/DataDog/datadog-go/statsd"
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/controller/service"
 	mysql_store "github.com/deviceplane/deviceplane/pkg/controller/store/mysql"
@@ -24,6 +25,7 @@ var name = "deviceplane-controller"
 var config struct {
 	Addr           string   `conf:"addr"`
 	MySQLPrimary   string   `conf:"mysql-primary"`
+	Statsd         string   `conf:"statsd"`
 	CookieDomain   string   `conf:"cookie-domain"`
 	CookieSecure   bool     `conf:"cookie-secure"`
 	AllowedOrigins []string `conf:"allowed-origins"`
@@ -32,6 +34,7 @@ var config struct {
 func init() {
 	config.Addr = ":8080"
 	config.MySQLPrimary = "user:pass@tcp(localhost:3306)/deviceplane?parseTime=true"
+	config.Statsd = "127.0.0.1:8125"
 	config.CookieDomain = "localhost"
 	config.CookieSecure = false
 	config.AllowedOrigins = []string{"http://localhost:3000"}
@@ -52,12 +55,19 @@ func main() {
 
 	sqlStore := mysql_store.NewStore(db)
 
+	st, err := statsd.New(config.Statsd,
+		statsd.WithNamespace("deviceplane."),
+	)
+	if err != nil {
+		log.WithError(err).Fatal("statsd")
+	}
+
 	sendgridClient := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
 	sendgridEmail := sendgrid_email.NewEmail(sendgridClient)
 
 	svc := service.NewService(sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
 		sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
-		sendgridEmail, config.CookieDomain, config.CookieSecure, statikFS)
+		sendgridEmail, config.CookieDomain, config.CookieSecure, statikFS, st)
 
 	server := &http.Server{
 		Addr: config.Addr,

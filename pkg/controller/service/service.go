@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/DataDog/datadog-go/statsd"
 	"github.com/Knetic/govaluate"
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/controller/authz"
@@ -61,9 +62,11 @@ type Service struct {
 	email                      email.Interface
 	cookieDomain               string
 	cookieSecure               bool
-	router                     *mux.Router
-	upgrader                   websocket.Upgrader
-	connKing                   *connman.ConnectionManager
+	st                         *statsd.Client
+
+	router   *mux.Router
+	upgrader websocket.Upgrader
+	connman  *connman.ConnectionManager
 }
 
 func NewService(
@@ -95,6 +98,7 @@ func NewService(
 	cookieDomain string,
 	cookieSecure bool,
 	fileSystem http.FileSystem,
+	st *statsd.Client,
 ) *Service {
 	s := &Service{
 		users:                      users,
@@ -124,7 +128,9 @@ func NewService(
 		email:                      email,
 		cookieDomain:               cookieDomain,
 		cookieSecure:               cookieSecure,
-		router:                     mux.NewRouter(),
+		st:                         st,
+
+		router: mux.NewRouter(),
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
@@ -133,7 +139,7 @@ func NewService(
 				return true
 			},
 		},
-		connKing: connman.New(),
+		connman: connman.New(),
 	}
 
 	apiRouter := s.router.PathPrefix("/api").Subrouter()
@@ -249,7 +255,7 @@ func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) health(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
+	s.st.Incr("health", nil, 1)
 }
 
 func (s *Service) withUserOrServiceAccountAuth(handler func(http.ResponseWriter, *http.Request, string, string)) func(http.ResponseWriter, *http.Request) {

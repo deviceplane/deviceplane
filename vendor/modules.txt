@@ -1,3 +1,5 @@
+# github.com/DataDog/datadog-go v2.2.0+incompatible
+github.com/DataDog/datadog-go/statsd
 # github.com/Knetic/govaluate v3.0.0+incompatible
 github.com/Knetic/govaluate
 # github.com/Microsoft/go-winio v0.4.13
