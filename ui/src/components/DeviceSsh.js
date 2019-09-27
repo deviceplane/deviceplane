@@ -63,7 +63,7 @@ export default class DeviceSsh extends Component {
     window.onresize = term.fit.bind(term);
 
     conn.connect({
-      sock: ws(`${config.wsEndpoint}/projects/${this.props.projectName}/devices/${this.props.device.id}/wssh`, ['binary']),
+      sock: ws(`${config.wsEndpoint}/projects/${this.props.projectName}/devices/${this.props.device.id}/ssh`, ['binary']),
       username: ''
     });
   }

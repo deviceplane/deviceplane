@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -18,6 +18,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/agent/variables"
 	"github.com/deviceplane/deviceplane/pkg/revdial"
 	"github.com/gliderlabs/ssh"
+	"github.com/gorilla/websocket"
 	"github.com/kr/pty"
 	gossh "golang.org/x/crypto/ssh"
 )
@@ -59,8 +60,8 @@ func (c *Connector) Do() {
 		return
 	}
 
-	listener := revdial.NewListener(conn, func(ctx context.Context) (net.Conn, error) {
-		return c.client.Dial(ctx)
+	listener := revdial.NewListener(conn, func(ctx context.Context, path string) (*websocket.Conn, *http.Response, error) {
+		return c.client.Revdial(ctx, path)
 	})
 	defer listener.Close()
 

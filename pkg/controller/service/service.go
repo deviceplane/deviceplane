@@ -217,7 +217,6 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "UpdateDevice", s.withDevice(s.updateDevice))).Methods("PATCH")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "DeleteDevice", s.withDevice(s.deleteDevice))).Methods("DELETE")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/ssh", s.validateAuthorization("devices", "SSH", s.withDevice(s.initiateSSH))).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/wssh", s.validateAuthorization("devices", "SSH", s.withDevice(s.initiateWebSocketSSH))).Methods("GET")
 
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "SetDeviceLabel", s.withDevice(s.setDeviceLabel))).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateAuthorization("devicelabels", "GetDeviceLabel", s.withDevice(s.getDeviceLabel))).Methods("GET")
@@ -235,12 +234,11 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.withDeviceAuth(s.deleteDeviceServiceStatus)).Methods("DELETE")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/connection", s.withDeviceAuth(s.initiateDeviceConnection)).Methods("GET")
 
+	apiRouter.Handle("/revdial", revdial.ConnHandler(s.upgrader)).Methods("GET")
+
 	s.router.PathPrefix("/api").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
-
-	// TODO: scope under /api?
-	s.router.Handle("/revdial", revdial.ConnHandler()).Methods("GET")
 
 	// TODO: scope under /api?
 	s.router.HandleFunc("/health", s.health).Methods("GET")

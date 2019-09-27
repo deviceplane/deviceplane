@@ -25,11 +25,6 @@ func main() {
 			Value:  "https://cloud.deviceplane.com:443/api",
 		},
 		cli.StringFlag{
-			Hidden: true,
-			Name:   "url2",
-			Value:  "https://cloud2.deviceplane.com:443/api",
-		},
-		cli.StringFlag{
 			Name:   "access-key",
 			EnvVar: "DEVICEPLANE_ACCESS_KEY",
 		},

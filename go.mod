@@ -14,6 +14,7 @@ require (
 	github.com/docker/go-units v0.3.3
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568
 	github.com/fsnotify/fsnotify v1.4.7
+	github.com/function61/holepunch-server v0.0.0-20190515131118-6a4402002d39
 	github.com/gliderlabs/ssh v0.1.1
 	github.com/go-playground/locales v0.12.1 // indirect
 	github.com/go-playground/universal-translator v0.16.0 // indirect

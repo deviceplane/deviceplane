@@ -35,7 +35,7 @@ func (m *ConnectionManager) Set(key string, conn net.Conn) {
 	m.deviceDialers[key] = revdial.NewDialer(conn, "/revdial")
 }
 
-func (m *ConnectionManager) Join(key string, conn io.ReadWriteCloser) error {
+func (m *ConnectionManager) Join(key string, conn net.Conn) error {
 	m.lock.RLock()
 	dialer, ok := m.deviceDialers[key]
 	if !ok {

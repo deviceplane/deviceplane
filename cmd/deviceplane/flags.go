@@ -27,10 +27,6 @@ func withClient(c *cli.Context, f func(*client.Client) error) error {
 	if err != nil {
 		return err
 	}
-	u2, err := url.Parse(c.GlobalString("url2"))
-	if err != nil {
-		return err
-	}
 	accessKey := c.GlobalString("access-key")
-	return f(client.NewClient(u, u2, accessKey, nil))
+	return f(client.NewClient(u, accessKey, nil))
 }

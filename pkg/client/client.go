@@ -3,40 +3,40 @@ package client
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"strings"
 
 	"github.com/deviceplane/deviceplane/pkg/models"
+	"github.com/function61/holepunch-server/pkg/wsconnadapter"
+	"github.com/gorilla/websocket"
 )
 
 const (
 	projectsURL     = "projects"
 	applicationsURL = "applications"
 	releasesURL     = "releases"
+	devicesURL      = "devices"
+	sshURL          = "ssh"
 	bundleURL       = "bundle"
 )
 
 type Client struct {
 	url        *url.URL
-	url2       *url.URL
 	accessKey  string
 	httpClient *http.Client
 }
 
-func NewClient(url, url2 *url.URL, accessKey string, httpClient *http.Client) *Client {
+func NewClient(url *url.URL, accessKey string, httpClient *http.Client) *Client {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
 	return &Client{
 		url:        url,
-		url2:       url2,
 		accessKey:  accessKey,
 		httpClient: httpClient,
 	}
@@ -77,27 +77,19 @@ func (c *Client) CreateRelease(ctx context.Context, project, application, config
 }
 
 func (c *Client) InitiateSSH(ctx context.Context, project, deviceID string) (net.Conn, error) {
-	conn, err := tls.Dial("tcp", c.url2.Host, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	clientConn := httputil.NewClientConn(conn, nil)
-
-	req, err := http.NewRequest("GET", getURL(c.url2, "projects", project, "devices", deviceID, "ssh"), nil)
+	req, err := http.NewRequest("", "", nil)
 	if err != nil {
 		return nil, err
 	}
 
 	req.SetBasicAuth(c.accessKey, "")
 
-	if _, err = clientConn.Do(req); err != httputil.ErrPersistEOF && err != nil {
+	wsConn, _, err := websocket.DefaultDialer.Dial(getWebsocketURL(c.url, projectsURL, project, devicesURL, deviceID, sshURL), req.Header)
+	if err != nil {
 		return nil, err
 	}
 
-	hijackedConn, _ := clientConn.Hijack()
-
-	return hijackedConn, nil
+	return wsconnadapter.New(wsConn), nil
 }
 
 func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {
@@ -148,6 +140,17 @@ func (c *Client) handleResponse(resp *http.Response, out interface{}) error {
 	}
 }
 
-func getURL(url *url.URL, s ...string) string {
-	return strings.Join(append([]string{url.String()}, s...), "/")
+func getURL(u *url.URL, s ...string) string {
+	return strings.Join(append([]string{u.String()}, s...), "/")
+}
+
+func getWebsocketURL(u *url.URL, s ...string) string {
+	uCopy, _ := url.Parse(u.String())
+	switch uCopy.Scheme {
+	case "http":
+		uCopy.Scheme = "ws"
+	default:
+		uCopy.Scheme = "wss"
+	}
+	return strings.Join(append([]string{uCopy.String()}, s...), "/")
 }

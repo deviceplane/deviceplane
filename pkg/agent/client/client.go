@@ -3,18 +3,17 @@ package client
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"net"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"strings"
 
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/models"
+	"github.com/function61/holepunch-server/pkg/wsconnadapter"
+	"github.com/gorilla/websocket"
 )
 
 const (
@@ -23,7 +22,6 @@ const (
 
 type Client struct {
 	url        *url.URL
-	url2       *url.URL
 	projectID  string
 	httpClient *http.Client
 
@@ -31,13 +29,12 @@ type Client struct {
 	accessKey string
 }
 
-func NewClient(url, url2 *url.URL, projectID string, httpClient *http.Client) *Client {
+func NewClient(url *url.URL, projectID string, httpClient *http.Client) *Client {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
 	return &Client{
 		url:        url,
-		url2:       url2,
 		projectID:  projectID,
 		httpClient: httpClient,
 	}
@@ -119,38 +116,23 @@ func (c *Client) DeleteDeviceServiceStatus(ctx context.Context, applicationID, s
 }
 
 func (c *Client) InitiateDeviceConnection(ctx context.Context) (net.Conn, error) {
-	conn, err := c.Dial(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	clientConn := httputil.NewClientConn(conn, nil)
-
-	req, err := http.NewRequest("GET", getURL(c.url2, "projects", c.projectID, "devices", c.deviceID, "connection"), nil)
+	req, err := http.NewRequest("", "", nil)
 	if err != nil {
 		return nil, err
 	}
 
 	req.SetBasicAuth(c.accessKey, "")
 
-	if _, err = clientConn.Do(req); err != httputil.ErrPersistEOF && err != nil {
+	wsConn, _, err := websocket.DefaultDialer.Dial(getWebsocketURL(c.url, "projects", c.projectID, "devices", c.deviceID, "connection"), req.Header)
+	if err != nil {
 		return nil, err
 	}
 
-	hijackedConn, _ := clientConn.Hijack()
-
-	return hijackedConn, nil
+	return wsconnadapter.New(wsConn), nil
 }
 
-func (c *Client) Dial(ctx context.Context) (net.Conn, error) {
-	switch c.url2.Scheme {
-	case "http":
-		return net.Dial("tcp", c.url2.Host)
-	case "https":
-		return tls.Dial("tcp", c.url2.Host, nil)
-	default:
-		return nil, errors.New("invalid scheme")
-	}
+func (c *Client) Revdial(ctx context.Context, path string) (*websocket.Conn, *http.Response, error) {
+	return websocket.DefaultDialer.Dial(getWebsocketURL(c.url, strings.TrimPrefix(path, "/")), nil)
 }
 
 func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {
@@ -257,4 +239,15 @@ func (c *Client) delete(ctx context.Context, out interface{}, s ...string) error
 
 func getURL(url *url.URL, s ...string) string {
 	return strings.Join(append([]string{url.String()}, s...), "/")
+}
+
+func getWebsocketURL(u *url.URL, s ...string) string {
+	uCopy, _ := url.Parse(u.String())
+	switch uCopy.Scheme {
+	case "http":
+		uCopy.Scheme = "ws"
+	default:
+		uCopy.Scheme = "wss"
+	}
+	return strings.Join(append([]string{uCopy.String()}, s...), "/")
 }

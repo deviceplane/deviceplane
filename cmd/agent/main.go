@@ -19,7 +19,6 @@ var name = "deviceplane-agent"
 
 var config struct {
 	Controller        string `conf:"controller"`
-	Controller2       string `conf:"controller2"`
 	Project           string `conf:"project"`
 	RegistrationToken string `conf:"registration-token"`
 	ConfDir           string `conf:"conf-dir"`
@@ -29,7 +28,6 @@ var config struct {
 
 func init() {
 	config.Controller = "https://cloud.deviceplane.com:443/api"
-	config.Controller2 = "https://cloud2.deviceplane.com:443/api"
 	config.ConfDir = "/etc/deviceplane"
 	config.StateDir = "/var/lib/deviceplane"
 	config.LogLevel = "info"
@@ -57,12 +55,7 @@ func main() {
 		log.WithError(err).Fatal("parse controller URL")
 	}
 
-	controller2URL, err := url.Parse(config.Controller2)
-	if err != nil {
-		log.WithError(err).Fatal("parse controller2 URL")
-	}
-
-	client := agent_client.NewClient(controllerURL, controller2URL, config.Project, http.DefaultClient)
+	client := agent_client.NewClient(controllerURL, config.Project, http.DefaultClient)
 	agent := agent.NewAgent(client, engine, config.Project, config.RegistrationToken,
 		config.ConfDir, config.StateDir)
 

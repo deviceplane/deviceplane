@@ -30,6 +30,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/function61/holepunch-server/pkg/wsconnadapter"
+	"github.com/gorilla/websocket"
 )
 
 // dialerUniqParam is the parameter name of the GET URL form value
@@ -215,7 +218,7 @@ func (d *Dialer) sendMessage(m controlMsg) error {
 //
 // The provided dialServer func is responsible for connecting back to
 // the server and doing TLS setup.
-func NewListener(serverConn net.Conn, dialServer func(context.Context) (net.Conn, error)) *Listener {
+func NewListener(serverConn net.Conn, dialServer func(context.Context, string) (*websocket.Conn, *http.Response, error)) *Listener {
 	ln := &Listener{
 		sc:    serverConn,
 		dial:  dialServer,
@@ -234,7 +237,7 @@ type Listener struct {
 	sc     net.Conn
 	connc  chan net.Conn
 	donec  chan struct{}
-	dial   func(context.Context) (net.Conn, error)
+	dial   func(context.Context, string) (*websocket.Conn, *http.Response, error)
 	writec chan<- []byte
 
 	mu      sync.Mutex // guards below, closing connc, and writing to rw
@@ -304,33 +307,26 @@ func (ln *Listener) sendMessage(m controlMsg) {
 func (ln *Listener) grabConn(path string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-	c, err := ln.dial(ctx)
+
+	wsConn, resp, err := ln.dial(ctx, path)
 	if err != nil {
 		ln.sendMessage(controlMsg{Command: "pickup-failed", ConnPath: path, Err: err.Error()})
 		return
 	}
+
 	failPickup := func(err error) {
-		c.Close()
+		wsConn.Close()
 		log.Printf("revdial.Listener: failed to pick up connection to %s: %v", path, err)
 		ln.sendMessage(controlMsg{Command: "pickup-failed", ConnPath: path, Err: err.Error()})
 	}
-	req, _ := http.NewRequest("GET", path, nil)
-	if err := req.Write(c); err != nil {
-		failPickup(err)
-		return
-	}
-	bufr := bufio.NewReader(c)
-	resp, err := http.ReadResponse(bufr, req)
-	if err != nil {
-		failPickup(err)
-		return
-	}
+
 	if resp.StatusCode != 101 {
 		failPickup(fmt.Errorf("non-101 response %v", resp.Status))
 		return
 	}
+
 	select {
-	case ln.connc <- c:
+	case ln.connc <- wsconnadapter.New(wsConn):
 	case <-ln.donec:
 	}
 }
@@ -388,35 +384,24 @@ func (fakeAddr) String() string  { return "revdialconn" }
 // that the Listeners can dial out and get to. A dialer to connect to it
 // is given to NewListener and the path to reach it is given to NewDialer
 // to use in messages to the listener.
-func ConnHandler() http.Handler {
-	return http.HandlerFunc(connHandler)
-}
+func ConnHandler(upgrader websocket.Upgrader) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		dialerUniq := r.FormValue(dialerUniqParam)
 
-func connHandler(w http.ResponseWriter, r *http.Request) {
-	/*if r.TLS == nil {
-		http.Error(w, "handler requires TLS", http.StatusInternalServerError)
-		return
-	}*/
-	if r.Method != "GET" {
-		w.Header().Set("Allow", "GET")
-		http.Error(w, "expected GET request to revdial conn handler", http.StatusMethodNotAllowed)
-		return
-	}
-	dialerUniq := r.FormValue(dialerUniqParam)
+		dmapMu.Lock()
+		d, ok := dialers[dialerUniq]
+		dmapMu.Unlock()
+		if !ok {
+			http.Error(w, "unknown dialer", http.StatusBadRequest)
+			return
+		}
 
-	dmapMu.Lock()
-	d, ok := dialers[dialerUniq]
-	dmapMu.Unlock()
-	if !ok {
-		http.Error(w, "unknown dialer", http.StatusBadRequest)
-		return
-	}
+		wsConn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-	conn, _, err := w.(http.Hijacker).Hijack()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	(&http.Response{StatusCode: http.StatusSwitchingProtocols, Proto: "HTTP/1.1"}).Write(conn)
-	d.matchConn(conn)
+		d.matchConn(wsconnadapter.New(wsConn))
+	})
 }
