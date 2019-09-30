@@ -29,7 +29,7 @@ var ssh = cli.Command{
 				return err
 			}
 
-			listener, err := net.Listen("tcp", ":0")
+			listener, err := net.Listen("tcp", "127.0.0.1:0")
 			if err != nil {
 				return err
 			}
@@ -54,7 +54,7 @@ var ssh = cli.Command{
 
 				port := strconv.Itoa(listener.Addr().(*net.TCPAddr).Port)
 
-				cmd := exec.CommandContext(ctx, "ssh", "-p", port, "localhost")
+				cmd := exec.CommandContext(ctx, "ssh", "-p", port, "127.0.0.1")
 				cmd.Stdin = os.Stdin
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
