@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/controller/authz"
 	"github.com/deviceplane/deviceplane/pkg/controller/connman"
+	"github.com/deviceplane/deviceplane/pkg/controller/query"
 	"github.com/deviceplane/deviceplane/pkg/controller/spaserver"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/email"
@@ -2063,7 +2065,31 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	respond(w, devices)
+	var devicesMap []map[string]interface{}
+
+	jsonBytes, err := json.Marshal(devices)
+
+	if err == nil {
+		json.Unmarshal(jsonBytes, &devicesMap)
+	}
+
+	for _, device := range devicesMap {
+		deviceLabels, err := s.deviceLabels.ListDeviceLabels(r.Context(), device["id"].(string), device["projectId"].(string))
+		if err == nil {
+			labels := make([]map[string]interface{}, 0, len(deviceLabels))
+			for _, label := range deviceLabels {
+				labels = append(labels, map[string]interface{}{
+					"key":   label.Key,
+					"value": label.Value,
+				})
+			}
+			device["labels"] = labels
+		}
+	}
+
+	result := query.FilterDevices(devicesMap, r.URL.Query())
+
+	respond(w, result)
 }
 
 func (s *Service) getDevice(w http.ResponseWriter, r *http.Request,
