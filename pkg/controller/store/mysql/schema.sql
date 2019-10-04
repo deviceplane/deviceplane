@@ -249,6 +249,7 @@ create table if not exists devices (
   project_id varchar(32) not null,
 
   name varchar(100) not null,
+  desired_agent_spec longtext not null,
   info longtext not null,
   last_seen_at timestamp not null default current_timestamp,
 

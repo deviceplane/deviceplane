@@ -39,6 +39,7 @@ type Service struct {
 	Ports          []string                  `yaml:"ports,omitempty"`
 	Privileged     bool                      `yaml:"privileged,omitempty"`
 	ReadOnly       bool                      `yaml:"read_only,omitempty"`
+	Restart        string                    `yaml:"restart,omitempty"`
 	SecurityOpt    []string                  `yaml:"security_opt,omitempty"`
 	ShmSize        yamltypes.MemStringorInt  `yaml:"shm_size,omitempty"`
 	StopSignal     string                    `yaml:"stop_signal,omitempty"`

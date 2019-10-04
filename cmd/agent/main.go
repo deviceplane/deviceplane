@@ -23,6 +23,7 @@ var config struct {
 	RegistrationToken string `conf:"registration-token"`
 	ConfDir           string `conf:"conf-dir"`
 	StateDir          string `conf:"state-dir"`
+	ServerPort        int    `conf:"server-port"`
 	LogLevel          string `conf:"log-level"`
 }
 
@@ -30,6 +31,7 @@ func init() {
 	config.Controller = "https://cloud.deviceplane.com:443/api"
 	config.ConfDir = "/etc/deviceplane"
 	config.StateDir = "/var/lib/deviceplane"
+	config.ServerPort = 4444
 	config.LogLevel = "info"
 }
 
@@ -56,8 +58,11 @@ func main() {
 	}
 
 	client := agent_client.NewClient(controllerURL, config.Project, http.DefaultClient)
-	agent := agent.NewAgent(client, engine, config.Project, config.RegistrationToken,
-		config.ConfDir, config.StateDir)
+	agent, err := agent.NewAgent(client, engine, config.Project, config.RegistrationToken,
+		config.ConfDir, config.StateDir, version, config.ServerPort)
+	if err != nil {
+		log.WithError(err).Fatal("failure creating agent")
+	}
 
 	if err := agent.Initialize(); err != nil {
 		log.WithError(err).Fatal("failure while initializing agent")

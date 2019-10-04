@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/apex/log"
+	"github.com/deviceplane/deviceplane/pkg/agent/utils"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/deviceplane/deviceplane/pkg/spec"
@@ -166,7 +167,7 @@ func (s *ApplicationSupervisor) containerGC() {
 	defer ticker.Stop()
 
 	for {
-		instances := containerList(s.ctx, s.engine, map[string]struct{}{
+		instances := utils.ContainerList(s.ctx, s.engine, map[string]struct{}{
 			models.ServiceLabel: struct{}{},
 		}, map[string]string{
 			models.ApplicationLabel: s.applicationID,
@@ -178,8 +179,8 @@ func (s *ApplicationSupervisor) containerGC() {
 			if _, ok := s.serviceSupervisors[serviceName]; !ok {
 				// TODO: this could start many goroutines
 				go func(instanceID string) {
-					containerStop(s.ctx, s.engine, instanceID)
-					containerRemove(s.ctx, s.engine, instanceID)
+					utils.ContainerStop(s.ctx, s.engine, instanceID)
+					utils.ContainerRemove(s.ctx, s.engine, instanceID)
 				}(instance.ID)
 			}
 		}

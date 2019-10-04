@@ -41,6 +41,7 @@ func fullService() Service {
 		Ports:          []string{"x", "y", "z"},
 		Privileged:     true,
 		ReadOnly:       true,
+		Restart:        "always",
 		SecurityOpt:    []string{"x", "y", "z"},
 		ShmSize:        yamltypes.MemStringorInt(1),
 		StopSignal:     "x",
