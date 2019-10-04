@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/deviceplane/deviceplane/pkg/agent/utils"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/hash"
 	"github.com/deviceplane/deviceplane/pkg/models"
@@ -107,7 +108,7 @@ func (s *ServiceSupervisor) reconcileLoop() {
 			}()
 		}
 
-		instances := containerList(ctx, s.engine, nil, map[string]string{
+		instances := utils.ContainerList(ctx, s.engine, nil, map[string]string{
 			models.ApplicationLabel: s.applicationID,
 			models.ServiceLabel:     s.serviceName,
 		}, true)
@@ -123,20 +124,20 @@ func (s *ServiceSupervisor) reconcileLoop() {
 			}
 
 			startCanceler()
-			imagePull(ctx, s.engine, service.Image)
+			utils.ImagePull(ctx, s.engine, service.Image)
 
 			s.sendKeepAliveDeactivate()
 
-			containerStop(ctx, s.engine, instance.ID)
-			containerRemove(ctx, s.engine, instance.ID)
+			utils.ContainerStop(ctx, s.engine, instance.ID)
+			utils.ContainerRemove(ctx, s.engine, instance.ID)
 		} else {
 			startCanceler()
-			imagePull(ctx, s.engine, service.Image)
+			utils.ImagePull(ctx, s.engine, service.Image)
 		}
 
 		s.sendKeepAliveDeactivate()
 
-		containerCreate(
+		utils.ContainerCreate(
 			ctx,
 			s.engine,
 			strings.Join([]string{s.serviceName, hash.ShortHash(s.applicationID), service.ShortHash(s.serviceName)}, "-"),
@@ -210,7 +211,7 @@ func (s *ServiceSupervisor) keepAlive() {
 				continue
 			}
 
-			instances := containerList(s.ctx, s.engine, nil, map[string]string{
+			instances := utils.ContainerList(s.ctx, s.engine, nil, map[string]string{
 				models.ApplicationLabel: s.applicationID,
 				models.ServiceLabel:     s.serviceName,
 				models.HashLabel:        service.Hash(s.serviceName),
@@ -227,7 +228,7 @@ func (s *ServiceSupervisor) keepAlive() {
 			instance := instances[0]
 
 			if !instance.Running {
-				containerStart(s.ctx, s.engine, instance.ID)
+				utils.ContainerStart(s.ctx, s.engine, instance.ID)
 			}
 		}
 	}

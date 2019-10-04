@@ -1,11 +1,11 @@
-package supervisor
+package utils
 
 import (
 	"context"
 	"time"
 )
 
-func retry(ctx context.Context, f func(context.Context) error, timeout time.Duration) {
+func Retry(ctx context.Context, f func(context.Context) error, timeout time.Duration) {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 

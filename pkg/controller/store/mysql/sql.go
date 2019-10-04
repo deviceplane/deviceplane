@@ -395,17 +395,17 @@ const createDevice = `
 `
 
 const getDevice = `
-  select id, created_at, project_id, name, info, last_seen_at from devices
+  select id, created_at, project_id, name, desired_agent_spec, info, last_seen_at from devices
   where id = ? and project_id = ?
 `
 
 const lookupDevice = `
-  select id, created_at, project_id, name, info, last_seen_at from devices
+  select id, created_at, project_id, name, desired_agent_spec, info, last_seen_at from devices
   where name = ? and project_id = ?
 `
 
 const listDevices = `
-  select id, created_at, project_id, name, info, last_seen_at from devices
+  select id, created_at, project_id, name, desired_agent_spec, info, last_seen_at from devices
   where project_id = ?
 `
 

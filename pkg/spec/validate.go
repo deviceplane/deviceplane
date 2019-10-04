@@ -37,6 +37,7 @@ var (
 		"ports":            []func(interface{}) error{validation.ValidateStringIntegerArray},
 		"privileged":       []func(interface{}) error{validation.ValidateBoolean},
 		"read_only":        []func(interface{}) error{validation.ValidateBoolean},
+		"restart":          []func(interface{}) error{validation.ValidateString},
 		"security_opt":     []func(interface{}) error{validation.ValidateStringArray},
 		"shm_size":         []func(interface{}) error{validation.ValidateStringOrInteger},
 		"stop_signal":      []func(interface{}) error{validation.ValidateString},

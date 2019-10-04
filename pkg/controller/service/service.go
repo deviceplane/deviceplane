@@ -2323,9 +2323,9 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, d
 		return
 	}
 
-	applications, err := s.applications.ListApplications(r.Context(), projectID)
+	device, err := s.devices.GetDevice(r.Context(), deviceID, projectID)
 	if err != nil {
-		log.WithError(err).Error("list applications")
+		log.WithError(err).Error("get device")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -2337,7 +2337,17 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, d
 		return
 	}
 
-	var bundle models.Bundle
+	applications, err := s.applications.ListApplications(r.Context(), projectID)
+	if err != nil {
+		log.WithError(err).Error("list applications")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	bundle := models.Bundle{
+		DesiredAgentSpec: device.DesiredAgentSpec,
+	}
+
 	for i, application := range applications {
 		if application.Settings.SchedulingRule != "" {
 			expression, err := govaluate.NewEvaluableExpression(application.Settings.SchedulingRule)

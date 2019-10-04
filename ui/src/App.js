@@ -173,12 +173,17 @@ class AddDevice extends Component {
                   background="#234361"
                 >
                   <Code fontFamily="mono" color="white">
-                    docker run -d --restart=always --privileged --net=host
-                    --pid=host -v /etc/deviceplane:/etc/deviceplane -v
-                    /var/lib/deviceplane:/var/lib/deviceplane -v
-                    /var/run/docker.sock:/var/run/docker.sock -v
-                    /etc/os-release:/etc/os-release deviceplane/agent:
-                    {config.agentVersion} --project={this.state.project.id}{' '}
+                    docker run -d --restart=always
+                    --privileged
+                    --net=host
+                    --pid=host
+                    -v /etc/deviceplane:/etc/deviceplane
+                    -v /var/lib/deviceplane:/var/lib/deviceplane
+                    -v /var/run/docker.sock:/var/run/docker.sock
+                    -v /etc/os-release:/etc/os-release
+                    --label com.deviceplane.agent-version={config.agentVersion}{' '}
+                    deviceplane/agent:{config.agentVersion}{' '}
+                    --project={this.state.project.id}{' '}
                     --registration-token={this.state.deviceRegistrationToken.id}
                   </Code>
                 </Card>

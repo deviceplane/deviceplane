@@ -3,14 +3,13 @@ package docker
 import (
 	"path/filepath"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/strslice"
-	"github.com/docker/go-connections/nat"
-
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/spec"
 	"github.com/deviceplane/deviceplane/pkg/yamltypes"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/strslice"
+	"github.com/docker/go-connections/nat"
 )
 
 func convert(s spec.Service) (*container.Config, *container.HostConfig, error) {
@@ -54,6 +53,9 @@ func convert(s spec.Service) (*container.Config, *container.HostConfig, error) {
 				MemoryReservation: int64(s.MemReservation),
 				MemorySwap:        int64(s.MemSwapLimit),
 				OomKillDisable:    &s.OomKillDisable, // TODO: this might have the wrong default value
+			},
+			RestartPolicy: container.RestartPolicy{
+				Name: s.Restart,
 			},
 			ShmSize:     int64(s.ShmSize),
 			SecurityOpt: s.SecurityOpt,

@@ -11,15 +11,20 @@ import (
 	"github.com/apex/log"
 	agent_client "github.com/deviceplane/deviceplane/pkg/agent/client"
 	"github.com/deviceplane/deviceplane/pkg/agent/connector"
+	"github.com/deviceplane/deviceplane/pkg/agent/handoff"
 	"github.com/deviceplane/deviceplane/pkg/agent/info"
+	"github.com/deviceplane/deviceplane/pkg/agent/server"
 	"github.com/deviceplane/deviceplane/pkg/agent/status"
 	"github.com/deviceplane/deviceplane/pkg/agent/supervisor"
+	"github.com/deviceplane/deviceplane/pkg/agent/updater"
 	"github.com/deviceplane/deviceplane/pkg/agent/variables"
 	"github.com/deviceplane/deviceplane/pkg/agent/variables/fsnotify"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/file"
 	"github.com/deviceplane/deviceplane/pkg/models"
+	"github.com/deviceplane/deviceplane/pkg/spec"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -28,9 +33,12 @@ const (
 	bundleFilename    = "bundle"
 )
 
+var (
+	errVersionNotSet = errors.New("version not set")
+)
+
 type Agent struct {
 	client                 *agent_client.Client // TODO: interface
-	engine                 engine.Engine
 	variables              variables.Interface
 	projectID              string
 	registrationToken      string
@@ -40,12 +48,20 @@ type Agent struct {
 	statusGarbageCollector *status.GarbageCollector
 	connector              *connector.Connector
 	infoReporter           *info.Reporter
+	server                 *server.Server
+	updater                *updater.Updater
+	handoffCoordinator     *handoff.Coordinator
 }
 
-func NewAgent(client *agent_client.Client, engine engine.Engine, projectID, registrationToken, confDir, stateDir string) *Agent {
+func NewAgent(
+	client *agent_client.Client, engine engine.Engine,
+	projectID, registrationToken, confDir, stateDir, version string, serverPort int,
+) (*Agent, error) {
+	if version == "" {
+		return nil, errVersionNotSet
+	}
 	return &Agent{
 		client:            client,
-		engine:            engine,
 		projectID:         projectID,
 		registrationToken: registrationToken,
 		confDir:           confDir,
@@ -61,7 +77,10 @@ func NewAgent(client *agent_client.Client, engine engine.Engine, projectID, regi
 		}),
 		statusGarbageCollector: status.NewGarbageCollector(client.DeleteDeviceApplicationStatus, client.DeleteDeviceServiceStatus),
 		infoReporter:           info.NewReporter(client),
-	}
+		server:                 server.NewServer(),
+		updater:                updater.NewUpdater(engine, projectID, version),
+		handoffCoordinator:     handoff.NewCoordinator(engine, version, serverPort),
+	}, nil
 }
 
 func (a *Agent) fileLocation(elem ...string) string {
@@ -116,6 +135,8 @@ func (a *Agent) Initialize() error {
 	a.variables = variables
 	a.connector = connector.NewConnector(a.client, a.variables, a.confDir)
 
+	a.server.SetListener(a.handoffCoordinator.Takeover())
+
 	return nil
 }
 
@@ -134,13 +155,14 @@ func (a *Agent) register() error {
 }
 
 func (a *Agent) Run() {
-	go a.runBundleDownloader()
+	go a.runBundleApplier()
 	go a.runConnector()
 	go a.runInfoReporter()
+	go a.runServer()
 	select {}
 }
 
-func (a *Agent) runBundleDownloader() {
+func (a *Agent) runBundleApplier() {
 	if bundle := a.loadSavedBundle(); bundle != nil {
 		a.supervisor.SetApplications(bundle.Applications)
 	}
@@ -152,6 +174,10 @@ func (a *Agent) runBundleDownloader() {
 		if bundle := a.downloadLatestBundle(); bundle != nil {
 			a.supervisor.SetApplications(bundle.Applications)
 			a.statusGarbageCollector.SetBundle(*bundle)
+			var desiredAgentSpec spec.Service
+			if err := yaml.Unmarshal([]byte(bundle.DesiredAgentSpec), &desiredAgentSpec); err == nil {
+				a.updater.SetDesiredSpec(desiredAgentSpec)
+			}
 		}
 
 		select {
@@ -237,6 +263,24 @@ func (a *Agent) runInfoReporter() {
 	for {
 		if err := a.infoReporter.Report(); err != nil {
 			log.WithError(err).Error("report device info")
+			goto cont
+		}
+
+	cont:
+		select {
+		case <-ticker.C:
+			continue
+		}
+	}
+}
+
+func (a *Agent) runServer() {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for {
+		if err := a.server.Serve(); err != nil {
+			log.WithError(err).Error("serve device API")
 			goto cont
 		}
 

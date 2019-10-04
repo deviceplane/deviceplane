@@ -1313,6 +1313,7 @@ func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 		&device.CreatedAt,
 		&device.ProjectID,
 		&device.Name,
+		&device.DesiredAgentSpec,
 		&infoString,
 		&device.LastSeenAt,
 	); err != nil {
