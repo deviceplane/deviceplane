@@ -1,10 +1,20 @@
 import React, { Component } from 'react';
 import config from '../config.js';
 import utils from '../utils.js';
-import { toaster, Pane, majorScale, minorScale, Heading, Alert,
-  TextInputField, Button, Text, Link } from 'evergreen-ui'
+import {
+  toaster,
+  Pane,
+  majorScale,
+  minorScale,
+  Heading,
+  Alert,
+  TextInputField,
+  Button,
+  Text,
+  Link
+} from 'evergreen-ui';
 import axios from 'axios';
-import logo from '../logo.png';
+import logo from '../assets/logo.png';
 
 export default class ResetPassword extends Component {
   constructor(props) {
@@ -16,20 +26,20 @@ export default class ResetPassword extends Component {
     };
   }
 
-  handleUpdateEmail = (event) => {
+  handleUpdateEmail = event => {
     this.setState({
       email: event.target.value
     });
-  }
+  };
 
-  handleSubmit = (event) => {
+  handleSubmit = event => {
     event.preventDefault();
 
     var emailValidationMessage = null;
     var showUserNotFound = false;
 
     if (!utils.emailRegex.test(this.state.email)) {
-      emailValidationMessage = 'Please enter a valid email.'
+      emailValidationMessage = 'Please enter a valid email.';
     }
 
     this.setState({
@@ -38,25 +48,30 @@ export default class ResetPassword extends Component {
     });
 
     if (emailValidationMessage === null) {
-      axios.post(`${config.endpoint}/recoverpassword`, {
-        email: this.state.email
-      })
-        .then((response) => {
-          this.props.history.push(`/login`);
-          toaster.success('Password recovery email sent. Please check your email to reset your password.')
+      axios
+        .post(`${config.endpoint}/recoverpassword`, {
+          email: this.state.email
         })
-        .catch((error) => {
+        .then(response => {
+          this.props.history.push(`/login`);
+          toaster.success(
+            'Password recovery email sent. Please check your email to reset your password.'
+          );
+        })
+        .catch(error => {
           if (error.response.status === 404) {
             this.setState({
               showUserNotFound: true
-            })
+            });
           } else {
-            toaster.danger('There was an error with your e-mail. Please contact us at info@deviceplane.com.')
+            toaster.danger(
+              'There was an error with your e-mail. Please contact us at info@deviceplane.com.'
+            );
             console.log(error);
           }
         });
     }
-  }
+  };
 
   render() {
     return (
@@ -85,7 +100,15 @@ export default class ResetPassword extends Component {
             <Heading size={600}>Reset your Password</Heading>
           </Pane>
           {this.state.showUserNotFound && (
-            <Alert marginBottom={majorScale(2)} paddingTop={majorScale(2)} paddingBottom={majorScale(2)} intent="warning" title="User doesn't exist">There is no user with that email address.</Alert>
+            <Alert
+              marginBottom={majorScale(2)}
+              paddingTop={majorScale(2)}
+              paddingBottom={majorScale(2)}
+              intent="warning"
+              title="User doesn't exist"
+            >
+              There is no user with that email address.
+            </Alert>
           )}
           <Pane is="form">
             <TextInputField
@@ -96,7 +119,14 @@ export default class ResetPassword extends Component {
               validationMessage={this.state.emailValidationMessage}
             />
             <Pane>
-              <Button width="100%" appearance="primary" justifyContent="center" onClick={this.handleSubmit}>Send Reset Password Email</Button>
+              <Button
+                width="100%"
+                appearance="primary"
+                justifyContent="center"
+                onClick={this.handleSubmit}
+              >
+                Send Reset Password Email
+              </Button>
             </Pane>
           </Pane>
         </React.Fragment>
@@ -107,15 +137,15 @@ export default class ResetPassword extends Component {
           paddingTop={majorScale(3)}
         >
           <Text color="muted">{`Already have an account?`}</Text>
-          <Link paddingLeft={majorScale(1)} href='/login'>Log in</Link>
+          <Link paddingLeft={majorScale(1)} href="/login">
+            Log in
+          </Link>
         </Pane>
-        <Pane
-          display="flex"
-          flexDirection="row"
-          justifyContent="center"
-        >
+        <Pane display="flex" flexDirection="row" justifyContent="center">
           <Text color="muted">{`Don't have an account?`}</Text>
-          <Link paddingLeft={majorScale(1)} href='/register'>Sign up</Link>
+          <Link paddingLeft={majorScale(1)} href="/register">
+            Sign up
+          </Link>
         </Pane>
       </Pane>
     );

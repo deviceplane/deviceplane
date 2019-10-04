@@ -2,7 +2,8 @@ import React, { Component } from 'react';
 import './../App.css';
 import UserAvatar from './UserAvatar.js';
 import { Pane, majorScale, Heading } from 'evergreen-ui';
-import logo from '../logo.png';
+
+import logo from '../assets/logo.png';
 
 export default class TopHeader extends Component {
   render() {
@@ -16,14 +17,12 @@ export default class TopHeader extends Component {
         borderBottom="default"
         padding={majorScale(1)}
       >
-        <Pane flex={1} >
-          {this.props.showLogo && <img src={logo} alt="Logo" height="30px" width="35px" />}
+        <Pane flex={1}>
+          {this.props.showLogo && (
+            <img src={logo} alt="Logo" height="30px" width="35px" />
+          )}
         </Pane>
-        <Pane
-          display="flex"
-          justifyContent="center"
-          flex={1}
-        >
+        <Pane display="flex" justifyContent="center" flex={1}>
           <Heading size={500}>{this.props.heading}</Heading>
         </Pane>
         <Pane
@@ -33,7 +32,11 @@ export default class TopHeader extends Component {
           cursor="pointer"
           flex={1}
         >
-          <UserAvatar user={this.props.user} history={this.props.history} hideSwitchProjects={this.props.hideSwitchProjects} />
+          <UserAvatar
+            user={this.props.user}
+            history={this.props.history}
+            hideSwitchProjects={this.props.hideSwitchProjects}
+          />
         </Pane>
       </Pane>
     );
