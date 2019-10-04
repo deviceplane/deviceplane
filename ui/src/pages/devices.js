@@ -57,30 +57,17 @@ export default class Devices extends Component {
               alignItems="center"
             >
               <Heading paddingLeft={majorScale(2)}>Devices</Heading>
-              <div>
-                <Button
-                  margin={majorScale(1)}
-                  appearance="secondary"
-                  onClick={() =>
-                    this.props.history.push(
-                      `/${this.props.projectName}/devices/add`
-                    )
-                  }
-                >
-                  Filter
-                </Button>
-                <Button
-                  margin={majorScale(2)}
-                  appearance="primary"
-                  onClick={() =>
-                    this.props.history.push(
-                      `/${this.props.projectName}/devices/add`
-                    )
-                  }
-                >
-                  Add Device
-                </Button>
-              </div>
+              <Button
+                margin={majorScale(2)}
+                appearance="primary"
+                onClick={() =>
+                  this.props.history.push(
+                    `/${this.props.projectName}/devices/add`
+                  )
+                }
+              >
+                Add Device
+              </Button>
             </Pane>
             {this.state.devices && this.state.devices.length > 0 && (
               <Table>
