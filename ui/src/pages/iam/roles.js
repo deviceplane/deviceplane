@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import axios from 'axios';
 import { Pane, Table, majorScale, Button, Heading } from 'evergreen-ui';
 

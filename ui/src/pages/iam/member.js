@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import axios from 'axios';
 import {
   Pane,
@@ -11,7 +11,6 @@ import {
   toaster
 } from 'evergreen-ui';
 
-import utils from '../../utils';
 import config from '../../config';
 import InnerCard from '../../components/InnerCard';
 import CustomSpinner from '../../components/CustomSpinner';

@@ -1,19 +1,7 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import axios from 'axios';
-import {
-  Pane,
-  Table,
-  Dialog,
-  majorScale,
-  Button,
-  Heading,
-  Badge,
-  IconButton,
-  TextInputField,
-  toaster
-} from 'evergreen-ui';
+import { Pane, Table, majorScale, Button, Heading } from 'evergreen-ui';
 
-import utils from '../../utils';
 import config from '../../config';
 import InnerCard from '../../components/InnerCard';
 import CustomSpinner from '../../components/CustomSpinner';
