@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
-import './../App.css';
-import UserAvatar from './UserAvatar.js';
 import { Pane, majorScale, Heading } from 'evergreen-ui';
 
-import logo from '../assets/logo.png';
+import './../App.css';
+
+import UserAvatar from './UserAvatar.js';
+import Logo from './logo';
 
 export default class TopHeader extends Component {
   render() {
@@ -18,9 +19,7 @@ export default class TopHeader extends Component {
         padding={majorScale(1)}
       >
         <Pane flex={1}>
-          {this.props.showLogo && (
-            <img src={logo} alt="Logo" height="30px" width="35px" />
-          )}
+          {this.props.showLogo && <Logo height="30px" width="35px" />}
         </Pane>
         <Pane display="flex" justifyContent="center" flex={1}>
           <Heading size={500}>{this.props.heading}</Heading>

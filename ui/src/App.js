@@ -38,8 +38,6 @@ import moment from 'moment';
 
 import './App.css';
 
-import logo from './assets/logo.png';
-
 import config from './config';
 import segment from './segment';
 import utils from './utils';
@@ -58,6 +56,7 @@ import Editor from './components/Editor';
 import InnerCard from './components/InnerCard';
 import ResetPassword from './components/ResetPassword';
 import TopHeader from './components/TopHeader';
+import Logo from './components/logo';
 
 class Iam extends Component {
   constructor(props) {
@@ -4023,7 +4022,7 @@ class InnerOogie extends Component {
           width="100%"
         >
           <a href="/">
-            <img src={logo} alt="Logo" height="40px" width="45px" />
+            <Logo />
           </a>
         </Pane>
         <TabNavigation>
@@ -4393,7 +4392,7 @@ class PasswordRecovery extends Component {
           marginX="auto"
         >
           <Pane paddingRight={minorScale(3)}>
-            <img src={logo} alt="Logo" height="40px" width="45px" />
+            <Logo />
           </Pane>
           <Heading size={600}>Device Plane</Heading>
         </Pane>

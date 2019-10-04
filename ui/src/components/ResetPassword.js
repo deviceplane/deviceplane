@@ -1,6 +1,4 @@
 import React, { Component } from 'react';
-import config from '../config.js';
-import utils from '../utils.js';
 import {
   toaster,
   Pane,
@@ -14,7 +12,10 @@ import {
   Link
 } from 'evergreen-ui';
 import axios from 'axios';
-import logo from '../assets/logo.png';
+
+import config from '../config.js';
+import utils from '../utils.js';
+import Logo from './logo';
 
 export default class ResetPassword extends Component {
   constructor(props) {
@@ -91,7 +92,7 @@ export default class ResetPassword extends Component {
           marginX="auto"
         >
           <Pane paddingRight={minorScale(3)}>
-            <img src={logo} alt="Logo" height="40px" width="45px" />
+            <Logo />
           </Pane>
           <Heading size={600}>Device Plane</Heading>
         </Pane>

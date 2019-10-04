@@ -14,8 +14,7 @@ import axios from 'axios';
 
 import config from '../config';
 import utils from '../utils';
-
-import logo from '../assets/logo.png';
+import Logo from '../components/logo';
 
 export default class Login extends Component {
   state = {
@@ -100,7 +99,7 @@ export default class Login extends Component {
           paddingBottom={majorScale(2)}
         >
           <Pane paddingRight={minorScale(3)}>
-            <img src={logo} alt="Logo" height="40px" width="45px" />
+            <Logo />
           </Pane>
           <Heading size={600}>Device Plane</Heading>
         </Pane>
