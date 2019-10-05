@@ -251,8 +251,9 @@ type ApplicationFull2 struct {
 }
 
 type DeviceInfo struct {
-	IPAddress string    `json:"ipAddress"`
-	OSRelease OSRelease `json:"osRelease"`
+	AgentVersion string    `json:"agentVersion"`
+	IPAddress    string    `json:"ipAddress"`
+	OSRelease    OSRelease `json:"osRelease"`
 }
 
 type OSRelease struct {

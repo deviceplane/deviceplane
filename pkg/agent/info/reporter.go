@@ -4,18 +4,21 @@ import (
 	"context"
 
 	"github.com/apex/log"
-	agent_client "github.com/deviceplane/deviceplane/pkg/agent/client"
+	"github.com/deviceplane/deviceplane/pkg/agent/client"
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
 type Reporter struct {
-	client *agent_client.Client // TODO: interface
-	info   models.DeviceInfo
+	client       *client.Client // TODO: interface
+	agentVersion string
+
+	info models.DeviceInfo
 }
 
-func NewReporter(client *agent_client.Client) *Reporter {
+func NewReporter(client *client.Client, agentVersion string) *Reporter {
 	return &Reporter{
-		client: client,
+		client:       client,
+		agentVersion: agentVersion,
 	}
 }
 
@@ -33,7 +36,9 @@ func (r *Reporter) Report() error {
 }
 
 func (r *Reporter) readInfo() models.DeviceInfo {
-	var info models.DeviceInfo
+	info := models.DeviceInfo{
+		AgentVersion: r.agentVersion,
+	}
 
 	ipAddress, err := getIPAddress()
 	if err == nil {

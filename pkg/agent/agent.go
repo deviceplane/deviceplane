@@ -76,7 +76,7 @@ func NewAgent(
 			})
 		}),
 		statusGarbageCollector: status.NewGarbageCollector(client.DeleteDeviceApplicationStatus, client.DeleteDeviceServiceStatus),
-		infoReporter:           info.NewReporter(client),
+		infoReporter:           info.NewReporter(client, version),
 		server:                 server.NewServer(),
 		updater:                updater.NewUpdater(engine, projectID, version),
 		handoffCoordinator:     handoff.NewCoordinator(engine, version, serverPort),
