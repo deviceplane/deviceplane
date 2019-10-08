@@ -1,7 +1,7 @@
 FROM alpine:3.10
 RUN apk -u add ca-certificates util-linux
 
-FROM golang:1.12
+FROM golang:1.13
 ARG version
 WORKDIR /app
 COPY ./ ./

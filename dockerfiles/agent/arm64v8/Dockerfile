@@ -5,7 +5,7 @@ FROM arm64v8/alpine:3.10
 COPY --from=0 /usr/bin/qemu-aarch64-static /usr/bin/
 RUN apk -u add ca-certificates util-linux
 
-FROM golang:1.12
+FROM golang:1.13
 ARG version
 WORKDIR /app
 COPY ./ ./
