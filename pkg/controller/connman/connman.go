@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net"
+	"net/http"
 	"sync"
 
 	"github.com/deviceplane/deviceplane/pkg/revdial"
@@ -44,9 +45,15 @@ func (m *ConnectionManager) Join(key string, conn net.Conn) error {
 	}
 	m.lock.RUnlock()
 
-	otherConn, err := dialer.Dial(context.Background())
+	otherConn, err := dialer.Dial(context.TODO())
 	if err != nil {
-		return nil
+		return err
+	}
+
+	// TODO: build a proper client for this API
+	req, _ := http.NewRequest("POST", "/ssh", nil)
+	if err := req.Write(otherConn); err != nil {
+		return err
 	}
 
 	go io.Copy(otherConn, conn)

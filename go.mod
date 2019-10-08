@@ -15,7 +15,7 @@ require (
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/function61/holepunch-server v0.0.0-20190515131118-6a4402002d39
-	github.com/gliderlabs/ssh v0.1.1
+	github.com/gliderlabs/ssh v0.2.3-0.20190927203027-f6d256ee2510
 	github.com/go-playground/locales v0.12.1 // indirect
 	github.com/go-playground/universal-translator v0.16.0 // indirect
 	github.com/go-sql-driver/mysql v1.4.1
@@ -35,8 +35,9 @@ require (
 	github.com/stretchr/testify v1.3.0
 	github.com/urfave/cli v1.20.0
 	golang.org/x/build v0.0.0-20190604154314-6c34d49dff48 // indirect
-	golang.org/x/crypto v0.0.0-20190424203555-c05e17bb3b2d
+	golang.org/x/crypto v0.0.0-20191002192127-34f69633bfdc
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
+	golang.org/x/sys v0.0.0-20191005200804-aed5e4c7ecf9 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.29.1
 	gopkg.in/yaml.v2 v2.2.2

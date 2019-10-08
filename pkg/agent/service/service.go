@@ -3,21 +3,24 @@ package service
 import (
 	"net/http"
 
+	"github.com/deviceplane/deviceplane/pkg/agent/variables"
 	"github.com/gorilla/mux"
 )
 
 type Service struct {
-	router *mux.Router
+	variables variables.Interface
+	confDir   string
+	router    *mux.Router
 }
 
-func NewService() *Service {
+func NewService(variables variables.Interface, confDir string) *Service {
 	s := &Service{
-		router: mux.NewRouter(),
+		variables: variables,
+		confDir:   confDir,
+		router:    mux.NewRouter(),
 	}
 
-	// This API will be filled out more later
-	// Just leaving a stub here for now
-	s.router.HandleFunc("/", func(http.ResponseWriter, *http.Request) {}).Methods("POST")
+	s.router.HandleFunc("/ssh", s.ssh).Methods("POST")
 
 	return s
 }

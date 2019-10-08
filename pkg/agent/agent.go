@@ -9,11 +9,12 @@ import (
 	"time"
 
 	"github.com/apex/log"
-	agent_client "github.com/deviceplane/deviceplane/pkg/agent/client"
-	"github.com/deviceplane/deviceplane/pkg/agent/connector"
+	"github.com/deviceplane/deviceplane/pkg/agent/client"
 	"github.com/deviceplane/deviceplane/pkg/agent/handoff"
 	"github.com/deviceplane/deviceplane/pkg/agent/info"
-	"github.com/deviceplane/deviceplane/pkg/agent/server"
+	"github.com/deviceplane/deviceplane/pkg/agent/server/local"
+	"github.com/deviceplane/deviceplane/pkg/agent/server/remote"
+	"github.com/deviceplane/deviceplane/pkg/agent/service"
 	"github.com/deviceplane/deviceplane/pkg/agent/status"
 	"github.com/deviceplane/deviceplane/pkg/agent/supervisor"
 	"github.com/deviceplane/deviceplane/pkg/agent/updater"
@@ -38,7 +39,7 @@ var (
 )
 
 type Agent struct {
-	client                 *agent_client.Client // TODO: interface
+	client                 *client.Client // TODO: interface
 	variables              variables.Interface
 	projectID              string
 	registrationToken      string
@@ -46,22 +47,31 @@ type Agent struct {
 	stateDir               string
 	supervisor             *supervisor.Supervisor
 	statusGarbageCollector *status.GarbageCollector
-	connector              *connector.Connector
 	infoReporter           *info.Reporter
-	server                 *server.Server
+	localServer            *local.Server
+	remoteServer           *remote.Server
 	updater                *updater.Updater
 	handoffCoordinator     *handoff.Coordinator
 }
 
 func NewAgent(
-	client *agent_client.Client, engine engine.Engine,
+	client *client.Client, engine engine.Engine,
 	projectID, registrationToken, confDir, stateDir, version string, serverPort int,
 ) (*Agent, error) {
 	if version == "" {
 		return nil, errVersionNotSet
 	}
+
+	variables := fsnotify.NewVariables(confDir)
+	if err := variables.Start(); err != nil {
+		return nil, errors.Wrap(err, "start fsnotify variables")
+	}
+
+	service := service.NewService(variables, confDir)
+
 	return &Agent{
 		client:            client,
+		variables:         variables,
 		projectID:         projectID,
 		registrationToken: registrationToken,
 		confDir:           confDir,
@@ -77,7 +87,8 @@ func NewAgent(
 		}),
 		statusGarbageCollector: status.NewGarbageCollector(client.DeleteDeviceApplicationStatus, client.DeleteDeviceServiceStatus),
 		infoReporter:           info.NewReporter(client, version),
-		server:                 server.NewServer(),
+		localServer:            local.NewServer(service),
+		remoteServer:           remote.NewServer(client, service),
 		updater:                updater.NewUpdater(engine, projectID, version),
 		handoffCoordinator:     handoff.NewCoordinator(engine, version, serverPort),
 	}, nil
@@ -127,15 +138,7 @@ func (a *Agent) Initialize() error {
 	a.client.SetAccessKey(string(accessKeyBytes))
 	a.client.SetDeviceID(string(deviceIDBytes))
 
-	variables := fsnotify.NewVariables(a.confDir)
-	if err := variables.Start(); err != nil {
-		return errors.Wrap(err, "start fsnotify variables detector")
-	}
-
-	a.variables = variables
-	a.connector = connector.NewConnector(a.client, a.variables, a.confDir)
-
-	a.server.SetListener(a.handoffCoordinator.Takeover())
+	a.localServer.SetListener(a.handoffCoordinator.Takeover())
 
 	return nil
 }
@@ -156,9 +159,9 @@ func (a *Agent) register() error {
 
 func (a *Agent) Run() {
 	go a.runBundleApplier()
-	go a.runConnector()
 	go a.runInfoReporter()
-	go a.runServer()
+	go a.runRemoteServer()
+	go a.runLocalServer()
 	select {}
 }
 
@@ -242,20 +245,6 @@ func (a *Agent) downloadLatestBundle() *models.Bundle {
 	return bundle
 }
 
-func (a *Agent) runConnector() {
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-
-	for {
-		a.connector.Do()
-
-		select {
-		case <-ticker.C:
-			continue
-		}
-	}
-}
-
 func (a *Agent) runInfoReporter() {
 	ticker := time.NewTicker(time.Minute)
 	defer ticker.Stop()
@@ -274,13 +263,31 @@ func (a *Agent) runInfoReporter() {
 	}
 }
 
-func (a *Agent) runServer() {
+func (a *Agent) runLocalServer() {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
 	for {
-		if err := a.server.Serve(); err != nil {
-			log.WithError(err).Error("serve device API")
+		if err := a.localServer.Serve(); err != nil {
+			log.WithError(err).Error("serve local device API")
+			goto cont
+		}
+
+	cont:
+		select {
+		case <-ticker.C:
+			continue
+		}
+	}
+}
+
+func (a *Agent) runRemoteServer() {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for {
+		if err := a.remoteServer.Serve(); err != nil {
+			log.WithError(err).Error("serve remote device API")
 			goto cont
 		}
 

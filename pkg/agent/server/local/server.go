@@ -1,10 +1,10 @@
-package server
+package local
 
 import (
 	"net"
 	"net/http"
 
-	"github.com/deviceplane/deviceplane/pkg/agent/service"
+	"github.com/deviceplane/deviceplane/pkg/agent/server/conncontext"
 )
 
 type Server struct {
@@ -12,10 +12,11 @@ type Server struct {
 	listener   net.Listener
 }
 
-func NewServer() *Server {
+func NewServer(service http.Handler) *Server {
 	return &Server{
 		httpServer: &http.Server{
-			Handler: service.NewService(),
+			Handler:     service,
+			ConnContext: conncontext.SaveConn,
 		},
 	}
 }
