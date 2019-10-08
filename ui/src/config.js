@@ -16,7 +16,7 @@ const config = process.env.REACT_APP_ENVIRONMENT === 'development'
   : production;
 
 export default {
-  agentVersion: '1.3.0',
+  agentVersion: '1.5.0',
   cliEndpoint: 'https://cli.deviceplane.com',
   ...config
 };
