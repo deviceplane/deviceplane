@@ -139,7 +139,7 @@ type ServiceAccountRoleBindings interface {
 var ErrServiceAccountRoleBindingNotFound = errors.New("service account role binding not found")
 
 type Devices interface {
-	CreateDevice(ctx context.Context, projectID, name string) (*models.Device, error)
+	CreateDevice(ctx context.Context, projectID, name, registrationTokenID string) (*models.Device, error)
 	GetDevice(ctx context.Context, id, projectID string) (*models.Device, error)
 	LookupDevice(ctx context.Context, name, projectID string) (*models.Device, error)
 	ListDevices(ctx context.Context, projectID string) ([]models.Device, error)
@@ -162,9 +162,14 @@ type DeviceLabels interface {
 var ErrDeviceLabelNotFound = errors.New("device label not found")
 
 type DeviceRegistrationTokens interface {
-	CreateDeviceRegistrationToken(ctx context.Context, projectID string) (*models.DeviceRegistrationToken, error)
+	CreateDeviceRegistrationToken(ctx context.Context, projectID, name string, maxRegistrations *int) (*models.DeviceRegistrationToken, error)
 	GetDeviceRegistrationToken(ctx context.Context, id, projectID string) (*models.DeviceRegistrationToken, error)
-	BindDeviceRegistrationToken(ctx context.Context, id, projectID, deviceAccessKeyID string) (*models.DeviceRegistrationToken, error)
+	LookupDeviceRegistrationToken(ctx context.Context, name, projectID string) (*models.DeviceRegistrationToken, error)
+	ListDeviceRegistrationTokens(ctx context.Context, projectID string) ([]models.DeviceRegistrationToken, error)
+}
+
+type DevicesRegisteredWithToken interface {
+	GetDevicesRegisteredWithTokenCount(ctx context.Context, id, projectID string) (*models.DevicesRegisteredWithTokenCount, error)
 }
 
 var ErrDeviceRegistrationTokenNotFound = errors.New("device registration token not found")

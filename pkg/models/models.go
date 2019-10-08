@@ -110,14 +110,15 @@ type ServiceAccountRoleBinding struct {
 }
 
 type Device struct {
-	ID               string       `json:"id"`
-	CreatedAt        time.Time    `json:"createdAt"`
-	ProjectID        string       `json:"projectId"`
-	Name             string       `json:"name"`
-	DesiredAgentSpec string       `json:"desiredAgentSpec"`
-	Info             DeviceInfo   `json:"info"`
-	LastSeenAt       time.Time    `json:"lastSeenAt"`
-	Status           DeviceStatus `json:"status"`
+	ID                  string       `json:"id"`
+	CreatedAt           time.Time    `json:"createdAt"`
+	ProjectID           string       `json:"projectId"`
+	Name                string       `json:"name"`
+	RegistrationTokenID string       `json:"registrationTokenId"`
+	DesiredAgentSpec    string       `json:"desiredAgentSpec"`
+	Info                DeviceInfo   `json:"info"`
+	LastSeenAt          time.Time    `json:"lastSeenAt"`
+	Status              DeviceStatus `json:"status"`
 }
 
 type DeviceStatus string
@@ -136,10 +137,15 @@ type DeviceLabel struct {
 }
 
 type DeviceRegistrationToken struct {
-	ID                string    `json:"id"`
-	CreatedAt         time.Time `json:"createdAt"`
-	ProjectID         string    `json:"projectId"`
-	DeviceAccessKeyID *string   `json:"deviceAccessKeyId"`
+	ID               string    `json:"id"`
+	CreatedAt        time.Time `json:"createdAt"`
+	ProjectID        string    `json:"projectId"`
+	MaxRegistrations *int      `json:"maxRegistrations"`
+	Name             string    `json:"name"`
+}
+
+type DevicesRegisteredWithTokenCount struct {
+	AllCount int `json:"allCount"`
 }
 
 type DeviceAccessKey struct {
@@ -229,6 +235,11 @@ type ApplicationFull1 struct {
 	Application
 	LatestRelease *Release                `json:"latestRelease"`
 	DeviceCounts  ApplicationDeviceCounts `json:"deviceCounts"`
+}
+
+type DeviceRegistrationTokenFull struct {
+	DeviceRegistrationToken
+	DeviceCounts DevicesRegisteredWithTokenCount `json:"deviceCounts"`
 }
 
 type ReleaseFull struct {

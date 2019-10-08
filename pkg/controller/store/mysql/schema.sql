@@ -240,6 +240,22 @@ create table if not exists service_account_role_bindings (
 );
 
 --
+-- DeviceRegistrationTokens
+--
+
+create table if not exists device_registration_tokens (
+  id varchar(32) not null,
+  created_at timestamp not null default current_timestamp,
+  project_id varchar(32) not null,
+
+  name varchar(100) not null,
+  max_registrations int,
+
+  primary key (id),
+  unique(name, project_id)
+);
+
+--
 -- Devices
 --
 
@@ -249,6 +265,7 @@ create table if not exists devices (
   project_id varchar(32) not null,
 
   name varchar(100) not null,
+  registration_token_id varchar(32),
   desired_agent_spec longtext not null,
   info longtext not null,
   last_seen_at timestamp not null default current_timestamp,
@@ -257,7 +274,10 @@ create table if not exists devices (
   unique(name, project_id),
   foreign key devices_project_id(project_id)
   references projects(id)
-  on delete cascade
+  on delete cascade,
+  foreign key devices_registration_token_id(registration_token_id)
+  references device_registration_tokens(id)
+  on delete set null
 );
 
 create table if not exists device_labels (
@@ -272,19 +292,6 @@ create table if not exists device_labels (
   foreign key device_labels_device_id(device_id)
   references devices(id)
   on delete cascade
-);
-
---
--- DeviceRegistrationTokens
---
-
-create table if not exists device_registration_tokens (
-  id varchar(32) not null,
-  created_at timestamp not null default current_timestamp,
-  project_id varchar(32) not null,
-  device_access_key_id varchar(32) default null,
-
-  primary key (id)
 );
 
 --

@@ -58,6 +58,8 @@ var (
 		"ListDevices",
 		"GetDeviceLabel",
 		"ListDeviceLabels",
+		"GetDeviceRegistrationToken",
+		"ListDeviceRegistrationTokens",
 	}
 	writeActions = append(readActions, []string{
 		"CreateApplication",

@@ -124,3 +124,32 @@ func (s *Service) withDevice(handler func(http.ResponseWriter, *http.Request, st
 		handler(w, r, projectID, authenticatedUserID, authenticatedServiceAccountID, deviceID)
 	}
 }
+
+func (s *Service) withDeviceRegistrationToken(handler func(http.ResponseWriter, *http.Request, string, string, string, string)) func(http.ResponseWriter, *http.Request, string, string, string) {
+	return func(w http.ResponseWriter, r *http.Request, projectID, authenticatedUserID, authenticatedServiceAccountID string) {
+		vars := mux.Vars(r)
+		token := vars["deviceregistrationtoken"]
+		if token == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		var tokenID string
+		if strings.Contains(token, "_") {
+			tokenID = token
+		} else {
+			token, err := s.deviceRegistrationTokens.LookupDeviceRegistrationToken(r.Context(), token, projectID)
+			if err == store.ErrDeviceRegistrationTokenNotFound {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			} else if err != nil {
+				log.WithError(err).Error("lookup device registration token")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			tokenID = token.ID
+		}
+
+		handler(w, r, projectID, authenticatedUserID, authenticatedServiceAccountID, tokenID)
+	}
+}

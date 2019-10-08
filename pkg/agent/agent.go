@@ -146,7 +146,7 @@ func (a *Agent) Initialize() error {
 func (a *Agent) register() error {
 	registerDeviceResponse, err := a.client.RegisterDevice(context.Background(), a.registrationToken)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to register device")
 	}
 	if err := a.writeFile([]byte(registerDeviceResponse.DeviceAccessKeyValue), accessKeyFilename); err != nil {
 		return errors.Wrap(err, "failed to save access key")

@@ -10,6 +10,7 @@ insert into memberships (user_id, project_id) values ('usr_xxx', 'prj_xxx');
 insert into roles (id, project_id, name, description, config) values ('rol_xxx', 'prj_xxx', 'role-xxx', 'role description', '{\"rules\":[{\"resources\":[\"*\"],\"actions\":[\"admin\"]}]}');
 insert into membership_role_bindings (user_id, project_id, role_id) values ('usr_xxx', 'prj_xxx', 'rol_xxx');
 insert into applications (id, project_id, name, description) values ('app_xxx', 'prj_xxx', 'testapplication', 'application description');
+insert into device_registration_tokens (id, project_id, name) values ('default_reg_token_xxx', 'prj_xxx', 'default');
 
 update users set registration_completed = 1 where id = 'usr_xxx';
 "

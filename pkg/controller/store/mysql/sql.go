@@ -389,23 +389,24 @@ const createDevice = `
   insert into devices (
     id,
     project_id,
-    name
+    name,
+    registration_token_id
   )
-  values (?, ?, ?)
+  values (?, ?, ?, ?)
 `
 
 const getDevice = `
-  select id, created_at, project_id, name, desired_agent_spec, info, last_seen_at from devices
+  select id, created_at, project_id, name, registration_token_id, desired_agent_spec, info, last_seen_at from devices
   where id = ? and project_id = ?
 `
 
 const lookupDevice = `
-  select id, created_at, project_id, name, desired_agent_spec, info, last_seen_at from devices
+  select id, created_at, project_id, name, registration_token_id, desired_agent_spec, info, last_seen_at from devices
   where name = ? and project_id = ?
 `
 
 const listDevices = `
-  select id, created_at, project_id, name, desired_agent_spec, info, last_seen_at from devices
+  select id, created_at, project_id, name, registration_token_id, desired_agent_spec, info, last_seen_at from devices
   where project_id = ?
 `
 
@@ -462,20 +463,37 @@ var deleteDeviceLabel = fmt.Sprintf(`
 const createDeviceRegistrationToken = `
   insert into device_registration_tokens (
     id,
-    project_id
+    project_id,
+    name,
+    max_registrations
   )
-  values (?, ?)
+  values (?, ?, ?, ?)
+`
+
+const lookupDeviceRegistrationToken = `
+  select id, created_at, project_id, max_registrations, name from device_registration_tokens
+  where name = ? and project_id = ?
+`
+
+const listDeviceRegistrationTokens = `
+  select id, created_at, project_id, max_registrations, name from device_registration_tokens
+  where project_id = ?
 `
 
 const getDeviceRegistrationToken = `
-  select id, created_at, project_id, device_access_key_id from device_registration_tokens
+  select id, created_at, project_id, max_registrations, name from device_registration_tokens
   where id = ? and project_id = ?
 `
 
-const bindDeviceRegistrationToken = `
+const updateDeviceRegistrationTokenMaxRegistrations = `
   update device_registration_tokens
-  set device_access_key_id = ?
+  set max_registrations = ?
   where id = ? and project_id = ?
+`
+
+const getDevicesRegisteredWithTokenCount = `
+  select count(*) from devices
+  where registration_token = ? and project_id = ?
 `
 
 const createDeviceAccessKey = `

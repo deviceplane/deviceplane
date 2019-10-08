@@ -1184,7 +1184,7 @@ func (s *Store) scanServiceAccountRoleBinding(scanner scanner) (*models.ServiceA
 	return &serviceAccountRoleBinding, nil
 }
 
-func (s *Store) CreateDevice(ctx context.Context, projectID, name string) (*models.Device, error) {
+func (s *Store) CreateDevice(ctx context.Context, projectID, name, registrationTokenID string) (*models.Device, error) {
 	id := newDeviceID()
 
 	if _, err := s.db.ExecContext(
@@ -1193,6 +1193,7 @@ func (s *Store) CreateDevice(ctx context.Context, projectID, name string) (*mode
 		id,
 		projectID,
 		name,
+		registrationTokenID,
 	); err != nil {
 		return nil, err
 	}
@@ -1313,6 +1314,7 @@ func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 		&device.CreatedAt,
 		&device.ProjectID,
 		&device.Name,
+		&device.RegistrationTokenID,
 		&device.DesiredAgentSpec,
 		&infoString,
 		&device.LastSeenAt,
@@ -1415,7 +1417,7 @@ func (s *Store) scanDeviceLabel(scanner scanner) (*models.DeviceLabel, error) {
 	return &deviceLabel, nil
 }
 
-func (s *Store) CreateDeviceRegistrationToken(ctx context.Context, projectID string) (*models.DeviceRegistrationToken, error) {
+func (s *Store) CreateDeviceRegistrationToken(ctx context.Context, projectID, name string, maxRegistrations *int) (*models.DeviceRegistrationToken, error) {
 	id := newDeviceRegistrationTokenID()
 
 	if _, err := s.db.ExecContext(
@@ -1423,11 +1425,49 @@ func (s *Store) CreateDeviceRegistrationToken(ctx context.Context, projectID str
 		createDeviceRegistrationToken,
 		id,
 		projectID,
+		name,
+		maxRegistrations,
 	); err != nil {
 		return nil, err
 	}
 
 	return s.GetDeviceRegistrationToken(ctx, id, projectID)
+}
+
+func (s *Store) LookupDeviceRegistrationToken(ctx context.Context, name, projectID string) (*models.DeviceRegistrationToken, error) {
+	deviceRegistrationTokenRow := s.db.QueryRowContext(ctx, lookupDeviceRegistrationToken, projectID)
+
+	deviceRegistrationToken, err := s.scanDeviceRegistrationToken(deviceRegistrationTokenRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrDeviceRegistrationTokenNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return deviceRegistrationToken, nil
+}
+
+func (s *Store) ListDeviceRegistrationTokens(ctx context.Context, projectID string) ([]models.DeviceRegistrationToken, error) {
+	tokenRows, err := s.db.QueryContext(ctx, listDeviceRegistrationTokens, projectID)
+	if err != nil {
+		return nil, errors.Wrap(err, "query device registration tokens")
+	}
+	defer tokenRows.Close()
+
+	deviceRegistrationTokens := make([]models.DeviceRegistrationToken, 0)
+	for tokenRows.Next() {
+		deviceRegistrationToken, err := s.scanDeviceRegistrationToken(tokenRows)
+		if err != nil {
+			return nil, err
+		}
+		deviceRegistrationTokens = append(deviceRegistrationTokens, *deviceRegistrationToken)
+	}
+
+	if err := tokenRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return deviceRegistrationTokens, nil
 }
 
 func (s *Store) GetDeviceRegistrationToken(ctx context.Context, id, projectID string) (*models.DeviceRegistrationToken, error) {
@@ -1443,11 +1483,11 @@ func (s *Store) GetDeviceRegistrationToken(ctx context.Context, id, projectID st
 	return deviceRegistrationToken, nil
 }
 
-func (s *Store) BindDeviceRegistrationToken(ctx context.Context, id, projectID, deviceAccessKeyID string) (*models.DeviceRegistrationToken, error) {
+func (s *Store) UpdateDeviceRegistrationTokenMaxRegistrations(ctx context.Context, id, projectID string, newMaxRegistrations int) (*models.DeviceRegistrationToken, error) {
 	if _, err := s.db.ExecContext(
 		ctx,
-		bindDeviceRegistrationToken,
-		deviceAccessKeyID,
+		updateDeviceRegistrationTokenMaxRegistrations,
+		newMaxRegistrations,
 		id,
 		projectID,
 	); err != nil {
@@ -1463,11 +1503,35 @@ func (s *Store) scanDeviceRegistrationToken(scanner scanner) (*models.DeviceRegi
 		&deviceRegistrationToken.ID,
 		&deviceRegistrationToken.CreatedAt,
 		&deviceRegistrationToken.ProjectID,
-		&deviceRegistrationToken.DeviceAccessKeyID,
+		&deviceRegistrationToken.MaxRegistrations,
+		&deviceRegistrationToken.Name,
 	); err != nil {
 		return nil, err
 	}
 	return &deviceRegistrationToken, nil
+}
+
+func (s *Store) GetDevicesRegisteredWithTokenCount(ctx context.Context, id, projectID string) (int, error) {
+	countRow := s.db.QueryRowContext(ctx, getDevicesRegisteredWithTokenCount, id, projectID)
+
+	count, err := s.scanDevicesRegisteredCountRow(countRow)
+	if err == sql.ErrNoRows {
+		return 0, store.ErrDeviceRegistrationTokenNotFound
+	} else if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *Store) scanDevicesRegisteredCountRow(scanner scanner) (int, error) {
+	var count int
+	if err := scanner.Scan(
+		&count,
+	); err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (s *Store) CreateDeviceAccessKey(ctx context.Context, projectID, deviceID, hash string) (*models.DeviceAccessKey, error) {
