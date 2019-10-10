@@ -21,3 +21,7 @@ git commit --allow-empty -m "Release controller x.x.x"
 git commit --allow-empty -m "Release agent x.x.x"
 git commit --allow-empty -m "Release CLI x.x.x"
 ```
+
+## Testing
+
+There are no tests. Yet. To manually test things like db migrations, run `make clone-db-locally` to get a local copy of the prod database. You can run db migrations, the ui, the controller, and local agents as needed.

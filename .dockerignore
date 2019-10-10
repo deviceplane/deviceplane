@@ -7,3 +7,5 @@ cmd/deviceplane/deviceplane
 cmd/deviceplane/config.yaml
 ui/build
 ui/node_modules
+.env
+localdump/
