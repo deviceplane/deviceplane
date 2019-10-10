@@ -114,7 +114,7 @@ type Device struct {
 	CreatedAt           time.Time    `json:"createdAt"`
 	ProjectID           string       `json:"projectId"`
 	Name                string       `json:"name"`
-	RegistrationTokenID string       `json:"registrationTokenId"`
+	RegistrationTokenID *string      `json:"registrationTokenId"`
 	DesiredAgentSpec    string       `json:"desiredAgentSpec"`
 	Info                DeviceInfo   `json:"info"`
 	LastSeenAt          time.Time    `json:"lastSeenAt"`
