@@ -1,9 +1,3 @@
-#!make
-include .env
-export
-
-WAIT_FOR_DB=./scripts/wait-for-db.sh mysql -h 127.0.0.1 -u user --password=pass -P 3306 -D deviceplane
-
 db-reset: state-reset
 	docker-compose down
 	docker-compose build
