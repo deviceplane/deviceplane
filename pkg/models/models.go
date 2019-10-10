@@ -227,7 +227,7 @@ type DeviceFull struct {
 
 type DeviceWithLabels struct {
 	Device
-	Labels []DeviceLabel
+	Labels map[string]string `json:"labels"`
 }
 
 type DeviceApplicationStatusInfo struct {

@@ -3,41 +3,32 @@ package query
 import (
 	"encoding/base64"
 	"encoding/json"
-
-	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
 type Operator string
 
-type FilterCondition struct {
-	Property string
-	Operator Operator
-	Key      string
-	Value    string
-}
-
 const (
-	OperatorIs       = Operator("is")
-	OperatorIsNot    = Operator("is not")
-	OperatorKeyIs    = Operator("key is")
-	OperatorKeyIsNot = Operator("key is not")
+	OperatorIs             = Operator("is")
+	OperatorIsNot          = Operator("is not")
+	OperatorHasKey         = Operator("has key")
+	OperatorDoesNotHaveKey = Operator("does not have key")
 )
 
-func FilterDevices(devices []models.DeviceWithLabels, filters [][]FilterCondition) ([]map[string]interface{}, bool) {
-	var devicesMap []map[string]interface{}
+type Filter []Condition
 
-	jsonBytes, err := json.Marshal(devices)
+type Condition struct {
+	Property string   `json:"property"`
+	Operator Operator `json:"operator"`
+	Key      string   `json:"key"`
+	Value    string   `json:"value"`
+}
 
-	if err != nil {
-		return nil, true
-	}
-
-	json.Unmarshal(jsonBytes, &devicesMap)
-
-	filteredDevices := make([]map[string]interface{}, 0, len(devicesMap))
+func FilterDevices(devicesMap []map[string]interface{}, filters []Filter) []map[string]interface{} {
+	filteredDevices := make([]map[string]interface{}, 0)
 
 	for _, device := range devicesMap {
 		valid := true
+
 		for _, filter := range filters {
 			matchesFilter := false
 			for _, condition := range filter {
@@ -47,16 +38,22 @@ func FilterDevices(devices []models.DeviceWithLabels, filters [][]FilterConditio
 				if condition.Property == "label" {
 					switch condition.Operator {
 					case OperatorIs:
-						for _, label := range device["labels"].([]map[string]interface{}) {
-							if label["key"] == condition.Key && label["value"] == condition.Value {
+						for key, value := range device["labels"].(map[string]interface{}) {
+							if key == condition.Key && value == condition.Value {
+								matchesFilter = true
+								break
+							}
+						}
+						for key, value := range device["labels"].(map[string]interface{}) {
+							if key == condition.Key && value == condition.Value {
 								matchesFilter = true
 								break
 							}
 						}
 					case OperatorIsNot:
 						found := false
-						for _, label := range device["labels"].([]map[string]interface{}) {
-							if label["key"] == condition.Key && label["value"] == condition.Value {
+						for key, value := range device["labels"].(map[string]interface{}) {
+							if key == condition.Key && value == condition.Value {
 								found = true
 								break
 							}
@@ -64,17 +61,17 @@ func FilterDevices(devices []models.DeviceWithLabels, filters [][]FilterConditio
 						if !found {
 							matchesFilter = true
 						}
-					case OperatorKeyIs:
-						for _, label := range device["labels"].([]map[string]interface{}) {
-							if label["key"] == condition.Key {
+					case OperatorHasKey:
+						for key := range device["labels"].(map[string]interface{}) {
+							if key == condition.Key {
 								matchesFilter = true
 								break
 							}
 						}
-					case OperatorKeyIsNot:
+					case OperatorDoesNotHaveKey:
 						found := false
-						for _, label := range device["labels"].([]map[string]interface{}) {
-							if label["key"] == condition.Key {
+						for key := range device["labels"].(map[string]interface{}) {
+							if key == condition.Key {
 								found = true
 								break
 							}
@@ -103,25 +100,29 @@ func FilterDevices(devices []models.DeviceWithLabels, filters [][]FilterConditio
 		}
 	}
 
-	return filteredDevices, false
+	return filteredDevices
 }
 
-func FiltersFromQuery(query map[string][]string) [][]FilterCondition {
-	var filters [][]FilterCondition
+func FiltersFromQuery(query map[string][]string) ([]Filter, error) {
+	var filters []Filter
+
 	for key, values := range query {
 		if key == "filter" {
 			for _, encodedFilter := range values {
-				var filter []FilterCondition
 				bytes, err := base64.StdEncoding.DecodeString(encodedFilter)
-				if err == nil {
-					err := json.Unmarshal(bytes, &filter)
-					if err == nil {
-						filters = append(filters, filter)
-					}
+				if err != nil {
+					return nil, err
 				}
+
+				var filter Filter
+				if err := json.Unmarshal(bytes, &filter); err != nil {
+					return nil, err
+				}
+
+				filters = append(filters, filter)
 			}
 		}
 	}
 
-	return filters
+	return filters, nil
 }

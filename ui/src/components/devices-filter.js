@@ -36,8 +36,8 @@ export default class DevicesFilter extends Component {
           >
             <option value="is">is</option>
             <option value="is not">is not</option>
-            <option value="key is">key is</option>
-            <option value="key is not">key is not</option>
+            <option value="has key">has key</option>
+            <option value="does not have key">does not have key</option>
           </Select>
         );
       case 'status':
@@ -101,8 +101,8 @@ export default class DevicesFilter extends Component {
                 />
               </Pane>
             );
-          case 'key is':
-          case 'key is not':
+          case 'has key':
+          case 'does not have key':
             return (
               <Pane display="flex" flex="1" marginRight={majorScale(1)}>
                 <TextInput

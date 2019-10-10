@@ -3,97 +3,260 @@ package query
 import (
 	"encoding/base64"
 	"encoding/json"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
-func MockDevices() [][]map[string]interface{} {
-	var devicesA []map[string]interface{}
-	var devicesB []map[string]interface{}
-	var devicesC []map[string]interface{}
-
-	devicesA = append(devicesA, map[string]interface{}{
-		"id": "A",
-	}, map[string]interface{}{
-		"id": "B",
-	},
-		map[string]interface{}{
-			"id": "C",
-		},
-		map[string]interface{}{
-			"id": "E",
-		})
-
-	devicesB = append(devicesB, map[string]interface{}{
-		"id": "A",
-	}, map[string]interface{}{
-		"id": "B",
+func TestFilterDevices(t *testing.T) {
+	t.Run("standard", func(t *testing.T) {
+		for _, scenario := range []struct {
+			in      []map[string]interface{}
+			filters []Filter
+			out     []map[string]interface{}
+		}{
+			{
+				in: []map[string]interface{}{
+					{
+						"status": "online",
+					},
+				},
+				out: []map[string]interface{}{
+					{
+						"status": "online",
+					},
+				},
+			},
+			{
+				in: []map[string]interface{}{
+					{
+						"status": "online",
+					},
+				},
+				filters: []Filter{
+					Filter([]Condition{
+						{
+							Property: "status",
+							Operator: OperatorIs,
+							Value:    "online",
+						},
+					}),
+				},
+				out: []map[string]interface{}{
+					{
+						"status": "online",
+					},
+				},
+			},
+			{
+				in: []map[string]interface{}{
+					{
+						"status": "offline",
+					},
+				},
+				filters: []Filter{
+					Filter([]Condition{
+						{
+							Property: "status",
+							Operator: OperatorIs,
+							Value:    "online",
+						},
+					}),
+				},
+				out: []map[string]interface{}{},
+			},
+		} {
+			require.Equal(t, scenario.out, FilterDevices(scenario.in, scenario.filters))
+		}
 	})
 
-	devicesC = append(devicesC, map[string]interface{}{
-		"id": "B",
-	}, map[string]interface{}{
-		"id": "E",
-	},
-		map[string]interface{}{
-			"id": "A",
-		},
-		map[string]interface{}{
-			"id": "G",
-		},
-		map[string]interface{}{
-			"id": "H",
-		})
-
-	devices := [][]map[string]interface{}{devicesA, devicesB, devicesC}
-
-	return devices
-}
-
-func MockFilters() []map[string]interface{} {
-	filters := []map[string]interface{}{{"property": "status",
-		"operator": "is",
-		"value":    "online"},
-		{"property": "status",
-			"operator": "is",
-			"value":    "offline"}}
-
-	return filters
-}
-
-func TestFilterDevices(t *testing.T) {
-
+	t.Run("label", func(t *testing.T) {
+		for _, scenario := range []struct {
+			in      []map[string]interface{}
+			filters []Filter
+			out     []map[string]interface{}
+		}{
+			{
+				in: []map[string]interface{}{
+					{
+						"labels": map[string]interface{}{
+							"a": "b",
+						},
+					},
+				},
+				filters: []Filter{
+					Filter([]Condition{
+						{
+							Property: "label",
+							Operator: OperatorIs,
+							Key:      "a",
+							Value:    "b",
+						},
+					}),
+				},
+				out: []map[string]interface{}{
+					{
+						"labels": map[string]interface{}{
+							"a": "b",
+						},
+					},
+				},
+			},
+			{
+				in: []map[string]interface{}{
+					{
+						"labels": map[string]interface{}{
+							"a": "b",
+						},
+					},
+				},
+				filters: []Filter{
+					Filter([]Condition{
+						{
+							Property: "label",
+							Operator: OperatorHasKey,
+							Key:      "a",
+						},
+					}),
+				},
+				out: []map[string]interface{}{
+					{
+						"labels": map[string]interface{}{
+							"a": "b",
+						},
+					},
+				},
+			},
+			{
+				in: []map[string]interface{}{
+					{
+						"labels": map[string]interface{}{
+							"a": "b",
+						},
+					},
+				},
+				filters: []Filter{
+					Filter([]Condition{
+						{
+							Property: "label",
+							Operator: OperatorDoesNotHaveKey,
+							Key:      "c",
+						},
+					}),
+				},
+				out: []map[string]interface{}{
+					{
+						"labels": map[string]interface{}{
+							"a": "b",
+						},
+					},
+				},
+			},
+			{
+				in: []map[string]interface{}{
+					{
+						"labels": map[string]interface{}{
+							"a": "b",
+						},
+					},
+				},
+				filters: []Filter{
+					Filter([]Condition{
+						{
+							Property: "label",
+							Operator: OperatorIs,
+							Key:      "a",
+							Value:    "x",
+						},
+					}),
+				},
+				out: []map[string]interface{}{},
+			},
+			{
+				in: []map[string]interface{}{
+					{
+						"labels": map[string]interface{}{
+							"a": "b",
+						},
+					},
+				},
+				filters: []Filter{
+					Filter([]Condition{
+						{
+							Property: "label",
+							Operator: OperatorHasKey,
+							Key:      "c",
+						},
+					}),
+				},
+				out: []map[string]interface{}{},
+			},
+			{
+				in: []map[string]interface{}{
+					{
+						"labels": map[string]interface{}{
+							"a": "b",
+						},
+					},
+				},
+				filters: []Filter{
+					Filter([]Condition{
+						{
+							Property: "label",
+							Operator: OperatorDoesNotHaveKey,
+							Key:      "a",
+						},
+					}),
+				},
+				out: []map[string]interface{}{},
+			},
+		} {
+			require.Equal(t, scenario.out, FilterDevices(scenario.in, scenario.filters))
+		}
+	})
 }
 
 func TestFiltersFromQuery(t *testing.T) {
-	filters := MockFilters()
+	filtersA := Filter([]Condition{
+		{
+			Property: "status",
+			Operator: OperatorIs,
+			Value:    "online",
+		},
+		{
+			Property: "status",
+			Operator: OperatorIs,
+			Value:    "offline",
+		},
+	})
 
-	filtersA := []map[string]interface{}{
-		filters[0], filters[1],
-	}
-
-	filtersB := []map[string]interface{}{
-		filters[1],
-	}
+	filtersB := Filter([]Condition{
+		{
+			Property: "status",
+			Operator: OperatorIs,
+			Value:    "online",
+		},
+	})
 
 	jsonFilterA, _ := json.Marshal(filtersA)
 	encodedFilterA := base64.StdEncoding.EncodeToString(jsonFilterA)
-
 	jsonFilterB, _ := json.Marshal(filtersB)
 	encodedFilterB := base64.StdEncoding.EncodeToString(jsonFilterB)
 
 	query := map[string][]string{
-		"filter": []string{encodedFilterA, encodedFilterB},
+		"filter": []string{
+			encodedFilterA,
+			encodedFilterB,
+		},
 	}
 
-	result := filtersFromQuery(query)
+	result, err := FiltersFromQuery(query)
+	require.NoError(t, err)
 
-	require.True(t, len(result) == 2)
-	require.True(t, len(result[0]) == 2)
-	require.True(t, len(result[1]) == 1)
-	require.True(t, reflect.DeepEqual(result[0][0], filters[0]))
-	require.True(t, reflect.DeepEqual(result[0][1], filters[1]))
-	require.True(t, reflect.DeepEqual(result[1][0], filters[1]))
+	require.Len(t, result, 2)
+	require.Len(t, result[0], 2)
+	require.Len(t, result[1], 1)
+	require.Equal(t, filtersA[0], result[0][0])
+	require.Equal(t, filtersA[1], result[0][1])
+	require.Equal(t, filtersB[0], result[1][0])
 }

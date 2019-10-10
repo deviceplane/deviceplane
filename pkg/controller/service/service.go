@@ -20,6 +20,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/namesgenerator"
 	"github.com/deviceplane/deviceplane/pkg/revdial"
 	"github.com/deviceplane/deviceplane/pkg/spec"
+	"github.com/deviceplane/deviceplane/pkg/utils"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
@@ -2058,47 +2059,50 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID string,
 ) {
 	devices, err := s.devices.ListDevices(r.Context(), projectID)
-
 	if err != nil {
 		log.WithError(err).Error("list devices")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	filters, err := query.FiltersFromQuery(r.URL.Query())
+	if err != nil {
+		http.Error(w, errors.Wrap(err, "get filters from query").Error(), http.StatusBadRequest)
+		return
+	}
+	if len(filters) == 0 {
+		respond(w, devices)
+		return
+	}
+
 	devicesWithLabels := make([]models.DeviceWithLabels, len(devices))
-
-	for _, device := range devices {
+	for i, device := range devices {
 		labels, err := s.deviceLabels.ListDeviceLabels(r.Context(), device.ID, device.ProjectID)
-
 		if err != nil {
-			log.WithError(err).Error("labels for device")
+			log.WithError(err).Error("list device labels")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		deviceWithLabels := models.DeviceWithLabels{
+		labelsMap := make(map[string]string)
+		for _, label := range labels {
+			labelsMap[label.Key] = label.Value
+		}
+
+		devicesWithLabels[i] = models.DeviceWithLabels{
 			Device: device,
-			Labels: labels,
+			Labels: labelsMap,
 		}
-
-		devicesWithLabels = append(devicesWithLabels, deviceWithLabels)
 	}
 
-	filters := query.FiltersFromQuery(r.URL.Query())
-
-	if len(filters) > 0 {
-		filteredDevices, err := query.FilterDevices(devicesWithLabels, filters)
-
-		if err {
-			log.Error("filter devices")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		respond(w, filteredDevices)
-	} else {
-		respond(w, devicesWithLabels)
+	var devicesMap []map[string]interface{}
+	if err := utils.JSONConvert(devicesWithLabels, &devicesMap); err != nil {
+		log.WithError(err).Error("convert devices with labels")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
+
+	respond(w, query.FilterDevices(devicesMap, filters))
 }
 
 func (s *Service) getDevice(w http.ResponseWriter, r *http.Request,
