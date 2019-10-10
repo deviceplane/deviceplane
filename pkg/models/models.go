@@ -225,6 +225,11 @@ type DeviceFull struct {
 	ApplicationStatusInfo []DeviceApplicationStatusInfo `json:"applicationStatusInfo"`
 }
 
+type DeviceWithLabels struct {
+	Device
+	Labels []DeviceLabel
+}
+
 type DeviceApplicationStatusInfo struct {
 	Application       Application              `json:"application"`
 	ApplicationStatus *DeviceApplicationStatus `json:"applicationStatus"`

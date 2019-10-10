@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
@@ -2059,37 +2058,47 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID string,
 ) {
 	devices, err := s.devices.ListDevices(r.Context(), projectID)
+
 	if err != nil {
 		log.WithError(err).Error("list devices")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	var devicesMap []map[string]interface{}
+	devicesWithLabels := make([]models.DeviceWithLabels, len(devices))
 
-	jsonBytes, err := json.Marshal(devices)
+	for _, device := range devices {
+		labels, err := s.deviceLabels.ListDeviceLabels(r.Context(), device.ID, device.ProjectID)
 
-	if err == nil {
-		json.Unmarshal(jsonBytes, &devicesMap)
-	}
-
-	for _, device := range devicesMap {
-		deviceLabels, err := s.deviceLabels.ListDeviceLabels(r.Context(), device["id"].(string), device["projectId"].(string))
-		if err == nil {
-			labels := make([]map[string]interface{}, 0, len(deviceLabels))
-			for _, label := range deviceLabels {
-				labels = append(labels, map[string]interface{}{
-					"key":   label.Key,
-					"value": label.Value,
-				})
-			}
-			device["labels"] = labels
+		if err != nil {
+			log.WithError(err).Error("labels for device")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
+
+		deviceWithLabels := models.DeviceWithLabels{
+			Device: device,
+			Labels: labels,
+		}
+
+		devicesWithLabels = append(devicesWithLabels, deviceWithLabels)
 	}
 
-	result := query.FilterDevices(devicesMap, r.URL.Query())
+	filters := query.FiltersFromQuery(r.URL.Query())
 
-	respond(w, result)
+	if len(filters) > 0 {
+		filteredDevices, err := query.FilterDevices(devicesWithLabels, filters)
+
+		if err {
+			log.Error("filter devices")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		respond(w, filteredDevices)
+	} else {
+		respond(w, devicesWithLabels)
+	}
 }
 
 func (s *Service) getDevice(w http.ResponseWriter, r *http.Request,

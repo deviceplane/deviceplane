@@ -10,7 +10,6 @@ import {
   minorScale,
   Icon,
   Text,
-  Strong,
   withTheme
 } from 'evergreen-ui';
 
@@ -45,7 +44,7 @@ class Devices extends Component {
     let queryParams = '';
 
     if (window.location.search && window.location.search.includes('filter=')) {
-      queryParams = `&${window.location.search.substr(1)}`;
+      queryParams = window.location.search.substr(1);
       const filters = queryParams.replace(/&/g, '').split('filter=');
 
       filters.forEach(encodedFilter => {
@@ -67,12 +66,15 @@ class Devices extends Component {
 
     return axios
       .get(
-        `${config.endpoint}/projects/${this.props.projectName}/devices?full${queryParams}`,
+        `${config.endpoint}/projects/${this.props.projectName}/devices${
+          queryParams ? `?${queryParams}` : ''
+        }`,
         {
           withCredentials: true
         }
       )
       .then(({ data: devices }) => {
+        devices = this.parseDevices(devices);
         const labelKeys = [
           ...new Set(
             devices.map(({ labels }) => labels.map(({ key }) => key)).flat()
@@ -93,6 +95,11 @@ class Devices extends Component {
       .catch(console.log);
   };
 
+  parseDevices = devices =>
+    devices.map(device =>
+      Array.isArray(device.labels) ? device : { ...device, labels: [] }
+    );
+
   buildFiltersQueryString = () =>
     [...new Set(this.state.filters)]
       .map(
@@ -111,14 +118,14 @@ class Devices extends Component {
     window.history.pushState('', '', `?${filtersQueryString}`);
     axios
       .get(
-        `${config.endpoint}/projects/${this.props.projectName}/devices?full&${filtersQueryString}`,
+        `${config.endpoint}/projects/${this.props.projectName}/devices?${filtersQueryString}`,
         {
           withCredentials: true
         }
       )
       .then(({ data: devices }) => {
         this.setState({
-          devices
+          devices: this.parseDevices(devices)
         });
       })
       .catch(console.log);
@@ -204,6 +211,7 @@ class Devices extends Component {
           marginRight={minorScale(2)}
           marginY={minorScale(1)}
           overflow="hidden"
+          key={key}
         >
           <Pane
             backgroundColor={this.state.labelColorMap[key]}
@@ -364,7 +372,7 @@ class Devices extends Component {
                       alignItems="center"
                     >
                       {conditions.map((filter, i) => (
-                        <Fragment>
+                        <Fragment key={i}>
                           {this.renderFilter(filter)}
                           {conditions.length > 1 &&
                             i !== conditions.length - 1 && (
