@@ -6,11 +6,9 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
-	"path"
 	"syscall"
 	"time"
 	"unsafe"
@@ -24,8 +22,6 @@ import (
 )
 
 const (
-	authorizedKeysFilename = "authorized_keys"
-
 	// Simple script to start a preferred shell
 	// On Debian and Ubuntu /bin/sh links to dash, whereas bash is what's actually preferred
 	// This is fairly hacky and there's likely a better approach to determining the preferred shell
@@ -66,37 +62,25 @@ func (s *Service) ssh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: refactor this
-	// The variables package should be the only one reading variables
-	authorizedKeysLocation := path.Join(s.confDir, authorizedKeysFilename)
-
-	var options []ssh.Option
-	if _, err := os.Stat(authorizedKeysLocation); err == nil {
-		authorizedKeyBytes, err := ioutil.ReadFile(authorizedKeysLocation)
-		if err != nil {
-			log.WithError(err).Error("read authorized keys")
-			return
-		}
-		authorizedKey, _, _, _, err := gossh.ParseAuthorizedKey(authorizedKeyBytes)
-		if err != nil {
-			log.WithError(err).Error("parse authorized keys")
-			return
-		}
-		options = []ssh.Option{
-			ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
-				return ssh.KeysEqual(key, authorizedKey)
-			}),
-		}
-	} else if !os.IsNotExist(err) {
-		log.WithError(err).Error("check for authorized keys")
-		return
-	}
-
 	sshServer := &ssh.Server{
-		Handler:         handler(ctx),
+		Handler:         sshServerHandler(ctx),
 		RequestHandlers: ssh.DefaultRequestHandlers,
 		ChannelHandlers: ssh.DefaultChannelHandlers,
 		HostSigners:     []ssh.Signer{signer},
+	}
+
+	var options []ssh.Option
+	if len(s.variables.GetAuthorizedSSHKeys()) > 0 {
+		options = []ssh.Option{
+			ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
+				for _, authorizedKey := range s.variables.GetAuthorizedSSHKeys() {
+					if ssh.KeysEqual(key, authorizedKey) {
+						return true
+					}
+				}
+				return false
+			}),
+		}
 	}
 
 	for _, option := range options {
@@ -108,7 +92,7 @@ func (s *Service) ssh(w http.ResponseWriter, r *http.Request) {
 	sshServer.HandleConn(conn)
 }
 
-func handler(ctx context.Context) func(s ssh.Session) {
+func sshServerHandler(ctx context.Context) func(s ssh.Session) {
 	return func(s ssh.Session) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
