@@ -2065,16 +2065,6 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	filters, err := query.FiltersFromQuery(r.URL.Query())
-	if err != nil {
-		http.Error(w, errors.Wrap(err, "get filters from query").Error(), http.StatusBadRequest)
-		return
-	}
-	if len(filters) == 0 {
-		respond(w, devices)
-		return
-	}
-
 	devicesWithLabels := make([]models.DeviceWithLabels, len(devices))
 	for i, device := range devices {
 		labels, err := s.deviceLabels.ListDeviceLabels(r.Context(), device.ID, device.ProjectID)
@@ -2093,6 +2083,16 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request,
 			Device: device,
 			Labels: labelsMap,
 		}
+	}
+
+	filters, err := query.FiltersFromQuery(r.URL.Query())
+	if err != nil {
+		http.Error(w, errors.Wrap(err, "get filters from query").Error(), http.StatusBadRequest)
+		return
+	}
+	if len(filters) == 0 {
+		respond(w, devicesWithLabels)
+		return
 	}
 
 	var devicesMap []map[string]interface{}

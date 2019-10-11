@@ -75,10 +75,14 @@ class Devices extends Component {
       )
       .then(({ data: devices }) => {
         devices = this.parseDevices(devices);
+        var x = [];
+        devices.forEach((device) => {
+          Object.keys(device.labels).forEach((label) => {
+            x.push(label);
+          })
+        });
         const labelKeys = [
-          ...new Set(
-            devices.map(({ labels }) => labels.map(({ key }) => key)).flat()
-          )
+          ...new Set(x)
         ].sort();
         const labelColorMap = labelKeys.reduce(
           (obj, key, i) => ({
@@ -96,9 +100,7 @@ class Devices extends Component {
   };
 
   parseDevices = devices =>
-    devices.map(device =>
-      Array.isArray(device.labels) ? device : { ...device, labels: [] }
-    );
+    devices.map(device => device);
 
   buildFiltersQueryString = () =>
     [...new Set(this.state.filters)]
@@ -205,7 +207,7 @@ class Devices extends Component {
 
   renderLabels = device => (
     <Pane display="flex" flexWrap="wrap">
-      {device.labels.map(({ key, value }, i) => (
+      {Object.keys(device.labels).map((key, i) => (
         <Pane
           display="flex"
           marginRight={minorScale(2)}
@@ -236,7 +238,7 @@ class Devices extends Component {
             overflow="hidden"
             whiteSpace="nowrap"
           >
-            {value}
+            {device.labels[key]}
           </Pane>
         </Pane>
       ))}
