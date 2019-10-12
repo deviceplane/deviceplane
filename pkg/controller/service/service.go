@@ -11,6 +11,7 @@ import (
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/controller/authz"
 	"github.com/deviceplane/deviceplane/pkg/controller/connman"
+	"github.com/deviceplane/deviceplane/pkg/controller/query"
 	"github.com/deviceplane/deviceplane/pkg/controller/spaserver"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/email"
@@ -19,6 +20,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/namesgenerator"
 	"github.com/deviceplane/deviceplane/pkg/revdial"
 	"github.com/deviceplane/deviceplane/pkg/spec"
+	"github.com/deviceplane/deviceplane/pkg/utils"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
@@ -2063,7 +2065,44 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	respond(w, devices)
+	devicesWithLabels := make([]models.DeviceWithLabels, len(devices))
+	for i, device := range devices {
+		labels, err := s.deviceLabels.ListDeviceLabels(r.Context(), device.ID, device.ProjectID)
+		if err != nil {
+			log.WithError(err).Error("list device labels")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		labelsMap := make(map[string]string)
+		for _, label := range labels {
+			labelsMap[label.Key] = label.Value
+		}
+
+		devicesWithLabels[i] = models.DeviceWithLabels{
+			Device: device,
+			Labels: labelsMap,
+		}
+	}
+
+	filters, err := query.FiltersFromQuery(r.URL.Query())
+	if err != nil {
+		http.Error(w, errors.Wrap(err, "get filters from query").Error(), http.StatusBadRequest)
+		return
+	}
+	if len(filters) == 0 {
+		respond(w, devicesWithLabels)
+		return
+	}
+
+	var devicesMap []map[string]interface{}
+	if err := utils.JSONConvert(devicesWithLabels, &devicesMap); err != nil {
+		log.WithError(err).Error("convert devices with labels")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	respond(w, query.FilterDevices(devicesMap, filters))
 }
 
 func (s *Service) getDevice(w http.ResponseWriter, r *http.Request,

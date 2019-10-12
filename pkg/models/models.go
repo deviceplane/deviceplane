@@ -114,7 +114,7 @@ type Device struct {
 	CreatedAt           time.Time    `json:"createdAt"`
 	ProjectID           string       `json:"projectId"`
 	Name                string       `json:"name"`
-	RegistrationTokenID string       `json:"registrationTokenId"`
+	RegistrationTokenID *string      `json:"registrationTokenId"`
 	DesiredAgentSpec    string       `json:"desiredAgentSpec"`
 	Info                DeviceInfo   `json:"info"`
 	LastSeenAt          time.Time    `json:"lastSeenAt"`
@@ -223,6 +223,11 @@ type ServiceAccountFull struct {
 type DeviceFull struct {
 	Device
 	ApplicationStatusInfo []DeviceApplicationStatusInfo `json:"applicationStatusInfo"`
+}
+
+type DeviceWithLabels struct {
+	Device
+	Labels map[string]string `json:"labels"`
 }
 
 type DeviceApplicationStatusInfo struct {
