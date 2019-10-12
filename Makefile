@@ -1,8 +1,16 @@
+#!make
+-include .env
+export
+
+DB_COMMAND=./scripts/db-command.sh
+WAIT_FOR_DB=./scripts/wait-for-db.sh
+
 db-reset: state-reset
 	docker-compose down
 	docker-compose build
 	docker-compose up -d
-	$$WAIT_FOR_DB
+	$$WAIT_FOR_DB $$(env ENV=local $$DB_COMMAND)
+	$$(env ENV=local $$DB_COMMAND) < pkg/controller/store/mysql/schema.sql
 	./scripts/seed
 
 state-reset:
@@ -36,20 +44,31 @@ statik:
 	npm run build --prefix ./ui
 	statik -src=./ui/build -dest=./pkg
 
-clone-db-locally: dump-remote-db load-local-db-from-dump
-
 dump-remote-db:
 	mkdir -p localdump
-	echo $$DB_PASS
 	if [[ -z "$$DB_PASS" ]]; then \
 		echo "DB_PASS is not set"; \
 		exit 1; \
 	fi
-	ssh ubuntu@54.200.126.157 "mysqldump -h deviceplane.coed7waagekn.us-west-2.rds.amazonaws.com -u deviceplane --password=$$DB_PASS -P 3306 --databases deviceplane" > localdump/db.sql
+	$$(env ENV=prod DUMP=true $$DB_COMMAND) > localdump/db.sql
 
 load-local-db-from-dump: state-reset
 	docker-compose down
 	docker-compose build
 	docker-compose up -d
-	$$WAIT_FOR_DB
-	mysql -h 127.0.0.1 -u user --password=pass -P 3306 -D deviceplane < localdump/db.sql
+	$$WAIT_FOR_DB $$(env ENV=local $$DB_COMMAND)
+	$$(env ENV=local $$DB_COMMAND) < localdump/db.sql
+
+apply-migration:
+	if [[ -z "$$MIGRATION_FILE" ]]; then \
+		echo "MIGRATION_FILE is not set"; \
+		exit 1; \
+	fi
+	if [[ -z "$$ENV" ]]; then \
+		echo "ENV is not set"; \
+		exit 1; \
+	fi
+	$$($$DB_COMMAND) < $$MIGRATION_FILE
+
+try-last-migration-locally: load-local-db-from-dump
+	lastFile=$$(ls ./migrations | tail -n 1); env ENV=local MIGRATION_FILE=./migrations/$$lastFile make apply-migration
