@@ -17,6 +17,7 @@ create table if not exists users (
   last_name varchar(100) not null,
   company varchar(100) not null,
   registration_completed boolean not null default false,
+  super_admin boolean not null default false,
 
   primary key (id),
   unique(email)

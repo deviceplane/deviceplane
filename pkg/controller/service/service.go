@@ -248,6 +248,7 @@ func NewService(
 
 	// TODO: scope under /api?
 	s.router.HandleFunc("/health", s.health).Methods("GET")
+	s.router.HandleFunc("/500", s.withUserOrServiceAccountAuth(s.intentional500)).Methods("GET")
 
 	s.router.PathPrefix("/").Handler(spaserver.NewSPAFileServer(fileSystem))
 
@@ -260,6 +261,27 @@ func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) health(w http.ResponseWriter, r *http.Request) {
 	s.st.Incr("health", nil, 1)
+}
+
+func (s *Service) intentional500(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
+	// TODO
+	if authenticatedUserID == "" {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	user, err := s.users.GetUser(r.Context(), authenticatedUserID)
+	if err != nil {
+		log.WithError(err).Error("get user")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if user.SuperAdmin {
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusForbidden)
+	}
 }
 
 func (s *Service) withUserOrServiceAccountAuth(handler func(http.ResponseWriter, *http.Request, string, string)) func(http.ResponseWriter, *http.Request) {

@@ -12,6 +12,7 @@ type User struct {
 	LastName              string    `json:"lastName"`
 	Company               string    `json:"company"`
 	RegistrationCompleted bool      `json:"registrationCompleted"`
+	SuperAdmin            bool      `json:"superAdmin"`
 }
 
 type RegistrationToken struct {

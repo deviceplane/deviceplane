@@ -15,22 +15,22 @@ const createUser = `
 `
 
 const getUser = `
-  select id, created_at, email, first_name, last_name, company, registration_completed from users
+  select id, created_at, email, first_name, last_name, company, registration_completed, super_admin from users
   where id = ?
 `
 
 const lookupUser = `
-  select id, created_at, email, first_name, last_name, company, registration_completed from users
+  select id, created_at, email, first_name, last_name, company, registration_completed, super_admin from users
   where email = ?
 `
 
 const validateUser = `
-  select id, created_at, email, first_name, last_name, company, registration_completed from users
+  select id, created_at, email, first_name, last_name, company, registration_completed, super_admin from users
   where id = ? and password_hash = ?
 `
 
 const validateUserWithEmail = `
-  select id, created_at, email, first_name, last_name, company, registration_completed from users
+  select id, created_at, email, first_name, last_name, company, registration_completed, super_admin from users
   where email = ? and password_hash = ?
 `
 

@@ -270,6 +270,7 @@ func (s *Store) scanUser(scanner scanner) (*models.User, error) {
 		&user.LastName,
 		&user.Company,
 		&user.RegistrationCompleted,
+		&user.SuperAdmin,
 	); err != nil {
 		return nil, err
 	}
