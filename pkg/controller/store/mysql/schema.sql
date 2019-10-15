@@ -111,6 +111,7 @@ create table if not exists projects (
   created_at timestamp not null default current_timestamp,
 
   name varchar(100) not null,
+  datadog_api_key varchar(100),
 
   primary key (id),
   unique(name)

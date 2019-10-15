@@ -8,6 +8,8 @@ import (
 
 	"github.com/DataDog/datadog-go/statsd"
 	"github.com/apex/log"
+	"github.com/deviceplane/deviceplane/pkg/controller/runner"
+	"github.com/deviceplane/deviceplane/pkg/controller/runner/datadog"
 	"github.com/deviceplane/deviceplane/pkg/controller/service"
 	mysql_store "github.com/deviceplane/deviceplane/pkg/controller/store/mysql"
 	sendgrid_email "github.com/deviceplane/deviceplane/pkg/email/sendgrid"
@@ -64,6 +66,11 @@ func main() {
 
 	sendgridClient := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
 	sendgridEmail := sendgrid_email.NewEmail(sendgridClient)
+
+	runnerManager := runner.NewManager([]runner.Runner{
+		datadog.NewRunner(sqlStore, sqlStore),
+	})
+	runnerManager.Start()
 
 	svc := service.NewService(sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
 		sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,

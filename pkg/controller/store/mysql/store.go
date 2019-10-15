@@ -574,6 +574,29 @@ func (s *Store) LookupProject(ctx context.Context, name string) (*models.Project
 	return project, nil
 }
 
+func (s *Store) ListProjects(ctx context.Context) ([]models.Project, error) {
+	projectRows, err := s.db.QueryContext(ctx, listProjects)
+	if err != nil {
+		return nil, errors.Wrap(err, "query projects")
+	}
+	defer projectRows.Close()
+
+	projects := make([]models.Project, 0)
+	for projectRows.Next() {
+		project, err := s.scanProject(projectRows)
+		if err != nil {
+			return nil, err
+		}
+		projects = append(projects, *project)
+	}
+
+	if err := projectRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return projects, nil
+}
+
 func (s *Store) UpdateProject(ctx context.Context, id, name string) (*models.Project, error) {
 	if _, err := s.db.ExecContext(
 		ctx,
@@ -602,6 +625,7 @@ func (s *Store) scanProject(scanner scanner) (*models.Project, error) {
 		&project.ID,
 		&project.CreatedAt,
 		&project.Name,
+		&project.DatadogAPIKey,
 	); err != nil {
 		return nil, err
 	}

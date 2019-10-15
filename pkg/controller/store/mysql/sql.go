@@ -168,13 +168,17 @@ const createProject = `
 `
 
 const getProject = `
-  select id, created_at, name from projects
+  select id, created_at, name, datadog_api_key from projects
   where id = ?
 `
 
 const lookupProject = `
-  select id, created_at, name from projects
+  select id, created_at, name, datadog_api_key from projects
   where name = ?
+`
+
+const listProjects = `
+  select id, created_at, name, datadog_api_key from projects
 `
 
 const updateProject = `

@@ -47,9 +47,10 @@ type UserAccessKeyWithValue struct {
 }
 
 type Project struct {
-	ID        string    `json:"id"`
-	CreatedAt time.Time `json:"createdAt"`
-	Name      string    `json:"name"`
+	ID            string    `json:"id"`
+	CreatedAt     time.Time `json:"createdAt"`
+	Name          string    `json:"name"`
+	DatadogAPIKey *string   `json:"datadogApiKey"`
 }
 
 type ProjectDeviceCounts struct {
