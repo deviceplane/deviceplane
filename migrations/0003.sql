@@ -1,0 +1,7 @@
+-- INSERT INTO device_registration_tokens
+-- (id, project_id, name)
+-- SELECT
+-- CONCAT("reg_", LEFT(MD5(RAND()), 32-4)) as id,
+-- id as project_id,
+-- 'default' as name
+-- from projects;

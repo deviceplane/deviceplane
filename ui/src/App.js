@@ -81,9 +81,8 @@ class AddDevice extends Component {
 
   getRegistrationToken = () => {
     axios
-      .post(
-        `${config.endpoint}/projects/${this.props.projectName}/deviceregistrationtokens`,
-        null,
+      .get(
+        `${config.endpoint}/projects/${this.props.projectName}/deviceregistrationtokens/default`,
         {
           withCredentials: true
         }
@@ -148,11 +147,11 @@ class AddDevice extends Component {
               >
                 <Icon icon="info-sign" color="info" marginRight={8} />
                 <Text>
-                  Device registration ID{' '}
+                  Default device registration token with ID{' '}
                   <Code fontFamily="mono" background="#234361" color="white">
                     {this.state.deviceRegistrationToken.id}
                   </Code>{' '}
-                  created.
+                  is being used.
                 </Text>
               </Pane>
               <Card
