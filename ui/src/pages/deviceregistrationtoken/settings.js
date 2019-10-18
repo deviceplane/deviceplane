@@ -126,7 +126,7 @@ export default class DeviceRegistrationTokenSettings extends Component {
         });
         toaster.success('Successfully deleted Device Registration Token.');
         this.props.history.push(
-          `/${this.props.projectName}/provisioning/deviceregistrationtokens`
+          `/${this.props.projectName}/provisioning`
         );
       })
       .catch(error => {
