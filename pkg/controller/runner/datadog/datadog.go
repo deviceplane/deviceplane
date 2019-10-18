@@ -11,10 +11,11 @@ import (
 )
 
 const (
-	metricName   = "deviceplane.devices"
-	metricType   = "count"
-	idTagKey     = "id"
-	statusTagKey = "status"
+	metricName    = "deviceplane.devices"
+	metricType    = "count"
+	projectTagKey = "project"
+	idTagKey      = "id"
+	statusTagKey  = "status"
 )
 
 type Runner struct {
@@ -56,6 +57,7 @@ func (r *Runner) Do(ctx context.Context) {
 				},
 				Type: metricType,
 				Tags: []string{
+					strings.Join([]string{projectTagKey, project.Name}, ":"),
 					strings.Join([]string{idTagKey, device.ID}, ":"),
 					strings.Join([]string{statusTagKey, string(device.Status)}, ":"),
 				},
