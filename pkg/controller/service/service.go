@@ -38,35 +38,35 @@ var (
 )
 
 type Service struct {
-	users                            store.Users
-	passwordRecoveryTokens           store.PasswordRecoveryTokens
-	registrationTokens               store.RegistrationTokens
-	userAccessKeys                   store.UserAccessKeys
-	sessions                         store.Sessions
-	projects                         store.Projects
-	projectDeviceCounts              store.ProjectDeviceCounts
-	projectApplicationCounts         store.ProjectApplicationCounts
-	roles                            store.Roles
-	memberships                      store.Memberships
-	membershipRoleBindings           store.MembershipRoleBindings
-	serviceAccounts                  store.ServiceAccounts
-	serviceAccountAccessKeys         store.ServiceAccountAccessKeys
-	serviceAccountRoleBindings       store.ServiceAccountRoleBindings
-	devices                          store.Devices
-	deviceLabels                     store.DeviceLabels
-	deviceRegistrationTokens         store.DeviceRegistrationTokens
-	devicesRegisteredWithTokensCount store.DevicesRegisteredWithToken
-	deviceAccessKeys                 store.DeviceAccessKeys
-	applications                     store.Applications
-	applicationDeviceCounts          store.ApplicationDeviceCounts
-	releases                         store.Releases
-	releaseDeviceCounts              store.ReleaseDeviceCounts
-	deviceApplicationStatuses        store.DeviceApplicationStatuses
-	deviceServiceStatuses            store.DeviceServiceStatuses
-	email                            email.Interface
-	cookieDomain                     string
-	cookieSecure                     bool
-	st                               *statsd.Client
+	users                      store.Users
+	passwordRecoveryTokens     store.PasswordRecoveryTokens
+	registrationTokens         store.RegistrationTokens
+	userAccessKeys             store.UserAccessKeys
+	sessions                   store.Sessions
+	projects                   store.Projects
+	projectDeviceCounts        store.ProjectDeviceCounts
+	projectApplicationCounts   store.ProjectApplicationCounts
+	roles                      store.Roles
+	memberships                store.Memberships
+	membershipRoleBindings     store.MembershipRoleBindings
+	serviceAccounts            store.ServiceAccounts
+	serviceAccountAccessKeys   store.ServiceAccountAccessKeys
+	serviceAccountRoleBindings store.ServiceAccountRoleBindings
+	devices                    store.Devices
+	deviceLabels               store.DeviceLabels
+	deviceRegistrationTokens   store.DeviceRegistrationTokens
+	devicesRegisteredWithToken store.DevicesRegisteredWithToken
+	deviceAccessKeys           store.DeviceAccessKeys
+	applications               store.Applications
+	applicationDeviceCounts    store.ApplicationDeviceCounts
+	releases                   store.Releases
+	releaseDeviceCounts        store.ReleaseDeviceCounts
+	deviceApplicationStatuses  store.DeviceApplicationStatuses
+	deviceServiceStatuses      store.DeviceServiceStatuses
+	email                      email.Interface
+	cookieDomain               string
+	cookieSecure               bool
+	st                         *statsd.Client
 
 	router   *mux.Router
 	upgrader websocket.Upgrader
@@ -91,6 +91,7 @@ func NewService(
 	devices store.Devices,
 	deviceLabels store.DeviceLabels,
 	deviceRegistrationTokens store.DeviceRegistrationTokens,
+	devicesRegisteredWithToken store.DevicesRegisteredWithToken,
 	deviceAccessKeys store.DeviceAccessKeys,
 	applications store.Applications,
 	applicationDeviceCounts store.ApplicationDeviceCounts,
@@ -122,6 +123,7 @@ func NewService(
 		devices:                    devices,
 		deviceLabels:               deviceLabels,
 		deviceRegistrationTokens:   deviceRegistrationTokens,
+		devicesRegisteredWithToken: devicesRegisteredWithToken,
 		deviceAccessKeys:           deviceAccessKeys,
 		applications:               applications,
 		applicationDeviceCounts:    applicationDeviceCounts,
@@ -230,6 +232,8 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens", s.validateAuthorization("deviceregistrationtokens", "ListDeviceRegistrationTokens", s.listDeviceRegistrationTokens)).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens", s.validateAuthorization("deviceregistrationtokens", "CreateDeviceRegistrationToken", s.createDeviceRegistrationToken)).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}", s.validateAuthorization("deviceregistrationtokens", "GetDeviceRegistrationToken", s.withDeviceRegistrationToken(s.getDeviceRegistrationToken))).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}", s.validateAuthorization("deviceregistrationtokens", "UpdateDeviceRegistrationToken", s.withDeviceRegistrationToken(s.updateDeviceRegistrationToken))).Methods("PUT")
+	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}", s.validateAuthorization("deviceregistrationtokens", "DeleteDeviceRegistrationToken", s.withDeviceRegistrationToken(s.deleteDeviceRegistrationToken))).Methods("DELETE")
 
 	apiRouter.HandleFunc("/projects/{project}/devices/register", s.registerDevice).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/bundle", s.withDeviceAuth(s.getBundle)).Methods("GET")
@@ -1069,7 +1073,15 @@ func (s *Service) createProject(w http.ResponseWriter, r *http.Request, authenti
 
 	// Create default device registration token.
 	// It is named "default" and has an unlimited device registration cap.
-	if _, err = s.deviceRegistrationTokens.CreateDeviceRegistrationToken(r.Context(), project.ID, "default", nil); err != nil {
+	_, err = s.deviceRegistrationTokens.CreateDeviceRegistrationToken(
+		r.Context(),
+		project.ID,
+		"default",
+		// This copy can be improved:
+		"This default registration token is used for provisioning new devices from the UI.",
+		nil,
+	)
+	if err != nil {
 		log.WithError(err).Error("create default registration token")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -2303,27 +2315,32 @@ func (s *Service) deleteDeviceLabel(w http.ResponseWriter, r *http.Request,
 func (s *Service) createDeviceRegistrationToken(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID string,
 ) {
-	var registrationTokenRequest struct {
-		MaxRegistrations *int    `json:"maxRegistrations"`
-		Name             *string `json:"name"`
+	var deviceRegistrationTokenRequest struct {
+		Name             string `json:"name" validate:"name"`
+		Description      string `json:"description" validate:"description"`
+		MaxRegistrations *int   `json:"maxRegistrations"`
 	}
 
 	// We'll accept empty requests for backwards compatibility.
 	// We may change this in the future.
-	err := read(r, &registrationTokenRequest)
-	if err != nil && err != io.EOF {
+	err := read(r, &deviceRegistrationTokenRequest)
+	if err == io.EOF {
+		// TODO: add a frontend commit to change the way new devices are created
+		deviceRegistrationTokenRequest.Name = namesgenerator.GetRandomName()
+		deviceRegistrationTokenRequest.Description = "Single-device registration token used for device registration through the UI."
+		singleRegistration := 1
+		deviceRegistrationTokenRequest.MaxRegistrations = &singleRegistration
+	} else if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	var name string
-	if registrationTokenRequest.Name != nil {
-		name = *registrationTokenRequest.Name
-	} else {
-		name = namesgenerator.GetRandomName()
-	}
-
-	deviceRegistrationToken, err := s.deviceRegistrationTokens.CreateDeviceRegistrationToken(r.Context(), projectID, name, registrationTokenRequest.MaxRegistrations)
+	deviceRegistrationToken, err := s.deviceRegistrationTokens.CreateDeviceRegistrationToken(
+		r.Context(),
+		projectID,
+		deviceRegistrationTokenRequest.Name,
+		deviceRegistrationTokenRequest.Description,
+		deviceRegistrationTokenRequest.MaxRegistrations)
 	if err != nil {
 		log.WithError(err).Error("create device registration token")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -2334,9 +2351,9 @@ func (s *Service) createDeviceRegistrationToken(w http.ResponseWriter, r *http.R
 }
 
 func (s *Service) getDeviceRegistrationToken(w http.ResponseWriter, r *http.Request,
-	projectID, authenticatedUserID, authenticatedServiceAccountID, id string,
+	projectID, authenticatedUserID, authenticatedServiceAccountID, tokenID string,
 ) {
-	deviceRegistrationToken, err := s.deviceRegistrationTokens.GetDeviceRegistrationToken(r.Context(), id, projectID)
+	deviceRegistrationToken, err := s.deviceRegistrationTokens.GetDeviceRegistrationToken(r.Context(), tokenID, projectID)
 	if err != nil {
 		log.WithError(err).Error("get device registration token")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -2345,7 +2362,7 @@ func (s *Service) getDeviceRegistrationToken(w http.ResponseWriter, r *http.Requ
 
 	var ret interface{} = deviceRegistrationToken
 	if _, ok := r.URL.Query()["full"]; ok {
-		devicesRegistered, err := s.devicesRegisteredWithTokensCount.GetDevicesRegisteredWithTokenCount(r.Context(), deviceRegistrationToken.ID, projectID)
+		devicesRegistered, err := s.devicesRegisteredWithToken.GetDevicesRegisteredWithTokenCount(r.Context(), deviceRegistrationToken.ID, projectID)
 		if err != nil {
 			log.WithError(err).Error("get registered device count")
 			w.WriteHeader(http.StatusInternalServerError)
@@ -2359,6 +2376,57 @@ func (s *Service) getDeviceRegistrationToken(w http.ResponseWriter, r *http.Requ
 	}
 
 	respond(w, ret)
+}
+
+func (s *Service) updateDeviceRegistrationToken(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID, tokenID string,
+) {
+	var updateDeviceRegistrationTokenRequest struct {
+		Name             string `json:"name" validate:"name"`
+		Description      string `json:"description" validate:"description"`
+		MaxRegistrations *int   `json:"maxRegistrations"`
+	}
+	if err := read(r, &updateDeviceRegistrationTokenRequest); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if deviceRegistrationToken, err := s.deviceRegistrationTokens.LookupDeviceRegistrationToken(r.Context(),
+		updateDeviceRegistrationTokenRequest.Name, projectID); err == nil && deviceRegistrationToken.ID != tokenID {
+		http.Error(w, store.ErrDeviceRegistrationTokenNameAlreadyInUse.Error(), http.StatusBadRequest)
+		return
+	} else if err != nil && err != store.ErrDeviceRegistrationTokenNotFound {
+		log.WithError(err).Error("lookup device registration token")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	deviceRegistrationToken, err := s.deviceRegistrationTokens.UpdateDeviceRegistrationToken(
+		r.Context(),
+		tokenID,
+		projectID,
+		updateDeviceRegistrationTokenRequest.Name,
+		updateDeviceRegistrationTokenRequest.Description,
+		updateDeviceRegistrationTokenRequest.MaxRegistrations,
+	)
+	if err != nil {
+		log.WithError(err).Error("update device registration token")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	respond(w, deviceRegistrationToken)
+}
+
+func (s *Service) deleteDeviceRegistrationToken(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	tokenID string,
+) {
+	if err := s.deviceRegistrationTokens.DeleteDeviceRegistrationToken(r.Context(), tokenID, projectID); err != nil {
+		log.WithError(err).Error("delete device registration token")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *Service) listDeviceRegistrationTokens(w http.ResponseWriter, r *http.Request,
@@ -2376,7 +2444,7 @@ func (s *Service) listDeviceRegistrationTokens(w http.ResponseWriter, r *http.Re
 		deviceRegistrationTokensFull := make([]models.DeviceRegistrationTokenFull, 0)
 
 		for _, deviceRegistrationToken := range deviceRegistrationTokens {
-			deviceRegistrationTokenCounts, err := s.devicesRegisteredWithTokensCount.GetDevicesRegisteredWithTokenCount(r.Context(), projectID, deviceRegistrationToken.ID)
+			deviceRegistrationTokenCounts, err := s.devicesRegisteredWithToken.GetDevicesRegisteredWithTokenCount(r.Context(), deviceRegistrationToken.ID, projectID)
 			if err != nil {
 				log.WithError(err).Error("get count of devices registered with device registration token")
 				w.WriteHeader(http.StatusInternalServerError)
@@ -2439,7 +2507,7 @@ func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if deviceRegistrationToken.MaxRegistrations != nil {
-		devicesRegisteredCount, err := s.devicesRegisteredWithTokensCount.GetDevicesRegisteredWithTokenCount(r.Context(), registerDeviceRequest.DeviceRegistrationTokenID, projectID)
+		devicesRegisteredCount, err := s.devicesRegisteredWithToken.GetDevicesRegisteredWithTokenCount(r.Context(), registerDeviceRequest.DeviceRegistrationTokenID, projectID)
 		if err != nil {
 			log.WithError(err).Error("get devices registered with token count")
 			w.WriteHeader(http.StatusInternalServerError)

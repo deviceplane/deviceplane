@@ -1442,7 +1442,7 @@ func (s *Store) scanDeviceLabel(scanner scanner) (*models.DeviceLabel, error) {
 	return &deviceLabel, nil
 }
 
-func (s *Store) CreateDeviceRegistrationToken(ctx context.Context, projectID, name string, maxRegistrations *int) (*models.DeviceRegistrationToken, error) {
+func (s *Store) CreateDeviceRegistrationToken(ctx context.Context, projectID, name, description string, maxRegistrations *int) (*models.DeviceRegistrationToken, error) {
 	id := newDeviceRegistrationTokenID()
 
 	if _, err := s.db.ExecContext(
@@ -1451,6 +1451,7 @@ func (s *Store) CreateDeviceRegistrationToken(ctx context.Context, projectID, na
 		id,
 		projectID,
 		name,
+		description,
 		maxRegistrations,
 	); err != nil {
 		return nil, err
@@ -1460,7 +1461,7 @@ func (s *Store) CreateDeviceRegistrationToken(ctx context.Context, projectID, na
 }
 
 func (s *Store) LookupDeviceRegistrationToken(ctx context.Context, name, projectID string) (*models.DeviceRegistrationToken, error) {
-	deviceRegistrationTokenRow := s.db.QueryRowContext(ctx, lookupDeviceRegistrationToken, projectID)
+	deviceRegistrationTokenRow := s.db.QueryRowContext(ctx, lookupDeviceRegistrationToken, name, projectID)
 
 	deviceRegistrationToken, err := s.scanDeviceRegistrationToken(deviceRegistrationTokenRow)
 	if err == sql.ErrNoRows {
@@ -1508,11 +1509,13 @@ func (s *Store) GetDeviceRegistrationToken(ctx context.Context, id, projectID st
 	return deviceRegistrationToken, nil
 }
 
-func (s *Store) UpdateDeviceRegistrationTokenMaxRegistrations(ctx context.Context, id, projectID string, newMaxRegistrations int) (*models.DeviceRegistrationToken, error) {
+func (s *Store) UpdateDeviceRegistrationToken(ctx context.Context, id, projectID, name, description string, maxRegistrations *int) (*models.DeviceRegistrationToken, error) {
 	if _, err := s.db.ExecContext(
 		ctx,
-		updateDeviceRegistrationTokenMaxRegistrations,
-		newMaxRegistrations,
+		updateDeviceRegistrationToken,
+		name,
+		description,
+		maxRegistrations,
 		id,
 		projectID,
 	); err != nil {
@@ -1520,6 +1523,16 @@ func (s *Store) UpdateDeviceRegistrationTokenMaxRegistrations(ctx context.Contex
 	}
 
 	return s.GetDeviceRegistrationToken(ctx, id, projectID)
+}
+
+func (s *Store) DeleteDeviceRegistrationToken(ctx context.Context, id, projectID string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		deleteDeviceRegistrationToken,
+		id,
+		projectID,
+	)
+	return err
 }
 
 func (s *Store) scanDeviceRegistrationToken(scanner scanner) (*models.DeviceRegistrationToken, error) {
@@ -1530,23 +1543,26 @@ func (s *Store) scanDeviceRegistrationToken(scanner scanner) (*models.DeviceRegi
 		&deviceRegistrationToken.ProjectID,
 		&deviceRegistrationToken.MaxRegistrations,
 		&deviceRegistrationToken.Name,
+		&deviceRegistrationToken.Description,
 	); err != nil {
 		return nil, err
 	}
 	return &deviceRegistrationToken, nil
 }
 
-func (s *Store) GetDevicesRegisteredWithTokenCount(ctx context.Context, id, projectID string) (int, error) {
-	countRow := s.db.QueryRowContext(ctx, getDevicesRegisteredWithTokenCount, id, projectID)
+func (s *Store) GetDevicesRegisteredWithTokenCount(ctx context.Context, tokenID, projectID string) (*models.DevicesRegisteredWithTokenCount, error) {
+	countRow := s.db.QueryRowContext(ctx, getDevicesRegisteredWithTokenCount, tokenID, projectID)
 
 	count, err := s.scanDevicesRegisteredCountRow(countRow)
 	if err == sql.ErrNoRows {
-		return 0, store.ErrDeviceRegistrationTokenNotFound
+		return nil, store.ErrDeviceRegistrationTokenNotFound
 	} else if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return count, nil
+	return &models.DevicesRegisteredWithTokenCount{
+		AllCount: count,
+	}, nil
 }
 
 func (s *Store) scanDevicesRegisteredCountRow(scanner scanner) (int, error) {

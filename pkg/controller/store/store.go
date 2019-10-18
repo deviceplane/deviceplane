@@ -163,17 +163,20 @@ type DeviceLabels interface {
 var ErrDeviceLabelNotFound = errors.New("device label not found")
 
 type DeviceRegistrationTokens interface {
-	CreateDeviceRegistrationToken(ctx context.Context, projectID, name string, maxRegistrations *int) (*models.DeviceRegistrationToken, error)
-	GetDeviceRegistrationToken(ctx context.Context, id, projectID string) (*models.DeviceRegistrationToken, error)
+	CreateDeviceRegistrationToken(ctx context.Context, projectID, name, description string, maxRegistrations *int) (*models.DeviceRegistrationToken, error)
+	GetDeviceRegistrationToken(ctx context.Context, tokenID, projectID string) (*models.DeviceRegistrationToken, error)
 	LookupDeviceRegistrationToken(ctx context.Context, name, projectID string) (*models.DeviceRegistrationToken, error)
 	ListDeviceRegistrationTokens(ctx context.Context, projectID string) ([]models.DeviceRegistrationToken, error)
+	UpdateDeviceRegistrationToken(ctx context.Context, tokenID, projectID, name, description string, maxRegistrations *int) (*models.DeviceRegistrationToken, error)
+	DeleteDeviceRegistrationToken(ctx context.Context, tokenID, projectID string) error
 }
 
 type DevicesRegisteredWithToken interface {
-	GetDevicesRegisteredWithTokenCount(ctx context.Context, id, projectID string) (*models.DevicesRegisteredWithTokenCount, error)
+	GetDevicesRegisteredWithTokenCount(ctx context.Context, tokenID, projectID string) (*models.DevicesRegisteredWithTokenCount, error)
 }
 
 var ErrDeviceRegistrationTokenNotFound = errors.New("device registration token not found")
+var ErrDeviceRegistrationTokenNameAlreadyInUse = errors.New("device registration token name already in use")
 
 type DeviceAccessKeys interface {
 	CreateDeviceAccessKey(ctx context.Context, projectID, deviceID, hash string) (*models.DeviceAccessKey, error)

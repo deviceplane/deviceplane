@@ -469,35 +469,42 @@ const createDeviceRegistrationToken = `
     id,
     project_id,
     name,
+    description,
     max_registrations
   )
-  values (?, ?, ?, ?)
+  values (?, ?, ?, ?, ?)
 `
 
 const lookupDeviceRegistrationToken = `
-  select id, created_at, project_id, max_registrations, name from device_registration_tokens
+  select id, created_at, project_id, max_registrations, name, description from device_registration_tokens
   where name = ? and project_id = ?
 `
 
 const listDeviceRegistrationTokens = `
-  select id, created_at, project_id, max_registrations, name from device_registration_tokens
+  select id, created_at, project_id, max_registrations, name, description from device_registration_tokens
   where project_id = ?
 `
 
 const getDeviceRegistrationToken = `
-  select id, created_at, project_id, max_registrations, name from device_registration_tokens
+  select id, created_at, project_id, max_registrations, name, description from device_registration_tokens
   where id = ? and project_id = ?
 `
 
-const updateDeviceRegistrationTokenMaxRegistrations = `
+const updateDeviceRegistrationToken = `
   update device_registration_tokens
-  set max_registrations = ?
+  set name = ?, description = ?, max_registrations = ?
   where id = ? and project_id = ?
+`
+
+const deleteDeviceRegistrationToken = `
+  delete from device_registration_tokens
+  where id = ? and project_id = ?
+  limit 1
 `
 
 const getDevicesRegisteredWithTokenCount = `
   select count(*) from devices
-  where registration_token = ? and project_id = ?
+  where registration_token_id = ? and project_id = ?
 `
 
 const createDeviceAccessKey = `

@@ -49,6 +49,8 @@ import InnerCard from './components/InnerCard';
 import ResetPassword from './components/ResetPassword';
 import TopHeader from './components/TopHeader';
 import Logo from './components/logo';
+import DeviceRegistrationToken from './pages/deviceregistrationtoken';
+import Provisioning from './pages/provisioning';
 
 class AddDevice extends Component {
   constructor(props) {
@@ -137,12 +139,6 @@ class AddDevice extends Component {
                 >
                   Devices
                 </BackButton>
-                <Button
-                  appearance="primary"
-                  onClick={() => this.handleAddNewDevice()}
-                >
-                  Add Another Device
-                </Button>
               </Pane>
               <Pane
                 display="flex"
@@ -331,6 +327,178 @@ class CreateApplication extends Component {
   }
 }
 
+class CreateDeviceRegistrationToken extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      name: '',
+      description: '',
+      maxRegistrations: '',
+      nameValidationMessage: null,
+      maxRegistrationsValidationMessage: null,
+      showDeleteDialog: false,
+      backendError: null
+    };
+  }
+
+  handleUpdateName = event => {
+    this.setState({
+      name: event.target.value,
+    });
+  };
+
+  handleUpdateDescription = event => {
+    this.setState({
+      description: event.target.value,
+    });
+  };
+
+  handleUpdateMaxRegistrations = event => {
+    this.setState({
+      maxRegistrations: event.target.value,
+    });
+  };
+
+  handleSubmit = () => {
+    var nameValidationMessage = utils.checkName('Device Registration Token', this.state.name);
+
+    //always set validation message for name
+    this.setState({
+      nameValidationMessage: nameValidationMessage,
+      backendError: null
+    });
+
+    if (nameValidationMessage !== null) {
+      return;
+    }
+
+    // Convert max registrations to int or undefined
+    var maxRegistrationsCleaned;
+    if (this.state.maxRegistrations === '') {
+      maxRegistrationsCleaned = null;
+    } else {
+      maxRegistrationsCleaned = Number(this.state.maxRegistrations);
+
+      if (isNaN(maxRegistrationsCleaned)) {
+        this.setState({
+          maxRegistrationsValidationMessage: 'Max Registrations should either be a number or be left empty.'
+        });
+        return;
+      }
+    }
+
+    axios
+      .post(
+        `${config.endpoint}/projects/${this.props.projectName}/deviceregistrationtokens`,
+        {
+          name: this.state.name,
+          description: this.state.description,
+          maxRegistrations: maxRegistrationsCleaned,
+        },
+        {
+          withCredentials: true
+        }
+      )
+      .then(response => {
+        toaster.success('Device Registration Token created successfully.');
+        this.props.history.push(
+          // TODO: change this to an overview page once we get one
+          `/${this.props.projectName}/provisioning`
+        );
+      })
+      .catch(error => {
+        if (utils.is4xx(error.response.status)) {
+          this.setState({
+            backendError: utils.convertErrorMessage(error.response.data)
+          });
+        } else {
+          toaster.danger('Device Registration Token was not updated.');
+          console.log(error);
+        }
+      });
+  };
+
+
+  handleCancel() {
+    this.props.history.push(`/${this.props.projectName}/provisioning`);
+  }
+
+  render() {
+    const heading = 'Create Device Registration Token';
+    return (
+      <Fragment>
+        <TopHeader
+          user={this.props.user}
+          heading={heading}
+          history={this.props.history}
+        />
+        <Pane width="50%">
+          <InnerCard>
+            <Pane padding={majorScale(4)}>
+              {this.state.backendError && (
+                <Alert
+                  marginBottom={majorScale(2)}
+                  paddingTop={majorScale(2)}
+                  paddingBottom={majorScale(2)}
+                  intent="warning"
+                  title={this.state.backendError}
+                />
+              )}
+              <Heading paddingBottom={majorScale(4)} size={600}>
+                Device Registration Token Settings
+              </Heading>
+              <TextInputField
+                label="Name"
+                onChange={this.handleUpdateName}
+                value={this.state.name}
+                validationMessage={this.state.nameValidationMessage}
+              />
+              <Label
+                htmlFor="description-textarea"
+                marginBottom="4"
+                display="block"
+              >
+                Description (optional)
+              </Label>
+              <Textarea
+                id="description-textarea"
+                height="100px"
+                onChange={this.handleUpdateDescription}
+                value={this.state.description}
+              />
+              <TextInputField
+                paddingTop={majorScale(4)}
+                label="Maximum Device Registrations"
+                description="Limit the number of devices that can be registered using this token"
+                hint="Leave empty to allow unlimited registrations"
+                onChange={this.handleUpdateMaxRegistrations}
+                value={this.state.maxRegistrations}
+                validationMessage={this.state.maxRegistrationsValidationMessage}
+              />
+              <Pane display="flex" flex="row">
+                <Button
+                  marginTop={majorScale(2)}
+                  appearance="primary"
+                  onClick={this.handleSubmit}
+                >
+                  Submit
+                </Button>
+                <Button
+                  marginTop={majorScale(2)}
+                  marginLeft={majorScale(2)}
+                  onClick={() => this.handleCancel()}
+                >
+                  Cancel
+                </Button>
+              </Pane>
+            </Pane>
+          </InnerCard>
+        </Pane>
+      </Fragment>
+    );
+  }
+}
+
 class CreateRelease extends Component {
   constructor(props) {
     super(props);
@@ -462,9 +630,9 @@ class InnerOogie extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      tabs: ['devices', 'applications', 'iam'],
-      tabLabels: ['Devices', 'Applications', 'IAM'],
-      icons: ['desktop', 'application', 'user'],
+      tabs: ['devices', 'provisioning', 'applications', 'iam'],
+      tabLabels: ['Devices', 'Provisioning', 'Applications', 'IAM'],
+      icons: ['desktop', 'box', 'application', 'user'],
       footerTabs: ['settings'],
       footerTabLabels: ['Settings'],
       footerIcons: ['settings']
@@ -479,11 +647,14 @@ class InnerOogie extends Component {
       case 'devices':
         selectedIndex = 0;
         break;
-      case 'applications':
+      case 'provisioning':
         selectedIndex = 1;
         break;
-      case 'iam':
+      case 'applications':
         selectedIndex = 2;
+        break;
+      case 'iam':
+        selectedIndex = 3;
         break;
       case 'settings':
         footerSelectedIndex = 0;
@@ -617,6 +788,55 @@ class InnerOogie extends Component {
               path={match.path}
               render={route => (
                 <Devices
+                  user={user}
+                  projectName={projectName}
+                  history={this.props.history}
+                />
+              )}
+            />
+          </Switch>
+        );
+      case 'provisioning':
+        console.log('path', match.path, match.params)
+        console.log('real path', window.location.pathname)
+        return (
+          <Switch>
+            <Route
+              path={`${match.path}/deviceregistrationtokens/create`}
+              render={route => (
+                <CreateDeviceRegistrationToken
+                  user={user}
+                  projectName={projectName}
+                  history={this.props.history}
+                />
+              )}
+            />
+            <Route
+              exact
+              path={`${match.path}/deviceregistrationtokens/:tokenName`}
+              render={route => (
+                <Redirect
+                  to={`${route.match.url}/overview`}
+                />
+              )}
+            />
+            <Route
+              path={`${match.path}/deviceregistrationtokens/:tokenName/:appTab`}
+              render={route => (
+                <DeviceRegistrationToken
+                  user={user}
+                  projectName={projectName}
+                  tokenName={route.match.params.tokenName}
+                  applicationRoute={route.match}
+                  history={this.props.history}
+                />
+              )}
+            />
+            <Route
+              exact
+              path={match.path}
+              render={route => (
+                <Provisioning
                   user={user}
                   projectName={projectName}
                   history={this.props.history}

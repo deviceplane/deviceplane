@@ -10,8 +10,13 @@ import {
   minorScale,
   Icon,
   Text,
-  withTheme
+  withTheme,
+  Popover,
 } from 'evergreen-ui';
+
+import {
+  Link
+} from "react-router-dom";
 
 import config from '../config.js';
 import InnerCard from '../components/InnerCard.js';
@@ -32,12 +37,31 @@ class Devices extends Component {
     this.state = {
       devices: [],
       filters: [],
-      showFilterDialog: false
+      showFilterDialog: false,
+      popoverShown: false,
+      defaultDeviceRegistrationTokenExists: false,
     };
   }
 
   componentDidMount() {
     this.fetchDevices();
+    this.checkDefaultDeviceRegistrationToken();
+  }
+
+  checkDefaultDeviceRegistrationToken = () => {
+    axios
+      .get(
+        `${config.endpoint}/projects/${this.props.projectName}/deviceregistrationtokens/default`,
+        {
+          withCredentials: true
+        }
+      )
+      .then(response => {
+        this.setState({
+          defaultDeviceRegistrationTokenExists: true,
+        });
+      })
+      .catch(error => {});
   }
 
   fetchDevices = () => {
@@ -312,6 +336,65 @@ class Devices extends Component {
     const { user, history, projectName } = this.props;
     const { showFilterDialog, filters } = this.state;
 
+    var addDeviceButtonHolder;
+    if (this.state.defaultDeviceRegistrationTokenExists) {
+      addDeviceButtonHolder = (
+        <Button
+          appearance="primary"
+          onClick={() => history.push(`/${projectName}/devices/add`)}
+        >
+          Add Device
+        </Button>
+      );
+    } else {
+      addDeviceButtonHolder = (
+        <Popover
+          trigger="hover"
+          isShown={this.state.popoverShown}
+          content={
+            <Pane
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              flexDirection="column"
+              width="250px"
+              padding="20px"
+              onMouseOver={() => {
+                this.setState({ popoverShown: true });
+              }}
+              onMouseOut={() => {
+                this.setState({ popoverShown: false });
+              }}
+            >
+              <Text>
+                There is no "default" device registration token, so adding
+                devices from the UI is disabled.
+              </Text>
+              <Text paddingTop={minorScale(1)}>
+                Device registration tokens can be created on the{" "}
+                <Link style={{color: "blue"}} to={`/${projectName}/provisioning`}>
+                  Provisioning
+                </Link>{" "}
+                page.
+              </Text>
+            </Pane>
+          }
+        >
+          <Pane
+            appearance="primary"
+            onMouseOver={() => {
+              this.setState({ popoverShown: true });
+            }}
+            onMouseOut={() => {
+              this.setState({ popoverShown: false });
+            }}
+          >
+            <Button disabled={true}>Add Device</Button>
+          </Pane>
+        </Popover>
+      );
+    }
+
     return (
       <Fragment>
         <TopHeader user={user} heading="Devices" history={history} />
@@ -324,8 +407,10 @@ class Devices extends Component {
               alignItems="center"
             >
               <Heading paddingLeft={majorScale(2)}>Devices</Heading>
-              <Pane display="flex" alignItems="center" padding={majorScale(2)}>
-                <Pane marginLeft={majorScale(2)}>
+              <Pane alignItems="center" padding={majorScale(2)}>
+                <Pane
+                display="flex"
+                marginLeft={majorScale(2)}>
                   {filters.length > 0 && (
                     <Button
                       marginRight={majorScale(2)}
@@ -343,12 +428,7 @@ class Devices extends Component {
                   >
                     Add Filter
                   </Button>
-                  <Button
-                    appearance="primary"
-                    onClick={() => history.push(`/${projectName}/devices/add`)}
-                  >
-                    Add Device
-                  </Button>
+                  {addDeviceButtonHolder}
                 </Pane>
               </Pane>
             </Pane>

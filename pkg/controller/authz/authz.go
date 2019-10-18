@@ -72,6 +72,8 @@ var (
 		"SetDeviceLabel",
 		"DeleteDeviceLabel",
 		"CreateDeviceRegistrationToken",
+		"UpdateDeviceRegistrationToken",
+		"DeleteDeviceRegistrationToken",
 	}...)
 	adminActions = append(writeActions, []string{
 		"UpdateProject",

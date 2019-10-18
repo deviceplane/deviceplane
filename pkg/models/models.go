@@ -144,6 +144,7 @@ type DeviceRegistrationToken struct {
 	ProjectID        string    `json:"projectId"`
 	MaxRegistrations *int      `json:"maxRegistrations"`
 	Name             string    `json:"name"`
+	Description      string    `json:"description"`
 }
 
 type DevicesRegisteredWithTokenCount struct {

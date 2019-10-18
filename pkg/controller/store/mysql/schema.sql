@@ -251,6 +251,7 @@ create table if not exists device_registration_tokens (
   project_id varchar(32) not null,
 
   name varchar(100) not null,
+  description longtext not null,
   max_registrations int,
 
   primary key (id),
