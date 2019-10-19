@@ -14,7 +14,7 @@ const (
 	metricName    = "deviceplane.devices"
 	metricType    = "count"
 	projectTagKey = "project"
-	idTagKey      = "id"
+	nameTagKey    = "name"
 	statusTagKey  = "status"
 )
 
@@ -58,7 +58,7 @@ func (r *Runner) Do(ctx context.Context) {
 				Type: metricType,
 				Tags: []string{
 					strings.Join([]string{projectTagKey, project.Name}, ":"),
-					strings.Join([]string{idTagKey, device.ID}, ":"),
+					strings.Join([]string{nameTagKey, device.Name}, ":"),
 					strings.Join([]string{statusTagKey, string(device.Status)}, ":"),
 				},
 			})
