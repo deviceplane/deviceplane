@@ -21,15 +21,39 @@ export default class ProjectSettings extends Component {
   state = {
     name: this.props.projectName,
     nameValidationMessage: null,
+    datadogApiKey: '',
+    datadogApiKeyValidationMessage: null,
     unchanged: true,
     showDeleteDialog: false,
     disableDeleteConfirm: true,
-    backendError: null
+    backendError: null,
   };
+
+  componentDidMount() {
+    axios
+      .get(`${config.endpoint}/projects/${this.props.projectName}`, {
+        withCredentials: true
+      })
+      .then(response => {
+        this.setState({
+          datadogApiKey: response.data.datadogApiKey,
+        });
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  }
 
   handleUpdateName = event => {
     this.setState({
       name: event.target.value,
+      unchanged: false
+    });
+  };
+
+  handleUpdateDatadogApiKey = event => {
+    this.setState({
+      datadogApiKey: event.target.value,
       unchanged: false
     });
   };
@@ -47,11 +71,29 @@ export default class ProjectSettings extends Component {
       return;
     }
 
+    var datadogApiKeyValidationMessage = utils.customValidate(
+      'Datadog API Key',
+      utils.nameRegex,
+      'numbers and lowercase letters',
+      100,
+      this.state.datadogApiKey,
+    )
+
+    this.setState({
+      datadogApiKeyValidationMessage: datadogApiKeyValidationMessage,
+      backendError: null
+    });
+
+    if (datadogApiKeyValidationMessage !== null) {
+      return;
+    }
+
     axios
       .put(
         `${config.endpoint}/projects/${this.props.projectName}`,
         {
-          name: this.state.name
+          name: this.state.name,
+          datadogApiKey: this.state.datadogApiKey,
         },
         {
           withCredentials: true
@@ -116,6 +158,8 @@ export default class ProjectSettings extends Component {
       backendError,
       name,
       nameValidationMessage,
+      datadogApiKey,
+      datadogApiKeyValidationMessage,
       unchanged,
       disableDeleteConfirm,
       showDeleteDialog
@@ -148,6 +192,12 @@ export default class ProjectSettings extends Component {
                 onChange={this.handleUpdateName}
                 value={name}
                 validationMessage={nameValidationMessage}
+              />
+              <TextInputField
+                label="Datadog API Key"
+                onChange={this.handleUpdateDatadogApiKey}
+                value={datadogApiKey}
+                validationMessage={datadogApiKeyValidationMessage}
               />
               <Button
                 marginTop={majorScale(2)}

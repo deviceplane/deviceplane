@@ -1107,7 +1107,8 @@ func (s *Service) updateProject(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID string,
 ) {
 	var updateProjectRequest struct {
-		Name string `json:"name" validate:"name"`
+		Name          string `json:"name" validate:"name"`
+		DatadogApiKey string `json:"datadogApiKey"`
 	}
 	if err := read(r, &updateProjectRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -1124,7 +1125,7 @@ func (s *Service) updateProject(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	project, err := s.projects.UpdateProject(r.Context(), projectID, updateProjectRequest.Name)
+	project, err := s.projects.UpdateProject(r.Context(), projectID, updateProjectRequest.Name, updateProjectRequest.DatadogApiKey)
 	if err != nil {
 		log.WithError(err).Error("update project")
 		w.WriteHeader(http.StatusInternalServerError)

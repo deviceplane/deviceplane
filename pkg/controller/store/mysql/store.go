@@ -597,11 +597,12 @@ func (s *Store) ListProjects(ctx context.Context) ([]models.Project, error) {
 	return projects, nil
 }
 
-func (s *Store) UpdateProject(ctx context.Context, id, name string) (*models.Project, error) {
+func (s *Store) UpdateProject(ctx context.Context, id, name, datadogApiKey string) (*models.Project, error) {
 	if _, err := s.db.ExecContext(
 		ctx,
 		updateProject,
 		name,
+		datadogApiKey,
 		id,
 	); err != nil {
 		return nil, err
