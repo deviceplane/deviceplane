@@ -33,6 +33,22 @@ export default {
     return null
   },
 
+  customValidate: (name, validationRegex, containsMsg, maxLength, value) => {
+    if (value === '') {
+      return `Please enter a ${name}.`
+    }
+
+    if (!validationRegex.test(value)) {
+      return `Invalid  ${name}. ${name} can only contain ${containsMsg}.`
+    }
+
+    if (maxLength && value.length > maxLength) {
+      return `The ${name} must be less than ${maxLength} characters.`
+    }
+
+    return null
+  },
+
   checkConfig: (objectName, config) => {
     if (config === '') {
       return 'Please enter a ' + objectName + '.'

@@ -183,7 +183,7 @@ const listProjects = `
 
 const updateProject = `
   update projects
-  set name = ?
+  set name = ?, datadog_api_key = ?
   where id = ?
 `
 
