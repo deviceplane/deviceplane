@@ -107,6 +107,36 @@ class AddDevice extends Component {
       return <CustomSpinner />;
     }
     const heading = 'Add Device';
+
+    var dockerCommand;
+    if (window.location.hostname === "localhost") {
+      dockerCommand = [
+        "go run cmd/agent/main.go",
+        "--controller=http://localhost:8080/api",
+        "--conf-dir=./cmd/agent/conf",
+        "--state-dir=./cmd/agent/state",
+        "--log-level=debug",
+        `--project=${this.state.project.id}`,
+        `--registration-token=${this.state.deviceRegistrationToken.id}`,
+        "# note, this is the local version"
+      ].join(" ");
+    } else {
+      dockerCommand = [
+        "docker run -d --restart=always",
+        "--privileged",
+        "--net=host",
+        "--pid=host",
+        "-v /etc/deviceplane:/etc/deviceplane",
+        "-v /var/lib/deviceplane:/var/lib/deviceplane",
+        "-v /var/run/docker.sock:/var/run/docker.sock",
+        "-v /etc/os-release:/etc/os-release",
+        `--label com.deviceplane.agent-version=${config.agentVersion}`,
+        `deviceplane/agent:${config.agentVersion}`,
+        `--project=${this.state.project.id}`,
+        `--registration-token=${this.state.deviceRegistrationToken.id}`
+      ].join(" ");
+    }
+
     return (
       <Fragment>
         <TopHeader
@@ -168,18 +198,7 @@ class AddDevice extends Component {
                   background="#234361"
                 >
                   <Code fontFamily="mono" color="white">
-                    docker run -d --restart=always
-                    --privileged
-                    --net=host
-                    --pid=host
-                    -v /etc/deviceplane:/etc/deviceplane
-                    -v /var/lib/deviceplane:/var/lib/deviceplane
-                    -v /var/run/docker.sock:/var/run/docker.sock
-                    -v /etc/os-release:/etc/os-release
-                    --label com.deviceplane.agent-version={config.agentVersion}{' '}
-                    deviceplane/agent:{config.agentVersion}{' '}
-                    --project={this.state.project.id}{' '}
-                    --registration-token={this.state.deviceRegistrationToken.id}
+                    {dockerCommand}
                   </Code>
                 </Card>
               </Card>
