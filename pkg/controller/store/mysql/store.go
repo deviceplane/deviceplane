@@ -1355,8 +1355,12 @@ func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 		}
 	}
 
-	if err := json.Unmarshal([]byte(labelsString), &device.Labels); err != nil {
-		return nil, err
+	if labelsString == "" {
+		device.Labels = map[string]string{}
+	} else {
+		if err := json.Unmarshal([]byte(labelsString), &device.Labels); err != nil {
+			return nil, err
+		}
 	}
 
 	if time.Now().After(device.LastSeenAt.Add(time.Minute)) {
