@@ -44,6 +44,9 @@ statik:
 	npm run build --prefix ./ui
 	statik -src=./ui/build -dest=./pkg
 
+ssh-db:
+	$$DB_COMMAND
+
 dump-remote-db:
 	mkdir -p localdump
 	if [[ -z "$$DB_PASS" ]]; then \
@@ -53,9 +56,13 @@ dump-remote-db:
 	$$(env ENV=prod DUMP=true $$DB_COMMAND) > localdump/db.sql
 
 load-local-db-from-dump: state-reset
-	docker-compose down
-	docker-compose build
-	docker-compose up -d
+	if [[ -z "$$FAST" ]]; then \
+		docker-compose down; \
+		docker-compose build; \
+		docker-compose up -d; \
+	else \
+		echo "DROP SCHEMA if exists deviceplane; CREATE DATABASE deviceplane;" | $$(env ENV=local $$DB_COMMAND); \
+	fi
 	$$WAIT_FOR_DB $$(env ENV=local $$DB_COMMAND)
 	$$(env ENV=local $$DB_COMMAND) < localdump/db.sql
 
