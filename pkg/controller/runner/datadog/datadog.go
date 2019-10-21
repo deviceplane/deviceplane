@@ -8,6 +8,7 @@ import (
 	"github.com/apex/log"
 
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
+	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
 const (
@@ -15,7 +16,6 @@ const (
 	metricType    = "count"
 	projectTagKey = "project"
 	nameTagKey    = "name"
-	statusTagKey  = "status"
 )
 
 type Runner struct {
@@ -50,16 +50,20 @@ func (r *Runner) Do(ctx context.Context) {
 
 		var req postMetricsRequest
 		for _, device := range devices {
+			metricValue := int64(0)
+			if device.Status == models.DeviceStatusOnline {
+				metricValue = 1
+			}
+
 			req.Series = append(req.Series, metric{
 				Metric: metricName,
 				Points: [][]int64{
-					[]int64{time.Now().Unix(), 1},
+					[]int64{time.Now().Unix(), metricValue},
 				},
 				Type: metricType,
 				Tags: []string{
 					strings.Join([]string{projectTagKey, project.Name}, ":"),
 					strings.Join([]string{nameTagKey, device.Name}, ":"),
-					strings.Join([]string{statusTagKey, string(device.Status)}, ":"),
 				},
 			})
 		}
