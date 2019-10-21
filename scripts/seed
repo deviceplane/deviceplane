@@ -3,16 +3,7 @@ set -e
 
 query="
 use deviceplane;
-insert into users (id, email, password_hash, first_name, last_name, company) values ('usr_xxx', 'email@example.com', '5E884898DA28047151D0E56F8DC6292773603D0D6AABBDD62A11EF721D1542D8', 'Elon', 'Musk', 'Tesla');
-insert into user_access_keys (id, user_id, hash) values ('uky_xxx', 'usr_xxx', '2F9EEBDF3AD52A2235460C18F4EC2524569E32DC36BB5E1F3AC2A4F17B30EC0C');
-insert into projects (id, name) values ('prj_xxx', 'testproject');
-insert into memberships (user_id, project_id) values ('usr_xxx', 'prj_xxx');
-insert into roles (id, project_id, name, description, config) values ('rol_xxx', 'prj_xxx', 'role-xxx', 'role description', '{\"rules\":[{\"resources\":[\"*\"],\"actions\":[\"admin\"]}]}');
-insert into membership_role_bindings (user_id, project_id, role_id) values ('usr_xxx', 'prj_xxx', 'rol_xxx');
-insert into applications (id, project_id, name, description) values ('app_xxx', 'prj_xxx', 'testapplication', 'application description');
-insert into device_registration_tokens (id, project_id, name) values ('default_reg_token_xxx', 'prj_xxx', 'default');
-
-update users set registration_completed = 1 where id = 'usr_xxx';
+insert into users (id, email, password_hash, first_name, last_name, company, registration_completed) values ('usr_xxx', 'email@example.com', '5E884898DA28047151D0E56F8DC6292773603D0D6AABBDD62A11EF721D1542D8', 'Elon', 'Musk', 'Tesla', 1);
 "
 
 echo "$query" | mysql -h 127.0.0.1 -u user -ppass -P 3306

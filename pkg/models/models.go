@@ -112,15 +112,16 @@ type ServiceAccountRoleBinding struct {
 }
 
 type Device struct {
-	ID                  string       `json:"id"`
-	CreatedAt           time.Time    `json:"createdAt"`
-	ProjectID           string       `json:"projectId"`
-	Name                string       `json:"name"`
-	RegistrationTokenID *string      `json:"registrationTokenId"`
-	DesiredAgentSpec    string       `json:"desiredAgentSpec"`
-	Info                DeviceInfo   `json:"info"`
-	LastSeenAt          time.Time    `json:"lastSeenAt"`
-	Status              DeviceStatus `json:"status"`
+	ID                  string            `json:"id"`
+	CreatedAt           time.Time         `json:"createdAt"`
+	ProjectID           string            `json:"projectId"`
+	Name                string            `json:"name"`
+	RegistrationTokenID *string           `json:"registrationTokenId"`
+	DesiredAgentSpec    string            `json:"desiredAgentSpec"`
+	Info                DeviceInfo        `json:"info"`
+	LastSeenAt          time.Time         `json:"lastSeenAt"`
+	Status              DeviceStatus      `json:"status"`
+	Labels              map[string]string `json:"labels"`
 }
 
 type DeviceStatus string
@@ -129,14 +130,6 @@ const (
 	DeviceStatusOnline  = DeviceStatus("online")
 	DeviceStatusOffline = DeviceStatus("offline")
 )
-
-type DeviceLabel struct {
-	Key       string    `json:"key"`
-	DeviceID  string    `json:"deviceId"`
-	CreatedAt time.Time `json:"createdAt"`
-	ProjectID string    `json:"projectId"`
-	Value     string    `json:"value"`
-}
 
 type DeviceRegistrationToken struct {
 	ID               string    `json:"id"`
@@ -226,11 +219,6 @@ type ServiceAccountFull struct {
 type DeviceFull struct {
 	Device
 	ApplicationStatusInfo []DeviceApplicationStatusInfo `json:"applicationStatusInfo"`
-}
-
-type DeviceWithLabels struct {
-	Device
-	Labels map[string]string `json:"labels"`
 }
 
 type DeviceApplicationStatusInfo struct {

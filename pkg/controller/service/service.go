@@ -53,7 +53,6 @@ type Service struct {
 	serviceAccountAccessKeys   store.ServiceAccountAccessKeys
 	serviceAccountRoleBindings store.ServiceAccountRoleBindings
 	devices                    store.Devices
-	deviceLabels               store.DeviceLabels
 	deviceRegistrationTokens   store.DeviceRegistrationTokens
 	devicesRegisteredWithToken store.DevicesRegisteredWithToken
 	deviceAccessKeys           store.DeviceAccessKeys
@@ -89,7 +88,6 @@ func NewService(
 	serviceAccountAccessKeys store.ServiceAccountAccessKeys,
 	serviceAccountRoleBindings store.ServiceAccountRoleBindings,
 	devices store.Devices,
-	deviceLabels store.DeviceLabels,
 	deviceRegistrationTokens store.DeviceRegistrationTokens,
 	devicesRegisteredWithToken store.DevicesRegisteredWithToken,
 	deviceAccessKeys store.DeviceAccessKeys,
@@ -121,7 +119,6 @@ func NewService(
 		serviceAccountAccessKeys:   serviceAccountAccessKeys,
 		serviceAccountRoleBindings: serviceAccountRoleBindings,
 		devices:                    devices,
-		deviceLabels:               deviceLabels,
 		deviceRegistrationTokens:   deviceRegistrationTokens,
 		devicesRegisteredWithToken: devicesRegisteredWithToken,
 		deviceAccessKeys:           deviceAccessKeys,
@@ -2100,39 +2097,19 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	devicesWithLabels := make([]models.DeviceWithLabels, len(devices))
-	for i, device := range devices {
-		labels, err := s.deviceLabels.ListDeviceLabels(r.Context(), device.ID, device.ProjectID)
-		if err != nil {
-			log.WithError(err).Error("list device labels")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		labelsMap := make(map[string]string)
-		for _, label := range labels {
-			labelsMap[label.Key] = label.Value
-		}
-
-		devicesWithLabels[i] = models.DeviceWithLabels{
-			Device: device,
-			Labels: labelsMap,
-		}
-	}
-
 	filters, err := query.FiltersFromQuery(r.URL.Query())
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "get filters from query").Error(), http.StatusBadRequest)
 		return
 	}
 	if len(filters) == 0 {
-		respond(w, devicesWithLabels)
+		respond(w, devices)
 		return
 	}
 
 	var devicesMap []map[string]interface{}
-	if err := utils.JSONConvert(devicesWithLabels, &devicesMap); err != nil {
-		log.WithError(err).Error("convert devices with labels")
+	if err := utils.JSONConvert(devices, &devicesMap); err != nil {
+		log.WithError(err).Error("convert devices")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -2257,8 +2234,13 @@ func (s *Service) setDeviceLabel(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	deviceLabel, err := s.deviceLabels.SetDeviceLabel(r.Context(), setDeviceLabelRequest.Key,
-		deviceID, projectID, setDeviceLabelRequest.Value)
+	deviceLabel, err := s.devices.SetDeviceLabel(
+		r.Context(),
+		deviceID,
+		projectID,
+		setDeviceLabelRequest.Key,
+		setDeviceLabelRequest.Value,
+	)
 	if err != nil {
 		log.WithError(err).Error("set device label")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -2275,28 +2257,29 @@ func (s *Service) getDeviceLabel(w http.ResponseWriter, r *http.Request,
 	vars := mux.Vars(r)
 	key := vars["key"]
 
-	deviceLabel, err := s.deviceLabels.GetDeviceLabel(r.Context(), key, deviceID, projectID)
+	device, err := s.devices.GetDevice(r.Context(), deviceID, projectID)
 	if err != nil {
-		log.WithError(err).Error("get device label")
+		log.WithError(err).Error("get device")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	respond(w, deviceLabel)
+	respond(w, device.Labels[key])
 }
 
 func (s *Service) listDeviceLabels(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID,
 	deviceID string,
 ) {
-	deviceLabels, err := s.deviceLabels.ListDeviceLabels(r.Context(), deviceID, projectID)
+
+	device, err := s.devices.GetDevice(r.Context(), deviceID, projectID)
 	if err != nil {
-		log.WithError(err).Error("list device labels")
+		log.WithError(err).Error("get device")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	respond(w, deviceLabels)
+	respond(w, device.Labels)
 }
 
 func (s *Service) deleteDeviceLabel(w http.ResponseWriter, r *http.Request,
@@ -2306,7 +2289,7 @@ func (s *Service) deleteDeviceLabel(w http.ResponseWriter, r *http.Request,
 	vars := mux.Vars(r)
 	key := vars["key"]
 
-	if err := s.deviceLabels.DeleteDeviceLabel(r.Context(), key, deviceID, projectID); err != nil {
+	if err := s.devices.DeleteDeviceLabel(r.Context(), deviceID, projectID, key); err != nil {
 		log.WithError(err).Error("delete device label")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -2558,13 +2541,6 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, d
 		return
 	}
 
-	deviceLabels, err := s.deviceLabels.ListDeviceLabels(r.Context(), deviceID, projectID)
-	if err != nil {
-		log.WithError(err).Error("list device labels")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
 	applications, err := s.applications.ListApplications(r.Context(), projectID)
 	if err != nil {
 		log.WithError(err).Error("list applications")
@@ -2585,7 +2561,7 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, d
 				return
 			}
 
-			result, err := expression.Eval(deviceLabelParameters(deviceLabels))
+			result, err := expression.Eval(deviceLabelParameters(device.Labels))
 			if err != nil {
 				log.WithError(err).Error("evaluate application scheduling rule")
 				w.WriteHeader(http.StatusInternalServerError)

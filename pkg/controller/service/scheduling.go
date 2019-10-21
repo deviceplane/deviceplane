@@ -2,19 +2,18 @@ package service
 
 import (
 	"github.com/Knetic/govaluate"
-	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/pkg/errors"
 )
 
-type deviceLabelParameters []models.DeviceLabel
+type deviceLabelParameters map[string]string
 
 func (p deviceLabelParameters) Get(name string) (interface{}, error) {
-	for _, deviceLabel := range []models.DeviceLabel(p) {
-		if deviceLabel.Key == name {
-			return deviceLabel.Value, nil
-		}
+	label, ok := p[name]
+	if !ok {
+		return "", nil
 	}
-	return "", nil
+
+	return label, nil
 }
 
 type emptyParameters struct{}

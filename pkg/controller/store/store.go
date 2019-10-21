@@ -147,20 +147,13 @@ type Devices interface {
 	UpdateDeviceName(ctx context.Context, id, projectID, name string) (*models.Device, error)
 	SetDeviceInfo(ctx context.Context, id, projectID string, deviceInfo models.DeviceInfo) (*models.Device, error)
 	UpdateDeviceLastSeenAt(ctx context.Context, id, projectID string) error
+	SetDeviceLabel(ctx context.Context, id, projectID, key, value string) (*string, error)
+	DeleteDeviceLabel(ctx context.Context, id, projectID, key string) error
 	DeleteDevice(ctx context.Context, id, projectID string) error
 }
 
 var ErrDeviceNotFound = errors.New("device not found")
 var ErrDeviceNameAlreadyInUse = errors.New("device name already in use")
-
-type DeviceLabels interface {
-	SetDeviceLabel(ctx context.Context, key, deviceID, projectID, value string) (*models.DeviceLabel, error)
-	GetDeviceLabel(ctx context.Context, key, deviceID, projectID string) (*models.DeviceLabel, error)
-	ListDeviceLabels(ctx context.Context, deviceID, projectID string) ([]models.DeviceLabel, error)
-	DeleteDeviceLabel(ctx context.Context, key, deviceID, projectID string) error
-}
-
-var ErrDeviceLabelNotFound = errors.New("device label not found")
 
 type DeviceRegistrationTokens interface {
 	CreateDeviceRegistrationToken(ctx context.Context, projectID, name, description string, maxRegistrations *int) (*models.DeviceRegistrationToken, error)

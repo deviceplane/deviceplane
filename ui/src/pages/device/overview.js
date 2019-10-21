@@ -183,17 +183,26 @@ class DeviceLabels extends Component {
 
   initializeLabels = keyValues => {
     var labels = [];
-    for (var i = 0; i < keyValues.length; i++) {
+    var labelKeys = Object.keys(keyValues);
+    for (var i = 0; i < labelKeys.length; i++) {
       labels.push({
-        key: keyValues[i].key,
-        value: keyValues[i].value,
-        mode: 'default',
+        key: labelKeys[i],
+        value: keyValues[labelKeys[i]],
+        mode: "default",
         keyValidationMessage: null,
         valueValidationMessage: null,
         showRemoveDialog: false
       });
     }
-    return labels;
+    return labels.sort(function(a, b) {
+      if (a.key < b.key) {
+        return -1;
+      }
+      if (a.key > b.key) {
+        return 1;
+      }
+      return 0;
+    });
   };
 
   createNewDeviceLabel = k => {

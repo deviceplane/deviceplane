@@ -105,7 +105,6 @@ var (
 	_ store.ServiceAccountAccessKeys   = &Store{}
 	_ store.ServiceAccountRoleBindings = &Store{}
 	_ store.Devices                    = &Store{}
-	_ store.DeviceLabels               = &Store{}
 	_ store.DeviceAccessKeys           = &Store{}
 	_ store.DeviceRegistrationTokens   = &Store{}
 	_ store.Applications               = &Store{}
@@ -1335,6 +1334,7 @@ func (s *Store) DeleteDevice(ctx context.Context, id, projectID string) error {
 func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 	var device models.Device
 	var infoString string
+	var labelsString string
 	if err := scanner.Scan(
 		&device.ID,
 		&device.CreatedAt,
@@ -1343,6 +1343,7 @@ func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 		&device.RegistrationTokenID,
 		&device.DesiredAgentSpec,
 		&infoString,
+		&labelsString,
 		&device.LastSeenAt,
 	); err != nil {
 		return nil, err
@@ -1354,6 +1355,10 @@ func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 		}
 	}
 
+	if err := json.Unmarshal([]byte(labelsString), &device.Labels); err != nil {
+		return nil, err
+	}
+
 	if time.Now().After(device.LastSeenAt.Add(time.Minute)) {
 		device.Status = models.DeviceStatusOffline
 	} else {
@@ -1363,84 +1368,60 @@ func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 	return &device, nil
 }
 
-func (s *Store) SetDeviceLabel(ctx context.Context, key, deviceID, projectID, value string) (*models.DeviceLabel, error) {
+func (s *Store) SetDeviceLabel(ctx context.Context, deviceID, projectID, key, value string) (*string, error) {
+	device, err := s.GetDevice(ctx, deviceID, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	device.Labels[key] = value
+
+	labelsString, err := json.Marshal(device.Labels)
+	if err != nil {
+		return nil, err
+	}
+
 	if _, err := s.db.ExecContext(
 		ctx,
-		setDeviceLabel,
-		key,
+		updateDeviceLabels,
+		labelsString,
 		deviceID,
 		projectID,
-		value,
-		value,
 	); err != nil {
 		return nil, err
 	}
 
-	return s.GetDeviceLabel(ctx, key, deviceID, projectID)
-}
-
-func (s *Store) GetDeviceLabel(ctx context.Context, key, deviceID, projectID string) (*models.DeviceLabel, error) {
-	deviceLabelRow := s.db.QueryRowContext(ctx, getDeviceLabel, key, deviceID, projectID)
-
-	deviceLabel, err := s.scanDeviceLabel(deviceLabelRow)
-	if err == sql.ErrNoRows {
-		return nil, store.ErrDeviceLabelNotFound
-	} else if err != nil {
-		return nil, err
-	}
-
-	return deviceLabel, nil
-}
-
-func (s *Store) ListDeviceLabels(ctx context.Context, deviceID, projectID string) ([]models.DeviceLabel, error) {
-	deviceLabelRows, err := s.db.QueryContext(ctx, listDeviceLabels, deviceID, projectID)
+	device, err = s.GetDevice(ctx, deviceID, projectID)
 	if err != nil {
 		return nil, err
 	}
-	defer deviceLabelRows.Close()
-
-	deviceLabels := make([]models.DeviceLabel, 0)
-	for deviceLabelRows.Next() {
-		deviceLabel, err := s.scanDeviceLabel(deviceLabelRows)
-		if err != nil {
-			return nil, err
-		}
-		deviceLabels = append(deviceLabels, *deviceLabel)
-	}
-
-	if err := deviceLabelRows.Err(); err != nil {
-		return nil, err
-	}
-
-	return deviceLabels, nil
+	v := device.Labels[key]
+	return &v, nil
 }
 
-func (s *Store) DeleteDeviceLabel(ctx context.Context, key, deviceID, projectID string) error {
+func (s *Store) DeleteDeviceLabel(ctx context.Context, deviceID, projectID, key string) error {
+	device, err := s.GetDevice(ctx, deviceID, projectID)
+	if err != nil {
+		return err
+	}
+
+	delete(device.Labels, key)
+
+	labelsString, err := json.Marshal(device.Labels)
+	if err != nil {
+		return err
+	}
+
 	if _, err := s.db.ExecContext(
 		ctx,
-		deleteDeviceLabel,
-		key,
+		updateDeviceLabels,
+		labelsString,
 		deviceID,
 		projectID,
 	); err != nil {
 		return err
 	}
-
 	return nil
-}
-
-func (s *Store) scanDeviceLabel(scanner scanner) (*models.DeviceLabel, error) {
-	var deviceLabel models.DeviceLabel
-	if err := scanner.Scan(
-		&deviceLabel.Key,
-		&deviceLabel.DeviceID,
-		&deviceLabel.CreatedAt,
-		&deviceLabel.ProjectID,
-		&deviceLabel.Value,
-	); err != nil {
-		return nil, err
-	}
-	return &deviceLabel, nil
 }
 
 func (s *Store) CreateDeviceRegistrationToken(ctx context.Context, projectID, name, description string, maxRegistrations *int) (*models.DeviceRegistrationToken, error) {

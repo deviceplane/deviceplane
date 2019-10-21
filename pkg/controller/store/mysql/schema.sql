@@ -272,6 +272,7 @@ create table if not exists devices (
   desired_agent_spec longtext not null,
   info longtext not null,
   last_seen_at timestamp not null default current_timestamp,
+  labels longtext not null,
 
   primary key (id),
   unique(name, project_id),
@@ -281,20 +282,6 @@ create table if not exists devices (
   foreign key devices_registration_token_id(registration_token_id)
   references device_registration_tokens(id)
   on delete set null
-);
-
-create table if not exists device_labels (
-  `key` varchar(100) not null,
-  device_id varchar(32) not null,
-  created_at timestamp not null default current_timestamp,
-  project_id varchar(32) not null,
-
-  value varchar(100) not null,
-
-  primary key (`key`, device_id),
-  foreign key device_labels_device_id(device_id)
-  references devices(id)
-  on delete cascade
 );
 
 --

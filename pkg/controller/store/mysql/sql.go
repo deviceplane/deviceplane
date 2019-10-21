@@ -1,7 +1,5 @@
 package mysql
 
-import "fmt"
-
 const createUser = `
   insert into users (
     id,
@@ -394,29 +392,36 @@ const createDevice = `
     id,
     project_id,
     name,
-    registration_token_id
+    registration_token_id,
+    labels
   )
-  values (?, ?, ?, ?)
+  values (?, ?, ?, ?, '{}')
 `
 
 const getDevice = `
-  select id, created_at, project_id, name, registration_token_id, desired_agent_spec, info, last_seen_at from devices
+  select id, created_at, project_id, name, registration_token_id, desired_agent_spec, info, labels, last_seen_at from devices
   where id = ? and project_id = ?
 `
 
 const lookupDevice = `
-  select id, created_at, project_id, name, registration_token_id, desired_agent_spec, info, last_seen_at from devices
+  select id, created_at, project_id, name, registration_token_id, desired_agent_spec, info, labels, last_seen_at from devices
   where name = ? and project_id = ?
 `
 
 const listDevices = `
-  select id, created_at, project_id, name, registration_token_id, desired_agent_spec, info, last_seen_at from devices
+  select id, created_at, project_id, name, registration_token_id, desired_agent_spec, info, labels, last_seen_at from devices
   where project_id = ?
 `
 
 const updateDeviceName = `
   update devices
   set name = ?
+  where id = ? and project_id = ?
+`
+
+const updateDeviceLabels = `
+  update devices
+  set labels = ?
   where id = ? and project_id = ?
 `
 
@@ -436,33 +441,6 @@ const deleteDevice = `
   delete from devices
   where id = ? and project_id = ?
 `
-
-var setDeviceLabel = fmt.Sprintf(`
-  insert into device_labels (
-    %skey%s,
-    device_id,
-    project_id,
-    value
-  )
-  values (?, ?, ?, ?)
-  on duplicate key update value = ?
-`, "`", "`")
-
-var getDeviceLabel = fmt.Sprintf(`
-  select %skey%s, device_id, created_at, project_id, value from device_labels
-  where %skey%s = ? and device_id = ? and project_id = ?
-`, "`", "`", "`", "`")
-
-var listDeviceLabels = fmt.Sprintf(`
-  select %skey%s, device_id, created_at, project_id, value from device_labels
-  where device_id = ? and project_id = ?
-`, "`", "`")
-
-var deleteDeviceLabel = fmt.Sprintf(`
-  delete from device_labels
-  where %skey%s = ? and device_id = ? and project_id = ?
-  limit 1
-`, "`", "`")
 
 const createDeviceRegistrationToken = `
   insert into device_registration_tokens (
