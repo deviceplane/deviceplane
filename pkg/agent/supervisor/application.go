@@ -7,6 +7,7 @@ import (
 
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/agent/utils"
+	"github.com/deviceplane/deviceplane/pkg/agent/validator"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/deviceplane/deviceplane/pkg/spec"
@@ -17,6 +18,7 @@ type ApplicationSupervisor struct {
 	applicationID string
 	engine        engine.Engine
 	reporter      *Reporter
+	validators    []validator.Validator
 
 	serviceNames            map[string]struct{}
 	serviceSupervisors      map[string]*ServiceSupervisor
@@ -34,12 +36,14 @@ func NewApplicationSupervisor(
 	applicationID string,
 	engine engine.Engine,
 	reporter *Reporter,
+	validators []validator.Validator,
 ) *ApplicationSupervisor {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &ApplicationSupervisor{
 		applicationID: applicationID,
 		engine:        engine,
 		reporter:      reporter,
+		validators:    validators,
 
 		serviceNames:            make(map[string]struct{}),
 		serviceSupervisors:      make(map[string]*ServiceSupervisor),
@@ -80,6 +84,7 @@ func (s *ApplicationSupervisor) SetApplication(application models.ApplicationFul
 				serviceName,
 				s.engine,
 				s.reporter,
+				s.validators,
 			)
 			s.serviceSupervisors[serviceName] = serviceSupervisor
 		}

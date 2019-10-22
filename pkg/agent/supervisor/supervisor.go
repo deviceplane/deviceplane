@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/deviceplane/deviceplane/pkg/agent/utils"
+	"github.com/deviceplane/deviceplane/pkg/agent/validator"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
@@ -14,6 +15,7 @@ type Supervisor struct {
 	engine                  engine.Engine
 	reportApplicationStatus func(ctx context.Context, applicationID string, currentReleaseID string) error
 	reportServiceStatus     func(ctx context.Context, applicationID, service, currentReleaseID string) error
+	validators              []validator.Validator
 
 	applicationIDs         map[string]struct{}
 	applicationSupervisors map[string]*ApplicationSupervisor
@@ -28,12 +30,14 @@ func NewSupervisor(
 	engine engine.Engine,
 	reportApplicationStatus func(ctx context.Context, applicationID, currentReleaseID string) error,
 	reportServiceStatus func(ctx context.Context, applicationID, service, currentReleaseID string) error,
+	validators []validator.Validator,
 ) *Supervisor {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Supervisor{
 		engine:                  engine,
 		reportApplicationStatus: reportApplicationStatus,
 		reportServiceStatus:     reportServiceStatus,
+		validators:              validators,
 
 		applicationIDs:         make(map[string]struct{}),
 		applicationSupervisors: make(map[string]*ApplicationSupervisor),
@@ -53,6 +57,7 @@ func (s *Supervisor) SetApplications(applications []models.ApplicationFull2) {
 				application.Application.ID,
 				s.engine,
 				NewReporter(application.Application.ID, s.reportApplicationStatus, s.reportServiceStatus),
+				s.validators,
 			)
 			s.applicationSupervisors[application.Application.ID] = applicationSupervisor
 		}

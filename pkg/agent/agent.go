@@ -18,6 +18,9 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/agent/status"
 	"github.com/deviceplane/deviceplane/pkg/agent/supervisor"
 	"github.com/deviceplane/deviceplane/pkg/agent/updater"
+	"github.com/deviceplane/deviceplane/pkg/agent/validator"
+	"github.com/deviceplane/deviceplane/pkg/agent/validator/customcommands"
+	"github.com/deviceplane/deviceplane/pkg/agent/validator/image"
 	"github.com/deviceplane/deviceplane/pkg/agent/variables"
 	"github.com/deviceplane/deviceplane/pkg/agent/variables/fsnotify"
 	"github.com/deviceplane/deviceplane/pkg/engine"
@@ -76,15 +79,23 @@ func NewAgent(
 		registrationToken: registrationToken,
 		confDir:           confDir,
 		stateDir:          stateDir,
-		supervisor: supervisor.NewSupervisor(engine, func(ctx context.Context, applicationID, currentReleaseID string) error {
-			return client.SetDeviceApplicationStatus(ctx, applicationID, models.SetDeviceApplicationStatusRequest{
-				CurrentReleaseID: currentReleaseID,
-			})
-		}, func(ctx context.Context, applicationID, service, currentReleaseID string) error {
-			return client.SetDeviceServiceStatus(ctx, applicationID, service, models.SetDeviceServiceStatusRequest{
-				CurrentReleaseID: currentReleaseID,
-			})
-		}),
+		supervisor: supervisor.NewSupervisor(
+			engine,
+			func(ctx context.Context, applicationID, currentReleaseID string) error {
+				return client.SetDeviceApplicationStatus(ctx, applicationID, models.SetDeviceApplicationStatusRequest{
+					CurrentReleaseID: currentReleaseID,
+				})
+			},
+			func(ctx context.Context, applicationID, service, currentReleaseID string) error {
+				return client.SetDeviceServiceStatus(ctx, applicationID, service, models.SetDeviceServiceStatusRequest{
+					CurrentReleaseID: currentReleaseID,
+				})
+			},
+			[]validator.Validator{
+				image.NewValidator(variables),
+				customcommands.NewValidator(variables),
+			},
+		),
 		statusGarbageCollector: status.NewGarbageCollector(client.DeleteDeviceApplicationStatus, client.DeleteDeviceServiceStatus),
 		infoReporter:           info.NewReporter(client, version),
 		localServer:            local.NewServer(service),

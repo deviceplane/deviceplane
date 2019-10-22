@@ -6,7 +6,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/apex/log"
+
 	"github.com/deviceplane/deviceplane/pkg/agent/utils"
+	"github.com/deviceplane/deviceplane/pkg/agent/validator"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/hash"
 	"github.com/deviceplane/deviceplane/pkg/models"
@@ -18,6 +21,7 @@ type ServiceSupervisor struct {
 	serviceName   string
 	engine        engine.Engine
 	reporter      *Reporter
+	validators    []validator.Validator
 
 	release             string
 	service             spec.Service
@@ -38,6 +42,7 @@ func NewServiceSupervisor(
 	serviceName string,
 	engine engine.Engine,
 	reporter *Reporter,
+	validators []validator.Validator,
 ) *ServiceSupervisor {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &ServiceSupervisor{
@@ -45,6 +50,7 @@ func NewServiceSupervisor(
 		serviceName:   serviceName,
 		engine:        engine,
 		reporter:      reporter,
+		validators:    validators,
 
 		keepAliveRelease:    make(chan string),
 		keepAliveService:    make(chan spec.Service),
@@ -136,6 +142,17 @@ func (s *ServiceSupervisor) reconcileLoop() {
 		}
 
 		s.sendKeepAliveDeactivate()
+
+		for _, v := range s.validators {
+			err := v.Validate(s.service)
+			if err != nil {
+				log.WithField("service", s.serviceName).
+					WithField("validator", v.Name()).
+					WithError(err).
+					Error("validation failed")
+				goto cont
+			}
+		}
 
 		utils.ContainerCreate(
 			ctx,

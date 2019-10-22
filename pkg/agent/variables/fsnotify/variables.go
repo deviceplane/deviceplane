@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,12 +15,17 @@ import (
 )
 
 type Variables struct {
-	dir                  string
-	lock                 sync.RWMutex
-	disableSSH           bool
-	disableSSHSet        bool
-	authorizedSSHKeys    []ssh.PublicKey
-	authorizedSSHKeysSet bool
+	dir  string
+	lock sync.RWMutex
+
+	disableSSH               bool
+	disableSSHSet            bool
+	authorizedSSHKeys        []ssh.PublicKey
+	authorizedSSHKeysSet     bool
+	whitelistedImages        []string
+	whitelistedImagesSet     bool
+	disableCustomCommands    bool
+	disableCustomCommandsSet bool
 }
 
 func NewVariables(dir string) *Variables {
@@ -60,6 +66,8 @@ func (v *Variables) refresh() {
 	for _, refresher := range []func() error{
 		v.refreshDisableSSH,
 		v.refreshAuthorizedSSHKeys,
+		v.refreshWhitelistedImages,
+		v.refreshDisableCustomCommands,
 	} {
 		if err := refresher(); err != nil {
 			log.WithError(err).Error("variables refresh")
@@ -109,6 +117,44 @@ func (v *Variables) refreshAuthorizedSSHKeys() error {
 	return nil
 }
 
+func (v *Variables) refreshWhitelistedImages() error {
+	bytes, err := ioutil.ReadFile(path.Join(v.dir, variables.WhitelistedImages))
+
+	v.lock.Lock()
+	defer v.lock.Unlock()
+
+	if err == nil {
+		v.whitelistedImages = strings.Split(string(bytes), "\n")
+		v.whitelistedImagesSet = true
+	} else if os.IsNotExist(err) {
+		v.whitelistedImages = []string{}
+		v.whitelistedImagesSet = true
+	} else {
+		return err
+	}
+
+	return nil
+}
+
+func (v *Variables) refreshDisableCustomCommands() error {
+	_, err := os.Stat(path.Join(v.dir, variables.DisableCustomCommands))
+
+	v.lock.Lock()
+	defer v.lock.Unlock()
+
+	if err == nil {
+		v.disableCustomCommands = true
+		v.disableCustomCommandsSet = true
+	} else if os.IsNotExist(err) {
+		v.disableCustomCommands = false
+		v.disableCustomCommandsSet = true
+	} else {
+		return err
+	}
+
+	return nil
+}
+
 func (v *Variables) GetDisableSSH() bool {
 	v.waitFor(func() bool {
 		return v.disableSSHSet
@@ -121,6 +167,20 @@ func (v *Variables) GetAuthorizedSSHKeys() []ssh.PublicKey {
 		return v.authorizedSSHKeysSet
 	})
 	return v.authorizedSSHKeys
+}
+
+func (v *Variables) GetWhitelistedImages() []string {
+	v.waitFor(func() bool {
+		return v.whitelistedImagesSet
+	})
+	return v.whitelistedImages
+}
+
+func (v *Variables) GetDisableCustomCommands() bool {
+	v.waitFor(func() bool {
+		return v.disableCustomCommandsSet
+	})
+	return v.disableCustomCommands
 }
 
 func (v *Variables) waitFor(getField func() bool) {
