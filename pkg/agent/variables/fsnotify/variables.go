@@ -124,7 +124,15 @@ func (v *Variables) refreshWhitelistedImages() error {
 	defer v.lock.Unlock()
 
 	if err == nil {
-		v.whitelistedImages = strings.Split(string(bytes), "\n")
+		v.whitelistedImages = []string{}
+		nonCleanedImages := strings.Split(string(bytes), "\n")
+		for _, image := range nonCleanedImages {
+			cleanedImage := strings.TrimSpace(image)
+			if len(cleanedImage) != 0 {
+				v.whitelistedImages = append(v.whitelistedImages, cleanedImage)
+			}
+		}
+
 		v.whitelistedImagesSet = true
 	} else if os.IsNotExist(err) {
 		v.whitelistedImages = []string{}
