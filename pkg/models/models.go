@@ -132,12 +132,13 @@ const (
 )
 
 type DeviceRegistrationToken struct {
-	ID               string    `json:"id"`
-	CreatedAt        time.Time `json:"createdAt"`
-	ProjectID        string    `json:"projectId"`
-	MaxRegistrations *int      `json:"maxRegistrations"`
-	Name             string    `json:"name"`
-	Description      string    `json:"description"`
+	ID               string            `json:"id"`
+	CreatedAt        time.Time         `json:"createdAt"`
+	ProjectID        string            `json:"projectId"`
+	MaxRegistrations *int              `json:"maxRegistrations"`
+	Name             string            `json:"name"`
+	Description      string            `json:"description"`
+	Labels           map[string]string `json:"labels"`
 }
 
 type DevicesRegisteredWithTokenCount struct {

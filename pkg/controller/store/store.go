@@ -140,16 +140,16 @@ type ServiceAccountRoleBindings interface {
 var ErrServiceAccountRoleBindingNotFound = errors.New("service account role binding not found")
 
 type Devices interface {
-	CreateDevice(ctx context.Context, projectID, name, registrationTokenID string) (*models.Device, error)
-	GetDevice(ctx context.Context, id, projectID string) (*models.Device, error)
+	CreateDevice(ctx context.Context, projectID, name, registrationTokenID string, deviceLabels map[string]string) (*models.Device, error)
+	GetDevice(ctx context.Context, deviceID, projectID string) (*models.Device, error)
 	LookupDevice(ctx context.Context, name, projectID string) (*models.Device, error)
 	ListDevices(ctx context.Context, projectID string) ([]models.Device, error)
-	UpdateDeviceName(ctx context.Context, id, projectID, name string) (*models.Device, error)
-	SetDeviceInfo(ctx context.Context, id, projectID string, deviceInfo models.DeviceInfo) (*models.Device, error)
-	UpdateDeviceLastSeenAt(ctx context.Context, id, projectID string) error
-	SetDeviceLabel(ctx context.Context, id, projectID, key, value string) (*string, error)
-	DeleteDeviceLabel(ctx context.Context, id, projectID, key string) error
-	DeleteDevice(ctx context.Context, id, projectID string) error
+	UpdateDeviceName(ctx context.Context, deviceID, projectID, name string) (*models.Device, error)
+	DeleteDevice(ctx context.Context, deviceID, projectID string) error
+	SetDeviceInfo(ctx context.Context, deviceID, projectID string, deviceInfo models.DeviceInfo) (*models.Device, error)
+	UpdateDeviceLastSeenAt(ctx context.Context, deviceID, projectID string) error
+	SetDeviceLabel(ctx context.Context, deviceID, projectID, key, value string) (*string, error)
+	DeleteDeviceLabel(ctx context.Context, deviceID, projectID, key string) error
 }
 
 var ErrDeviceNotFound = errors.New("device not found")
@@ -162,6 +162,8 @@ type DeviceRegistrationTokens interface {
 	ListDeviceRegistrationTokens(ctx context.Context, projectID string) ([]models.DeviceRegistrationToken, error)
 	UpdateDeviceRegistrationToken(ctx context.Context, tokenID, projectID, name, description string, maxRegistrations *int) (*models.DeviceRegistrationToken, error)
 	DeleteDeviceRegistrationToken(ctx context.Context, tokenID, projectID string) error
+	SetDeviceRegistrationTokenLabel(ctx context.Context, tokenID, projectID, key, value string) (*string, error)
+	DeleteDeviceRegistrationTokenLabel(ctx context.Context, tokenID, projectID, key string) error
 }
 
 type DevicesRegisteredWithToken interface {

@@ -395,7 +395,7 @@ const createDevice = `
     registration_token_id,
     labels
   )
-  values (?, ?, ?, ?, '{}')
+  values (?, ?, ?, ?, ?)
 `
 
 const getDevice = `
@@ -448,29 +448,36 @@ const createDeviceRegistrationToken = `
     project_id,
     name,
     description,
-    max_registrations
+    max_registrations,
+    labels
   )
-  values (?, ?, ?, ?, ?)
+  values (?, ?, ?, ?, ?, '{}')
 `
 
 const lookupDeviceRegistrationToken = `
-  select id, created_at, project_id, max_registrations, name, description from device_registration_tokens
+  select id, created_at, project_id, max_registrations, name, description, labels from device_registration_tokens
   where name = ? and project_id = ?
 `
 
 const listDeviceRegistrationTokens = `
-  select id, created_at, project_id, max_registrations, name, description from device_registration_tokens
+  select id, created_at, project_id, max_registrations, name, description, labels from device_registration_tokens
   where project_id = ?
 `
 
 const getDeviceRegistrationToken = `
-  select id, created_at, project_id, max_registrations, name, description from device_registration_tokens
+  select id, created_at, project_id, max_registrations, name, description, labels from device_registration_tokens
   where id = ? and project_id = ?
 `
 
 const updateDeviceRegistrationToken = `
   update device_registration_tokens
   set name = ?, description = ?, max_registrations = ?
+  where id = ? and project_id = ?
+`
+
+const updateDeviceRegistrationTokenLabels = `
+  update device_registration_tokens
+  set labels = ?
   where id = ? and project_id = ?
 `
 

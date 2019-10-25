@@ -22,6 +22,7 @@ import config from '../config.js';
 import InnerCard from '../components/InnerCard.js';
 import TopHeader from '../components/TopHeader.js';
 import Filter from '../components/devices-filter';
+import { buildLabelColorMap, renderLabels } from '../helpers/labels.js';
 
 class Devices extends Component {
   constructor(props) {
@@ -99,22 +100,7 @@ class Devices extends Component {
       )
       .then(({ data: devices }) => {
         devices = this.parseDevices(devices);
-        var x = [];
-        devices.forEach((device) => {
-          Object.keys(device.labels).forEach((label) => {
-            x.push(label);
-          })
-        });
-        const labelKeys = [
-          ...new Set(x)
-        ].sort();
-        const labelColorMap = labelKeys.reduce(
-          (obj, key, i) => ({
-            ...obj,
-            [key]: this.labelColors[i % (this.labelColors.length - 1)]
-          }),
-          {}
-        );
+        const labelColorMap = buildLabelColorMap(this.labelColors, devices);
         this.setState({
           devices,
           labelColorMap
@@ -229,46 +215,6 @@ class Devices extends Component {
     }
   };
 
-  renderLabels = device => (
-    <Pane display="flex" flexWrap="wrap">
-      {Object.keys(device.labels).map((key, i) => (
-        <Pane
-          display="flex"
-          marginRight={minorScale(2)}
-          marginY={minorScale(1)}
-          overflow="hidden"
-          key={key}
-        >
-          <Pane
-            backgroundColor={this.state.labelColorMap[key]}
-            paddingX={6}
-            paddingY={2}
-            color="white"
-            borderTopLeftRadius={3}
-            borderBottomLeftRadius={3}
-            textOverflow="ellipsis"
-            overflow="hidden"
-            whiteSpace="nowrap"
-          >
-            {key}
-          </Pane>
-          <Pane
-            backgroundColor="#E4E7EB"
-            paddingX={6}
-            paddingY={2}
-            borderTopRightRadius={3}
-            borderBottomRightRadius={3}
-            textOverflow="ellipsis"
-            overflow="hidden"
-            whiteSpace="nowrap"
-          >
-            {device.labels[key]}
-          </Pane>
-        </Pane>
-      ))}
-    </Pane>
-  );
-
   renderDeviceOs = device => {
     var innerText = '-';
     if (
@@ -326,7 +272,7 @@ class Devices extends Component {
           {this.renderDeviceOs(device)}
         </Table.TextCell>
         <Table.TextCell flexGrow={2}>
-          {this.renderLabels(device)}
+          {renderLabels(device.labels, this.state.labelColorMap)}
         </Table.TextCell>
       </Table.Row>
     ));

@@ -1209,21 +1209,27 @@ func (s *Store) scanServiceAccountRoleBinding(scanner scanner) (*models.ServiceA
 	return &serviceAccountRoleBinding, nil
 }
 
-func (s *Store) CreateDevice(ctx context.Context, projectID, name, registrationTokenID string) (*models.Device, error) {
-	id := newDeviceID()
+func (s *Store) CreateDevice(ctx context.Context, projectID, name, deviceRegistrationTokenID string, deviceLabels map[string]string) (*models.Device, error) {
+	deviceID := newDeviceID()
+
+	serializedDeviceLabels, err := json.Marshal(deviceLabels)
+	if err != nil {
+		return nil, err
+	}
 
 	if _, err := s.db.ExecContext(
 		ctx,
 		createDevice,
-		id,
+		deviceID,
 		projectID,
 		name,
-		registrationTokenID,
+		deviceRegistrationTokenID,
+		string(serializedDeviceLabels),
 	); err != nil {
 		return nil, err
 	}
 
-	return s.GetDevice(ctx, id, projectID)
+	return s.GetDevice(ctx, deviceID, projectID)
 }
 
 func (s *Store) GetDevice(ctx context.Context, id, projectID string) (*models.Device, error) {
@@ -1521,8 +1527,65 @@ func (s *Store) DeleteDeviceRegistrationToken(ctx context.Context, id, projectID
 	return err
 }
 
+func (s *Store) SetDeviceRegistrationTokenLabel(ctx context.Context, deviceRegistrationTokenID, projectID, key, value string) (*string, error) {
+	deviceRegistrationToken, err := s.GetDeviceRegistrationToken(ctx, deviceRegistrationTokenID, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	deviceRegistrationToken.Labels[key] = value
+
+	labelsString, err := json.Marshal(deviceRegistrationToken.Labels)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateDeviceRegistrationTokenLabels,
+		labelsString,
+		deviceRegistrationTokenID,
+		projectID,
+	); err != nil {
+		return nil, err
+	}
+
+	deviceRegistrationToken, err = s.GetDeviceRegistrationToken(ctx, deviceRegistrationTokenID, projectID)
+	if err != nil {
+		return nil, err
+	}
+	v := deviceRegistrationToken.Labels[key]
+	return &v, nil
+}
+
+func (s *Store) DeleteDeviceRegistrationTokenLabel(ctx context.Context, deviceRegistrationTokenID, projectID, key string) error {
+	deviceRegistrationToken, err := s.GetDeviceRegistrationToken(ctx, deviceRegistrationTokenID, projectID)
+	if err != nil {
+		return err
+	}
+
+	delete(deviceRegistrationToken.Labels, key)
+
+	labelsString, err := json.Marshal(deviceRegistrationToken.Labels)
+	if err != nil {
+		return err
+	}
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateDeviceRegistrationTokenLabels,
+		labelsString,
+		deviceRegistrationTokenID,
+		projectID,
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *Store) scanDeviceRegistrationToken(scanner scanner) (*models.DeviceRegistrationToken, error) {
 	var deviceRegistrationToken models.DeviceRegistrationToken
+	var labelsString string
 	if err := scanner.Scan(
 		&deviceRegistrationToken.ID,
 		&deviceRegistrationToken.CreatedAt,
@@ -1530,9 +1593,19 @@ func (s *Store) scanDeviceRegistrationToken(scanner scanner) (*models.DeviceRegi
 		&deviceRegistrationToken.MaxRegistrations,
 		&deviceRegistrationToken.Name,
 		&deviceRegistrationToken.Description,
+		&labelsString,
 	); err != nil {
 		return nil, err
 	}
+
+	if labelsString == "" {
+		deviceRegistrationToken.Labels = map[string]string{}
+	} else {
+		if err := json.Unmarshal([]byte(labelsString), &deviceRegistrationToken.Labels); err != nil {
+			return nil, err
+		}
+	}
+
 	return &deviceRegistrationToken, nil
 }
 

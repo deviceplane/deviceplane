@@ -222,9 +222,7 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "DeleteDevice", s.withDevice(s.deleteDevice))).Methods("DELETE")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/ssh", s.validateAuthorization("devices", "SSH", s.withDevice(s.initiateSSH))).Methods("GET")
 
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "SetDeviceLabel", s.withDevice(s.setDeviceLabel))).Methods("POST")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateAuthorization("devicelabels", "GetDeviceLabel", s.withDevice(s.getDeviceLabel))).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "ListDeviceLabels", s.withDevice(s.listDeviceLabels))).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "SetDeviceLabel", s.withDevice(s.setDeviceLabel))).Methods("PUT")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateAuthorization("devicelabels", "DeleteDeviceLabel", s.withDevice(s.deleteDeviceLabel))).Methods("DELETE")
 
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens", s.validateAuthorization("deviceregistrationtokens", "ListDeviceRegistrationTokens", s.listDeviceRegistrationTokens)).Methods("GET")
@@ -232,6 +230,9 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}", s.validateAuthorization("deviceregistrationtokens", "GetDeviceRegistrationToken", s.withDeviceRegistrationToken(s.getDeviceRegistrationToken))).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}", s.validateAuthorization("deviceregistrationtokens", "UpdateDeviceRegistrationToken", s.withDeviceRegistrationToken(s.updateDeviceRegistrationToken))).Methods("PUT")
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}", s.validateAuthorization("deviceregistrationtokens", "DeleteDeviceRegistrationToken", s.withDeviceRegistrationToken(s.deleteDeviceRegistrationToken))).Methods("DELETE")
+
+	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}/labels", s.validateAuthorization("deviceregistrationtokenlabels", "SetDeviceRegistrationTokenLabel", s.withDeviceRegistrationToken(s.setDeviceRegistrationTokenLabel))).Methods("PUT")
+	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}/labels/{key}", s.validateAuthorization("deviceregistrationtokenlabels", "DeleteDeviceRegistrationTokenLabel", s.withDeviceRegistrationToken(s.deleteDeviceRegistrationTokenLabel))).Methods("DELETE")
 
 	apiRouter.HandleFunc("/projects/{project}/devices/register", s.registerDevice).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/bundle", s.withDeviceAuth(s.getBundle)).Methods("GET")
@@ -2251,38 +2252,6 @@ func (s *Service) setDeviceLabel(w http.ResponseWriter, r *http.Request,
 	respond(w, deviceLabel)
 }
 
-func (s *Service) getDeviceLabel(w http.ResponseWriter, r *http.Request,
-	projectID, authenticatedUserID, authenticatedServiceAccountID,
-	deviceID string,
-) {
-	vars := mux.Vars(r)
-	key := vars["key"]
-
-	device, err := s.devices.GetDevice(r.Context(), deviceID, projectID)
-	if err != nil {
-		log.WithError(err).Error("get device")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	respond(w, device.Labels[key])
-}
-
-func (s *Service) listDeviceLabels(w http.ResponseWriter, r *http.Request,
-	projectID, authenticatedUserID, authenticatedServiceAccountID,
-	deviceID string,
-) {
-
-	device, err := s.devices.GetDevice(r.Context(), deviceID, projectID)
-	if err != nil {
-		log.WithError(err).Error("get device")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	respond(w, device.Labels)
-}
-
 func (s *Service) deleteDeviceLabel(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID,
 	deviceID string,
@@ -2448,6 +2417,49 @@ func (s *Service) listDeviceRegistrationTokens(w http.ResponseWriter, r *http.Re
 	respond(w, ret)
 }
 
+func (s *Service) setDeviceRegistrationTokenLabel(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	deviceRegistrationTokenID string,
+) {
+	var setLabelRequest struct {
+		Key   string `json:"key" validate:"labelkey"`
+		Value string `json:"value" validate:"labelvalue"`
+	}
+	if err := read(r, &setLabelRequest); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	label, err := s.deviceRegistrationTokens.SetDeviceRegistrationTokenLabel(
+		r.Context(),
+		deviceRegistrationTokenID,
+		projectID,
+		setLabelRequest.Key,
+		setLabelRequest.Value,
+	)
+	if err != nil {
+		log.WithError(err).Error("set device registration token label")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	respond(w, label)
+}
+
+func (s *Service) deleteDeviceRegistrationTokenLabel(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	deviceRegistrationTokenID string,
+) {
+	vars := mux.Vars(r)
+	key := vars["key"]
+
+	if err := s.deviceRegistrationTokens.DeleteDeviceRegistrationTokenLabel(r.Context(), deviceRegistrationTokenID, projectID, key); err != nil {
+		log.WithError(err).Error("delete device registration token label")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
 func (s *Service) withDeviceAuth(handler func(http.ResponseWriter, *http.Request, string, string)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -2506,7 +2518,7 @@ func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	device, err := s.devices.CreateDevice(r.Context(), projectID, namesgenerator.GetRandomName(), deviceRegistrationToken.ID)
+	device, err := s.devices.CreateDevice(r.Context(), projectID, namesgenerator.GetRandomName(), deviceRegistrationToken.ID, deviceRegistrationToken.Labels)
 	if err != nil {
 		log.WithError(err).Error("create device")
 		w.WriteHeader(http.StatusInternalServerError)

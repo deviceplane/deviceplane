@@ -815,8 +815,6 @@ class InnerOogie extends Component {
           </Switch>
         );
       case 'provisioning':
-        console.log('path', match.path, match.params)
-        console.log('real path', window.location.pathname)
         return (
           <Switch>
             <Route
