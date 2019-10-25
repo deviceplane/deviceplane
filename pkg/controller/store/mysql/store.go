@@ -1363,7 +1363,7 @@ func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 		}
 	}
 
-	if time.Now().After(device.LastSeenAt.Add(time.Minute)) {
+	if time.Now().After(device.LastSeenAt.Add(2 * time.Minute)) {
 		device.Status = models.DeviceStatusOffline
 	} else {
 		device.Status = models.DeviceStatusOnline
