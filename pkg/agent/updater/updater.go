@@ -42,7 +42,7 @@ func (u *Updater) SetDesiredSpec(desiredSpec spec.Service) {
 }
 
 func (u *Updater) updater() {
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(time.Minute)
 	defer ticker.Stop()
 
 	for {
