@@ -12,32 +12,55 @@ import {
   Text,
   withTheme,
   Popover,
+  // @ts-ignore
 } from 'evergreen-ui';
 
 import {
   Link
-} from "react-router-dom";
+} from 'react-router-dom';
 
 import config from '../config.js';
 import InnerCard from '../components/InnerCard.js';
 import TopHeader from '../components/TopHeader.js';
-import Filter from '../components/devices-filter';
+import { DevicesFilter, Query, Filter, Condition, DevicePropertyCondition, LabelExistenceCondition, LabelValueCondition, LabelValueConditionParams, LabelExistenceConditionParams, DevicePropertyConditionParams } from '../components/DevicesFilter';
 import { buildLabelColorMap, renderLabels } from '../helpers/labels.js';
 
-class Devices extends Component {
-  constructor(props) {
+// Runtime type safety
+import * as deviceTypes from '../components/DevicesFilter-ti';
+import { createCheckers } from 'ts-interface-checker';
+const typeCheckers = createCheckers(deviceTypes.default);
+
+interface Props {
+  theme: any,
+  projectName: string,
+  user: any,
+  history: any,
+}
+
+interface State {
+  labelColors: any[],
+  labelColorMap: any,
+  devices: any[],
+  query: Query,
+  showFilterDialog: boolean,
+  popoverShown: boolean,
+  defaultDeviceRegistrationTokenExists: boolean,
+}
+
+class Devices extends Component<Props, State> {
+  constructor(props: Props) {
     super(props);
 
     const palletteArray = Object.values(this.props.theme.palette);
 
-    this.labelColors = [
-      ...palletteArray.map(colors => colors.base),
-      ...palletteArray.map(colors => colors.dark)
-    ];
-
     this.state = {
+      labelColorMap: {},
+      labelColors: [
+        ...palletteArray.map((colors: any) => colors.base),
+        ...palletteArray.map((colors: any) => colors.dark)
+      ],
       devices: [],
-      filters: [],
+      query: [],
       showFilterDialog: false,
       popoverShown: false,
       defaultDeviceRegistrationTokenExists: false,
@@ -45,7 +68,8 @@ class Devices extends Component {
   }
 
   componentDidMount() {
-    this.fetchDevices();
+    const queryString = this.parseFiltersQueryString()
+    this.fetchDevices(queryString);
     this.checkDefaultDeviceRegistrationToken();
   }
 
@@ -65,42 +89,20 @@ class Devices extends Component {
       .catch(error => {});
   }
 
-  fetchDevices = () => {
-    let queryParams = '';
-
-    if (window.location.search && window.location.search.includes('filter=')) {
-      queryParams = window.location.search.substr(1);
-      const filters = queryParams.replace(/&/g, '').split('filter=');
-
-      filters.forEach(encodedFilter => {
-        if (encodedFilter) {
-          try {
-            const filter = JSON.parse(
-              atob(decodeURIComponent(encodedFilter))
-            ).filter(f => f.property && f.operator && f.value);
-
-            if (filter.length) {
-              this.setState(({ filters }) => ({
-                filters: [...filters, filter]
-              }));
-            }
-          } catch (e) {}
-        }
-      });
+  fetchDevices = (queryString: string) => {
+    if (queryString.length) {
+      queryString = '?' + queryString;
     }
-
     return axios
       .get(
-        `${config.endpoint}/projects/${this.props.projectName}/devices${
-          queryParams ? `?${queryParams}` : ''
-        }`,
+        `${config.endpoint}/projects/${this.props.projectName}/devices${queryString}`,
         {
           withCredentials: true
         }
       )
       .then(({ data: devices }) => {
         devices = this.parseDevices(devices);
-        const labelColorMap = buildLabelColorMap(this.labelColors, devices);
+        const labelColorMap = buildLabelColorMap(this.state.labelColorMap, this.state.labelColors, devices);
         this.setState({
           devices,
           labelColorMap
@@ -109,113 +111,159 @@ class Devices extends Component {
       .catch(console.log);
   };
 
-  parseDevices = devices =>
+  parseDevices = (devices: any[]) =>
     devices.map(device => device);
 
   buildFiltersQueryString = () =>
-    [...new Set(this.state.filters)]
+    [...Array.from(new Set(this.state.query))]
       .map(
         filter => `filter=${encodeURIComponent(btoa(JSON.stringify(filter)))}`
       )
       .join('&');
 
+  parseFiltersQueryString = () => {
+    let queryParams = '';
+
+    if (window.location.search && window.location.search.includes('filter=')) {
+      queryParams = window.location.search.substr(1);
+      const filters = queryParams.replace(/&/g, '').split('filter=');
+
+      var builtQuery: Query = [];
+
+      filters.forEach(encodedFilter => {
+        if (encodedFilter) {
+          try {
+            const filter = JSON.parse(
+              atob(decodeURIComponent(encodedFilter))
+            )
+
+            const validFilter = filter.filter((c: Condition) => {
+              return typeCheckers['Condition'].strictTest(c);
+            });
+
+            if (validFilter.length) {
+              builtQuery.push(validFilter);
+            }
+          } catch (e) {
+            console.log('Error parsing filters:', e)
+          }
+        }
+      });
+
+      this.setState({
+        query: [...this.state.query, ...builtQuery]
+      });
+    }
+    return queryParams;
+  }
+
   filterDevices = () => {
-    if (!this.state.filters.length) {
+    if (!this.state.query.length) {
       window.history.pushState('', '', window.location.pathname);
-      this.fetchDevices();
+      this.fetchDevices('');
       return;
     }
 
     const filtersQueryString = this.buildFiltersQueryString();
     window.history.pushState('', '', `?${filtersQueryString}`);
-    axios
-      .get(
-        `${config.endpoint}/projects/${this.props.projectName}/devices?${filtersQueryString}`,
-        {
-          withCredentials: true
-        }
-      )
-      .then(({ data: devices }) => {
-        this.setState({
-          devices: this.parseDevices(devices)
-        });
-      })
-      .catch(console.log);
+    this.fetchDevices(filtersQueryString);
   };
 
-  removeFilter = index => {
-    this.setState(
-      ({ filters }) => ({
-        filters: filters.filter((_, i) => i !== index)
-      }),
-      this.filterDevices
-    );
+  removeFilter = (index: number) => {
+    this.setState({
+      query: this.state.query.filter((_, i) => i !== index),
+    }, this.filterDevices);
   };
 
-  addFilter = filter => {
-    this.setState(
-      ({ filters }) => ({
-        showFilterDialog: false,
-        filters: [...filters, filter]
-      }),
-      this.filterDevices
-    );
+  addFilter = (filter: Filter) => {
+    this.setState({
+      showFilterDialog: false,
+      query: [...this.state.query, filter]
+    }, this.filterDevices);
   };
 
   clearFilters = () => {
-    this.setState({ filters: [] }, this.filterDevices);
+    this.setState({
+      query: []
+    }, this.filterDevices);
   };
 
-  renderFilter = ({ property, operator, key, value }) => {
-    switch (property) {
-      case 'label':
-        return (
-          <Fragment>
-            <Text
-              fontWeight={500}
-              marginRight={minorScale(1)}
-              style={{ textTransform: 'capitalize' }}
-            >
-              {property}
-            </Text>
-            <Text fontWeight={500} marginRight={minorScale(1)}>
-              {operator}
-            </Text>
+  renderCondition = (condition: Condition) => {
+    if (condition.type === LabelValueCondition) {
+      let cond = condition.params as LabelValueConditionParams;
+      return (
+        <Fragment>
+          <Text
+            fontWeight={700}
+            marginRight={minorScale(1)}
+          >
+            {cond.key}
+          </Text>
 
-            <Text fontWeight={700}>{key}</Text>
-            {value && (
-              <Fragment>
-                <Text fontWeight={700} marginX={2}>
-                  :
-                </Text>
-                <Text fontWeight={700}>{value}</Text>
-              </Fragment>
-            )}
-          </Fragment>
-        );
+          <Text fontWeight={500} marginRight={minorScale(1)}>
+            {cond.operator}
+          </Text>
 
-      case 'status':
-        return (
-          <Fragment>
-            <Text
-              fontWeight={500}
-              marginRight={minorScale(1)}
-              style={{ textTransform: 'capitalize' }}
-            >
-              {property}
-            </Text>
-            <Text fontWeight={500} marginRight={minorScale(1)}>
-              {operator}
-            </Text>
-            <Text style={{ textTransform: 'capitalize' }} fontWeight={700}>
-              {value}
-            </Text>
-          </Fragment>
-        );
+          <Text fontWeight={700}>{cond.value}</Text>
+        </Fragment>
+      );
     }
+
+    if (condition.type === LabelExistenceCondition) {
+      let cond = condition.params as LabelExistenceConditionParams;
+      return (
+        <Fragment>
+          <Text
+            fontWeight={700}
+            marginRight={minorScale(1)}
+          >
+            {cond.key}
+          </Text>
+
+          <Text fontWeight={500} marginRight={minorScale(1)}>
+            {cond.operator}
+          </Text>
+        </Fragment>
+      );
+    }
+
+    if (condition.type === DevicePropertyCondition) {
+      let cond = condition.params as DevicePropertyConditionParams;
+      return (
+        <Fragment>
+          <Text
+            fontWeight={700}
+            marginRight={minorScale(1)}
+            style={{ textTransform: 'capitalize' }}
+          >
+            {cond.property}
+          </Text>
+
+          <Text fontWeight={500} marginRight={minorScale(1)}>
+            {cond.operator}
+          </Text>
+
+          <Text style={{ textTransform: 'capitalize' }} fontWeight={700}>
+            {cond.value}
+          </Text>
+        </Fragment>
+      );
+    }
+
+    return (
+      <Fragment>
+        <Text
+          fontWeight={500}
+          marginRight={minorScale(1)}
+          style={{ textTransform: 'capitalize' }}
+        >
+          Error rendering label.
+        </Text>
+      </Fragment>
+    );
   };
 
-  renderDeviceOs = device => {
+  renderDeviceOs = (device: any) => {
     var innerText = '-';
     if (
       device.info.hasOwnProperty('osRelease') &&
@@ -280,7 +328,7 @@ class Devices extends Component {
 
   render() {
     const { user, history, projectName } = this.props;
-    const { showFilterDialog, filters } = this.state;
+    const { showFilterDialog, query } = this.state;
 
     var addDeviceButtonHolder;
     if (this.state.defaultDeviceRegistrationTokenExists) {
@@ -357,7 +405,7 @@ class Devices extends Component {
                 <Pane
                 display="flex"
                 marginLeft={majorScale(2)}>
-                  {filters.length > 0 && (
+                  {query.length > 0 && (
                     <Button
                       marginRight={majorScale(2)}
                       appearance="minimal"
@@ -378,18 +426,21 @@ class Devices extends Component {
                 </Pane>
               </Pane>
             </Pane>
-            {filters.length > 0 && (
+            {query.length > 0 && (
               <Pane
                 paddingX={majorScale(2)}
                 paddingBottom={majorScale(2)}
                 display="flex"
+                flexWrap="wrap"
+                padding={5}
               >
-                {filters.map((conditions, index) => (
+                {query.map((filter, index) => (
                   <Pane
                     display="flex"
                     alignItems="center"
                     marginRight={minorScale(3)}
                     key={index}
+                    margin={3}
                   >
                     <Pane
                       backgroundColor="#B7D4EF"
@@ -399,11 +450,11 @@ class Devices extends Component {
                       display="flex"
                       alignItems="center"
                     >
-                      {conditions.map((filter, i) => (
+                      {filter.map((condition, i) => (
                         <Fragment key={i}>
-                          {this.renderFilter(filter)}
-                          {conditions.length > 1 &&
-                            i !== conditions.length - 1 && (
+                          {this.renderCondition(condition)}
+                          {filter.length > 1 &&
+                            i !== filter.length - 1 && (
                               <Text
                                 fontSize={10}
                                 fontWeight={700}
@@ -460,7 +511,7 @@ class Devices extends Component {
           </InnerCard>
         </Pane>
 
-        <Filter
+        <DevicesFilter
           show={showFilterDialog}
           onClose={() => this.setState({ showFilterDialog: false })}
           onSubmit={this.addFilter}

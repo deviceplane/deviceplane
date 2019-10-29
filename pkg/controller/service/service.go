@@ -20,7 +20,6 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/namesgenerator"
 	"github.com/deviceplane/deviceplane/pkg/revdial"
 	"github.com/deviceplane/deviceplane/pkg/spec"
-	"github.com/deviceplane/deviceplane/pkg/utils"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
@@ -2109,14 +2108,13 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	var devicesMap []map[string]interface{}
-	if err := utils.JSONConvert(devices, &devicesMap); err != nil {
-		log.WithError(err).Error("convert devices")
-		w.WriteHeader(http.StatusInternalServerError)
+	filteredDevices, err := query.FilterDevices(devices, filters)
+	if err != nil {
+		http.Error(w, errors.Wrap(err, "filter devices").Error(), http.StatusBadRequest)
 		return
 	}
 
-	respond(w, query.FilterDevices(devicesMap, filters))
+	respond(w, filteredDevices)
 }
 
 func (s *Service) getDevice(w http.ResponseWriter, r *http.Request,

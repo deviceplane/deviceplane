@@ -4,6 +4,8 @@
   "private": true,
   "homepage": "https://app.deviceplane.com",
   "dependencies": {
+    "@types/react": "^16.9.11",
+    "@types/react-router-dom": "^5.1.0",
     "axios": "^0.18.0",
     "evergreen-ui": "^4.12.0",
     "moment": "^2.22.2",
@@ -14,6 +16,8 @@
     "react-router-dom": "^5.0.0",
     "react-scripts": "2.1.5",
     "ssh2": "^0.5.3",
+    "ts-interface-checker": "^0.1.9",
+    "typescript": "^3.6.4",
     "websocket-stream": "^5.5.0",
     "xterm": "^2.2.0"
   },
@@ -21,7 +25,8 @@
     "start": "REACT_APP_ENVIRONMENT=development react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "generate": "rm src/components/*-ti.ts && `npm bin`/ts-interface-builder src/components/*.ts*"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -31,5 +36,8 @@
     "not dead",
     "not ie <= 11",
     "not op_mini all"
-  ]
+  ],
+  "devDependencies": {
+    "ts-interface-builder": "^0.2.1"
+  }
 }

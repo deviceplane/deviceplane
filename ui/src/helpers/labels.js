@@ -4,7 +4,7 @@ import {
   minorScale,
 } from "evergreen-ui";
 
-export function buildLabelColorMap(labelColors, items) {
+export function buildLabelColorMap(oldLabelColorMap, labelColors, items) {
   var x = [];
   items.forEach(item => {
     Object.keys(item.labels).forEach(label => {
@@ -12,13 +12,13 @@ export function buildLabelColorMap(labelColors, items) {
     });
   });
   const labelKeys = [...new Set(x)].sort();
-  const labelColorMap = labelKeys.reduce(
-    (obj, key, i) => ({
-      ...obj,
-      [key]: labelColors[i % (labelColors.length - 1)]
-    }),
-    {}
-  );
+
+  var labelColorMap = Object.assign({}, oldLabelColorMap);
+  labelKeys.forEach((key, i) => {
+    if (!labelColorMap[key]) {
+      labelColorMap[key] = labelColors[i % (labelColors.length - 1)]
+    }
+  });
   return labelColorMap;
 };
 

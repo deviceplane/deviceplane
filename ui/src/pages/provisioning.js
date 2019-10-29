@@ -33,7 +33,7 @@ class Provisioning extends Component {
         }
       )
       .then(response => {
-        const labelColorMap = buildLabelColorMap(this.labelColors, response.data);
+        const labelColorMap = buildLabelColorMap({}, this.labelColors, response.data);
         this.setState({
           deviceRegistrationTokens: response.data,
           labelColorMap,

@@ -5,6 +5,9 @@ export
 DB_COMMAND=./scripts/db-command.sh
 WAIT_FOR_DB=./scripts/wait-for-db.sh
 
+test:
+	go test -v ./... -mod vendor
+
 get-releases:
 	@git log | grep "Release agent" | head -n 1
 	@git log | grep "Release controller" | head -n 1

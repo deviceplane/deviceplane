@@ -3,104 +3,170 @@ package query
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
+
+	"github.com/deviceplane/deviceplane/pkg/models"
+	"github.com/deviceplane/deviceplane/pkg/utils"
 )
 
-type Operator string
-
-const (
-	OperatorIs             = Operator("is")
-	OperatorIsNot          = Operator("is not")
-	OperatorHasKey         = Operator("has key")
-	OperatorDoesNotHaveKey = Operator("does not have key")
+var (
+	ErrConditionNotSupported = errors.New("condition not supported")
+	ErrOperatorNotSupported  = errors.New("operator not supported")
+	ErrPropertyNotSupported  = errors.New("device property not supported")
 )
+
+type Query []Filter
 
 type Filter []Condition
 
 type Condition struct {
+	Type   ConditionType          `json:"type"`
+	Params map[string]interface{} `json:"params"`
+}
+
+type ConditionType string
+
+const (
+	DevicePropertyCondition = ConditionType("DevicePropertyCondition")
+	LabelValueCondition     = ConditionType("LabelValueCondition")
+	LabelExistenceCondition = ConditionType("LabelExistenceCondition")
+)
+
+type DevicePropertyConditionParams struct {
 	Property string   `json:"property"`
 	Operator Operator `json:"operator"`
-	Key      string   `json:"key"`
 	Value    string   `json:"value"`
 }
 
-func FilterDevices(devicesMap []map[string]interface{}, filters []Filter) []map[string]interface{} {
-	filteredDevices := make([]map[string]interface{}, 0)
+type LabelValueConditionParams struct {
+	Key      string   `json:"key"`
+	Operator Operator `json:"operator"`
+	Value    string   `json:"value"`
+}
 
-	for _, device := range devicesMap {
-		valid := true
+type LabelExistenceConditionParams struct {
+	Key      string   `json:"key"`
+	Operator Operator `json:"operator"`
+}
 
-		for _, filter := range filters {
-			matchesFilter := false
-			for _, condition := range filter {
-				if matchesFilter {
-					break
-				}
-				if condition.Property == "label" {
-					switch condition.Operator {
-					case OperatorIs:
-						for key, value := range device["labels"].(map[string]interface{}) {
-							if key == condition.Key && value == condition.Value {
-								matchesFilter = true
-								break
-							}
-						}
-						for key, value := range device["labels"].(map[string]interface{}) {
-							if key == condition.Key && value == condition.Value {
-								matchesFilter = true
-								break
-							}
-						}
-					case OperatorIsNot:
-						found := false
-						for key, value := range device["labels"].(map[string]interface{}) {
-							if key == condition.Key && value == condition.Value {
-								found = true
-								break
-							}
-						}
-						if !found {
-							matchesFilter = true
-						}
-					case OperatorHasKey:
-						for key := range device["labels"].(map[string]interface{}) {
-							if key == condition.Key {
-								matchesFilter = true
-								break
-							}
-						}
-					case OperatorDoesNotHaveKey:
-						found := false
-						for key := range device["labels"].(map[string]interface{}) {
-							if key == condition.Key {
-								found = true
-								break
-							}
-						}
-						if !found {
-							matchesFilter = true
-						}
-					}
-				} else {
-					switch condition.Operator {
-					case OperatorIs:
-						matchesFilter = device[condition.Property] == condition.Value
-					case OperatorIsNot:
-						matchesFilter = device[condition.Property] != condition.Value
-					}
-				}
-			}
-			if !matchesFilter {
-				valid = false
-				break
-			}
+type Operator string
+
+const (
+	OperatorIs    = Operator("is")
+	OperatorIsNot = Operator("is not")
+
+	OperatorExists    = Operator("exists")
+	OperatorNotExists = Operator("does not exist")
+)
+
+func FilterDevices(devices []models.Device, query Query) ([]models.Device, error) {
+	filteredDevices := make([]models.Device, 0)
+	for _, device := range devices {
+		match, err := DeviceMatchesQuery(device, query)
+		if err != nil {
+			return nil, err
 		}
-
-		if valid {
+		if match {
 			filteredDevices = append(filteredDevices, device)
 		}
 	}
+	return filteredDevices, nil
+}
 
-	return filteredDevices
+func DeviceMatchesQuery(device models.Device, query Query) (bool, error) {
+	for _, filter := range query {
+		match, err := deviceMatchesFilter(device, filter)
+		if err != nil {
+			return false, err
+		}
+		if !match {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+func deviceMatchesFilter(device models.Device, filter Filter) (bool, error) {
+	for _, condition := range filter {
+		match, err := deviceMatchesCondition(device, condition)
+		if err != nil {
+			return false, err
+		}
+		if match {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func deviceMatchesCondition(device models.Device, condition Condition) (bool, error) {
+	switch condition.Type {
+	case DevicePropertyCondition:
+		var params DevicePropertyConditionParams
+		err := utils.JSONConvert(condition.Params, &params)
+		if err != nil {
+			return false, err
+		}
+
+		// We can either turn device into a map[string]interface, or make
+		// a switch statement with cases for each property.
+		// I'm going with the former just because it's easier.
+		var deviceMap map[string]interface{}
+		err = utils.JSONConvert(device, &deviceMap)
+		if err != nil {
+			return false, err
+		}
+
+		value, exists := deviceMap[params.Property]
+		if !exists {
+			return false, ErrPropertyNotSupported
+		}
+
+		match := value == params.Value
+		switch params.Operator {
+		case OperatorIs:
+			return match, nil
+		case OperatorIsNot:
+			return !match, nil
+		}
+		return false, ErrOperatorNotSupported
+
+	case LabelValueCondition:
+		var params LabelValueConditionParams
+		err := utils.JSONConvert(condition.Params, &params)
+		if err != nil {
+			return false, err
+		}
+
+		value, ok := device.Labels[params.Key]
+		valueMatches := bool(ok && value == params.Value)
+
+		switch params.Operator {
+		case OperatorIs:
+			return valueMatches, nil
+		case OperatorIsNot:
+			return !valueMatches, nil
+		}
+		return false, ErrOperatorNotSupported
+
+	case LabelExistenceCondition:
+		var params LabelExistenceConditionParams
+		err := utils.JSONConvert(condition.Params, &params)
+		if err != nil {
+			return false, err
+		}
+
+		_, ok := device.Labels[params.Key]
+		switch params.Operator {
+		case OperatorExists:
+			return ok, nil
+		case OperatorNotExists:
+			return !ok, nil
+		}
+		return false, ErrOperatorNotSupported
+	}
+	return false, ErrConditionNotSupported
 }
 
 func FiltersFromQuery(query map[string][]string) ([]Filter, error) {

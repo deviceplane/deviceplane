@@ -1,3 +1,5 @@
+const uuidv4 = require("uuid/v4");
+
 const emailRegex = /^([a-zA-Z0-9_.-])+@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
 const usernameRegex = /^[a-zA-Z]+$/;
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?!.*\s).{8,100}$/;
@@ -66,5 +68,9 @@ export default {
 
   is4xx: (status) => {
     return status >= 400 && status < 500
-  }
+  },
+
+  randomClassName: () => {
+    return 'rcn_' + uuidv4().replace(/-/g, '').substring(0, 10);
+  },
 };
