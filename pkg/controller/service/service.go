@@ -20,6 +20,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/namesgenerator"
 	"github.com/deviceplane/deviceplane/pkg/revdial"
 	"github.com/deviceplane/deviceplane/pkg/spec"
+	"github.com/deviceplane/deviceplane/pkg/utils"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
@@ -220,6 +221,7 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "UpdateDevice", s.withDevice(s.updateDevice))).Methods("PATCH")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "DeleteDevice", s.withDevice(s.deleteDevice))).Methods("DELETE")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/ssh", s.validateAuthorization("devices", "SSH", s.withDevice(s.initiateSSH))).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/execute", s.validateAuthorization("devices", "ExecuteCommand", s.withDevice(s.execute))).Methods("POST")
 
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "SetDeviceLabel", s.withDevice(s.setDeviceLabel))).Methods("PUT")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateAuthorization("devicelabels", "DeleteDeviceLabel", s.withDevice(s.deleteDeviceLabel))).Methods("DELETE")
@@ -628,7 +630,7 @@ func (s *Service) getPasswordRecoveryToken(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	respond(w, passwordRecoveryToken)
+	utils.Respond(w, passwordRecoveryToken)
 }
 
 func (s *Service) changePassword(w http.ResponseWriter, r *http.Request) {
@@ -671,7 +673,7 @@ func (s *Service) changePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respond(w, user)
+	utils.Respond(w, user)
 }
 
 func (s *Service) login(w http.ResponseWriter, r *http.Request) {
@@ -766,7 +768,7 @@ func (s *Service) getMe(w http.ResponseWriter, r *http.Request, authenticatedUse
 		return
 	}
 
-	respond(w, user)
+	utils.Respond(w, user)
 }
 
 func (s *Service) updateMe(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
@@ -839,7 +841,7 @@ func (s *Service) updateMe(w http.ResponseWriter, r *http.Request, authenticated
 		return
 	}
 
-	respond(w, user)
+	utils.Respond(w, user)
 }
 
 func (s *Service) listMembershipsByUser(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
@@ -903,7 +905,7 @@ func (s *Service) listMembershipsByUser(w http.ResponseWriter, r *http.Request, 
 		ret = membershipsFull
 	}
 
-	respond(w, ret)
+	utils.Respond(w, ret)
 }
 
 func (s *Service) createUserAccessKey(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
@@ -931,7 +933,7 @@ func (s *Service) createUserAccessKey(w http.ResponseWriter, r *http.Request, au
 		return
 	}
 
-	respond(w, models.UserAccessKeyWithValue{
+	utils.Respond(w, models.UserAccessKeyWithValue{
 		UserAccessKey: *user,
 		Value:         userAccessKeyValue,
 	})
@@ -958,7 +960,7 @@ func (s *Service) getUserAccessKey(w http.ResponseWriter, r *http.Request, authe
 		return
 	}
 
-	respond(w, userAccessKey)
+	utils.Respond(w, userAccessKey)
 }
 
 func (s *Service) listUserAccessKeys(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
@@ -975,7 +977,7 @@ func (s *Service) listUserAccessKeys(w http.ResponseWriter, r *http.Request, aut
 		return
 	}
 
-	respond(w, userAccessKeys)
+	utils.Respond(w, userAccessKeys)
 }
 
 // TODO: verify that the user owns this access key
@@ -1085,7 +1087,7 @@ func (s *Service) createProject(w http.ResponseWriter, r *http.Request, authenti
 		return
 	}
 
-	respond(w, project)
+	utils.Respond(w, project)
 }
 
 func (s *Service) getProject(w http.ResponseWriter, r *http.Request,
@@ -1098,7 +1100,7 @@ func (s *Service) getProject(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	respond(w, project)
+	utils.Respond(w, project)
 }
 
 func (s *Service) updateProject(w http.ResponseWriter, r *http.Request,
@@ -1130,7 +1132,7 @@ func (s *Service) updateProject(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	respond(w, project)
+	utils.Respond(w, project)
 }
 
 func (s *Service) deleteProject(w http.ResponseWriter, r *http.Request,
@@ -1179,7 +1181,7 @@ func (s *Service) createRole(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	respond(w, role)
+	utils.Respond(w, role)
 }
 
 func (s *Service) getRole(w http.ResponseWriter, r *http.Request,
@@ -1196,7 +1198,7 @@ func (s *Service) getRole(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	respond(w, role)
+	utils.Respond(w, role)
 }
 
 func (s *Service) listRoles(w http.ResponseWriter, r *http.Request,
@@ -1209,7 +1211,7 @@ func (s *Service) listRoles(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	respond(w, roles)
+	utils.Respond(w, roles)
 }
 
 func (s *Service) updateRole(w http.ResponseWriter, r *http.Request,
@@ -1252,7 +1254,7 @@ func (s *Service) updateRole(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	respond(w, role)
+	utils.Respond(w, role)
 }
 
 func (s *Service) deleteRole(w http.ResponseWriter, r *http.Request,
@@ -1297,7 +1299,7 @@ func (s *Service) createServiceAccount(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	respond(w, serviceAccount)
+	utils.Respond(w, serviceAccount)
 }
 
 func (s *Service) getServiceAccount(w http.ResponseWriter, r *http.Request,
@@ -1340,7 +1342,7 @@ func (s *Service) getServiceAccount(w http.ResponseWriter, r *http.Request,
 		}
 	}
 
-	respond(w, ret)
+	utils.Respond(w, ret)
 }
 
 func (s *Service) listServiceAccounts(w http.ResponseWriter, r *http.Request,
@@ -1385,7 +1387,7 @@ func (s *Service) listServiceAccounts(w http.ResponseWriter, r *http.Request,
 		ret = serviceAccountsFull
 	}
 
-	respond(w, ret)
+	utils.Respond(w, ret)
 }
 
 func (s *Service) updateServiceAccount(w http.ResponseWriter, r *http.Request,
@@ -1419,7 +1421,7 @@ func (s *Service) updateServiceAccount(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	respond(w, serviceAccount)
+	utils.Respond(w, serviceAccount)
 }
 
 func (s *Service) deleteServiceAccount(w http.ResponseWriter, r *http.Request,
@@ -1457,7 +1459,7 @@ func (s *Service) createServiceAccountAccessKey(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	respond(w, models.ServiceAccountAccessKeyWithValue{
+	utils.Respond(w, models.ServiceAccountAccessKeyWithValue{
 		ServiceAccountAccessKey: *serviceAccount,
 		Value:                   serviceAccountAccessKeyValue,
 	})
@@ -1479,7 +1481,7 @@ func (s *Service) getServiceAccountAccessKey(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	respond(w, serviceAccountAccessKey)
+	utils.Respond(w, serviceAccountAccessKey)
 }
 
 func (s *Service) listServiceAccountAccessKeys(w http.ResponseWriter, r *http.Request,
@@ -1495,7 +1497,7 @@ func (s *Service) listServiceAccountAccessKeys(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	respond(w, serviceAccountAccessKeys)
+	utils.Respond(w, serviceAccountAccessKeys)
 }
 
 func (s *Service) deleteServiceAccountAccessKey(w http.ResponseWriter, r *http.Request,
@@ -1525,7 +1527,7 @@ func (s *Service) createServiceAccountRoleBinding(w http.ResponseWriter, r *http
 		return
 	}
 
-	respond(w, serviceAccountRoleBinding)
+	utils.Respond(w, serviceAccountRoleBinding)
 }
 
 func (s *Service) getServiceAccountRoleBinding(w http.ResponseWriter, r *http.Request,
@@ -1542,7 +1544,7 @@ func (s *Service) getServiceAccountRoleBinding(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	respond(w, serviceAccountRoleBinding)
+	utils.Respond(w, serviceAccountRoleBinding)
 }
 
 func (s *Service) listServiceAccountRoleBindings(w http.ResponseWriter, r *http.Request,
@@ -1558,7 +1560,7 @@ func (s *Service) listServiceAccountRoleBindings(w http.ResponseWriter, r *http.
 		return
 	}
 
-	respond(w, serviceAccountRoleBindings)
+	utils.Respond(w, serviceAccountRoleBindings)
 }
 
 func (s *Service) deleteServiceAccountRoleBinding(w http.ResponseWriter, r *http.Request,
@@ -1603,7 +1605,7 @@ func (s *Service) createMembership(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	respond(w, membership)
+	utils.Respond(w, membership)
 }
 
 func (s *Service) getMembership(w http.ResponseWriter, r *http.Request,
@@ -1656,7 +1658,7 @@ func (s *Service) getMembership(w http.ResponseWriter, r *http.Request,
 		}
 	}
 
-	respond(w, ret)
+	utils.Respond(w, ret)
 }
 
 func (s *Service) listMembershipsByProject(w http.ResponseWriter, r *http.Request,
@@ -1709,7 +1711,7 @@ func (s *Service) listMembershipsByProject(w http.ResponseWriter, r *http.Reques
 		ret = membershipsFull
 	}
 
-	respond(w, ret)
+	utils.Respond(w, ret)
 }
 
 func (s *Service) deleteMembership(w http.ResponseWriter, r *http.Request,
@@ -1739,7 +1741,7 @@ func (s *Service) createMembershipRoleBinding(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	respond(w, membershipRoleBinding)
+	utils.Respond(w, membershipRoleBinding)
 }
 
 func (s *Service) getMembershipRoleBinding(w http.ResponseWriter, r *http.Request,
@@ -1759,7 +1761,7 @@ func (s *Service) getMembershipRoleBinding(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	respond(w, membershipRoleBinding)
+	utils.Respond(w, membershipRoleBinding)
 }
 
 func (s *Service) listMembershipRoleBindings(w http.ResponseWriter, r *http.Request,
@@ -1775,7 +1777,7 @@ func (s *Service) listMembershipRoleBindings(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	respond(w, membershipRoleBindings)
+	utils.Respond(w, membershipRoleBindings)
 }
 
 func (s *Service) deleteMembershipRoleBinding(w http.ResponseWriter, r *http.Request,
@@ -1829,7 +1831,7 @@ func (s *Service) createApplication(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	respond(w, application)
+	utils.Respond(w, application)
 }
 
 func (s *Service) getApplication(w http.ResponseWriter, r *http.Request,
@@ -1869,7 +1871,7 @@ func (s *Service) getApplication(w http.ResponseWriter, r *http.Request,
 		}
 	}
 
-	respond(w, ret)
+	utils.Respond(w, ret)
 }
 
 func (s *Service) listApplications(w http.ResponseWriter, r *http.Request,
@@ -1911,7 +1913,7 @@ func (s *Service) listApplications(w http.ResponseWriter, r *http.Request,
 		ret = applicationsFull
 	}
 
-	respond(w, ret)
+	utils.Respond(w, ret)
 }
 
 func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request,
@@ -1953,7 +1955,7 @@ func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	respond(w, application)
+	utils.Respond(w, application)
 }
 
 func (s *Service) deleteApplication(w http.ResponseWriter, r *http.Request,
@@ -1999,7 +2001,7 @@ func (s *Service) createRelease(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	respond(w, release)
+	utils.Respond(w, release)
 }
 
 func (s *Service) getRelease(w http.ResponseWriter, r *http.Request,
@@ -2029,7 +2031,7 @@ func (s *Service) getRelease(w http.ResponseWriter, r *http.Request,
 		}
 	}
 
-	respond(w, ret)
+	utils.Respond(w, ret)
 }
 
 func (s *Service) getLatestRelease(w http.ResponseWriter, r *http.Request,
@@ -2056,7 +2058,7 @@ func (s *Service) getLatestRelease(w http.ResponseWriter, r *http.Request,
 		}
 	}
 
-	respond(w, ret)
+	utils.Respond(w, ret)
 }
 
 func (s *Service) listReleases(w http.ResponseWriter, r *http.Request,
@@ -2085,7 +2087,7 @@ func (s *Service) listReleases(w http.ResponseWriter, r *http.Request,
 		ret = releasesFull
 	}
 
-	respond(w, ret)
+	utils.Respond(w, ret)
 }
 
 func (s *Service) listDevices(w http.ResponseWriter, r *http.Request,
@@ -2104,7 +2106,7 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request,
 		return
 	}
 	if len(filters) == 0 {
-		respond(w, devices)
+		utils.Respond(w, devices)
 		return
 	}
 
@@ -2114,7 +2116,7 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	respond(w, filteredDevices)
+	utils.Respond(w, filteredDevices)
 }
 
 func (s *Service) getDevice(w http.ResponseWriter, r *http.Request,
@@ -2175,7 +2177,7 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request,
 		}
 	}
 
-	respond(w, ret)
+	utils.Respond(w, ret)
 }
 
 func (s *Service) updateDevice(w http.ResponseWriter, r *http.Request,
@@ -2207,7 +2209,7 @@ func (s *Service) updateDevice(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	respond(w, device)
+	utils.Respond(w, device)
 }
 
 func (s *Service) deleteDevice(w http.ResponseWriter, r *http.Request,
@@ -2247,7 +2249,7 @@ func (s *Service) setDeviceLabel(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	respond(w, deviceLabel)
+	utils.Respond(w, deviceLabel)
 }
 
 func (s *Service) deleteDeviceLabel(w http.ResponseWriter, r *http.Request,
@@ -2299,7 +2301,7 @@ func (s *Service) createDeviceRegistrationToken(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	respond(w, deviceRegistrationToken)
+	utils.Respond(w, deviceRegistrationToken)
 }
 
 func (s *Service) getDeviceRegistrationToken(w http.ResponseWriter, r *http.Request,
@@ -2327,7 +2329,7 @@ func (s *Service) getDeviceRegistrationToken(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	respond(w, ret)
+	utils.Respond(w, ret)
 }
 
 func (s *Service) updateDeviceRegistrationToken(w http.ResponseWriter, r *http.Request,
@@ -2367,7 +2369,7 @@ func (s *Service) updateDeviceRegistrationToken(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	respond(w, deviceRegistrationToken)
+	utils.Respond(w, deviceRegistrationToken)
 }
 
 func (s *Service) deleteDeviceRegistrationToken(w http.ResponseWriter, r *http.Request,
@@ -2412,7 +2414,7 @@ func (s *Service) listDeviceRegistrationTokens(w http.ResponseWriter, r *http.Re
 		ret = deviceRegistrationTokensFull
 	}
 
-	respond(w, ret)
+	utils.Respond(w, ret)
 }
 
 func (s *Service) setDeviceRegistrationTokenLabel(w http.ResponseWriter, r *http.Request,
@@ -2441,7 +2443,7 @@ func (s *Service) setDeviceRegistrationTokenLabel(w http.ResponseWriter, r *http
 		return
 	}
 
-	respond(w, label)
+	utils.Respond(w, label)
 }
 
 func (s *Service) deleteDeviceRegistrationTokenLabel(w http.ResponseWriter, r *http.Request,
@@ -2532,7 +2534,7 @@ func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respond(w, models.RegisterDeviceResponse{
+	utils.Respond(w, models.RegisterDeviceResponse{
 		DeviceID:             device.ID,
 		DeviceAccessKeyValue: deviceAccessKeyValue,
 	})
@@ -2625,7 +2627,7 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, d
 		return
 	}
 
-	respond(w, bundle)
+	utils.Respond(w, bundle)
 }
 
 func (s *Service) setDeviceInfo(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {

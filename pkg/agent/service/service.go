@@ -21,6 +21,7 @@ func NewService(variables variables.Interface, confDir string) *Service {
 	}
 
 	s.router.HandleFunc("/ssh", s.ssh).Methods("POST")
+	s.router.HandleFunc("/execute", s.execute).Methods("POST")
 
 	return s
 }

@@ -69,6 +69,7 @@ var (
 		"UpdateDevice",
 		"DeleteDevice",
 		"SSH",
+		"ExecuteCommand",
 		"SetDeviceLabel",
 		"DeleteDeviceLabel",
 		"CreateDeviceRegistrationToken",

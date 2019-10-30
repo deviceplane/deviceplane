@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"os/exec"
 	"syscall"
 	"time"
@@ -97,12 +96,13 @@ func sshServerHandler(ctx context.Context) func(s ssh.Session) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		var cmd *exec.Cmd
-		if _, err := os.Stat("/usr/bin/nsenter"); os.IsNotExist(err) {
-			cmd = exec.CommandContext(ctx, "/bin/sh", "-c", entrypoint)
-		} else {
-			cmd = exec.CommandContext(ctx, "/usr/bin/nsenter", "-t", "1", "-a", "/bin/sh", "-c", entrypoint)
+		command, err := nsenterCommandWrapper(entrypoint)
+		if err != nil {
+			log.WithError(err).Error("nsenter command wrapper")
+			return
 		}
+
+		cmd := exec.CommandContext(ctx, command[0], command[1:]...)
 
 		ptyReq, winCh, isPty := s.Pty()
 		if !isPty {
