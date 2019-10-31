@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 	"os/exec"
@@ -23,24 +24,33 @@ func (s *Service) execute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exitCode := 0
-
-	if err := exec.CommandContext(
-		r.Context(), command[0], command[1:]...,
-	).Run(); err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			if status, ok := exitErr.Sys().(syscall.WaitStatus); ok {
-				exitCode = status.ExitStatus()
-			}
-		} else {
+	if _, ok := r.URL.Query()["background"]; ok {
+		if err := exec.CommandContext(
+			context.Background(), command[0], command[1:]...,
+		).Start(); err != nil {
 			http.Error(w, err.Error(), codes.StatusInternalDeviceError)
 			return
 		}
-	}
+	} else {
+		exitCode := 0
 
-	utils.Respond(w, struct {
-		ExitCode int `json:"exitCode"`
-	}{
-		ExitCode: exitCode,
-	})
+		if err := exec.CommandContext(
+			r.Context(), command[0], command[1:]...,
+		).Run(); err != nil {
+			if exitErr, ok := err.(*exec.ExitError); ok {
+				if status, ok := exitErr.Sys().(syscall.WaitStatus); ok {
+					exitCode = status.ExitStatus()
+				}
+			} else {
+				http.Error(w, err.Error(), codes.StatusInternalDeviceError)
+				return
+			}
+		}
+
+		utils.Respond(w, struct {
+			ExitCode int `json:"exitCode"`
+		}{
+			ExitCode: exitCode,
+		})
+	}
 }

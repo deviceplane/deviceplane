@@ -45,6 +45,12 @@ func (s *Service) execute(w http.ResponseWriter, r *http.Request,
 		// TODO: build a proper client for this API
 		req, _ := http.NewRequest("POST", "/execute", r.Body)
 
+		if _, ok := r.URL.Query()["background"]; ok {
+			query := req.URL.Query()
+			query.Add("background", "")
+			req.URL.RawQuery = query.Encode()
+		}
+
 		if err := req.Write(deviceConn); err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return
