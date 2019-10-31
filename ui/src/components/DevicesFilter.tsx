@@ -24,7 +24,7 @@ export type Condition = {
 
 type ConditionType = string
 export const DevicePropertyCondition: ConditionType = "DevicePropertyCondition";
-export const	LabelValueCondition: ConditionType = "LabelValueCondition";
+export const LabelValueCondition: ConditionType = "LabelValueCondition";
 export const LabelExistenceCondition: ConditionType = "LabelExistenceCondition";
 
 export type ConditionParams = DevicePropertyConditionParams |
@@ -54,7 +54,31 @@ export const OperatorIsNot:  Operator = "is not";
 export const OperatorExists:  Operator = "exists";
 export const OperatorNotExists:  Operator = "does not exist";
 
+const DefaultDevicePropertyConditionParams = (): DevicePropertyConditionParams => {
+  return {
+    property: 'status',
+    operator: OperatorIs,
+    value: 'online',
+  }
+}
+
+const DefaultLabelValueConditionParams = (): LabelValueConditionParams => {
+  return {
+    key: '',
+    operator: OperatorIs,
+    value: '',
+  }
+}
+
+const DefaultLabelExistenceConditionParams = (): LabelExistenceConditionParams => {
+  return {
+    key: '',
+    operator: OperatorExists,
+  }
+}
+
 interface Props {
+  whitelistedConditions?: ConditionType[]
   show: boolean
   onClose: () => void
   onSubmit?: (filter: Filter) => void
@@ -64,30 +88,70 @@ interface State {
   filter: Filter
 }
 
-function initialCondition(): Condition {
-  return {
-    type: DevicePropertyCondition,
-    params: {
-      property: 'status',
-      operator: OperatorIs,
-      value: 'online',
-    }
-  }
-}
-
-function initialState(): State {
-  return {
-      filter: [
-      initialCondition(),
-    ]
-  }
-}
-
 export class DevicesFilter extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = initialState();
+
+    this.conditionOptions = [
+      {
+        type: DevicePropertyCondition,
+        text: 'Device Property',
+      },
+      {
+        type: LabelValueCondition,
+        text: 'Label Value',
+      },
+      {
+        type: LabelExistenceCondition,
+        text: 'Label Existence',
+      }
+    ].filter((c) => {
+      if (!this.props.whitelistedConditions) {
+        return true;
+      }
+      return this.props.whitelistedConditions.includes(c.type);
+    }).map(c => <option key={c.type} value={c.type}>{c.text}</option>);
+
+    this.defaultCondition = [
+      {
+        type: DevicePropertyCondition,
+        params: DefaultDevicePropertyConditionParams(),
+      },
+      {
+        type: LabelValueCondition,
+        params: DefaultLabelValueConditionParams(),
+      },
+      {
+        type: LabelExistenceCondition,
+        params: DefaultLabelExistenceConditionParams(),
+      }
+    ].filter((c) => {
+      if (!this.props.whitelistedConditions) {
+        return true;
+      }
+      return this.props.whitelistedConditions.includes(c.type);
+    })[0];
+    if (!this.defaultCondition) {
+      throw('No default condition was whitelisted')
+    }
+
+    this.state = {
+      filter: [
+        utils.deepClone(this.defaultCondition),
+      ]
+    }
   }
+
+  resetFilter() {
+    this.setState({
+      filter: [
+        utils.deepClone(this.defaultCondition),
+      ]
+    });
+  }
+
+  defaultCondition: Condition;
+  conditionOptions: JSX.Element[];
 
   renderCondition = (condition: Condition, index: number) => {
     if (condition.type === LabelValueCondition) {
@@ -271,6 +335,7 @@ export class DevicesFilter extends Component<Props, State> {
     const { show, onClose, onSubmit } = this.props;
     const { filter } = this.state;
     const selectClassName: string = utils.randomClassName();
+
     return (
       <Pane>
         <Dialog
@@ -281,14 +346,14 @@ export class DevicesFilter extends Component<Props, State> {
             if (onSubmit) {
               onSubmit(filter);
             }
-            this.setState(initialState());
+            this.resetFilter();
           }}
           confirmLabel="Filter"
           hasCancel={false}
           style={{ maxHeight: majorScale(12), overflowY: 'auto' }}
         >
           <Pane display="flex" flexDirection="column">
-            {filter.map((condition, index) => (
+            {filter.map((condition, index) => {return (
               <Fragment key={index}>
                 <Pane display="flex" justifyContent="space-around">
                   <Select
@@ -297,39 +362,34 @@ export class DevicesFilter extends Component<Props, State> {
                       if (event.target == null) {
                         return;
                       }
-                      const { value: property } = event.target as HTMLSelectElement;
+                      var { value: property } = event.target as HTMLSelectElement;
                       this.setState({
                         filter: filter.map((condition, i) => {
-                          if (i === index) {
-                            if (condition.type !== property) {
+                          if (i !== index) {
+                            return condition;
+                          }
+                          if (condition.type === property) {
+                            return condition;
+                          }
 
-                              let params: ConditionParams;
-                              if (property === DevicePropertyCondition) {
-                                let p: DevicePropertyConditionParams = {
-                                  property: '',
-                                  operator: OperatorIs,
-                                  value: '',
-                                }
-                                params = p;
-                              } else if (property === LabelValueCondition) {
-                                let p: LabelValueConditionParams = {
-                                  key: '',
-                                  operator: OperatorIs,
-                                  value: ''
-                                }
-                                params = p;
-                              } else if (true || property === LabelExistenceCondition) {
-                                let p: LabelExistenceConditionParams = {
-                                  key: '',
-                                  operator: OperatorExists,
-                                }
-                                params = p;
-                              }
-                              condition = {
-                                type: property,
-                                params,
-                              }
-                            }
+                          let params: ConditionParams;
+                          switch (property) {
+                            case DevicePropertyCondition:
+                              params = DefaultDevicePropertyConditionParams();
+                              break;
+                            case LabelValueCondition:
+                              params = DefaultLabelValueConditionParams();
+                              break;
+                            case LabelExistenceCondition:
+                              params = DefaultLabelExistenceConditionParams();
+                              break;
+                            default:
+                              property = DevicePropertyCondition;
+                              params = DefaultDevicePropertyConditionParams();
+                          };
+                          condition = {
+                            type: property,
+                            params,
                           }
                           return condition;
                         })
@@ -338,9 +398,7 @@ export class DevicesFilter extends Component<Props, State> {
                     className={selectClassName}
                     marginRight={majorScale(1)}
                   >
-                    <option value={DevicePropertyCondition}>Device Property</option>
-                    <option value={LabelValueCondition}>Label Value</option>
-                    <option value={LabelExistenceCondition}>Label Existence</option>
+                    {this.conditionOptions}
                   </Select>
                   <style>{`
                     .${selectClassName} > select {
@@ -379,7 +437,7 @@ export class DevicesFilter extends Component<Props, State> {
                   </Pane>
                 )}
               </Fragment>
-            ))}
+            )})}
           </Pane>
           <Pane
           display="flex"
@@ -393,7 +451,7 @@ export class DevicesFilter extends Component<Props, State> {
                   this.setState({
                     filter: [
                       ...filter,
-                      initialCondition(),
+                      utils.deepClone(this.defaultCondition),
                     ]
                   });
                 }}

@@ -517,30 +517,41 @@ const createApplication = `
     id,
     project_id,
     name,
-    description,
-    settings
+    description
   )
-  values (?, ?, ?, ?, ?)
+  values (?, ?, ?, ?)
 `
 
 const getApplication = `
-  select id, created_at, project_id, name, description, settings from applications
+  select id, created_at, project_id, name, description, scheduling_rule from applications
   where id = ? and project_id = ?
 `
 
 const lookupApplication = `
-  select id, created_at, project_id, name, description, settings from applications
+  select id, created_at, project_id, name, description, scheduling_rule from applications
   where name = ? and project_id = ?
 `
 
 const listApplications = `
-  select id, created_at, project_id, name, description, settings from applications
+  select id, created_at, project_id, name, description, scheduling_rule from applications
   where project_id = ?
 `
 
-const updateApplication = `
+const updateApplicationName = `
   update applications
-  set name = ?, description = ?, settings = ?
+  set name = ?
+  where id = ? and project_id = ?
+`
+
+const updateApplicationDescription = `
+  update applications
+  set description = ?
+  where id = ? and project_id = ?
+`
+
+const updateApplicationSchedulingRule = `
+  update applications
+  set scheduling_rule = ?
   where id = ? and project_id = ?
 `
 

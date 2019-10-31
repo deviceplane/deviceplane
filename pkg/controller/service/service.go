@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
-	"github.com/Knetic/govaluate"
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/controller/authz"
 	"github.com/deviceplane/deviceplane/pkg/controller/connman"
@@ -1798,9 +1797,8 @@ func (s *Service) createApplication(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID string,
 ) {
 	var createApplicationRequest struct {
-		Name        string                     `json:"name" validate:"name"`
-		Description string                     `json:"description" validate:"description"`
-		Settings    models.ApplicationSettings `json:"settings"` // TODO: validation
+		Name        string `json:"name" validate:"name"`
+		Description string `json:"description" validate:"description"`
 	}
 	if err := read(r, &createApplicationRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -1816,15 +1814,11 @@ func (s *Service) createApplication(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	if createApplicationRequest.Settings.SchedulingRule != "" {
-		if err := validateSchedulingRule(createApplicationRequest.Settings.SchedulingRule); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-	}
-
-	application, err := s.applications.CreateApplication(r.Context(), projectID, createApplicationRequest.Name,
-		createApplicationRequest.Description, createApplicationRequest.Settings)
+	application, err := s.applications.CreateApplication(
+		r.Context(),
+		projectID,
+		createApplicationRequest.Name,
+		createApplicationRequest.Description)
 	if err != nil {
 		log.WithError(err).Error("create application")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -1921,38 +1915,53 @@ func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request,
 	applicationID string,
 ) {
 	var updateApplicationRequest struct {
-		Name        string                     `json:"name" validate:"name"`
-		Description string                     `json:"description" validate:"description"`
-		Settings    models.ApplicationSettings `json:"settings"` // TODO: validation
+		Name           *string       `json:"name" validate:"name"`
+		Description    *string       `json:"description" validate:"description"`
+		SchedulingRule *models.Query `json:"schedulingRule"`
 	}
 	if err := read(r, &updateApplicationRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if updateApplicationRequest.Settings.SchedulingRule != "" {
-		if err := validateSchedulingRule(updateApplicationRequest.Settings.SchedulingRule); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+	var application *models.Application
+	var err error
+	if updateApplicationRequest.Name != nil {
+		if application, err = s.applications.LookupApplication(r.Context(),
+			*updateApplicationRequest.Name, projectID); err == nil && application.ID != applicationID {
+			http.Error(w, store.ErrApplicationNameAlreadyInUse.Error(), http.StatusBadRequest)
+			return
+		} else if err != nil && err != store.ErrApplicationNotFound {
+			log.WithError(err).Error("lookup application")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if application, err = s.applications.UpdateApplicationName(r.Context(), applicationID, projectID, *updateApplicationRequest.Name); err != nil {
+			log.WithError(err).Error("update application name")
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	}
-
-	if application, err := s.applications.LookupApplication(r.Context(),
-		updateApplicationRequest.Name, projectID); err == nil && application.ID != applicationID {
-		http.Error(w, store.ErrApplicationNameAlreadyInUse.Error(), http.StatusBadRequest)
-		return
-	} else if err != nil && err != store.ErrApplicationNotFound {
-		log.WithError(err).Error("lookup application")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+	if updateApplicationRequest.Description != nil {
+		if application, err = s.applications.UpdateApplicationDescription(r.Context(), applicationID, projectID, *updateApplicationRequest.Description); err != nil {
+			log.WithError(err).Error("update application description")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
+	if updateApplicationRequest.SchedulingRule != nil {
+		err = query.ValidateQuery(*updateApplicationRequest.SchedulingRule)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
-	application, err := s.applications.UpdateApplication(r.Context(), applicationID, projectID, updateApplicationRequest.Name,
-		updateApplicationRequest.Description, updateApplicationRequest.Settings)
-	if err != nil {
-		log.WithError(err).Error("update application")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		if application, err = s.applications.UpdateApplicationSchedulingRule(r.Context(), applicationID, projectID, *updateApplicationRequest.SchedulingRule); err != nil {
+			log.WithError(err).Error("update application scheduling rule")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 
 	utils.Respond(w, application)
@@ -2566,30 +2575,14 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, d
 	}
 
 	for i, application := range applications {
-		if application.Settings.SchedulingRule != "" {
-			expression, err := govaluate.NewEvaluableExpression(application.Settings.SchedulingRule)
-			if err != nil {
-				log.WithError(err).Error("parse application scheduling rule")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			result, err := expression.Eval(deviceLabelParameters(device.Labels))
-			if err != nil {
-				log.WithError(err).Error("evaluate application scheduling rule")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			booleanResult, ok := result.(bool)
-			if !ok {
-				log.Error("invalid scheduling rule evaluation result")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			if !booleanResult {
-				continue
-			}
+		match, err := query.DeviceMatchesQuery(*device, application.SchedulingRule)
+		if err != nil {
+			log.WithError(err).Error("evaluate application scheduling rule")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		if !match {
+			continue
 		}
 
 		release, err := s.releases.GetLatestRelease(r.Context(), projectID, application.ID)

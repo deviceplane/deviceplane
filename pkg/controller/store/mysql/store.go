@@ -1690,14 +1690,8 @@ func (s *Store) scanDeviceAccessKey(scanner scanner) (*models.DeviceAccessKey, e
 	return &deviceAccessKey, nil
 }
 
-func (s *Store) CreateApplication(ctx context.Context, projectID, name, description string,
-	applicationSettings models.ApplicationSettings) (*models.Application, error) {
+func (s *Store) CreateApplication(ctx context.Context, projectID, name, description string) (*models.Application, error) {
 	id := newApplicationID()
-
-	settingsBytes, err := json.Marshal(applicationSettings)
-	if err != nil {
-		return nil, err
-	}
 
 	if _, err := s.db.ExecContext(
 		ctx,
@@ -1706,7 +1700,6 @@ func (s *Store) CreateApplication(ctx context.Context, projectID, name, descript
 		projectID,
 		name,
 		description,
-		string(settingsBytes),
 	); err != nil {
 		return nil, err
 	}
@@ -1763,19 +1756,44 @@ func (s *Store) ListApplications(ctx context.Context, projectID string) ([]model
 	return applications, nil
 }
 
-func (s *Store) UpdateApplication(ctx context.Context, id, projectID, name, description string,
-	applicationSettings models.ApplicationSettings) (*models.Application, error) {
-	settingsBytes, err := json.Marshal(applicationSettings)
+func (s *Store) UpdateApplicationName(ctx context.Context, id, projectID, name string) (*models.Application, error) {
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateApplicationName,
+		name,
+		id,
+		projectID,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetApplication(ctx, id, projectID)
+}
+
+func (s *Store) UpdateApplicationDescription(ctx context.Context, id, projectID, description string) (*models.Application, error) {
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateApplicationDescription,
+		description,
+		id,
+		projectID,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetApplication(ctx, id, projectID)
+}
+
+func (s *Store) UpdateApplicationSchedulingRule(ctx context.Context, id, projectID string, schedulingRule models.Query) (*models.Application, error) {
+	schedulingRuleBytes, err := json.Marshal(schedulingRule)
 	if err != nil {
 		return nil, err
 	}
 
 	if _, err := s.db.ExecContext(
 		ctx,
-		updateApplication,
-		name,
-		description,
-		string(settingsBytes),
+		updateApplicationSchedulingRule,
+		string(schedulingRuleBytes),
 		id,
 		projectID,
 	); err != nil {
@@ -1797,21 +1815,23 @@ func (s *Store) DeleteApplication(ctx context.Context, id, projectID string) err
 
 func (s *Store) scanApplication(scanner scanner) (*models.Application, error) {
 	var application models.Application
-	var settingsString string
+	var schedulingRuleString string
 	if err := scanner.Scan(
 		&application.ID,
 		&application.CreatedAt,
 		&application.ProjectID,
 		&application.Name,
 		&application.Description,
-		&settingsString,
+		&schedulingRuleString,
 	); err != nil {
 		return nil, err
 	}
-	if settingsString != "" {
-		if err := json.Unmarshal([]byte(settingsString), &application.Settings); err != nil {
+	if schedulingRuleString != "" {
+		if err := json.Unmarshal([]byte(schedulingRuleString), &application.SchedulingRule); err != nil {
 			return nil, err
 		}
+	} else {
+		application.SchedulingRule = make([]models.Filter, 0)
 	}
 	return &application, nil
 }

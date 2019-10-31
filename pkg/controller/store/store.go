@@ -182,11 +182,13 @@ type DeviceAccessKeys interface {
 var ErrDeviceAccessKeyNotFound = errors.New("device access key not found")
 
 type Applications interface {
-	CreateApplication(ctx context.Context, projectID, name, description string, applicationSettings models.ApplicationSettings) (*models.Application, error)
+	CreateApplication(ctx context.Context, projectID, name, description string) (*models.Application, error)
 	GetApplication(ctx context.Context, id, projectID string) (*models.Application, error)
 	LookupApplication(ctx context.Context, name, projectID string) (*models.Application, error)
 	ListApplications(ctx context.Context, projectID string) ([]models.Application, error)
-	UpdateApplication(ctx context.Context, id, projectID, name, description string, applicationSettings models.ApplicationSettings) (*models.Application, error)
+	UpdateApplicationName(ctx context.Context, id, projectID, name string) (*models.Application, error)
+	UpdateApplicationDescription(ctx context.Context, id, projectID, description string) (*models.Application, error)
+	UpdateApplicationSchedulingRule(ctx context.Context, id, projectID string, schedulingRule models.Query) (*models.Application, error)
 	DeleteApplication(ctx context.Context, id, projectID string) error
 }
 

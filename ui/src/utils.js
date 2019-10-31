@@ -73,4 +73,8 @@ export default {
   randomClassName: () => {
     return 'rcn_' + uuidv4().replace(/-/g, '').substring(0, 10);
   },
+
+  deepClone: (object) => {
+    return JSON.parse(JSON.stringify(object));
+  }
 };

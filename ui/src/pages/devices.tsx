@@ -23,6 +23,7 @@ import config from '../config.js';
 import InnerCard from '../components/InnerCard.js';
 import TopHeader from '../components/TopHeader.js';
 import { DevicesFilter, Query, Filter, Condition, DevicePropertyCondition, LabelExistenceCondition, LabelValueCondition, LabelValueConditionParams, LabelExistenceConditionParams, DevicePropertyConditionParams } from '../components/DevicesFilter';
+import { DevicesFilterButtons } from '../components/DevicesFilterButtons';
 import { buildLabelColorMap, renderLabels } from '../helpers/labels.js';
 
 // Runtime type safety
@@ -188,81 +189,6 @@ class Devices extends Component<Props, State> {
     }, this.filterDevices);
   };
 
-  renderCondition = (condition: Condition) => {
-    if (condition.type === LabelValueCondition) {
-      let cond = condition.params as LabelValueConditionParams;
-      return (
-        <Fragment>
-          <Text
-            fontWeight={700}
-            marginRight={minorScale(1)}
-          >
-            {cond.key}
-          </Text>
-
-          <Text fontWeight={500} marginRight={minorScale(1)}>
-            {cond.operator}
-          </Text>
-
-          <Text fontWeight={700}>{cond.value}</Text>
-        </Fragment>
-      );
-    }
-
-    if (condition.type === LabelExistenceCondition) {
-      let cond = condition.params as LabelExistenceConditionParams;
-      return (
-        <Fragment>
-          <Text
-            fontWeight={700}
-            marginRight={minorScale(1)}
-          >
-            {cond.key}
-          </Text>
-
-          <Text fontWeight={500} marginRight={minorScale(1)}>
-            {cond.operator}
-          </Text>
-        </Fragment>
-      );
-    }
-
-    if (condition.type === DevicePropertyCondition) {
-      let cond = condition.params as DevicePropertyConditionParams;
-      return (
-        <Fragment>
-          <Text
-            fontWeight={700}
-            marginRight={minorScale(1)}
-            style={{ textTransform: 'capitalize' }}
-          >
-            {cond.property}
-          </Text>
-
-          <Text fontWeight={500} marginRight={minorScale(1)}>
-            {cond.operator}
-          </Text>
-
-          <Text style={{ textTransform: 'capitalize' }} fontWeight={700}>
-            {cond.value}
-          </Text>
-        </Fragment>
-      );
-    }
-
-    return (
-      <Fragment>
-        <Text
-          fontWeight={500}
-          marginRight={minorScale(1)}
-          style={{ textTransform: 'capitalize' }}
-        >
-          Error rendering label.
-        </Text>
-      </Fragment>
-    );
-  };
-
   renderDeviceOs = (device: any) => {
     var innerText = '-';
     if (
@@ -426,60 +352,11 @@ class Devices extends Component<Props, State> {
                 </Pane>
               </Pane>
             </Pane>
-            {query.length > 0 && (
-              <Pane
-                paddingX={majorScale(2)}
-                paddingBottom={majorScale(2)}
-                display="flex"
-                flexWrap="wrap"
-                padding={5}
-              >
-                {query.map((filter, index) => (
-                  <Pane
-                    display="flex"
-                    alignItems="center"
-                    marginRight={minorScale(3)}
-                    key={index}
-                    margin={3}
-                  >
-                    <Pane
-                      backgroundColor="#B7D4EF"
-                      borderRadius={3}
-                      paddingX={minorScale(2)}
-                      paddingY={minorScale(1)}
-                      display="flex"
-                      alignItems="center"
-                    >
-                      {filter.map((condition, i) => (
-                        <Fragment key={i}>
-                          {this.renderCondition(condition)}
-                          {filter.length > 1 &&
-                            i !== filter.length - 1 && (
-                              <Text
-                                fontSize={10}
-                                fontWeight={700}
-                                marginX={minorScale(3)}
-                                color="white"
-                              >
-                                OR
-                              </Text>
-                            )}
-                        </Fragment>
-                      ))}
-                      <Icon
-                        marginLeft={minorScale(3)}
-                        icon="cross"
-                        appearance="minimal"
-                        cursor="pointer"
-                        color="white"
-                        size={14}
-                        onClick={() => this.removeFilter(index)}
-                      />
-                    </Pane>
-                  </Pane>
-                ))}
-              </Pane>
-            )}
+            <DevicesFilterButtons
+            query={this.state.query}
+            canRemoveFilter={true}
+            removeFilter={this.removeFilter}
+            />
             <Table>
               <Table.Head background="tint2">
                 <Table.TextHeaderCell

@@ -153,12 +153,12 @@ type DeviceAccessKey struct {
 }
 
 type Application struct {
-	ID          string              `json:"id"`
-	CreatedAt   time.Time           `json:"createdAt"`
-	ProjectID   string              `json:"projectId"`
-	Name        string              `json:"name"`
-	Description string              `json:"description"`
-	Settings    ApplicationSettings `json:"settings"`
+	ID             string    `json:"id"`
+	CreatedAt      time.Time `json:"createdAt"`
+	ProjectID      string    `json:"projectId"`
+	Name           string    `json:"name"`
+	Description    string    `json:"description"`
+	SchedulingRule Query     `json:"schedulingRule"`
 }
 
 type ApplicationDeviceCounts struct {
@@ -271,8 +271,4 @@ type OSRelease struct {
 	Version    string `json:"version"`
 	ID         string `json:"id"`
 	IDLike     string `json:"idLike"`
-}
-
-type ApplicationSettings struct {
-	SchedulingRule string `json:"schedulingRule"`
 }

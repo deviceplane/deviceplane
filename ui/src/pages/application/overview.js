@@ -4,13 +4,23 @@ import { Pane, majorScale, Heading, Card, Label, Button } from 'evergreen-ui';
 import Releases from './releases';
 import Editor from '../../components/Editor';
 import InnerCard from '../../components/InnerCard';
+import { DevicesFilterButtons } from '../../components/DevicesFilterButtons';
+import { Link } from 'react-router-dom';
 
 const ApplicationOverview = ({
-  application: { latestRelease, name, settings },
+  application: { latestRelease, name, schedulingRule },
   history,
   projectName
 }) => {
   const currentConfig = latestRelease ? latestRelease.config : '';
+  var schedulingRuleVisualized;
+  if (schedulingRule.length) {
+    schedulingRuleVisualized = (
+      <DevicesFilterButtons query={schedulingRule} canRemoveFilter={false} />
+    );
+  } else {
+    schedulingRuleVisualized = (<Label>No scheduling rule set. You can set one in the <Link to='./scheduling'>scheduling</Link> page.</Label>);
+  }
 
   return (
     <Pane width="70%" paddingBottom={majorScale(4)}>
@@ -32,7 +42,7 @@ const ApplicationOverview = ({
           width="80%"
           padding={majorScale(2)}
         >
-          <Label>{settings.schedulingRule}</Label>
+          {schedulingRuleVisualized}
         </Card>
       </InnerCard>
       <InnerCard>

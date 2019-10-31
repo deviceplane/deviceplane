@@ -13,53 +13,22 @@ var (
 	ErrConditionNotSupported = errors.New("condition not supported")
 	ErrOperatorNotSupported  = errors.New("operator not supported")
 	ErrPropertyNotSupported  = errors.New("device property not supported")
+	ErrNoEmptyFields         = errors.New("fields should not be empty")
 )
 
-type Query []Filter
-
-type Filter []Condition
-
-type Condition struct {
-	Type   ConditionType          `json:"type"`
-	Params map[string]interface{} `json:"params"`
+func ValidateQuery(query models.Query) error {
+	for _, filter := range query {
+		for _, condition := range filter {
+			err := validateCondition(condition)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
-type ConditionType string
-
-const (
-	DevicePropertyCondition = ConditionType("DevicePropertyCondition")
-	LabelValueCondition     = ConditionType("LabelValueCondition")
-	LabelExistenceCondition = ConditionType("LabelExistenceCondition")
-)
-
-type DevicePropertyConditionParams struct {
-	Property string   `json:"property"`
-	Operator Operator `json:"operator"`
-	Value    string   `json:"value"`
-}
-
-type LabelValueConditionParams struct {
-	Key      string   `json:"key"`
-	Operator Operator `json:"operator"`
-	Value    string   `json:"value"`
-}
-
-type LabelExistenceConditionParams struct {
-	Key      string   `json:"key"`
-	Operator Operator `json:"operator"`
-}
-
-type Operator string
-
-const (
-	OperatorIs    = Operator("is")
-	OperatorIsNot = Operator("is not")
-
-	OperatorExists    = Operator("exists")
-	OperatorNotExists = Operator("does not exist")
-)
-
-func FilterDevices(devices []models.Device, query Query) ([]models.Device, error) {
+func FilterDevices(devices []models.Device, query models.Query) ([]models.Device, error) {
 	filteredDevices := make([]models.Device, 0)
 	for _, device := range devices {
 		match, err := DeviceMatchesQuery(device, query)
@@ -73,7 +42,7 @@ func FilterDevices(devices []models.Device, query Query) ([]models.Device, error
 	return filteredDevices, nil
 }
 
-func DeviceMatchesQuery(device models.Device, query Query) (bool, error) {
+func DeviceMatchesQuery(device models.Device, query models.Query) (bool, error) {
 	for _, filter := range query {
 		match, err := deviceMatchesFilter(device, filter)
 		if err != nil {
@@ -86,7 +55,7 @@ func DeviceMatchesQuery(device models.Device, query Query) (bool, error) {
 	return true, nil
 }
 
-func deviceMatchesFilter(device models.Device, filter Filter) (bool, error) {
+func deviceMatchesFilter(device models.Device, filter models.Filter) (bool, error) {
 	for _, condition := range filter {
 		match, err := deviceMatchesCondition(device, condition)
 		if err != nil {
@@ -100,10 +69,78 @@ func deviceMatchesFilter(device models.Device, filter Filter) (bool, error) {
 	return false, nil
 }
 
-func deviceMatchesCondition(device models.Device, condition Condition) (bool, error) {
+func validateCondition(condition models.Condition) error {
 	switch condition.Type {
-	case DevicePropertyCondition:
-		var params DevicePropertyConditionParams
+	case models.DevicePropertyCondition:
+		var params models.DevicePropertyConditionParams
+		err := utils.JSONConvert(condition.Params, &params)
+		if err != nil {
+			return err
+		}
+
+		if params.Property == "" {
+			return ErrNoEmptyFields
+		}
+		if params.Value == "" {
+			return ErrNoEmptyFields
+		}
+
+		switch params.Operator {
+		case models.OperatorIs:
+			return nil
+		case models.OperatorIsNot:
+			return nil
+		}
+		return ErrOperatorNotSupported
+
+	case models.LabelValueCondition:
+		var params models.LabelValueConditionParams
+		err := utils.JSONConvert(condition.Params, &params)
+		if err != nil {
+			return err
+		}
+
+		if params.Key == "" {
+			return ErrNoEmptyFields
+		}
+		if params.Value == "" {
+			return ErrNoEmptyFields
+		}
+
+		switch params.Operator {
+		case models.OperatorIs:
+			return nil
+		case models.OperatorIsNot:
+			return nil
+		}
+		return ErrOperatorNotSupported
+
+	case models.LabelExistenceCondition:
+		var params models.LabelExistenceConditionParams
+		err := utils.JSONConvert(condition.Params, &params)
+		if err != nil {
+			return err
+		}
+
+		if params.Key == "" {
+			return ErrNoEmptyFields
+		}
+
+		switch params.Operator {
+		case models.OperatorExists:
+			return nil
+		case models.OperatorNotExists:
+			return nil
+		}
+		return ErrOperatorNotSupported
+	}
+	return ErrConditionNotSupported
+}
+
+func deviceMatchesCondition(device models.Device, condition models.Condition) (bool, error) {
+	switch condition.Type {
+	case models.DevicePropertyCondition:
+		var params models.DevicePropertyConditionParams
 		err := utils.JSONConvert(condition.Params, &params)
 		if err != nil {
 			return false, err
@@ -125,15 +162,15 @@ func deviceMatchesCondition(device models.Device, condition Condition) (bool, er
 
 		match := value == params.Value
 		switch params.Operator {
-		case OperatorIs:
+		case models.OperatorIs:
 			return match, nil
-		case OperatorIsNot:
+		case models.OperatorIsNot:
 			return !match, nil
 		}
 		return false, ErrOperatorNotSupported
 
-	case LabelValueCondition:
-		var params LabelValueConditionParams
+	case models.LabelValueCondition:
+		var params models.LabelValueConditionParams
 		err := utils.JSONConvert(condition.Params, &params)
 		if err != nil {
 			return false, err
@@ -143,15 +180,15 @@ func deviceMatchesCondition(device models.Device, condition Condition) (bool, er
 		valueMatches := bool(ok && value == params.Value)
 
 		switch params.Operator {
-		case OperatorIs:
+		case models.OperatorIs:
 			return valueMatches, nil
-		case OperatorIsNot:
+		case models.OperatorIsNot:
 			return !valueMatches, nil
 		}
 		return false, ErrOperatorNotSupported
 
-	case LabelExistenceCondition:
-		var params LabelExistenceConditionParams
+	case models.LabelExistenceCondition:
+		var params models.LabelExistenceConditionParams
 		err := utils.JSONConvert(condition.Params, &params)
 		if err != nil {
 			return false, err
@@ -159,9 +196,9 @@ func deviceMatchesCondition(device models.Device, condition Condition) (bool, er
 
 		_, ok := device.Labels[params.Key]
 		switch params.Operator {
-		case OperatorExists:
+		case models.OperatorExists:
 			return ok, nil
-		case OperatorNotExists:
+		case models.OperatorNotExists:
 			return !ok, nil
 		}
 		return false, ErrOperatorNotSupported
@@ -169,8 +206,8 @@ func deviceMatchesCondition(device models.Device, condition Condition) (bool, er
 	return false, ErrConditionNotSupported
 }
 
-func FiltersFromQuery(query map[string][]string) ([]Filter, error) {
-	var filters []Filter
+func FiltersFromQuery(query map[string][]string) ([]models.Filter, error) {
+	var filters []models.Filter
 
 	for key, values := range query {
 		if key == "filter" {
@@ -180,7 +217,7 @@ func FiltersFromQuery(query map[string][]string) ([]Filter, error) {
 					return nil, err
 				}
 
-				var filter Filter
+				var filter models.Filter
 				if err := json.Unmarshal(bytes, &filter); err != nil {
 					return nil, err
 				}

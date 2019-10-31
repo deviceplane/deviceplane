@@ -12,7 +12,7 @@ import (
 type Scenario struct {
 	desc  string
 	in    []models.Device
-	query Query
+	query models.Query
 	out   []models.Device
 }
 
@@ -34,13 +34,13 @@ func TestFilterDevices(t *testing.T) {
 						Status: models.DeviceStatusOnline,
 					},
 				},
-				query: Query{
-					Filter{
-						Condition{
-							Type: DevicePropertyCondition,
+				query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type: models.DevicePropertyCondition,
 							Params: map[string]interface{}{
 								"property": "status",
-								"operator": OperatorIs,
+								"operator": models.OperatorIs,
 								"value":    "online",
 							},
 						},
@@ -61,13 +61,13 @@ func TestFilterDevices(t *testing.T) {
 						Status: models.DeviceStatusOffline,
 					},
 				},
-				query: Query{
-					Filter{
-						Condition{
-							Type: DevicePropertyCondition,
+				query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type: models.DevicePropertyCondition,
 							Params: map[string]interface{}{
 								"property": "status",
-								"operator": OperatorIs,
+								"operator": models.OperatorIs,
 								"value":    "online",
 							},
 						},
@@ -95,13 +95,13 @@ func TestFilterDevices(t *testing.T) {
 						},
 					},
 				},
-				query: Query{
-					Filter{
-						Condition{
-							Type: LabelValueCondition,
+				query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type: models.LabelValueCondition,
 							Params: map[string]interface{}{
 								"key":      "a",
-								"operator": OperatorIs,
+								"operator": models.OperatorIs,
 								"value":    "b",
 							},
 						},
@@ -128,13 +128,13 @@ func TestFilterDevices(t *testing.T) {
 						},
 					},
 				},
-				query: Query{
-					Filter{
-						Condition{
-							Type: LabelExistenceCondition,
+				query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type: models.LabelExistenceCondition,
 							Params: map[string]interface{}{
 								"key":      "a",
-								"operator": OperatorExists,
+								"operator": models.OperatorExists,
 							},
 						},
 					},
@@ -160,13 +160,13 @@ func TestFilterDevices(t *testing.T) {
 						},
 					},
 				},
-				query: Query{
-					Filter{
-						Condition{
-							Type: LabelExistenceCondition,
+				query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type: models.LabelExistenceCondition,
 							Params: map[string]interface{}{
 								"key":      "c",
-								"operator": OperatorNotExists,
+								"operator": models.OperatorNotExists,
 							},
 						},
 					},
@@ -193,13 +193,13 @@ func TestFilterDevices(t *testing.T) {
 						},
 					},
 				},
-				query: Query{
-					Filter{
-						Condition{
-							Type: LabelValueCondition,
+				query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type: models.LabelValueCondition,
 							Params: map[string]interface{}{
 								"key":      "a",
-								"operator": OperatorIs,
+								"operator": models.OperatorIs,
 								"value":    "x",
 							},
 						},
@@ -218,13 +218,13 @@ func TestFilterDevices(t *testing.T) {
 						},
 					},
 				},
-				query: Query{
-					Filter{
-						Condition{
-							Type: LabelExistenceCondition,
+				query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type: models.LabelExistenceCondition,
 							Params: map[string]interface{}{
 								"key":      "c",
-								"operator": OperatorExists,
+								"operator": models.OperatorExists,
 							},
 						},
 					},
@@ -242,13 +242,13 @@ func TestFilterDevices(t *testing.T) {
 						},
 					},
 				},
-				query: Query{
-					Filter{
-						Condition{
-							Type: LabelExistenceCondition,
+				query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type: models.LabelExistenceCondition,
 							Params: map[string]interface{}{
 								"key":      "a",
-								"operator": OperatorNotExists,
+								"operator": models.OperatorNotExists,
 							},
 						},
 					},
@@ -257,6 +257,30 @@ func TestFilterDevices(t *testing.T) {
 			},
 		}
 
+		for _, scenario := range scenarios {
+			testScenario(t, scenario)
+		}
+	})
+
+	t.Run("edge cases", func(t *testing.T) {
+		scenarios := []Scenario{
+			Scenario{
+				desc: "Empty query",
+				in: []models.Device{
+					models.Device{
+						ID:     "one",
+						Status: models.DeviceStatusOffline,
+					},
+				},
+				query: models.Query{},
+				out: []models.Device{
+					models.Device{
+						ID:     "one",
+						Status: models.DeviceStatusOffline,
+					},
+				},
+			},
+		}
 		for _, scenario := range scenarios {
 			testScenario(t, scenario)
 		}
@@ -275,13 +299,13 @@ func TestFilterDevices(t *testing.T) {
 						},
 					},
 				},
-				query: Query{
-					Filter{
-						Condition{
-							Type: LabelValueCondition,
+				query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type: models.LabelValueCondition,
 							Params: map[string]interface{}{
 								"key":      "a",
-								"operator": OperatorExists,
+								"operator": models.OperatorExists,
 								"value":    "b",
 							},
 						},
@@ -299,13 +323,13 @@ func TestFilterDevices(t *testing.T) {
 						},
 					},
 				},
-				query: Query{
-					Filter{
-						Condition{
-							Type: LabelExistenceCondition,
+				query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type: models.LabelExistenceCondition,
 							Params: map[string]interface{}{
 								"key":      "a",
-								"operator": OperatorIs,
+								"operator": models.OperatorIs,
 								"value":    "b",
 							},
 						},
@@ -313,7 +337,7 @@ func TestFilterDevices(t *testing.T) {
 				},
 			},
 			Scenario{
-				desc: "DevicePropertyCondition with an OperatorExists",
+				desc: "models.DevicePropertyCondition with an OperatorExists",
 				in: []models.Device{
 					models.Device{
 						ID:     "one",
@@ -323,13 +347,13 @@ func TestFilterDevices(t *testing.T) {
 						},
 					},
 				},
-				query: Query{
-					Filter{
-						Condition{
-							Type: DevicePropertyCondition,
+				query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type: models.DevicePropertyCondition,
 							Params: map[string]interface{}{
 								"property": "a",
-								"operator": OperatorExists,
+								"operator": models.OperatorExists,
 								"value":    "b",
 							},
 						},
@@ -347,13 +371,13 @@ func TestFilterDevices(t *testing.T) {
 						},
 					},
 				},
-				query: Query{
-					Filter{
-						Condition{
-							Type: LabelValueCondition,
+				query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type: models.LabelValueCondition,
 							Params: map[string]interface{}{
 								"property": "a",
-								"operator": OperatorExists,
+								"operator": models.OperatorExists,
 								"value":    "b",
 							},
 						},
@@ -371,10 +395,10 @@ func TestFilterDevices(t *testing.T) {
 						},
 					},
 				},
-				query: Query{
-					Filter{
-						Condition{
-							Type:   LabelExistenceCondition,
+				query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type:   models.LabelExistenceCondition,
 							Params: map[string]interface{}{},
 						},
 					},
@@ -391,10 +415,10 @@ func TestFilterDevices(t *testing.T) {
 						},
 					},
 				},
-				query: Query{
-					Filter{
-						Condition{
-							Type: LabelExistenceCondition,
+				query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type: models.LabelExistenceCondition,
 							Params: map[string]interface{}{
 								"key": "a",
 							},
@@ -413,10 +437,10 @@ func TestFilterDevices(t *testing.T) {
 						},
 					},
 				},
-				query: Query{
-					Filter{
-						Condition{
-							Type: LabelExistenceCondition,
+				query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type: models.LabelExistenceCondition,
 							Params: map[string]interface{}{
 								"key": "a",
 							},
@@ -425,7 +449,7 @@ func TestFilterDevices(t *testing.T) {
 				},
 			},
 			Scenario{
-				desc: "DevicePropertyCondition with invalid property",
+				desc: "models.DevicePropertyCondition with invalid property",
 				in: []models.Device{
 					models.Device{
 						ID:     "one",
@@ -435,13 +459,13 @@ func TestFilterDevices(t *testing.T) {
 						},
 					},
 				},
-				query: Query{
-					Filter{
-						Condition{
-							Type: DevicePropertyCondition,
+				query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type: models.DevicePropertyCondition,
 							Params: map[string]interface{}{
 								"property": "qweroiweqroijfdsfafdew",
-								"operator": OperatorIs,
+								"operator": models.OperatorIs,
 								"value":    "qweiofioweweiweofewi",
 							},
 						},
@@ -459,31 +483,31 @@ func TestFilterDevices(t *testing.T) {
 }
 
 func TestFiltersFromQuery(t *testing.T) {
-	filtersA := Filter{
-		Condition{
-			Type: DevicePropertyCondition,
+	filtersA := models.Filter{
+		models.Condition{
+			Type: models.DevicePropertyCondition,
 			Params: map[string]interface{}{
 				"property": "status",
-				"operator": string(OperatorIs),
+				"operator": string(models.OperatorIs),
 				"value":    "online",
 			},
 		},
-		Condition{
-			Type: DevicePropertyCondition,
+		models.Condition{
+			Type: models.DevicePropertyCondition,
 			Params: map[string]interface{}{
 				"property": "status",
-				"operator": string(OperatorIs),
+				"operator": string(models.OperatorIs),
 				"value":    "offline",
 			},
 		},
 	}
 
-	filtersB := Filter{
-		Condition{
-			Type: DevicePropertyCondition,
+	filtersB := models.Filter{
+		models.Condition{
+			Type: models.DevicePropertyCondition,
 			Params: map[string]interface{}{
 				"property": "status",
-				"operator": string(OperatorIs),
+				"operator": string(models.OperatorIs),
 				"value":    "online",
 			},
 		},
