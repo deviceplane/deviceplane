@@ -5,6 +5,7 @@ import (
 
 	"github.com/deviceplane/deviceplane/pkg/agent/variables"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type Service struct {
@@ -22,6 +23,7 @@ func NewService(variables variables.Interface, confDir string) *Service {
 
 	s.router.HandleFunc("/ssh", s.ssh).Methods("POST")
 	s.router.HandleFunc("/execute", s.execute).Methods("POST")
+	s.router.Handle("/metrics", promhttp.Handler())
 
 	return s
 }

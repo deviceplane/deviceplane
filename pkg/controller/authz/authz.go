@@ -56,6 +56,7 @@ var (
 		"ListReleases",
 		"GetDevice",
 		"ListDevices",
+		"GetMetrics",
 		"GetDeviceLabel",
 		"ListDeviceLabels",
 		"GetDeviceRegistrationToken",

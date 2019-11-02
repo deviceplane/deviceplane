@@ -66,6 +66,29 @@ func (s *Service) execute(w http.ResponseWriter, r *http.Request,
 	})
 }
 
+func (s *Service) metrics(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	deviceID string,
+) {
+	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
+		// TODO: build a proper client for this API
+		req, _ := http.NewRequest("GET", "/metrics", nil)
+
+		if err := req.Write(deviceConn); err != nil {
+			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
+			return
+		}
+
+		resp, err := http.ReadResponse(bufio.NewReader(deviceConn), req)
+		if err != nil {
+			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
+			return
+		}
+
+		utils.ProxyResponse(w, resp)
+	})
+}
+
 func (s *Service) withHijackedWebSocketConnection(w http.ResponseWriter, r *http.Request, f func(net.Conn)) {
 	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
