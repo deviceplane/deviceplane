@@ -22,6 +22,7 @@ const (
 	releasesURL     = "releases"
 	devicesURL      = "devices"
 	sshURL          = "ssh"
+	executeURL      = "execute"
 	bundleURL       = "bundle"
 )
 
@@ -76,6 +77,14 @@ func (c *Client) CreateRelease(ctx context.Context, project, application, config
 	return &release, nil
 }
 
+func (c *Client) Execute(ctx context.Context, project, deviceID, command string) (*models.ExecuteResponse, error) {
+	var executeResponse models.ExecuteResponse
+	if err := c.post(ctx, command, &executeResponse, projectsURL, project, devicesURL, deviceID, executeURL); err != nil {
+		return nil, err
+	}
+	return &executeResponse, nil
+}
+
 func (c *Client) InitiateSSH(ctx context.Context, project, deviceID string) (net.Conn, error) {
 	req, err := http.NewRequest("", "", nil)
 	if err != nil {
@@ -102,10 +111,19 @@ func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {
 }
 
 func (c *Client) post(ctx context.Context, in, out interface{}, s ...string) error {
-	reqBytes, err := json.Marshal(in)
-	if err != nil {
-		return err
+	var reqBytes []byte
+
+	switch v := in.(type) {
+	case string:
+		reqBytes = []byte(v)
+	default:
+		var err error
+		reqBytes, err = json.Marshal(in)
+		if err != nil {
+			return err
+		}
 	}
+
 	reader := bytes.NewReader(reqBytes)
 
 	req, err := http.NewRequest("POST", getURL(c.url, s...), reader)

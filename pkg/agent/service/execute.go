@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/deviceplane/deviceplane/pkg/codes"
+	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/deviceplane/deviceplane/pkg/utils"
 )
 
@@ -47,9 +48,7 @@ func (s *Service) execute(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		utils.Respond(w, struct {
-			ExitCode int `json:"exitCode"`
-		}{
+		utils.Respond(w, models.ExecuteResponse{
 			ExitCode: exitCode,
 		})
 	}
