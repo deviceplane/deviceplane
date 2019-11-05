@@ -79,5 +79,5 @@ func ImagePull(ctx context.Context, eng engine.Engine, image string) {
 			return err
 		}
 		return nil
-	}, 30*time.Minute)
+	}, time.Hour)
 }
