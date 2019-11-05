@@ -56,6 +56,8 @@ var ssh = cli.Command{
 
 				sshArguments := append([]string{
 					"-p", port,
+					"-o",
+					"NoHostAuthenticationForLocalhost yes",
 					"127.0.0.1",
 				}, c.Args()...)
 
