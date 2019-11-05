@@ -8,7 +8,9 @@ import {
   Badge,
   majorScale,
   minorScale,
-  Icon,
+  TextDropdownButton,
+  Menu,
+  Position,
   Text,
   withTheme,
   Popover,
@@ -42,10 +44,26 @@ interface State {
   labelColors: any[],
   labelColorMap: any,
   devices: any[],
-  query: Query,
+  filterQuery: Query,
   showFilterDialog: boolean,
   popoverShown: boolean,
   defaultDeviceRegistrationTokenExists: boolean,
+
+  orderedColumn?: string,
+  order?: string,
+  page: number,
+}
+
+const Params = {
+  Filter: 'filter',
+  Page: 'page',
+  OrderedColumn: 'order_by',
+  OrderDirection: 'order',
+}
+
+const Order = {
+  ASC: 'asc',
+  DESC: 'desc'
 }
 
 class Devices extends Component<Props, State> {
@@ -61,16 +79,20 @@ class Devices extends Component<Props, State> {
         ...palletteArray.map((colors: any) => colors.dark)
       ],
       devices: [],
-      query: [],
+      filterQuery: [],
       showFilterDialog: false,
       popoverShown: false,
       defaultDeviceRegistrationTokenExists: false,
+
+      orderedColumn: undefined,
+      order: undefined,
+      page: 0,
     };
   }
 
-  componentDidMount() {
-    const queryString = this.parseFiltersQueryString()
-    this.fetchDevices(queryString);
+  async componentDidMount() {
+    await this.parseQueryString()
+    this.queryDevices();
     this.checkDefaultDeviceRegistrationToken();
   }
 
@@ -91,9 +113,6 @@ class Devices extends Component<Props, State> {
   }
 
   fetchDevices = (queryString: string) => {
-    if (queryString.length) {
-      queryString = '?' + queryString;
-    }
     return axios
       .get(
         `${config.endpoint}/projects/${this.props.projectName}/devices${queryString}`,
@@ -115,78 +134,122 @@ class Devices extends Component<Props, State> {
   parseDevices = (devices: any[]) =>
     devices.map(device => device);
 
-  buildFiltersQueryString = () =>
-    [...Array.from(new Set(this.state.query))]
+  buildFiltersQuery = (): string[] =>
+    [...Array.from(new Set(this.state.filterQuery))]
       .map(
-        filter => `filter=${encodeURIComponent(btoa(JSON.stringify(filter)))}`
-      )
-      .join('&');
+        filter => `${Params.Filter}=${encodeURIComponent(btoa(JSON.stringify(filter)))}`
+      );
 
-  parseFiltersQueryString = () => {
-    let queryParams = '';
-
-    if (window.location.search && window.location.search.includes('filter=')) {
-      queryParams = window.location.search.substr(1);
-      const filters = queryParams.replace(/&/g, '').split('filter=');
+  parseQueryString = () => {
+    return new Promise((resolve) => {
+      if (!window.location.search || window.location.search.length < 1) {
+        resolve();
+        return;
+      }
 
       var builtQuery: Query = [];
+      var page = 0;
+      var orderedColumn = undefined;
+      var order = undefined;
 
-      filters.forEach(encodedFilter => {
-        if (encodedFilter) {
-          try {
-            const filter = JSON.parse(
-              atob(decodeURIComponent(encodedFilter))
-            )
+      let queryParams = window.location.search.substr(1).split('&');
+      queryParams.forEach(queryParam => {
+        const parts = queryParam.split('=');
+        if (parts.length < 2) {
+          return;
+        }
 
-            const validFilter = filter.filter((c: Condition) => {
-              return typeCheckers['Condition'].strictTest(c);
-            });
+        switch (parts[0]) {
+          case Params.Filter: {
+            let encodedFilter = parts[1];
+            if (encodedFilter) {
+              try {
+                const filter = JSON.parse(
+                  atob(decodeURIComponent(encodedFilter))
+                )
 
-            if (validFilter.length) {
-              builtQuery.push(validFilter);
+                const validFilter = filter.filter((c: Condition) => {
+                  return typeCheckers['Condition'].strictTest(c);
+                });
+
+                if (validFilter.length) {
+                  builtQuery.push(validFilter);
+                }
+              } catch (e) {
+                console.log('Error parsing filters:', e)
+              }
             }
-          } catch (e) {
-            console.log('Error parsing filters:', e)
+            break;
+          }
+          case Params.Page: {
+            let p = Number(parts[1]);
+            if (!isNaN(p)) {
+              page = p;
+            }
+            break;
+          }
+          case Params.OrderedColumn: {
+            let p = parts[1];
+            if (p) {
+              orderedColumn = p;
+            }
+            break;
+          }
+          case Params.OrderDirection: {
+            let p = parts[1];
+            if (p) {
+              order = p;
+            }
+            break;
           }
         }
-      });
-
+      })
       this.setState({
-        query: [...this.state.query, ...builtQuery]
-      });
-    }
-    return queryParams;
+        page: page,
+        orderedColumn: orderedColumn,
+        order: order,
+        filterQuery: [...this.state.filterQuery, ...builtQuery]
+      }, resolve);
+    })
   }
 
-  filterDevices = () => {
-    if (!this.state.query.length) {
-      window.history.pushState('', '', window.location.pathname);
-      this.fetchDevices('');
-      return;
-    }
+  queryDevices = () => {
+    var query: string[] = [];
 
-    const filtersQueryString = this.buildFiltersQueryString();
-    window.history.pushState('', '', `?${filtersQueryString}`);
-    this.fetchDevices(filtersQueryString);
-  };
+    query.push(`${Params.Page}=${this.state.page}`)
+    if (this.state.orderedColumn) {
+      query.push(`${Params.OrderedColumn}=${this.state.orderedColumn}`)
+    }
+    if (this.state.order) {
+      query.push(`${Params.OrderDirection}=${this.state.order}`)
+    }
+    query.push(...this.buildFiltersQuery())
+
+    const queryString = '?' + query.join('&');
+    window.history.pushState('', '', query.length ? queryString : window.location.pathname );
+    this.fetchDevices(queryString);
+};
 
   removeFilter = (index: number) => {
     this.setState({
-      query: this.state.query.filter((_, i) => i !== index),
-    }, this.filterDevices);
+      page: 0,
+      filterQuery: this.state.filterQuery.filter((_, i) => i !== index),
+    }, this.queryDevices);
   };
 
   addFilter = (filter: Filter) => {
     this.setState({
+      page: 0,
       showFilterDialog: false,
-      query: [...this.state.query, filter]
-    }, this.filterDevices);
+      filterQuery: [...this.state.filterQuery, filter]
+    }, this.queryDevices);
   };
 
   clearFilters = () => {
     this.setState({
-      query: []
-    }, this.filterDevices);
+      page: 0,
+      filterQuery: []
+    }, this.queryDevices);
   };
 
   renderDeviceOs = (device: any) => {
@@ -252,9 +315,61 @@ class Devices extends Component<Props, State> {
     ));
   };
 
+  getIconForOrder = (order?: string) => {
+    switch (order) {
+      case Order.ASC:
+        return 'arrow-up'
+      case Order.DESC:
+        return 'arrow-down'
+      default:
+        return 'caret-down'
+    }
+  }
+
+  renderOrderedTableHeader = (title: string, jsonName: string) => {
+    return (
+      <Popover
+        position={Position.BOTTOM_LEFT}
+        content={({ close }: any) => (
+          <Menu>
+            <Menu.OptionsGroup
+              title="Order"
+              options={[
+                { label: 'Ascending', value: Order.ASC },
+                { label: 'Descending', value: Order.DESC }
+              ]}
+              selected={
+                this.state.orderedColumn === jsonName ? this.state.order : null
+              }
+              onChange={(value: string) => {
+                this.setState({
+                  orderedColumn: jsonName,
+                  order: value
+                }, this.queryDevices)
+
+                // Close the popover when you select a value.
+                close()
+              }}
+            />
+          </Menu>
+        )}
+      >
+        <TextDropdownButton
+          icon={
+            this.state.orderedColumn === jsonName
+              ? this.getIconForOrder(this.state.order)
+              : 'caret-down'
+          }
+        >
+          {title}
+        </TextDropdownButton>
+      </Popover>
+    )
+  }
+
   render() {
     const { user, history, projectName } = this.props;
-    const { showFilterDialog, query } = this.state;
+    const { showFilterDialog, filterQuery } = this.state;
 
     var addDeviceButtonHolder;
     if (this.state.defaultDeviceRegistrationTokenExists) {
@@ -331,7 +446,7 @@ class Devices extends Component<Props, State> {
                 <Pane
                 display="flex"
                 marginLeft={majorScale(2)}>
-                  {query.length > 0 && (
+                  {filterQuery.length > 0 && (
                     <Button
                       marginRight={majorScale(2)}
                       appearance="minimal"
@@ -353,7 +468,7 @@ class Devices extends Component<Props, State> {
               </Pane>
             </Pane>
             <DevicesFilterButtons
-            query={this.state.query}
+            query={this.state.filterQuery}
             canRemoveFilter={true}
             removeFilter={this.removeFilter}
             />
@@ -364,15 +479,17 @@ class Devices extends Component<Props, State> {
                   flexShrink={0}
                   flexGrow={0}
                 >
-                  Status
+                  {this.renderOrderedTableHeader('Status', 'status')}
                 </Table.TextHeaderCell>
-                <Table.TextHeaderCell>Name</Table.TextHeaderCell>
+                <Table.TextHeaderCell>
+                  {this.renderOrderedTableHeader('Name', 'name')}
+                </Table.TextHeaderCell>
                 <Table.TextHeaderCell
                   flexBasis={120}
                   flexShrink={0}
                   flexGrow={0}
                 >
-                  IP Address
+                  {this.renderOrderedTableHeader('IP Address', 'ipAddress')}
                 </Table.TextHeaderCell>
                 <Table.TextHeaderCell
                   flexBasis={120}
@@ -380,6 +497,7 @@ class Devices extends Component<Props, State> {
                   flexGrow={0}
                 >
                   OS
+                  {/* In the future, we can add nesting and use osRelease.prettyName */}
                 </Table.TextHeaderCell>
                 <Table.TextHeaderCell flexGrow={2}>Labels</Table.TextHeaderCell>
               </Table.Head>

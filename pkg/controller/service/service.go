@@ -10,6 +10,7 @@ import (
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/controller/authz"
 	"github.com/deviceplane/deviceplane/pkg/controller/connman"
+	"github.com/deviceplane/deviceplane/pkg/controller/middleware"
 	"github.com/deviceplane/deviceplane/pkg/controller/query"
 	"github.com/deviceplane/deviceplane/pkg/controller/spaserver"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
@@ -2115,18 +2116,20 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request,
 		http.Error(w, errors.Wrap(err, "get filters from query").Error(), http.StatusBadRequest)
 		return
 	}
-	if len(filters) == 0 {
-		utils.Respond(w, devices)
-		return
+
+	if len(filters) != 0 {
+		devices, err = query.FilterDevices(devices, filters)
+		if err != nil {
+			http.Error(w, errors.Wrap(err, "filter devices").Error(), http.StatusBadRequest)
+			return
+		}
 	}
 
-	filteredDevices, err := query.FilterDevices(devices, filters)
-	if err != nil {
-		http.Error(w, errors.Wrap(err, "filter devices").Error(), http.StatusBadRequest)
-		return
+	ds := make([]interface{}, len(devices))
+	for i := range devices {
+		ds[i] = devices[i]
 	}
-
-	utils.Respond(w, filteredDevices)
+	middleware.SortAndPaginateAndRespond(*r, w, ds)
 }
 
 func (s *Service) getDevice(w http.ResponseWriter, r *http.Request,
