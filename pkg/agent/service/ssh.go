@@ -96,7 +96,12 @@ func sshServerHandler(ctx context.Context) func(s ssh.Session) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		command, err := nsenterCommandWrapper(entrypoint)
+		innerCommand := s.RawCommand()
+		if innerCommand == "" {
+			innerCommand = entrypoint
+		}
+
+		command, err := nsenterCommandWrapper(innerCommand)
 		if err != nil {
 			log.WithError(err).Error("nsenter command wrapper")
 			return
@@ -105,31 +110,40 @@ func sshServerHandler(ctx context.Context) func(s ssh.Session) {
 		cmd := exec.CommandContext(ctx, command[0], command[1:]...)
 
 		ptyReq, winCh, isPty := s.Pty()
-		if !isPty {
-			return
-		}
+		if isPty {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("TERM=%s", ptyReq.Term))
 
-		cmd.Env = append(cmd.Env, fmt.Sprintf("TERM=%s", ptyReq.Term))
-
-		f, err := pty.Start(cmd)
-		if err != nil {
-			log.WithError(err).Error("start PTY")
-			return
-		}
-
-		go func() {
-			for win := range winCh {
-				syscall.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(syscall.TIOCSWINSZ),
-					uintptr(unsafe.Pointer(&struct {
-						h, w, x, y uint16
-					}{
-						uint16(win.Height), uint16(win.Width), 0, 0,
-					})))
+			f, err := pty.Start(cmd)
+			if err != nil {
+				log.WithError(err).Error("start PTY")
+				return
 			}
-		}()
 
-		go io.Copy(f, s)
-		io.Copy(s, f)
+			go func() {
+				for win := range winCh {
+					syscall.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(syscall.TIOCSWINSZ),
+						uintptr(unsafe.Pointer(&struct {
+							h, w, x, y uint16
+						}{
+							uint16(win.Height), uint16(win.Width), 0, 0,
+						})))
+				}
+			}()
+
+			go io.Copy(f, s)
+			io.Copy(s, f)
+		} else {
+			cmd.Stdout = s
+			cmd.Stderr = s
+			if err := cmd.Run(); err != nil {
+				if exitError, ok := err.(*exec.ExitError); ok {
+					s.Exit(exitError.ExitCode())
+					return
+				}
+				log.WithError(err).Error("run SSH command")
+				return
+			}
+		}
 	}
 }
 

@@ -54,11 +54,28 @@ var ssh = cli.Command{
 
 				port := strconv.Itoa(listener.Addr().(*net.TCPAddr).Port)
 
-				cmd := exec.CommandContext(ctx, "ssh", "-p", port, "127.0.0.1")
+				sshArguments := append([]string{
+					"-p", port,
+					"127.0.0.1",
+				}, c.Args()...)
+
+				cmd := exec.CommandContext(ctx,
+					"ssh",
+					sshArguments...,
+				)
 				cmd.Stdin = os.Stdin
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
-				return cmd.Run()
+
+				if err := cmd.Run(); err != nil {
+					if exitError, ok := err.(*exec.ExitError); ok {
+						os.Exit(exitError.ExitCode())
+						return nil
+					}
+					return err
+				}
+
+				return nil
 			})
 
 			return g.Wait()
