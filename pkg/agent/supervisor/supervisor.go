@@ -79,7 +79,7 @@ func (s *Supervisor) SetApplications(applications []models.ApplicationFull2) {
 }
 
 func (s *Supervisor) applicationSupervisorGC() {
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(defaultTickerFrequency)
 	defer ticker.Stop()
 
 	for {
@@ -107,7 +107,7 @@ func (s *Supervisor) applicationSupervisorGC() {
 }
 
 func (s *Supervisor) containerGC() {
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(defaultTickerFrequency)
 	defer ticker.Stop()
 
 	for {

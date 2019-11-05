@@ -137,7 +137,7 @@ func (s *ApplicationSupervisor) Stop() {
 }
 
 func (s *ApplicationSupervisor) serviceSupervisorGC() {
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(defaultTickerFrequency)
 	defer ticker.Stop()
 
 	for {
@@ -168,7 +168,7 @@ func (s *ApplicationSupervisor) serviceSupervisorGC() {
 }
 
 func (s *ApplicationSupervisor) containerGC() {
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(defaultTickerFrequency)
 	defer ticker.Stop()
 
 	for {

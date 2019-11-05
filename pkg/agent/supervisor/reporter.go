@@ -83,7 +83,7 @@ func (r *Reporter) Stop() {
 }
 
 func (r *Reporter) applicationStatusReporter() {
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(defaultTickerFrequency)
 	defer ticker.Stop()
 
 	for {
@@ -121,7 +121,7 @@ func (r *Reporter) applicationStatusReporter() {
 }
 
 func (r *Reporter) serviceStatusReporter() {
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(defaultTickerFrequency)
 	defer ticker.Stop()
 
 	for {

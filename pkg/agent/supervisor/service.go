@@ -83,7 +83,7 @@ func (s *ServiceSupervisor) Stop() {
 }
 
 func (s *ServiceSupervisor) reconcileLoop() {
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(defaultTickerFrequency)
 	defer ticker.Stop()
 
 	for {
@@ -96,7 +96,7 @@ func (s *ServiceSupervisor) reconcileLoop() {
 
 		startCanceler := func() {
 			go func() {
-				ticker := time.NewTicker(time.Second)
+				ticker := time.NewTicker(defaultTickerFrequency)
 				defer ticker.Stop()
 
 				for {
@@ -209,7 +209,7 @@ func (s *ServiceSupervisor) keepAlive() {
 	var release string
 	var service spec.Service
 
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(defaultTickerFrequency)
 	defer ticker.Stop()
 
 	for {
