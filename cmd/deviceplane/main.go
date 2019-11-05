@@ -36,7 +36,6 @@ func main() {
 		edit,
 		deploy,
 		ssh,
-		execute,
 	}
 
 	if err := app.Run(os.Args); err != nil {
