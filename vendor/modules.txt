@@ -119,6 +119,8 @@ github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/urfave/cli v1.20.0
 github.com/urfave/cli
+# github.com/vishvananda/netns v0.0.0-20190625233234-7109fa855b0f
+github.com/vishvananda/netns
 # golang.org/x/crypto v0.0.0-20191002192127-34f69633bfdc
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/ed25519
