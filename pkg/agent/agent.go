@@ -70,32 +70,34 @@ func NewAgent(
 		return nil, errors.Wrap(err, "start fsnotify variables")
 	}
 
-	service := service.NewService(variables, confDir)
+	supervisor := supervisor.NewSupervisor(
+		engine,
+		func(ctx context.Context, applicationID, currentReleaseID string) error {
+			return client.SetDeviceApplicationStatus(ctx, applicationID, models.SetDeviceApplicationStatusRequest{
+				CurrentReleaseID: currentReleaseID,
+			})
+		},
+		func(ctx context.Context, applicationID, service, currentReleaseID string) error {
+			return client.SetDeviceServiceStatus(ctx, applicationID, service, models.SetDeviceServiceStatusRequest{
+				CurrentReleaseID: currentReleaseID,
+			})
+		},
+		[]validator.Validator{
+			image.NewValidator(variables),
+			customcommands.NewValidator(variables),
+		},
+	)
+
+	service := service.NewService(variables, supervisor, engine, confDir)
 
 	return &Agent{
-		client:            client,
-		variables:         variables,
-		projectID:         projectID,
-		registrationToken: registrationToken,
-		confDir:           confDir,
-		stateDir:          stateDir,
-		supervisor: supervisor.NewSupervisor(
-			engine,
-			func(ctx context.Context, applicationID, currentReleaseID string) error {
-				return client.SetDeviceApplicationStatus(ctx, applicationID, models.SetDeviceApplicationStatusRequest{
-					CurrentReleaseID: currentReleaseID,
-				})
-			},
-			func(ctx context.Context, applicationID, service, currentReleaseID string) error {
-				return client.SetDeviceServiceStatus(ctx, applicationID, service, models.SetDeviceServiceStatusRequest{
-					CurrentReleaseID: currentReleaseID,
-				})
-			},
-			[]validator.Validator{
-				image.NewValidator(variables),
-				customcommands.NewValidator(variables),
-			},
-		),
+		client:                 client,
+		variables:              variables,
+		projectID:              projectID,
+		registrationToken:      registrationToken,
+		confDir:                confDir,
+		stateDir:               stateDir,
+		supervisor:             supervisor,
 		statusGarbageCollector: status.NewGarbageCollector(client.DeleteDeviceApplicationStatus, client.DeleteDeviceServiceStatus),
 		infoReporter:           info.NewReporter(client, version),
 		localServer:            local.NewServer(service),

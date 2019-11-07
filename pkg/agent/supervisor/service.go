@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/apex/log"
@@ -30,6 +31,8 @@ type ServiceSupervisor struct {
 	keepAliveDeactivate chan struct{}
 	reconcileLoopDone   chan struct{}
 	keepAliveDone       chan struct{}
+
+	containerID atomic.Value
 
 	once   sync.Once
 	lock   sync.RWMutex
@@ -225,6 +228,7 @@ func (s *ServiceSupervisor) keepAlive() {
 			active = false
 		case <-ticker.C:
 			if !active {
+				s.containerID.Store("")
 				continue
 			}
 
@@ -247,6 +251,8 @@ func (s *ServiceSupervisor) keepAlive() {
 			if !instance.Running {
 				utils.ContainerStart(s.ctx, s.engine, instance.ID)
 			}
+
+			s.containerID.Store(instance.ID)
 		}
 	}
 }

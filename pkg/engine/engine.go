@@ -13,6 +13,7 @@ var (
 
 type Engine interface {
 	CreateContainer(context.Context, string, spec.Service) (string, error)
+	InspectContainer(context.Context, string) (*InspectResponse, error)
 	StartContainer(context.Context, string) error
 	ListContainers(context.Context, map[string]struct{}, map[string]string, bool) ([]Instance, error)
 	StopContainer(context.Context, string) error
@@ -25,4 +26,8 @@ type Instance struct {
 	ID      string
 	Labels  map[string]string
 	Running bool
+}
+
+type InspectResponse struct {
+	PID int
 }

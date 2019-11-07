@@ -45,6 +45,16 @@ func (e *Engine) CreateContainer(ctx context.Context, name string, s spec.Servic
 	return resp.ID, nil
 }
 
+func (e *Engine) InspectContainer(ctx context.Context, id string) (*engine.InspectResponse, error) {
+	container, err := e.client.ContainerInspect(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &engine.InspectResponse{
+		PID: container.State.Pid,
+	}, nil
+}
+
 func (e *Engine) StartContainer(ctx context.Context, id string) error {
 	if err := e.client.ContainerStart(ctx, id, types.ContainerStartOptions{}); err != nil {
 		// TODO

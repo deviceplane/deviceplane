@@ -57,6 +57,7 @@ var (
 		"GetDevice",
 		"ListDevices",
 		"GetMetrics",
+		"GetServiceMetrics",
 		"GetDeviceLabel",
 		"ListDeviceLabels",
 		"GetDeviceRegistrationToken",

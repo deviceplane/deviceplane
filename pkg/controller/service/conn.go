@@ -2,6 +2,7 @@ package service
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/codes"
 	"github.com/deviceplane/deviceplane/pkg/utils"
 	"github.com/function61/holepunch-server/pkg/wsconnadapter"
+	"github.com/gorilla/mux"
 )
 
 func (s *Service) initiateDeviceConnection(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
@@ -73,6 +75,40 @@ func (s *Service) metrics(w http.ResponseWriter, r *http.Request,
 	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
 		// TODO: build a proper client for this API
 		req, _ := http.NewRequest("GET", "/metrics", nil)
+
+		if err := req.Write(deviceConn); err != nil {
+			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
+			return
+		}
+
+		resp, err := http.ReadResponse(bufio.NewReader(deviceConn), req)
+		if err != nil {
+			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
+			return
+		}
+
+		utils.ProxyResponse(w, resp)
+	})
+}
+
+func (s *Service) serviceMetrics(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	deviceID string,
+) {
+	vars := mux.Vars(r)
+	applicationID := vars["application"]
+	service := vars["service"]
+
+	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
+		// TODO: build a proper client for this API
+		req, _ := http.NewRequest(
+			"GET",
+			fmt.Sprintf(
+				"/applications/%s/services/%s/metrics",
+				applicationID, service,
+			),
+			nil,
+		)
 
 		if err := req.Write(deviceConn); err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)

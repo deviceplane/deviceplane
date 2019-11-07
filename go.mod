@@ -35,6 +35,7 @@ require (
 	github.com/sendgrid/sendgrid-go v3.4.1+incompatible
 	github.com/stretchr/testify v1.3.0
 	github.com/urfave/cli v1.20.0
+	github.com/vishvananda/netns v0.0.0-20190625233234-7109fa855b0f
 	golang.org/x/build v0.0.0-20190604154314-6c34d49dff48 // indirect
 	golang.org/x/crypto v0.0.0-20191002192127-34f69633bfdc
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
