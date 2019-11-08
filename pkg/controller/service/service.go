@@ -2512,8 +2512,7 @@ func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
 
 	deviceRegistrationToken, err := s.deviceRegistrationTokens.GetDeviceRegistrationToken(r.Context(), registerDeviceRequest.DeviceRegistrationTokenID, projectID)
 	if err != nil {
-		log.WithError(err).Error("get device registration token")
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
