@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
@@ -1981,7 +1982,7 @@ func (s *Service) deleteApplication(w http.ResponseWriter, r *http.Request,
 	}
 }
 
-// TOOD: this has a vulnerability!
+// TODO: this has a vulnerability!
 func (s *Service) createRelease(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID,
 	applicationID string,
@@ -1992,20 +1993,31 @@ func (s *Service) createRelease(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	if err := spec.Validate([]byte(createReleaseRequest.Config)); err != nil {
+	if err := spec.Validate([]byte(createReleaseRequest.RawConfig)); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	var applicationConfig map[string]spec.Service
-	if err := yaml.UnmarshalStrict([]byte(createReleaseRequest.Config), &applicationConfig); err != nil {
+	var applicationConfig map[string]models.Service
+	if err := yaml.UnmarshalStrict([]byte(createReleaseRequest.RawConfig), &applicationConfig); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	jsonApplicationConfig, err := json.Marshal(applicationConfig)
+	if err != nil {
+		log.WithError(err).Error("marshal json application config")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
-	release, err := s.releases.CreateRelease(r.Context(),
-		projectID, applicationID,
-		createReleaseRequest.Config, authenticatedUserID, authenticatedServiceAccountID,
+	release, err := s.releases.CreateRelease(
+		r.Context(),
+		projectID,
+		applicationID,
+		createReleaseRequest.RawConfig,
+		string(jsonApplicationConfig),
+		authenticatedUserID,
+		authenticatedServiceAccountID,
 	)
 	if err != nil {
 		log.WithError(err).Error("create release")

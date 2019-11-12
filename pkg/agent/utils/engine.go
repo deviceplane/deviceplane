@@ -7,10 +7,10 @@ import (
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	canonical_image "github.com/deviceplane/deviceplane/pkg/image"
-	"github.com/deviceplane/deviceplane/pkg/spec"
+	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
-func ContainerCreate(ctx context.Context, eng engine.Engine, name string, service spec.Service) string {
+func ContainerCreate(ctx context.Context, eng engine.Engine, name string, service models.Service) string {
 	var id string
 
 	Retry(ctx, func(ctx context.Context) error {

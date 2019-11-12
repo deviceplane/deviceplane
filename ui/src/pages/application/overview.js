@@ -12,7 +12,7 @@ const ApplicationOverview = ({
   history,
   projectName
 }) => {
-  const currentConfig = latestRelease ? latestRelease.config : '';
+  const currentConfig = latestRelease ? latestRelease.rawConfig : '';
   var schedulingRuleVisualized;
   if (schedulingRule.length) {
     schedulingRuleVisualized = (

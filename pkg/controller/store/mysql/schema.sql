@@ -336,6 +336,7 @@ create table if not exists releases (
   application_id varchar(32) not null,
 
   config longtext not null,
+  raw_config longtext not null,
   created_by_user_id varchar(32),
   created_by_service_account_id varchar(32),
 

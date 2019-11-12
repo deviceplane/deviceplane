@@ -7,6 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/deviceplane/deviceplane/pkg/spec"
+
 	"github.com/apex/log"
 
 	"github.com/deviceplane/deviceplane/pkg/agent/utils"
@@ -14,7 +16,6 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/hash"
 	"github.com/deviceplane/deviceplane/pkg/models"
-	"github.com/deviceplane/deviceplane/pkg/spec"
 )
 
 type ServiceSupervisor struct {
@@ -25,9 +26,9 @@ type ServiceSupervisor struct {
 	validators    []validator.Validator
 
 	release             string
-	service             spec.Service
+	service             models.Service
 	keepAliveRelease    chan string
-	keepAliveService    chan spec.Service
+	keepAliveService    chan models.Service
 	keepAliveDeactivate chan struct{}
 	reconcileLoopDone   chan struct{}
 	keepAliveDone       chan struct{}
@@ -56,7 +57,7 @@ func NewServiceSupervisor(
 		validators:    validators,
 
 		keepAliveRelease:    make(chan string),
-		keepAliveService:    make(chan spec.Service),
+		keepAliveService:    make(chan models.Service),
 		keepAliveDeactivate: make(chan struct{}),
 		reconcileLoopDone:   make(chan struct{}),
 		keepAliveDone:       make(chan struct{}),
@@ -66,7 +67,7 @@ func NewServiceSupervisor(
 	}
 }
 
-func (s *ServiceSupervisor) SetService(release string, service spec.Service) {
+func (s *ServiceSupervisor) SetService(release string, service models.Service) {
 	s.lock.Lock()
 	s.release = release
 	s.service = service
@@ -108,7 +109,7 @@ func (s *ServiceSupervisor) reconcileLoop() {
 						return
 					case <-ticker.C:
 						s.lock.RLock()
-						if s.service.Hash(s.serviceName) != service.Hash(s.serviceName) {
+						if spec.Hash(s.service, s.serviceName) != spec.Hash(service, s.serviceName) {
 							cancel()
 						}
 						s.lock.RUnlock()
@@ -126,7 +127,7 @@ func (s *ServiceSupervisor) reconcileLoop() {
 			// TODO: filter down to just one instance if we find more
 			instance := instances[0]
 
-			if hashLabel, ok := instance.Labels[models.HashLabel]; ok && hashLabel == service.Hash(s.serviceName) {
+			if hashLabel, ok := instance.Labels[models.HashLabel]; ok && hashLabel == spec.Hash(service, s.serviceName) {
 				s.sendKeepAliveService(service)
 				s.sendKeepAliveRelease(release)
 				goto cont
@@ -160,8 +161,8 @@ func (s *ServiceSupervisor) reconcileLoop() {
 		utils.ContainerCreate(
 			ctx,
 			s.engine,
-			strings.Join([]string{s.serviceName, hash.ShortHash(s.applicationID), service.ShortHash(s.serviceName)}, "-"),
-			service.WithStandardLabels(s.applicationID, s.serviceName),
+			strings.Join([]string{s.serviceName, hash.ShortHash(s.applicationID), spec.ShortHash(service, s.serviceName)}, "-"),
+			spec.WithStandardLabels(service, s.applicationID, s.serviceName),
 		)
 
 		s.sendKeepAliveService(service)
@@ -189,7 +190,7 @@ func (s *ServiceSupervisor) sendKeepAliveRelease(release string) {
 	}
 }
 
-func (s *ServiceSupervisor) sendKeepAliveService(service spec.Service) {
+func (s *ServiceSupervisor) sendKeepAliveService(service models.Service) {
 	select {
 	case <-s.ctx.Done():
 		break
@@ -210,7 +211,7 @@ func (s *ServiceSupervisor) sendKeepAliveDeactivate() {
 func (s *ServiceSupervisor) keepAlive() {
 	active := false
 	var release string
-	var service spec.Service
+	var service models.Service
 
 	ticker := time.NewTicker(defaultTickerFrequency)
 	defer ticker.Stop()
@@ -235,7 +236,7 @@ func (s *ServiceSupervisor) keepAlive() {
 			instances := utils.ContainerList(s.ctx, s.engine, nil, map[string]string{
 				models.ApplicationLabel: s.applicationID,
 				models.ServiceLabel:     s.serviceName,
-				models.HashLabel:        service.Hash(s.serviceName),
+				models.HashLabel:        spec.Hash(service, s.serviceName),
 			}, true)
 
 			if len(instances) == 0 {

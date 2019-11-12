@@ -67,10 +67,10 @@ func (c *Client) GetLatestRelease(ctx context.Context, project, application stri
 	return &release, nil
 }
 
-func (c *Client) CreateRelease(ctx context.Context, project, application, config string) (*models.Release, error) {
+func (c *Client) CreateRelease(ctx context.Context, project, application, yamlConfig string) (*models.Release, error) {
 	var release models.Release
 	if err := c.post(ctx, models.CreateReleaseRequest{
-		Config: config,
+		RawConfig: yamlConfig,
 	}, &release, projectsURL, project, applicationsURL, application, releasesURL); err != nil {
 		return nil, err
 	}
