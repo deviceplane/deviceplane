@@ -576,7 +576,7 @@ const createRelease = `
     created_by_user_id,
     created_by_service_account_id
   )
-  values (?, ?, ?, ?, ?, ?)
+  values (?, ?, ?, ?, ?, ?, ?)
 `
 
 const getRelease = `
