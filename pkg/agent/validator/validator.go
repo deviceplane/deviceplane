@@ -1,10 +1,10 @@
 package validator
 
 import (
-	"github.com/deviceplane/deviceplane/pkg/spec"
+	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
 type Validator interface {
-	Validate(spec.Service) error
+	Validate(models.Service) error
 	Name() string
 }

@@ -26,7 +26,6 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/file"
 	"github.com/deviceplane/deviceplane/pkg/models"
-	"github.com/deviceplane/deviceplane/pkg/spec"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -190,7 +189,7 @@ func (a *Agent) runBundleApplier() {
 		if bundle := a.downloadLatestBundle(); bundle != nil {
 			a.supervisor.SetApplications(bundle.Applications)
 			a.statusGarbageCollector.SetBundle(*bundle)
-			var desiredAgentSpec spec.Service
+			var desiredAgentSpec models.Service
 			if err := yaml.Unmarshal([]byte(bundle.DesiredAgentSpec), &desiredAgentSpec); err == nil {
 				a.updater.SetDesiredSpec(desiredAgentSpec)
 			}

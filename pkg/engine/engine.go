@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/deviceplane/deviceplane/pkg/spec"
+	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
 var (
@@ -12,7 +12,7 @@ var (
 )
 
 type Engine interface {
-	CreateContainer(context.Context, string, spec.Service) (string, error)
+	CreateContainer(context.Context, string, models.Service) (string, error)
 	InspectContainer(context.Context, string) (*InspectResponse, error)
 	StartContainer(context.Context, string) error
 	ListContainers(context.Context, map[string]struct{}, map[string]string, bool) ([]Instance, error)

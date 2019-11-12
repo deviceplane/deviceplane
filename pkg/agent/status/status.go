@@ -7,8 +7,6 @@ import (
 
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/models"
-	"github.com/deviceplane/deviceplane/pkg/spec"
-	"gopkg.in/yaml.v2"
 )
 
 type GarbageCollector struct {
@@ -105,14 +103,8 @@ func (gc *GarbageCollector) serviceStatusGarbageCollector() {
 
 		services := make(map[string]map[string]struct{})
 		for _, application := range bundle.Applications {
-			var applicationConfig map[string]spec.Service
-			if err := yaml.Unmarshal([]byte(application.LatestRelease.Config), &applicationConfig); err != nil {
-				log.WithError(err).Error("unmarshal")
-				continue
-			}
-
 			services[application.Application.ID] = make(map[string]struct{})
-			for serviceName := range applicationConfig {
+			for serviceName := range application.LatestRelease.Config {
 				services[application.Application.ID][serviceName] = struct{}{}
 			}
 		}

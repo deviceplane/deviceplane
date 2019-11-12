@@ -5,13 +5,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/agent/utils"
 	"github.com/deviceplane/deviceplane/pkg/agent/validator"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/models"
-	"github.com/deviceplane/deviceplane/pkg/spec"
-	"gopkg.in/yaml.v2"
 )
 
 type ApplicationSupervisor struct {
@@ -66,16 +63,10 @@ func (s *ApplicationSupervisor) SetApplication(application models.ApplicationFul
 		break
 	}
 
-	var applicationConfig map[string]spec.Service
-	if err := yaml.Unmarshal([]byte(application.LatestRelease.Config), &applicationConfig); err != nil {
-		log.WithError(err).Error("unmarshal")
-		return
-	}
-
-	s.reporter.SetDesiredApplication(application.LatestRelease.ID, applicationConfig)
+	s.reporter.SetDesiredApplication(application.LatestRelease.ID, application.LatestRelease.Config)
 
 	serviceNames := make(map[string]struct{})
-	for serviceName, service := range applicationConfig {
+	for serviceName, service := range application.LatestRelease.Config {
 		s.lock.Lock()
 		serviceSupervisor, ok := s.serviceSupervisors[serviceName]
 		if !ok {

@@ -166,13 +166,14 @@ type ApplicationDeviceCounts struct {
 }
 
 type Release struct {
-	ID                        string    `json:"id"`
-	CreatedAt                 time.Time `json:"createdAt"`
-	ProjectID                 string    `json:"projectId"`
-	ApplicationID             string    `json:"applicationId"`
-	Config                    string    `json:"config"`
-	CreatedByUserID           *string   `json:"createdByUserId"`
-	CreatedByServiceAccountID *string   `json:"createdByServiceAccountId"`
+	ID                        string             `json:"id"`
+	CreatedAt                 time.Time          `json:"createdAt"`
+	ProjectID                 string             `json:"projectId"`
+	ApplicationID             string             `json:"applicationId"`
+	Config                    map[string]Service `json:"config"`
+	RawConfig                 string             `json:"rawConfig"`
+	CreatedByUserID           *string            `json:"createdByUserId"`
+	CreatedByServiceAccountID *string            `json:"createdByServiceAccountId"`
 }
 
 type ReleaseDeviceCounts struct {

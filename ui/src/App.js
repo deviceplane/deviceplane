@@ -522,7 +522,7 @@ class CreateRelease extends Component {
     super(props);
     this.state = {
       externalData: [],
-      config: '',
+      rawConfig: '',
       backendError: null
     };
   }
@@ -538,7 +538,7 @@ class CreateRelease extends Component {
       .then(response => {
         this.setState({
           externalData: response.data,
-          config: response.data.config
+          rawConfig: response.data.rawConfig
         });
       })
       .catch(error => {
@@ -547,7 +547,7 @@ class CreateRelease extends Component {
   }
 
   handleSubmit() {
-    var configError = utils.checkConfig('release', this.state.config);
+    var configError = utils.checkConfig('release', this.state.rawConfig);
 
     this.setState({
       backendError: configError
@@ -561,7 +561,7 @@ class CreateRelease extends Component {
       .post(
         `${config.endpoint}/projects/${this.props.projectName}/applications/${this.props.applicationName}/releases`,
         {
-          config: this.state.config
+          rawConfig: this.state.rawConfig
         },
         {
           withCredentials: true
@@ -617,8 +617,8 @@ class CreateRelease extends Component {
               <Editor
                 width="100%"
                 height="300px"
-                value={this.state.config}
-                onChange={value => this.setState({ config: value })}
+                value={this.state.rawConfig}
+                onChange={value => this.setState({ rawConfig: value })}
               />
               <Pane display="flex" flex="row">
                 <Button
