@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/deviceplane/deviceplane/pkg/engine"
-	"github.com/deviceplane/deviceplane/pkg/models"
+	"github.com/deviceplane/deviceplane/pkg/spec"
 	"github.com/deviceplane/deviceplane/pkg/yamltypes"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -12,7 +12,7 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
-func convert(s models.Service) (*container.Config, *container.HostConfig, error) {
+func convert(s spec.Service) (*container.Config, *container.HostConfig, error) {
 	exposedPorts, portBindings, err := ports(s.Ports)
 	if err != nil {
 		return nil, nil, err

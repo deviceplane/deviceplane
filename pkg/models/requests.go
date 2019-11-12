@@ -1,7 +1,7 @@
 package models
 
 type CreateReleaseRequest struct {
-	RawConfig string `json:"rawConfig" validate:"config"`
+	Config string `json:"config" validate:"config"`
 }
 
 type ExecuteResponse struct {

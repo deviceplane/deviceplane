@@ -10,6 +10,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/agent/utils"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/models"
+	"github.com/deviceplane/deviceplane/pkg/spec"
 )
 
 type Updater struct {
@@ -17,7 +18,7 @@ type Updater struct {
 	projectID string
 	version   string
 
-	desiredSpec models.Service
+	desiredSpec spec.Service
 	once        sync.Once
 	lock        sync.RWMutex
 }
@@ -30,7 +31,7 @@ func NewUpdater(engine engine.Engine, projectID, version string) *Updater {
 	}
 }
 
-func (u *Updater) SetDesiredSpec(desiredSpec models.Service) {
+func (u *Updater) SetDesiredSpec(desiredSpec spec.Service) {
 	u.lock.Lock()
 	u.desiredSpec = desiredSpec
 	u.lock.Unlock()
@@ -69,7 +70,7 @@ func (u *Updater) updater() {
 	}
 }
 
-func (u *Updater) update(desiredSpec models.Service, desiredVersion string) {
+func (u *Updater) update(desiredSpec spec.Service, desiredVersion string) {
 	instances := utils.ContainerList(context.TODO(), u.engine, nil, map[string]string{
 		models.AgentVersionLabel: desiredVersion,
 	}, true)
@@ -90,7 +91,7 @@ func (u *Updater) update(desiredSpec models.Service, desiredVersion string) {
 	utils.ContainerStart(context.TODO(), u.engine, instanceID)
 }
 
-func withAgentVersionLabel(s models.Service, version string) models.Service {
+func withAgentVersionLabel(s spec.Service, version string) spec.Service {
 	if s.Labels == nil {
 		s.Labels = make(map[string]string)
 	}
@@ -98,7 +99,7 @@ func withAgentVersionLabel(s models.Service, version string) models.Service {
 	return s
 }
 
-func withCommandInterpolation(s models.Service, projectID string) models.Service {
+func withCommandInterpolation(s spec.Service, projectID string) spec.Service {
 	var command []string
 	for _, arg := range s.Command {
 		command = append(command, strings.ReplaceAll(arg, "$PROJECT", projectID))

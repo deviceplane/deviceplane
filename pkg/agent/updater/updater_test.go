@@ -3,7 +3,7 @@ package updater
 import (
 	"testing"
 
-	"github.com/deviceplane/deviceplane/pkg/models"
+	"github.com/deviceplane/deviceplane/pkg/spec"
 	"github.com/deviceplane/deviceplane/pkg/yamltypes"
 	"github.com/stretchr/testify/require"
 )
@@ -29,7 +29,7 @@ func TestWithCommandInterpolation(t *testing.T) {
 			projectID: "prj",
 		},
 	} {
-		s := models.Service{
+		s := spec.Service{
 			Entrypoint: []string{"a"},
 			Command:    scenario.command,
 		}

@@ -7,11 +7,51 @@ import (
 
 	"github.com/deviceplane/deviceplane/pkg/hash"
 	"github.com/deviceplane/deviceplane/pkg/models"
+	"github.com/deviceplane/deviceplane/pkg/yamltypes"
 )
 
-func WithStandardLabels(s models.Service, applicationID, serviceName string) models.Service {
+type Service struct {
+	CapAdd         []string                  `yaml:"cap_add,omitempty"`
+	CapDrop        []string                  `yaml:"cap_drop,omitempty"`
+	Command        yamltypes.Command         `yaml:"command,flow,omitempty"`
+	CPUSet         string                    `yaml:"cpuset,omitempty"`
+	CPUShares      yamltypes.StringorInt     `yaml:"cpu_shares,omitempty"`
+	CPUQuota       yamltypes.StringorInt     `yaml:"cpu_quota,omitempty"`
+	DNS            yamltypes.Stringorslice   `yaml:"dns,omitempty"`
+	DNSOpts        []string                  `yaml:"dns_opt,omitempty"`
+	DNSSearch      yamltypes.Stringorslice   `yaml:"dns_search,omitempty"`
+	DomainName     string                    `yaml:"domainname,omitempty"`
+	Entrypoint     yamltypes.Command         `yaml:"entrypoint,flow,omitempty"`
+	Environment    yamltypes.MaporEqualSlice `yaml:"environment,omitempty"`
+	ExtraHosts     []string                  `yaml:"extra_hosts,omitempty"`
+	GroupAdd       []string                  `yaml:"group_add,omitempty"`
+	Image          string                    `yaml:"image,omitempty"`
+	Hostname       string                    `yaml:"hostname,omitempty"`
+	Ipc            string                    `yaml:"ipc,omitempty"`
+	Labels         yamltypes.SliceorMap      `yaml:"labels,omitempty"`
+	MemLimit       yamltypes.MemStringorInt  `yaml:"mem_limit,omitempty"`
+	MemReservation yamltypes.MemStringorInt  `yaml:"mem_reservation,omitempty"`
+	MemSwapLimit   yamltypes.MemStringorInt  `yaml:"memswap_limit,omitempty"`
+	NetworkMode    string                    `yaml:"network_mode,omitempty"`
+	OomKillDisable bool                      `yaml:"oom_kill_disable,omitempty"`
+	OomScoreAdj    yamltypes.StringorInt     `yaml:"oom_score_adj,omitempty"`
+	Pid            string                    `yaml:"pid,omitempty"`
+	Ports          []string                  `yaml:"ports,omitempty"`
+	Privileged     bool                      `yaml:"privileged,omitempty"`
+	ReadOnly       bool                      `yaml:"read_only,omitempty"`
+	Restart        string                    `yaml:"restart,omitempty"`
+	SecurityOpt    []string                  `yaml:"security_opt,omitempty"`
+	ShmSize        yamltypes.MemStringorInt  `yaml:"shm_size,omitempty"`
+	StopSignal     string                    `yaml:"stop_signal,omitempty"`
+	User           string                    `yaml:"user,omitempty"`
+	Uts            string                    `yaml:"uts,omitempty"`
+	Volumes        *yamltypes.Volumes        `yaml:"volumes,omitempty"`
+	WorkingDir     string                    `yaml:"working_dir,omitempty"`
+}
+
+func (s Service) WithStandardLabels(applicationID, serviceName string) Service {
 	// Calculate hash before adding standard labels
-	hash := Hash(s, serviceName)
+	hash := s.Hash(serviceName)
 
 	// TODO
 	if s.Labels == nil {
@@ -24,15 +64,15 @@ func WithStandardLabels(s models.Service, applicationID, serviceName string) mod
 	return s
 }
 
-func Hash(s models.Service, name string) string {
-	return applyHash(s, name, hash.Hash)
+func (s Service) Hash(name string) string {
+	return s.hash(name, hash.Hash)
 }
 
-func ShortHash(s models.Service, name string) string {
-	return applyHash(s, name, hash.ShortHash)
+func (s Service) ShortHash(name string) string {
+	return s.hash(name, hash.ShortHash)
 }
 
-func applyHash(s models.Service, name string, hash func(string) string) string {
+func (s Service) hash(name string, hash func(string) string) string {
 	mapToSlice := func(m map[string]string) []string {
 		var s []string
 		for k, v := range m {

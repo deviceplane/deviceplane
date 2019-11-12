@@ -3,13 +3,12 @@ package spec
 import (
 	"testing"
 
-	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/deviceplane/deviceplane/pkg/yamltypes"
 	"github.com/stretchr/testify/require"
 )
 
-func fullService() models.Service {
-	return models.Service{
+func fullService() Service {
+	return Service{
 		CapAdd:      []string{"x", "y", "z"},
 		CapDrop:     []string{"x", "y", "z"},
 		Command:     yamltypes.Command([]string{"x", "y", "z"}),
@@ -62,29 +61,29 @@ func fullService() models.Service {
 
 func TestHash(t *testing.T) {
 	s := fullService()
-	require.Equal(t, Hash(s, ""), Hash(s, ""))
-	require.Equal(t, Hash(s, "s"), Hash(s, "s"))
+	require.Equal(t, s.Hash(""), s.Hash(""))
+	require.Equal(t, s.Hash("s"), s.Hash("s"))
 
-	require.NotEqual(t, Hash(s, "s1"), Hash(s, "s2"))
+	require.NotEqual(t, s.Hash("s1"), s.Hash("s2"))
 
-	for _, f := range []func(models.Service) models.Service{
-		func(s models.Service) models.Service {
+	for _, f := range []func(Service) Service{
+		func(s Service) Service {
 			s.Image = "xx"
 			return s
 		},
-		func(s models.Service) models.Service {
+		func(s Service) Service {
 			s.Command = yamltypes.Command([]string{"xx", "yy", "zz"})
 			return s
 		},
-		func(s models.Service) models.Service {
+		func(s Service) Service {
 			s.MemLimit = yamltypes.MemStringorInt(2)
 			return s
 		},
-		func(s models.Service) models.Service {
+		func(s Service) Service {
 			s.ReadOnly = false
 			return s
 		},
-		func(s models.Service) models.Service {
+		func(s Service) Service {
 			s.Labels = yamltypes.SliceorMap(map[string]string{
 				"k1": "v1",
 				"k2": "v2",
@@ -93,14 +92,14 @@ func TestHash(t *testing.T) {
 			})
 			return s
 		},
-		func(s models.Service) models.Service {
+		func(s Service) Service {
 			s.Labels = yamltypes.SliceorMap(map[string]string{
 				"k1": "v1",
 				"k2": "v2",
 			})
 			return s
 		},
-		func(s models.Service) models.Service {
+		func(s Service) Service {
 			s.Labels = yamltypes.SliceorMap(map[string]string{
 				"k1": "vv1",
 				"k2": "vv2",
@@ -108,7 +107,7 @@ func TestHash(t *testing.T) {
 			})
 			return s
 		},
-		func(s models.Service) models.Service {
+		func(s Service) Service {
 			s.Volumes = &yamltypes.Volumes{
 				Volumes: []*yamltypes.Volume{
 					{
@@ -119,7 +118,7 @@ func TestHash(t *testing.T) {
 			}
 			return s
 		},
-		func(s models.Service) models.Service {
+		func(s Service) Service {
 			s.Volumes = &yamltypes.Volumes{
 				Volumes: []*yamltypes.Volume{
 					{
@@ -130,7 +129,7 @@ func TestHash(t *testing.T) {
 			}
 			return s
 		},
-		func(s models.Service) models.Service {
+		func(s Service) Service {
 			s.Volumes = &yamltypes.Volumes{
 				Volumes: []*yamltypes.Volume{
 					{
@@ -142,7 +141,7 @@ func TestHash(t *testing.T) {
 			}
 			return s
 		},
-		func(s models.Service) models.Service {
+		func(s Service) Service {
 			s.Volumes = &yamltypes.Volumes{
 				Volumes: []*yamltypes.Volume{
 					{
@@ -158,6 +157,6 @@ func TestHash(t *testing.T) {
 			return s
 		},
 	} {
-		require.NotEqual(t, Hash(s, ""), Hash(f(s), ""))
+		require.NotEqual(t, s.Hash(""), f(s).Hash(""))
 	}
 }

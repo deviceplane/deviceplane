@@ -572,7 +572,6 @@ const createRelease = `
     project_id,
     application_id,
     config,
-    raw_config,
     created_by_user_id,
     created_by_service_account_id
   )
@@ -580,12 +579,12 @@ const createRelease = `
 `
 
 const getRelease = `
-  select id, created_at, project_id, application_id, config, raw_config, created_by_user_id, created_by_service_account_id from releases
+  select id, created_at, project_id, application_id, config, created_by_user_id, created_by_service_account_id from releases
   where id = ? and project_id = ? and application_id = ?
 `
 
 const getLatestRelease = `
-  select id, created_at, project_id, application_id, config, raw_config, created_by_user_id, created_by_service_account_id from releases
+  select id, created_at, project_id, application_id, config, created_by_user_id, created_by_service_account_id from releases
   where project_id = ? and application_id = ?
   order by created_at desc
   limit 1
@@ -593,7 +592,7 @@ const getLatestRelease = `
 
 // TODO: real pagination
 const listReleases = `
-  select id, created_at, project_id, application_id, config, raw_config, created_by_user_id, created_by_service_account_id from releases
+  select id, created_at, project_id, application_id, config, created_by_user_id, created_by_service_account_id from releases
   where project_id = ? and application_id = ?
   order by created_at desc
   limit 10

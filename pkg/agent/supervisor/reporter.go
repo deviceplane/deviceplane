@@ -5,8 +5,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/deviceplane/deviceplane/pkg/spec"
+
 	"github.com/apex/log"
-	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
 type Reporter struct {
@@ -51,7 +52,7 @@ func NewReporter(
 	}
 }
 
-func (r *Reporter) SetDesiredApplication(release string, applicationConfig map[string]models.Service) {
+func (r *Reporter) SetDesiredApplication(release string, applicationConfig map[string]spec.Service) {
 	serviceNames := make(map[string]struct{})
 	for serviceName := range applicationConfig {
 		serviceNames[serviceName] = struct{}{}

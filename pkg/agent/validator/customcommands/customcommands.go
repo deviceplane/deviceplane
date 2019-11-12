@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/deviceplane/deviceplane/pkg/agent/variables"
-	"github.com/deviceplane/deviceplane/pkg/models"
+	"github.com/deviceplane/deviceplane/pkg/spec"
 )
 
 var (
@@ -21,7 +21,7 @@ func NewValidator(variables variables.Interface) *Validator {
 	}
 }
 
-func (i *Validator) Validate(s models.Service) error {
+func (i *Validator) Validate(s spec.Service) error {
 	if i.variables.GetDisableCustomCommands() {
 		if len(s.Command) != 0 ||
 			len(s.Entrypoint) != 0 {

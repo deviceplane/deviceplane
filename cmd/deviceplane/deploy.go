@@ -22,17 +22,17 @@ var deploy = cli.Command{
 			project := c.String("project")
 			application := c.String("application")
 
-			yamlConfigBytes, err := ioutil.ReadFile(c.Args().First())
+			configBytes, err := ioutil.ReadFile(c.Args().First())
 			if err != nil {
 				return err
 			}
 
-			finalYamlConfig, err := interpolation.Interpolate(string(yamlConfigBytes), os.Getenv)
+			finalConfig, err := interpolation.Interpolate(string(configBytes), os.Getenv)
 			if err != nil {
 				return err
 			}
 
-			release, err := client.CreateRelease(context.TODO(), project, application, finalYamlConfig)
+			release, err := client.CreateRelease(context.TODO(), project, application, finalConfig)
 			if err != nil {
 				return err
 			}

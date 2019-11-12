@@ -1859,7 +1859,7 @@ func (s *Store) scanApplicationDeviceCountRow(scanner scanner) (int, error) {
 	return count, nil
 }
 
-func (s *Store) CreateRelease(ctx context.Context, projectID, applicationID, yamlConfig, jsonConfig, createdByUserID, createdByServiceAccountID string) (*models.Release, error) {
+func (s *Store) CreateRelease(ctx context.Context, projectID, applicationID, config, createdByUserID, createdByServiceAccountID string) (*models.Release, error) {
 	id := newReleaseID()
 
 	var createdByUserIDNullable *string
@@ -1877,15 +1877,18 @@ func (s *Store) CreateRelease(ctx context.Context, projectID, applicationID, yam
 		id,
 		projectID,
 		applicationID,
-		jsonConfig,
-		yamlConfig,
+		config,
 		createdByUserIDNullable,
 		createdByServiceAccountIDNullable,
 	); err != nil {
 		return nil, err
 	}
 
-	return s.GetRelease(ctx, id, projectID, applicationID)
+	return &models.Release{
+		ID:            id,
+		ApplicationID: applicationID,
+		Config:        config,
+	}, nil
 }
 
 func (s *Store) GetRelease(ctx context.Context, id, projectID, applicationID string) (*models.Release, error) {
@@ -1938,27 +1941,18 @@ func (s *Store) ListReleases(ctx context.Context, projectID, applicationID strin
 }
 
 func (s *Store) scanRelease(scanner scanner) (*models.Release, error) {
-	var jsonConfig string
 	var release models.Release
 	if err := scanner.Scan(
 		&release.ID,
 		&release.CreatedAt,
 		&release.ProjectID,
 		&release.ApplicationID,
-		&jsonConfig,
-		&release.RawConfig,
+		&release.Config,
 		&release.CreatedByUserID,
 		&release.CreatedByServiceAccountID,
 	); err != nil {
 		return nil, err
 	}
-
-	var parsedConfig map[string]models.Service
-	if err := json.Unmarshal([]byte(jsonConfig), &parsedConfig); err != nil {
-		return nil, err
-	}
-	release.Config = parsedConfig
-
 	return &release, nil
 }
 

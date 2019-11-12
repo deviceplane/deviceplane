@@ -165,7 +165,7 @@ class Release extends Component {
       .post(
         `${config.endpoint}/projects/${this.props.projectName}/applications/${this.props.applicationName}/releases`,
         {
-          rawConfig: this.props.release.rawConfig
+          config: this.props.release.config
         },
         {
           withCredentials: true
@@ -240,7 +240,7 @@ class Release extends Component {
               Revert to this Release
             </Button>
           </Pane>
-          <Editor width="100%" height="300px" value={release.rawConfig} readOnly />
+          <Editor width="100%" height="300px" value={release.config} readOnly />
         </Pane>
         <Dialog
           isShown={this.state.showConfirmDialog}

@@ -10,7 +10,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 
 	"github.com/deviceplane/deviceplane/pkg/engine"
-	"github.com/deviceplane/deviceplane/pkg/models"
+	"github.com/deviceplane/deviceplane/pkg/spec"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 )
@@ -31,7 +31,7 @@ func NewEngine() (*Engine, error) {
 	}, nil
 }
 
-func (e *Engine) CreateContainer(ctx context.Context, name string, s models.Service) (string, error) {
+func (e *Engine) CreateContainer(ctx context.Context, name string, s spec.Service) (string, error) {
 	config, hostConfig, err := convert(s)
 	if err != nil {
 		return "", err

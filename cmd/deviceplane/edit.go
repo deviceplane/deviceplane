@@ -27,9 +27,9 @@ var edit = cli.Command{
 				return err
 			}
 
-			var yamlConfig string
+			var config string
 			if release != nil {
-				yamlConfig = release.RawConfig
+				config = release.Config
 			}
 
 			tmpfile, err := ioutil.TempFile("", "")
@@ -38,7 +38,7 @@ var edit = cli.Command{
 			}
 			defer os.Remove(tmpfile.Name())
 
-			if _, err := tmpfile.Write([]byte(yamlConfig)); err != nil {
+			if _, err := tmpfile.Write([]byte(config)); err != nil {
 				return err
 			}
 
@@ -61,17 +61,17 @@ var edit = cli.Command{
 				return err
 			}
 
-			yamlConfigFile, err := os.Open(tmpfile.Name())
+			configFile, err := os.Open(tmpfile.Name())
 			if err != nil {
 				return err
 			}
 
-			yamlConfigBytes, err := ioutil.ReadAll(yamlConfigFile)
+			configBytes, err := ioutil.ReadAll(configFile)
 			if err != nil {
 				return err
 			}
 
-			release, err = client.CreateRelease(context.TODO(), project, application, string(yamlConfigBytes))
+			release, err = client.CreateRelease(context.TODO(), project, application, string(configBytes))
 			if err != nil {
 				return err
 			}

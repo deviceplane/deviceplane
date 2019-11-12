@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/deviceplane/deviceplane/pkg/agent/variables"
-	"github.com/deviceplane/deviceplane/pkg/models"
+	"github.com/deviceplane/deviceplane/pkg/spec"
 )
 
 var (
@@ -22,7 +22,7 @@ func NewValidator(variables variables.Interface) *Validator {
 	}
 }
 
-func (i *Validator) Validate(s models.Service) error {
+func (i *Validator) Validate(s spec.Service) error {
 	whitelistedImages := i.variables.GetWhitelistedImages()
 
 	if isValid(s.Image, whitelistedImages) {
