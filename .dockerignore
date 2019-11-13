@@ -4,8 +4,5 @@ cmd/agent/conf
 cmd/agent/state
 cmd/controller/controller
 cmd/deviceplane/deviceplane
-cmd/deviceplane/config.yaml
 ui/build
 ui/node_modules
-.env
-localdump/

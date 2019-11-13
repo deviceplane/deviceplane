@@ -1,4 +1,4 @@
 #!/bin/bash
 set -e
 
-$(env ENV=local $(dirname "$0")/db-command.sh)
+mysql -h 127.0.0.1 -u user --password=pass -P 3306 -D deviceplane

@@ -1,9 +1,27 @@
 #!/bin/bash
 set -e
 
+mysql -h 127.0.0.1 -u user -ppass -P 3306 < pkg/controller/store/mysql/schema.sql
+
 query="
 use deviceplane;
-insert into users (id, email, password_hash, first_name, last_name, company, registration_completed) values ('usr_xxx', 'email@example.com', '5E884898DA28047151D0E56F8DC6292773603D0D6AABBDD62A11EF721D1542D8', 'Elon', 'Musk', 'Tesla', 1);
+insert into users (
+  id,
+  email,
+  password_hash,
+  first_name,
+  last_name,
+  company,
+  registration_completed
+) values (
+  'usr_xxx',
+  'email@example.com',
+  '5E884898DA28047151D0E56F8DC6292773603D0D6AABBDD62A11EF721D1542D8',
+  'Elon',
+  'Musk',
+  'Tesla',
+  1
+);
 "
 
 echo "$query" | mysql -h 127.0.0.1 -u user -ppass -P 3306
