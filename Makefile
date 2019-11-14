@@ -36,6 +36,3 @@ push-cli: cli
 
 cli-binaries:
 	./scripts/build-cli-binaries
-
-upload-cli-binary-redirects:
-	./scripts/upload-cli-binary-redirects
