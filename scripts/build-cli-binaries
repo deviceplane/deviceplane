@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+if [ -z "$CLI_VERSION" ]; then
+    echo "CLI_VERSION not set"
+    exit 1
+fi
+
 mkdir -p ./dist/cli
 
 OS_PLATFORM_ARG=(linux windows darwin)

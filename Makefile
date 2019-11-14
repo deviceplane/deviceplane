@@ -39,7 +39,3 @@ cli-binaries:
 
 upload-cli-binary-redirects:
 	./scripts/upload-cli-binary-redirects
-
-statik:
-	npm run build --prefix ./ui
-	statik -src=./ui/build -dest=./pkg
