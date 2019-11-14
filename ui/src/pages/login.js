@@ -101,7 +101,7 @@ export default class Login extends Component {
           <Pane paddingRight={minorScale(3)}>
             <Logo />
           </Pane>
-          <Heading size={600}>Device Plane</Heading>
+          <Heading size={600}>Deviceplane</Heading>
         </Pane>
         {this.state.submitError && (
           <Alert

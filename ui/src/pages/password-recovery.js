@@ -132,7 +132,7 @@ export default class PasswordRecovery extends Component {
           <Pane paddingRight={minorScale(3)}>
             <Logo />
           </Pane>
-          <Heading size={600}>Device Plane</Heading>
+          <Heading size={600}>Deviceplane</Heading>
         </Pane>
         {this.state.passwordRecoveryError && (
           <Alert

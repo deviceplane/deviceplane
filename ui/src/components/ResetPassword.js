@@ -94,7 +94,7 @@ export default class ResetPassword extends Component {
           <Pane paddingRight={minorScale(3)}>
             <Logo />
           </Pane>
-          <Heading size={600}>Device Plane</Heading>
+          <Heading size={600}>Deviceplane</Heading>
         </Pane>
         <React.Fragment>
           <Pane display="flex" justifyContent="center" padding={majorScale(2)}>
