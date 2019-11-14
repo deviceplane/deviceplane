@@ -38,7 +38,7 @@ jobs:
     steps:
       - checkout
       - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
-      - run: ./scripts/ci/release-cli
+      - run: CLI_VERSION=${CIRCLE_TAG#"cli-"} make push-cli
 
   build-cli-binaries:
     docker:
@@ -46,7 +46,8 @@ jobs:
     steps:
       - *attach_workspace
       - checkout
-      - run: ./scripts/ci/build-cli-binaries
+      - run: mkdir -p ./dist/cli
+      - run: CLI_VERSION=${CIRCLE_TAG#"cli-"} make cli-binaries
       - run: mv dist /tmp/workspace
       - persist_to_workspace:
           root: /tmp/workspace
@@ -59,14 +60,16 @@ jobs:
     steps:
       - *attach_workspace
       - checkout
-      - run: ./scripts/ci/upload-cli-binaries
+      - run: sudo pip install awscli
+      - run: aws s3 sync /tmp/workspace/dist/cli s3://cli.deviceplane.com/
 
   upload-cli-binary-redirects:
     docker:
       - image: circleci/python:2.7-jessie
     steps:
       - checkout
-      - run: ./scripts/ci/upload-cli-binary-redirects
+      - run: sudo pip install awscli
+      - run: CLI_VERSION=${CIRCLE_TAG#"cli-"} ./scripts/ci/upload-cli-binary-redirects
 
 workflows:
   version: 2
@@ -98,23 +101,31 @@ workflows:
           requires:
             - test
           filters:
+            tags:
+              only: /^cli.*/
             branches:
-              only: master
+              ignore: /.*/
       - build-cli-binaries:
           requires:
             - test
           filters:
+            tags:
+              only: /^cli.*/
             branches:
-              only: master
+              ignore: /.*/
       - upload-cli-binaries:
           requires:
             - build-cli-binaries
           filters:
+            tags:
+              only: /^cli.*/
             branches:
-              only: master
+              ignore: /.*/
       - upload-cli-binary-redirects:
           requires:
             - upload-cli-binaries
           filters:
+            tags:
+              only: /^cli.*/
             branches:
-              only: master
+              ignore: /.*/
