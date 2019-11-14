@@ -1,5 +1,0 @@
-#!/bin/bash
-set -ex
-
-CONTROLLER_VERSION=${CIRCLE_TAG#"controller-"}
-echo $CONTROLLER_VERSION
