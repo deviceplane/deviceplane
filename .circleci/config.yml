@@ -18,7 +18,7 @@ jobs:
     steps:
       - checkout
       - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
-      - run: ./scripts/ci/release-controller
+      - run: CONTROLLER_VERSION=${CIRCLE_TAG#"controller-"} make push-controller
 
   release-agent:
     machine:
@@ -72,13 +72,20 @@ workflows:
   version: 2
   test_release:
     jobs:
-      - test
+      - test:
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              only: /.*/
       - release-controller:
           requires:
             - test
           filters:
+            tags:
+              only: /^controller.*/
             branches:
-              only: master
+              ignore: /.*/
       - release-agent:
           requires:
             - test
