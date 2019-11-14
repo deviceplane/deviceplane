@@ -91,6 +91,8 @@ workflows:
             branches:
               only: master
       - release-controller2:
+          requires:
+            - test
           filters:
             tags:
               only: /^controller.*/
