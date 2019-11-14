@@ -1,11 +1,21 @@
 #!/bin/bash
-set -ex
+set -e
 
-mkdir -p ./dist/cli
+OS_PLATFORM_ARG=(linux windows darwin)
 
-if ! git log -1 | grep -q "Release CLI"; then
-  exit 0
-fi
+declare -A OS_ARCH_ARG
+OS_ARCH_ARG[linux]="amd64 arm arm64"
+OS_ARCH_ARG[windows]="386 amd64"
+OS_ARCH_ARG[darwin]="amd64"
 
-sudo pip install awscli
-CLI_VERSION=$(git log -1 --pretty=%B | grep "Release CLI" | cut -d ' ' -f3) make upload-cli-binary-redirects
+for OS in ${OS_PLATFORM_ARG[@]}; do
+    for ARCH in ${OS_ARCH_ARG[${OS}]}; do
+        SOURCE="s3://cli.deviceplane.com/latest/${OS}/${ARCH}/deviceplane"
+        REDIRECT="/${CLI_VERSION}/${OS}/${ARCH}/deviceplane"
+        if test "$OS" = "windows"; then
+            SOURCE="${SOURCE}.exe"
+            REDIRECT="${REDIRECT}.exe"
+        fi
+        aws s3 cp empty ${SOURCE} --website-redirect ${REDIRECT}
+    done
+done
