@@ -20,13 +20,6 @@ jobs:
       - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
       - run: ./scripts/ci/release-controller
 
-  release-controller2:
-    machine: true
-    steps:
-      - checkout
-      - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
-      - run: ./scripts/ci/release-controller
-
   release-agent:
     machine:
       image: ubuntu-1604:201903-01
@@ -86,12 +79,6 @@ workflows:
             tags:
               only: /.*/
       - release-controller:
-          requires:
-            - test
-          filters:
-            branches:
-              only: master
-      - release-controller2:
           requires:
             - test
           filters:
