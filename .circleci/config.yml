@@ -31,7 +31,7 @@ jobs:
           mkdir -p ~/.docker && echo '{"experimental":"enabled"}' > ~/.docker/config.json
       - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
       - run: docker run --rm --privileged multiarch/qemu-user-static:register --reset
-      - run: ./scripts/ci/release-agent
+      - run: AGENT_VERSION=${CIRCLE_TAG#"agent-"} make push-agent
 
   release-cli:
     machine: true
@@ -90,8 +90,10 @@ workflows:
           requires:
             - test
           filters:
+            tags:
+              only: /^agent.*/
             branches:
-              only: master
+              ignore: /.*/
       - release-cli:
           requires:
             - test
