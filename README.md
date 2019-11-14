@@ -14,10 +14,19 @@ To run the agent navigate to the "Add Device" button in the UI. A command to run
 
 ## Releasing
 
-While on an up-to-date master branch run one of the following commands and then push to master.
+Release the controller, agent, or CLI by pushing git tags.
 
 ```
-git commit --allow-empty -m "Release controller x.x.x"
-git commit --allow-empty -m "Release agent x.x.x"
-git commit --allow-empty -m "Release CLI x.x.x"
+git tag controller-x.x.x
+git push origin controller-x.x.x
+```
+
+```
+git tag agent-x.x.x
+git push origin agent-x.x.x
+```
+
+```
+git tag cli-x.x.x
+git push origin cli-x.x.x
 ```
