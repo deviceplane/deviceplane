@@ -534,11 +534,11 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 	name := user.FirstName + " " + user.LastName
 
 	if err := s.email.Send(email.Request{
-		FromName:         "Device Plane",
+		FromName:         "Deviceplane",
 		FromAddress:      "noreply@deviceplane.com",
 		ToName:           name,
 		ToAddress:        user.Email,
-		Subject:          "Device Plane Registration Confirmation",
+		Subject:          "Deviceplane Registration Confirmation",
 		PlainTextContent: "Please go to the following URL to complete registration. https://cloud.deviceplane.com/confirm/" + registrationTokenValue,
 		HTMLContent:      "Please go to the following URL to complete registration. https://cloud.deviceplane.com/confirm/" + registrationTokenValue,
 	}); err != nil {
@@ -605,11 +605,11 @@ func (s *Service) recoverPassword(w http.ResponseWriter, r *http.Request) {
 	name := user.FirstName + " " + user.LastName
 
 	if err := s.email.Send(email.Request{
-		FromName:         "Device Plane",
+		FromName:         "Deviceplane",
 		FromAddress:      "noreply@deviceplane.com",
 		ToName:           name,
 		ToAddress:        user.Email,
-		Subject:          "Device Plane Password Recovery",
+		Subject:          "Deviceplane Password Recovery",
 		PlainTextContent: "Please go to the following URL to recover your password. https://cloud.deviceplane.com/recover/" + passwordRecoveryTokenValue,
 		HTMLContent:      "Please go to the following URL to recover your password. https://cloud.deviceplane.com/recover/" + passwordRecoveryTokenValue,
 	}); err != nil {
