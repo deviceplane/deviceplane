@@ -539,8 +539,8 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 		ToName:           name,
 		ToAddress:        user.Email,
 		Subject:          "Device Plane Registration Confirmation",
-		PlainTextContent: "Please go to the following URL to complete registration. https://app.deviceplane.com/confirm/" + registrationTokenValue,
-		HTMLContent:      "Please go to the following URL to complete registration. https://app.deviceplane.com/confirm/" + registrationTokenValue,
+		PlainTextContent: "Please go to the following URL to complete registration. https://cloud.deviceplane.com/confirm/" + registrationTokenValue,
+		HTMLContent:      "Please go to the following URL to complete registration. https://cloud.deviceplane.com/confirm/" + registrationTokenValue,
 	}); err != nil {
 		log.WithError(err).Error("send registration email")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -610,8 +610,8 @@ func (s *Service) recoverPassword(w http.ResponseWriter, r *http.Request) {
 		ToName:           name,
 		ToAddress:        user.Email,
 		Subject:          "Device Plane Password Recovery",
-		PlainTextContent: "Please go to the following URL to recover your password. https://app.deviceplane.com/recover/" + passwordRecoveryTokenValue,
-		HTMLContent:      "Please go to the following URL to recover your password. https://app.deviceplane.com/recover/" + passwordRecoveryTokenValue,
+		PlainTextContent: "Please go to the following URL to recover your password. https://cloud.deviceplane.com/recover/" + passwordRecoveryTokenValue,
+		HTMLContent:      "Please go to the following URL to recover your password. https://cloud.deviceplane.com/recover/" + passwordRecoveryTokenValue,
 	}); err != nil {
 		log.WithError(err).Error("send recovery email")
 		w.WriteHeader(http.StatusInternalServerError)
