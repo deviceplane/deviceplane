@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"errors"
+	"io"
 
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
@@ -19,7 +20,7 @@ type Engine interface {
 	StopContainer(context.Context, string) error
 	RemoveContainer(context.Context, string) error
 
-	PullImage(context.Context, string) error
+	PullImage(context.Context, string, io.Writer) error
 }
 
 type Instance struct {

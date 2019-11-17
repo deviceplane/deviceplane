@@ -16,13 +16,13 @@ func (s *Service) metrics(w http.ResponseWriter, r *http.Request) {
 	applicationID := vars["application"]
 	service := vars["service"]
 
-	containerID := s.supervisorLookup.GetContainerID(applicationID, service)
-	if containerID == nil {
+	containerID, ok := s.supervisorLookup.GetContainerID(applicationID, service)
+	if !ok {
 		w.WriteHeader(codes.StatusMetricsNotAvailable)
 		return
 	}
 
-	if err := s.netnsManager.RunInContainerNamespace(r.Context(), *containerID, func() {
+	if err := s.netnsManager.RunInContainerNamespace(r.Context(), containerID, func() {
 		conn, err := net.Dial("tcp", "127.0.0.1:2112")
 		if err != nil {
 			http.Error(w, err.Error(), codes.StatusMetricsNotAvailable)

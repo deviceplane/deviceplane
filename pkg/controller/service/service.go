@@ -222,7 +222,7 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "UpdateDevice", s.withDevice(s.updateDevice))).Methods("PATCH")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "DeleteDevice", s.withDevice(s.deleteDevice))).Methods("DELETE")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/ssh", s.validateAuthorization("devices", "SSH", s.withDevice(s.initiateSSH))).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/execute", s.validateAuthorization("devices", "ExecuteCommand", s.withDevice(s.execute))).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/imagepullprogress", s.validateAuthorization("devices", "GetImagePullProgress", s.withDevice(s.imagePullProgress))).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/metrics", s.validateAuthorization("devices", "GetMetrics", s.withDevice(s.metrics))).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/metrics", s.validateAuthorization("devices", "GetServiceMetrics", s.withDevice(s.serviceMetrics))).Methods("GET")
 

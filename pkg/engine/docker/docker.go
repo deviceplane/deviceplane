@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 
 	"github.com/docker/docker/api/types/filters"
@@ -113,12 +112,12 @@ func (e *Engine) RemoveContainer(ctx context.Context, id string) error {
 	return nil
 }
 
-func (e *Engine) PullImage(ctx context.Context, image string) error {
+func (e *Engine) PullImage(ctx context.Context, image string, w io.Writer) error {
 	out, err := e.client.ImagePull(ctx, image, types.ImagePullOptions{})
 	if err != nil {
 		return err
 	}
 	defer out.Close()
-	_, err = io.Copy(ioutil.Discard, out)
+	_, err = io.Copy(w, out)
 	return err
 }

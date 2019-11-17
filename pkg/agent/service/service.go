@@ -32,7 +32,7 @@ func NewService(
 	}
 
 	s.router.HandleFunc("/ssh", s.ssh).Methods("POST")
-	s.router.HandleFunc("/execute", s.execute).Methods("POST")
+	s.router.HandleFunc("/applications/{application}/services/{service}/imagepullprogress", s.imagePullProgress).Methods("GET")
 	s.router.HandleFunc("/applications/{application}/services/{service}/metrics", s.metrics).Methods("GET")
 	s.router.Handle("/metrics", promhttp.Handler())
 

@@ -25,6 +25,8 @@ type ServiceSupervisor struct {
 	reporter      *Reporter
 	validators    []validator.Validator
 
+	imagePuller *imagePuller
+
 	release             string
 	service             models.Service
 	keepAliveRelease    chan string
@@ -55,6 +57,8 @@ func NewServiceSupervisor(
 		engine:        engine,
 		reporter:      reporter,
 		validators:    validators,
+
+		imagePuller: newImagePuller(applicationID, serviceName, engine),
 
 		keepAliveRelease:    make(chan string),
 		keepAliveService:    make(chan models.Service),
@@ -134,7 +138,7 @@ func (s *ServiceSupervisor) reconcileLoop() {
 			}
 
 			startCanceler()
-			utils.ImagePull(ctx, s.engine, service.Image)
+			s.imagePuller.Pull(ctx, service.Image)
 
 			s.sendKeepAliveDeactivate()
 
@@ -142,7 +146,7 @@ func (s *ServiceSupervisor) reconcileLoop() {
 			utils.ContainerRemove(ctx, s.engine, instance.ID)
 		} else {
 			startCanceler()
-			utils.ImagePull(ctx, s.engine, service.Image)
+			s.imagePuller.Pull(ctx, service.Image)
 		}
 
 		s.sendKeepAliveDeactivate()

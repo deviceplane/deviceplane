@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"io"
 	"time"
 
 	"github.com/apex/log"
@@ -72,9 +73,9 @@ func ContainerRemove(ctx context.Context, eng engine.Engine, id string) {
 	}, 2*time.Minute)
 }
 
-func ImagePull(ctx context.Context, eng engine.Engine, image string) {
+func ImagePull(ctx context.Context, eng engine.Engine, image string, w io.Writer) {
 	Retry(ctx, func(ctx context.Context) error {
-		if err := eng.PullImage(ctx, canonical_image.ToCanonical(image)); err != nil {
+		if err := eng.PullImage(ctx, canonical_image.ToCanonical(image), w); err != nil {
 			log.WithError(err).Error("pull image")
 			return err
 		}

@@ -39,19 +39,24 @@ func (s *Service) initiateSSH(w http.ResponseWriter, r *http.Request,
 	})
 }
 
-func (s *Service) execute(w http.ResponseWriter, r *http.Request,
+func (s *Service) imagePullProgress(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID,
 	deviceID string,
 ) {
+	vars := mux.Vars(r)
+	applicationID := vars["application"]
+	service := vars["service"]
+
 	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
 		// TODO: build a proper client for this API
-		req, _ := http.NewRequest("POST", "/execute", r.Body)
-
-		if _, ok := r.URL.Query()["background"]; ok {
-			query := req.URL.Query()
-			query.Add("background", "")
-			req.URL.RawQuery = query.Encode()
-		}
+		req, _ := http.NewRequest(
+			"GET",
+			fmt.Sprintf(
+				"/applications/%s/services/%s/imagepullprogress",
+				applicationID, service,
+			),
+			nil,
+		)
 
 		if err := req.Write(deviceConn); err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)

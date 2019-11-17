@@ -2,6 +2,7 @@ package updater
 
 import (
 	"context"
+	"io/ioutil"
 	"strings"
 	"sync"
 	"time"
@@ -78,7 +79,7 @@ func (u *Updater) update(desiredSpec models.Service, desiredVersion string) {
 		return
 	}
 
-	utils.ImagePull(context.TODO(), u.engine, desiredSpec.Image)
+	utils.ImagePull(context.TODO(), u.engine, desiredSpec.Image, ioutil.Discard)
 
 	instanceID := utils.ContainerCreate(
 		context.TODO(),
