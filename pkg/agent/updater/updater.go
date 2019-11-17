@@ -71,24 +71,34 @@ func (u *Updater) updater() {
 }
 
 func (u *Updater) update(desiredSpec models.Service, desiredVersion string) {
-	instances := utils.ContainerList(context.TODO(), u.engine, nil, map[string]string{
+	instances, err := utils.ContainerList(context.TODO(), u.engine, nil, map[string]string{
 		models.AgentVersionLabel: desiredVersion,
 	}, true)
+	if err != nil {
+		return
+	}
 
 	if len(instances) > 0 {
 		return
 	}
 
-	utils.ImagePull(context.TODO(), u.engine, desiredSpec.Image, ioutil.Discard)
+	if err = utils.ImagePull(context.TODO(), u.engine, desiredSpec.Image, ioutil.Discard); err != nil {
+		return
+	}
 
-	instanceID := utils.ContainerCreate(
+	instanceID, err := utils.ContainerCreate(
 		context.TODO(),
 		u.engine,
 		"",
 		withCommandInterpolation(withAgentVersionLabel(desiredSpec, desiredVersion), u.projectID),
 	)
+	if err != nil {
+		return
+	}
 
-	utils.ContainerStart(context.TODO(), u.engine, instanceID)
+	if err = utils.ContainerStart(context.TODO(), u.engine, instanceID); err != nil {
+		return
+	}
 }
 
 func withAgentVersionLabel(s models.Service, version string) models.Service {

@@ -122,10 +122,13 @@ func (s *ServiceSupervisor) reconcileLoop() {
 			}()
 		}
 
-		instances := utils.ContainerList(ctx, s.engine, nil, map[string]string{
+		instances, err := utils.ContainerList(ctx, s.engine, nil, map[string]string{
 			models.ApplicationLabel: s.applicationID,
 			models.ServiceLabel:     s.serviceName,
 		}, true)
+		if err != nil {
+			goto cont
+		}
 
 		if len(instances) > 0 {
 			// TODO: filter down to just one instance if we find more
@@ -138,12 +141,18 @@ func (s *ServiceSupervisor) reconcileLoop() {
 			}
 
 			startCanceler()
-			s.imagePuller.Pull(ctx, service.Image)
+			if err = s.imagePuller.Pull(ctx, service.Image); err != nil {
+				goto cont
+			}
 
 			s.sendKeepAliveDeactivate()
 
-			utils.ContainerStop(ctx, s.engine, instance.ID)
-			utils.ContainerRemove(ctx, s.engine, instance.ID)
+			if err = utils.ContainerStop(ctx, s.engine, instance.ID); err != nil {
+				goto cont
+			}
+			if err = utils.ContainerRemove(ctx, s.engine, instance.ID); err != nil {
+				goto cont
+			}
 		} else {
 			startCanceler()
 			s.imagePuller.Pull(ctx, service.Image)
@@ -162,12 +171,14 @@ func (s *ServiceSupervisor) reconcileLoop() {
 			}
 		}
 
-		utils.ContainerCreate(
+		if _, err = utils.ContainerCreate(
 			ctx,
 			s.engine,
 			strings.Join([]string{s.serviceName, hash.ShortHash(s.applicationID), spec.ShortHash(service, s.serviceName)}, "-"),
 			spec.WithStandardLabels(service, s.applicationID, s.serviceName),
-		)
+		); err != nil {
+			goto cont
+		}
 
 		s.sendKeepAliveService(service)
 		s.sendKeepAliveRelease(release)
@@ -237,11 +248,14 @@ func (s *ServiceSupervisor) keepAlive() {
 				continue
 			}
 
-			instances := utils.ContainerList(s.ctx, s.engine, nil, map[string]string{
+			instances, err := utils.ContainerList(s.ctx, s.engine, nil, map[string]string{
 				models.ApplicationLabel: s.applicationID,
 				models.ServiceLabel:     s.serviceName,
 				models.HashLabel:        spec.Hash(service, s.serviceName),
 			}, true)
+			if err != nil {
+				continue
+			}
 
 			if len(instances) == 0 {
 				active = false
@@ -254,7 +268,9 @@ func (s *ServiceSupervisor) keepAlive() {
 			instance := instances[0]
 
 			if !instance.Running {
-				utils.ContainerStart(s.ctx, s.engine, instance.ID)
+				if err = utils.ContainerStart(s.ctx, s.engine, instance.ID); err != nil {
+					continue
+				}
 			}
 
 			s.containerID.Store(instance.ID)

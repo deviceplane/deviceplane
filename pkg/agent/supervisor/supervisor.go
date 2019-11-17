@@ -111,9 +111,12 @@ func (s *Supervisor) containerGC() {
 	defer ticker.Stop()
 
 	for {
-		instances := utils.ContainerList(s.ctx, s.engine, map[string]struct{}{
+		instances, err := utils.ContainerList(s.ctx, s.engine, map[string]struct{}{
 			models.ApplicationLabel: struct{}{},
 		}, nil, true)
+		if err != nil {
+			goto cont
+		}
 
 		s.lock.RLock()
 		for _, instance := range instances {
@@ -121,13 +124,18 @@ func (s *Supervisor) containerGC() {
 			if _, ok := s.applicationSupervisors[applicationID]; !ok {
 				// TODO: this could start many goroutines
 				go func(instanceID string) {
-					utils.ContainerStop(s.ctx, s.engine, instanceID)
-					utils.ContainerRemove(s.ctx, s.engine, instanceID)
+					if err = utils.ContainerStop(s.ctx, s.engine, instanceID); err != nil {
+						return
+					}
+					if err = utils.ContainerRemove(s.ctx, s.engine, instanceID); err != nil {
+						return
+					}
 				}(instance.ID)
 			}
 		}
 		s.lock.RUnlock()
 
+	cont:
 		select {
 		case <-ticker.C:
 			continue

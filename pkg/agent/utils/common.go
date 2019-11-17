@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func Retry(ctx context.Context, f func(context.Context) error, timeout time.Duration) {
+func Retry(ctx context.Context, f func(context.Context) error, timeout time.Duration) error {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
@@ -13,13 +13,13 @@ func Retry(ctx context.Context, f func(context.Context) error, timeout time.Dura
 		ctx2, cancel := context.WithTimeout(ctx, timeout)
 		if err := f(ctx2); err == nil {
 			cancel()
-			return
+			return nil
 		}
 		cancel()
 
 		select {
 		case <-ctx.Done():
-			return
+			return ctx.Err()
 		case <-ticker.C:
 			continue
 		}

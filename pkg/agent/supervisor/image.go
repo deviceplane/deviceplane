@@ -49,7 +49,7 @@ func newImagePuller(
 	return p
 }
 
-func (p *imagePuller) Pull(ctx context.Context, image string) {
+func (p *imagePuller) Pull(ctx context.Context, image string) error {
 	p.currentlyPulling.Store(true)
 	defer p.currentlyPulling.Store(false)
 
@@ -75,7 +75,7 @@ func (p *imagePuller) Pull(ctx context.Context, image string) {
 		}
 	}()
 
-	agent_utils.ImagePull(ctx, p.engine, image, w)
+	return agent_utils.ImagePull(ctx, p.engine, image, w)
 }
 
 func (p *imagePuller) Progress() (map[string]PullEvent, bool) {

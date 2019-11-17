@@ -35,17 +35,25 @@ func (c *Coordinator) Takeover() net.Listener {
 			return listener
 		}
 
-		instances := utils.ContainerList(context.TODO(), c.engine, map[string]struct{}{
+		instances, err := utils.ContainerList(context.TODO(), c.engine, map[string]struct{}{
 			models.AgentVersionLabel: struct{}{},
 		}, nil, true)
+		if err != nil {
+			goto cont
+		}
 
 		for _, instance := range instances {
 			if instance.Labels[models.AgentVersionLabel] != c.version {
-				utils.ContainerStop(context.TODO(), c.engine, instance.ID)
-				utils.ContainerRemove(context.TODO(), c.engine, instance.ID)
+				if err = utils.ContainerStop(context.TODO(), c.engine, instance.ID); err != nil {
+					goto cont
+				}
+				if err = utils.ContainerRemove(context.TODO(), c.engine, instance.ID); err != nil {
+					goto cont
+				}
 			}
 		}
 
+	cont:
 		select {
 		case <-ticker.C:
 			continue
