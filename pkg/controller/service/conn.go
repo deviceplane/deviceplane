@@ -1,12 +1,11 @@
 package service
 
 import (
-	"bufio"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
 
+	"github.com/deviceplane/deviceplane/pkg/agent/service/client"
 	"github.com/deviceplane/deviceplane/pkg/codes"
 	"github.com/deviceplane/deviceplane/pkg/utils"
 	"github.com/function61/holepunch-server/pkg/wsconnadapter"
@@ -25,10 +24,8 @@ func (s *Service) initiateSSH(w http.ResponseWriter, r *http.Request,
 ) {
 	s.withHijackedWebSocketConnection(w, r, func(conn net.Conn) {
 		s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-			// TODO: build a proper client for this API
-			req, _ := http.NewRequest("POST", "/ssh", nil)
-
-			if err := req.Write(deviceConn); err != nil {
+			err := client.InitiateSSH(deviceConn)
+			if err != nil {
 				http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 				return
 			}
@@ -48,22 +45,7 @@ func (s *Service) imagePullProgress(w http.ResponseWriter, r *http.Request,
 	service := vars["service"]
 
 	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-		// TODO: build a proper client for this API
-		req, _ := http.NewRequest(
-			"GET",
-			fmt.Sprintf(
-				"/applications/%s/services/%s/imagepullprogress",
-				applicationID, service,
-			),
-			nil,
-		)
-
-		if err := req.Write(deviceConn); err != nil {
-			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
-			return
-		}
-
-		resp, err := http.ReadResponse(bufio.NewReader(deviceConn), req)
+		resp, err := client.GetImagePullProgress(deviceConn, applicationID, service)
 		if err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return
@@ -78,15 +60,7 @@ func (s *Service) metrics(w http.ResponseWriter, r *http.Request,
 	deviceID string,
 ) {
 	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-		// TODO: build a proper client for this API
-		req, _ := http.NewRequest("GET", "/metrics", nil)
-
-		if err := req.Write(deviceConn); err != nil {
-			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
-			return
-		}
-
-		resp, err := http.ReadResponse(bufio.NewReader(deviceConn), req)
+		resp, err := client.GetDeviceMetrics(deviceConn)
 		if err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return
@@ -105,22 +79,7 @@ func (s *Service) serviceMetrics(w http.ResponseWriter, r *http.Request,
 	service := vars["service"]
 
 	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-		// TODO: build a proper client for this API
-		req, _ := http.NewRequest(
-			"GET",
-			fmt.Sprintf(
-				"/applications/%s/services/%s/metrics",
-				applicationID, service,
-			),
-			nil,
-		)
-
-		if err := req.Write(deviceConn); err != nil {
-			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
-			return
-		}
-
-		resp, err := http.ReadResponse(bufio.NewReader(deviceConn), req)
+		resp, err := client.GetServiceMetrics(deviceConn, applicationID, service)
 		if err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return

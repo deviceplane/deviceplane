@@ -195,6 +195,38 @@ type DeviceServiceStatus struct {
 	CurrentReleaseID string `json:"currentReleaseId"`
 }
 
+type MetricTargetConfig struct {
+	ID        string           `json:"id"`
+	CreatedAt time.Time        `json:"createdAt"`
+	ProjectID string           `json:"projectId"`
+	Type      MetricTargetType `json:"type"`
+	Configs   []MetricConfig   `json:"configs"`
+}
+
+type MetricTargetType string
+
+const (
+	MetricServiceTargetType MetricTargetType = "service"
+	MetricHostTargetType    MetricTargetType = "host"
+	MetricStateTargetType   MetricTargetType = "state"
+)
+
+type MetricConfig struct {
+	Params  *ServiceMetricParams `json:"params,omitempty"`
+	Metrics []Metric             `json:"metrics"`
+}
+
+type ServiceMetricParams struct {
+	ApplicationID string `json:"applicationId"`
+	Service       string `json:"service"`
+}
+
+type Metric struct {
+	Metric string   `json:"metric"`
+	Labels []string `json:"labels"`
+	Tags   []string `json:"tags"`
+}
+
 type MembershipFull1 struct {
 	Membership
 	User    User        `json:"user"`

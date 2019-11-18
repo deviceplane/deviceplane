@@ -8,6 +8,7 @@ import (
 
 	"github.com/DataDog/datadog-go/statsd"
 	"github.com/apex/log"
+	"github.com/deviceplane/deviceplane/pkg/controller/connman"
 	"github.com/deviceplane/deviceplane/pkg/controller/runner"
 	"github.com/deviceplane/deviceplane/pkg/controller/runner/datadog"
 	"github.com/deviceplane/deviceplane/pkg/controller/service"
@@ -67,14 +68,16 @@ func main() {
 	sendgridClient := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
 	sendgridEmail := sendgrid_email.NewEmail(sendgridClient)
 
+	connman := connman.New()
+
 	runnerManager := runner.NewManager([]runner.Runner{
-		datadog.NewRunner(sqlStore, sqlStore),
+		datadog.NewRunner(sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, st, connman),
 	})
 	runnerManager.Start()
 
 	svc := service.NewService(sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
-		sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
-		sendgridEmail, config.CookieDomain, config.CookieSecure, statikFS, st)
+		sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
+		sendgridEmail, config.CookieDomain, config.CookieSecure, statikFS, st, connman)
 
 	server := &http.Server{
 		Addr: config.Addr,

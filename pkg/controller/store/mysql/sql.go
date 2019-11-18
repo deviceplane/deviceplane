@@ -663,3 +663,29 @@ const deleteDeviceServiceStatus = `
   delete from device_service_statuses
   where project_id = ? and device_id = ? and application_id = ? and service = ?
 `
+
+const createMetricTargetConfig = `
+  insert into metric_target_configs (
+    id,
+    project_id,
+    type,
+    configs
+  )
+  values (?, ?, ?, ?)
+`
+
+const updateMetricTargetConfig = `
+  update metric_target_configs
+  set configs = ?
+  where id = ? and project_id = ?
+`
+
+const getMetricTargetConfig = `
+  select id, created_at, project_id, type, configs from metric_target_configs
+  where id = ? and project_id = ?
+`
+
+const lookupMetricTargetConfig = `
+  select id, created_at, project_id, type, configs from metric_target_configs
+  where type = ? and project_id = ?
+`

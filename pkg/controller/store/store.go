@@ -230,3 +230,13 @@ type DeviceServiceStatuses interface {
 }
 
 var ErrDeviceServiceStatusNotFound = errors.New("device service status not found")
+
+type MetricTargetConfigs interface {
+	CreateMetricTargetConfig(ctx context.Context, projectID, configType string, configs []models.MetricConfig) (*models.MetricTargetConfig, error)
+	GetMetricTargetConfig(ctx context.Context, projectID, id string) (*models.MetricTargetConfig, error)
+	LookupMetricTargetConfig(ctx context.Context, projectID, configType string) (*models.MetricTargetConfig, error)
+	UpdateMetricTargetConfig(ctx context.Context, projectID, id string, configs []models.MetricConfig) (*models.MetricTargetConfig, error)
+}
+
+var ErrInvalidMetricTargetType = errors.New("invalid metric config target type")
+var ErrMetricTargetConfigNotFound = errors.New("metric target config not found")

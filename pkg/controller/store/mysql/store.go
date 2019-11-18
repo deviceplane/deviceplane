@@ -34,6 +34,7 @@ const (
 	deviceAccessKeyPrefix         = "dak"
 	applicationPrefix             = "app"
 	releasePrefix                 = "rel"
+	metricTargetConfigPrefix      = "mtc"
 )
 
 func newUserID() string {
@@ -90,6 +91,10 @@ func newApplicationID() string {
 
 func newReleaseID() string {
 	return fmt.Sprintf("%s_%s", releasePrefix, ksuid.New().String())
+}
+
+func newMetricTargetConfigID() string {
+	return fmt.Sprintf("%s_%s", metricTargetConfigPrefix, ksuid.New().String())
 }
 
 var (
@@ -1816,25 +1821,28 @@ func (s *Store) DeleteApplication(ctx context.Context, id, projectID string) err
 }
 
 func (s *Store) scanApplication(scanner scanner) (*models.Application, error) {
+	var schedulingRuleStr string
 	var application models.Application
-	var schedulingRuleString string
 	if err := scanner.Scan(
 		&application.ID,
 		&application.CreatedAt,
 		&application.ProjectID,
 		&application.Name,
 		&application.Description,
-		&schedulingRuleString,
+		&schedulingRuleStr,
 	); err != nil {
 		return nil, err
 	}
-	if schedulingRuleString != "" {
-		if err := json.Unmarshal([]byte(schedulingRuleString), &application.SchedulingRule); err != nil {
+
+	if schedulingRuleStr == "" {
+		application.SchedulingRule = make([]models.Filter, 0)
+	} else {
+		err := json.Unmarshal([]byte(schedulingRuleStr), &application.SchedulingRule)
+		if err != nil {
 			return nil, err
 		}
-	} else {
-		application.SchedulingRule = make([]models.Filter, 0)
 	}
+
 	return &application, nil
 }
 
@@ -2163,4 +2171,95 @@ func (s *Store) scanDeviceServiceStatus(scanner scanner) (*models.DeviceServiceS
 		return nil, err
 	}
 	return &deviceServiceStatus, nil
+}
+
+func (s *Store) scanMetricTargetConfig(scanner scanner) (*models.MetricTargetConfig, error) {
+	var configsString string
+	var mtConfig models.MetricTargetConfig
+	if err := scanner.Scan(
+		&mtConfig.ID,
+		&mtConfig.CreatedAt,
+		&mtConfig.ProjectID,
+		&mtConfig.Type,
+		&configsString,
+	); err != nil {
+		return nil, err
+	}
+
+	if configsString != "" {
+		if err := json.Unmarshal([]byte(configsString), &mtConfig.Configs); err != nil {
+			return nil, err
+		}
+	} else {
+		mtConfig.Configs = make([]models.MetricConfig, 0)
+	}
+
+	return &mtConfig, nil
+}
+
+func (s *Store) GetMetricTargetConfig(ctx context.Context, projectID, id string) (*models.MetricTargetConfig, error) {
+	configRow := s.db.QueryRowContext(ctx, getMetricTargetConfig, id, projectID)
+
+	config, err := s.scanMetricTargetConfig(configRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrMetricTargetConfigNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
+func (s *Store) LookupMetricTargetConfig(ctx context.Context, projectID, configType string) (*models.MetricTargetConfig, error) {
+	configRow := s.db.QueryRowContext(ctx, lookupMetricTargetConfig, configType, projectID)
+
+	config, err := s.scanMetricTargetConfig(configRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrMetricTargetConfigNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
+func (s *Store) CreateMetricTargetConfig(ctx context.Context, projectID, configType string, configs []models.MetricConfig) (*models.MetricTargetConfig, error) {
+	configsBytes, err := json.Marshal(configs)
+	if err != nil {
+		return nil, err
+	}
+
+	id := newMetricTargetConfigID()
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		createMetricTargetConfig,
+		id,
+		projectID,
+		configType,
+		string(configsBytes),
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetMetricTargetConfig(ctx, projectID, id)
+}
+
+func (s *Store) UpdateMetricTargetConfig(ctx context.Context, projectID, id string, configs []models.MetricConfig) (*models.MetricTargetConfig, error) {
+	metricTargetConfigsBytes, err := json.Marshal(configs)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateMetricTargetConfig,
+		string(metricTargetConfigsBytes),
+		id,
+		projectID,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetMetricTargetConfig(ctx, projectID, id)
 }

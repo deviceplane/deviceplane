@@ -4,8 +4,9 @@ import (
 	"context"
 	"runtime"
 
-	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/vishvananda/netns"
+
+	"github.com/deviceplane/deviceplane/pkg/engine"
 )
 
 type Manager struct {

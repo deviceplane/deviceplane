@@ -63,6 +63,7 @@ var (
 		"ListDeviceLabels",
 		"GetDeviceRegistrationToken",
 		"ListDeviceRegistrationTokens",
+		"GetMetricTargetConfig",
 	}
 	writeActions = append(readActions, []string{
 		"CreateApplication",
@@ -99,6 +100,7 @@ var (
 		"DeleteServiceAccountAccessKey",
 		"CreateServiceAccountRoleBinding",
 		"DeleteServiceAccountRoleBinding",
+		"UpdateMetricTargetConfig",
 	}...)
 )
 
