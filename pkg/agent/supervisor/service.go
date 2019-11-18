@@ -262,8 +262,6 @@ func (s *ServiceSupervisor) keepAlive() {
 				continue
 			}
 
-			s.reporter.SetServiceRelease(s.serviceName, release)
-
 			// TODO: filter down to just one instance if we find more
 			instance := instances[0]
 
@@ -273,6 +271,7 @@ func (s *ServiceSupervisor) keepAlive() {
 				}
 			}
 
+			s.reporter.SetServiceRelease(s.serviceName, release)
 			s.containerID.Store(instance.ID)
 		}
 	}
