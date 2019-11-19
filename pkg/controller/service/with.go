@@ -125,6 +125,57 @@ func (s *Service) withDevice(handler func(http.ResponseWriter, *http.Request, st
 	}
 }
 
+func (s *Service) withApplicationAndDevice(handler func(http.ResponseWriter, *http.Request, string, string, string, string, string)) func(http.ResponseWriter, *http.Request, string, string, string) {
+	return func(w http.ResponseWriter, r *http.Request, projectID, authenticatedUserID, authenticatedServiceAccountID string) {
+		vars := mux.Vars(r)
+		application := vars["application"]
+		if application == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		device := vars["device"]
+		if device == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		var applicationID string
+		if strings.Contains(application, "_") {
+			applicationID = application
+		} else {
+			application, err := s.applications.LookupApplication(r.Context(), application, projectID)
+			if err == store.ErrApplicationNotFound {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			} else if err != nil {
+				log.WithError(err).Error("lookup application")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			applicationID = application.ID
+		}
+
+		var deviceID string
+		if strings.Contains(device, "_") {
+			deviceID = device
+		} else {
+			device, err := s.devices.LookupDevice(r.Context(), device, projectID)
+			if err == store.ErrDeviceNotFound {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			} else if err != nil {
+				log.WithError(err).Error("lookup device")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			deviceID = device.ID
+		}
+
+		handler(w, r, projectID, authenticatedUserID, authenticatedServiceAccountID, applicationID, deviceID)
+	}
+}
+
 func (s *Service) withDeviceRegistrationToken(handler func(http.ResponseWriter, *http.Request, string, string, string, string)) func(http.ResponseWriter, *http.Request, string, string, string) {
 	return func(w http.ResponseWriter, r *http.Request, projectID, authenticatedUserID, authenticatedServiceAccountID string) {
 		vars := mux.Vars(r)

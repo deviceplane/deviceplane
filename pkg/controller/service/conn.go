@@ -72,10 +72,9 @@ func (s *Service) metrics(w http.ResponseWriter, r *http.Request,
 
 func (s *Service) serviceMetrics(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID,
-	deviceID string,
+	applicationID, deviceID string,
 ) {
 	vars := mux.Vars(r)
-	applicationID := vars["application"]
 	service := vars["service"]
 
 	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {

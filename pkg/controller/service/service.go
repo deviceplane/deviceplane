@@ -231,7 +231,7 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/ssh", s.validateAuthorization("devices", "SSH", s.withDevice(s.initiateSSH))).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/imagepullprogress", s.validateAuthorization("devices", "GetImagePullProgress", s.withDevice(s.imagePullProgress))).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/metrics", s.validateAuthorization("devices", "GetMetrics", s.withDevice(s.metrics))).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/metrics", s.validateAuthorization("devices", "GetServiceMetrics", s.withDevice(s.serviceMetrics))).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/metrics", s.validateAuthorization("devices", "GetServiceMetrics", s.withApplicationAndDevice(s.serviceMetrics))).Methods("GET")
 
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization("devicelabels", "SetDeviceLabel", s.withDevice(s.setDeviceLabel))).Methods("PUT")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateAuthorization("devicelabels", "DeleteDeviceLabel", s.withDevice(s.deleteDeviceLabel))).Methods("DELETE")
