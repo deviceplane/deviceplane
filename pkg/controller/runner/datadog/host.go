@@ -15,9 +15,10 @@ func (r *Runner) getHostMetrics(deviceConn net.Conn, project *models.Project, de
 	// Get metrics from host
 	deviceMetricsResp, err := client.GetDeviceMetrics(deviceConn)
 	if err != nil || deviceMetricsResp.StatusCode != 200 {
+		r.st.Incr("runner.datadog.host_metrics_pull", append([]string{"status:failure"}, addedInternalTags(project, device)...), 1)
 		return nil
 	}
-	r.st.Incr("runner.datadog.successful_host_metrics_pull", addedInternalTags(project, device), 1)
+	r.st.Incr("runner.datadog.host_metrics_pull", append([]string{"status:success"}, addedInternalTags(project, device)...), 1)
 
 	// Convert request to DataDog format
 	metrics, err := translation.ConvertOpenMetricsToDataDog(deviceMetricsResp.Body)
