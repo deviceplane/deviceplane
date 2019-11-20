@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"os"
@@ -18,11 +19,13 @@ var ssh = cli.Command{
 	Flags: []cli.Flag{
 		projectFlag,
 		deviceFlag,
+		sshConnectTimeoutFlag,
 	},
 	Action: func(c *cli.Context) error {
 		return withClient(c, func(client *client.Client) error {
-			project := c.String("project")
-			device := c.String("device")
+			project := c.String(projectFlag.Name)
+			device := c.String(deviceFlag.Name)
+			connectTimeout := c.String(sshConnectTimeoutFlag.Name)
 
 			conn, err := client.InitiateSSH(context.TODO(), project, device)
 			if err != nil {
@@ -59,6 +62,8 @@ var ssh = cli.Command{
 					"-o",
 					"NoHostAuthenticationForLocalhost yes",
 					"127.0.0.1",
+					"-o",
+					fmt.Sprintf("ConnectTimeout=%s", connectTimeout),
 				}, c.Args()...)
 
 				cmd := exec.CommandContext(ctx,

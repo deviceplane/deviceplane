@@ -8,6 +8,18 @@ import (
 )
 
 var (
+	// Global flags
+	urlFlag = cli.StringFlag{
+		Hidden: true,
+		Name:   "url",
+		Value:  "https://cloud.deviceplane.com:443/api",
+	}
+	accessKeyFlag = cli.StringFlag{
+		Name:   "access-key",
+		EnvVar: "DEVICEPLANE_ACCESS_KEY",
+	}
+
+	// Common flags
 	projectFlag = cli.StringFlag{
 		Name:   "project",
 		EnvVar: "DEVICEPLANE_PROJECT",
@@ -20,13 +32,20 @@ var (
 		Name:   "device",
 		EnvVar: "DEVICEPLANE_DEVICE",
 	}
+
+	// SSH command flags
+	sshConnectTimeoutFlag = cli.StringFlag{
+		Name:   "connect-timeout",
+		EnvVar: "DEVICEPLANE_SSH_CONNECT_TIMEOUT",
+		Value:  "60",
+	}
 )
 
 func withClient(c *cli.Context, f func(*client.Client) error) error {
-	u, err := url.Parse(c.GlobalString("url"))
+	apiURL, err := url.Parse(c.GlobalString(urlFlag.Name))
 	if err != nil {
 		return err
 	}
-	accessKey := c.GlobalString("access-key")
-	return f(client.NewClient(u, accessKey, nil))
+	accessKey := c.GlobalString(accessKeyFlag.Name)
+	return f(client.NewClient(apiURL, accessKey, nil))
 }

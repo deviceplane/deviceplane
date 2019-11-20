@@ -15,13 +15,11 @@ var application = cli.Command{
 		{
 			Name: "create",
 			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name: "project",
-				},
+				projectFlag,
 			},
 			Action: func(c *cli.Context) error {
 				return withClient(c, func(client *client.Client) error {
-					project := c.String("project")
+					project := c.String(projectFlag.Name)
 
 					application, err := client.CreateApplication(context.TODO(), project)
 					if err != nil {

@@ -19,8 +19,8 @@ var deploy = cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 		return withClient(c, func(client *client.Client) error {
-			project := c.String("project")
-			application := c.String("application")
+			project := c.String(projectFlag.Name)
+			application := c.String(applicationFlag.Name)
 
 			yamlConfigBytes, err := ioutil.ReadFile(c.Args().First())
 			if err != nil {

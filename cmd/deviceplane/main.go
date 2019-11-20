@@ -19,15 +19,8 @@ func main() {
 	app.Usage = "Deviceplane CLI"
 
 	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Hidden: true,
-			Name:   "url",
-			Value:  "https://cloud.deviceplane.com:443/api",
-		},
-		cli.StringFlag{
-			Name:   "access-key",
-			EnvVar: "DEVICEPLANE_ACCESS_KEY",
-		},
+		urlFlag,
+		accessKeyFlag,
 	}
 
 	app.Commands = []cli.Command{

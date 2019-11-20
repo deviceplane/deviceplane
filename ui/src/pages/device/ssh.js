@@ -76,7 +76,8 @@ export default class DeviceSsh extends Component {
         `${config.wsEndpoint}/projects/${this.props.projectName}/devices/${this.props.device.id}/ssh`,
         ['binary']
       ),
-      username: ''
+      username: '',
+      readyTimeout: 60000,
     });
   }
 

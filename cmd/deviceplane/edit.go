@@ -19,8 +19,8 @@ var edit = cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 		return withClient(c, func(client *client.Client) error {
-			project := c.String("project")
-			application := c.String("application")
+			project := c.String(projectFlag.Name)
+			application := c.String(applicationFlag.Name)
 
 			release, err := client.GetLatestRelease(context.TODO(), project, application)
 			if err != nil {
