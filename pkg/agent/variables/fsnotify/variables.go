@@ -196,14 +196,12 @@ func (v *Variables) waitFor(getField func() bool) {
 	defer ticker.Stop()
 
 	for {
-		select {
-		case <-ticker.C:
-			v.lock.RLock()
-			field := getField()
-			v.lock.RUnlock()
-			if field {
-				return
-			}
+		v.lock.RLock()
+		field := getField()
+		v.lock.RUnlock()
+		if field {
+			return
 		}
+		<-ticker.C
 	}
 }
