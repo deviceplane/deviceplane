@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -2611,6 +2612,10 @@ func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
+	s.st.Incr("get_bundle", []string{
+		fmt.Sprintf("project:%s", projectID),
+	}, 1)
+
 	if err := s.devices.UpdateDeviceLastSeenAt(r.Context(), deviceID, projectID); err != nil {
 		log.WithError(err).Error("update device last seen at")
 		w.WriteHeader(http.StatusInternalServerError)
