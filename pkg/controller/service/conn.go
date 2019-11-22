@@ -55,12 +55,27 @@ func (s *Service) imagePullProgress(w http.ResponseWriter, r *http.Request,
 	})
 }
 
-func (s *Service) metrics(w http.ResponseWriter, r *http.Request,
+func (s *Service) hostMetrics(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID,
 	deviceID string,
 ) {
 	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-		resp, err := client.GetDeviceMetrics(deviceConn)
+		resp, err := client.GetHostMetrics(deviceConn)
+		if err != nil {
+			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
+			return
+		}
+
+		utils.ProxyResponse(w, resp)
+	})
+}
+
+func (s *Service) agentMetrics(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	deviceID string,
+) {
+	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
+		resp, err := client.GetAgentMetrics(deviceConn)
 		if err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return

@@ -30,6 +30,7 @@ require (
 	github.com/prometheus/client_golang v1.2.1
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
 	github.com/prometheus/common v0.7.0
+	github.com/prometheus/node_exporter v0.18.1-0.20191116173252-c4c5f1f062b1
 	github.com/rakyll/statik v0.1.6
 	github.com/segmentio/conf v1.1.0
 	github.com/segmentio/ksuid v1.0.2
@@ -41,7 +42,7 @@ require (
 	github.com/zorkian/go-datadog-api v2.24.0+incompatible // indirect
 	golang.org/x/build v0.0.0-20190604154314-6c34d49dff48 // indirect
 	golang.org/x/crypto v0.0.0-20191002192127-34f69633bfdc
-	golang.org/x/sync v0.0.0-20190423024810-112230192c58
+	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.29.1
 	gopkg.in/yaml.v2 v2.2.2

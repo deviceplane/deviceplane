@@ -1,18 +1,27 @@
-# github.com/DataDog/datadog-go v2.2.0+incompatible
+# github.com/DataDog/datadog-go v3.2.0+incompatible
 github.com/DataDog/datadog-go/statsd
 # github.com/Microsoft/go-winio v0.4.13
 github.com/Microsoft/go-winio
 github.com/Microsoft/go-winio/pkg/guid
+# github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
+github.com/alecthomas/template
+github.com/alecthomas/template/parse
+# github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4
+github.com/alecthomas/units
 # github.com/anmitsu/go-shlex v0.0.0-20161002113705-648efa622239
 github.com/anmitsu/go-shlex
 # github.com/apex/log v1.1.0
 github.com/apex/log
+# github.com/beevik/ntp v0.2.0
+github.com/beevik/ntp
 # github.com/beorn7/perks v1.0.1
 github.com/beorn7/perks/quantile
 # github.com/cespare/xxhash/v2 v2.1.0
 github.com/cespare/xxhash/v2
 # github.com/cobaugh/osrelease v0.0.0-20181218015638-a93a0a55a249
 github.com/cobaugh/osrelease
+# github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
+github.com/coreos/go-systemd/dbus
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/docker/distribution v2.7.1+incompatible
@@ -43,6 +52,8 @@ github.com/docker/go-connections/sockets
 github.com/docker/go-connections/tlsconfig
 # github.com/docker/go-units v0.3.3
 github.com/docker/go-units
+# github.com/ema/qdisc v0.0.0-20190904071900-b82c76788043
+github.com/ema/qdisc
 # github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568
 github.com/flynn/go-shlex
 # github.com/fsnotify/fsnotify v1.4.7
@@ -58,6 +69,8 @@ github.com/go-playground/locales/currency
 github.com/go-playground/universal-translator
 # github.com/go-sql-driver/mysql v1.4.1
 github.com/go-sql-driver/mysql
+# github.com/godbus/dbus v0.0.0-20190402143921-271e53dc4968
+github.com/godbus/dbus
 # github.com/golang/protobuf v1.3.2
 github.com/golang/protobuf/proto
 # github.com/gorilla/handlers v1.4.0
@@ -66,12 +79,28 @@ github.com/gorilla/handlers
 github.com/gorilla/mux
 # github.com/gorilla/websocket v1.4.0
 github.com/gorilla/websocket
+# github.com/hodgesds/perf-utils v0.0.7
+github.com/hodgesds/perf-utils
+# github.com/konsorten/go-windows-terminal-sequences v1.0.2
+github.com/konsorten/go-windows-terminal-sequences
 # github.com/kr/pty v1.1.3
 github.com/kr/pty
 # github.com/leodido/go-urn v1.1.0
 github.com/leodido/go-urn
+# github.com/lufia/iostat v0.0.0-20170605150913-9f7362b77ad3
+github.com/lufia/iostat
+# github.com/mattn/go-xmlrpc v0.0.3
+github.com/mattn/go-xmlrpc
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
+# github.com/mdlayher/genetlink v0.0.0-20190828143517-e35f2bf499b9
+github.com/mdlayher/genetlink
+# github.com/mdlayher/netlink v0.0.0-20190828143259-340058475d09
+github.com/mdlayher/netlink
+github.com/mdlayher/netlink/nlenc
+# github.com/mdlayher/wifi v0.0.0-20190303161829-b1436901ddee
+github.com/mdlayher/wifi
+github.com/mdlayher/wifi/internal/nl80211
 # github.com/opencontainers/go-digest v1.0.0-rc1
 github.com/opencontainers/go-digest
 # github.com/pkg/errors v0.8.1
@@ -87,11 +116,18 @@ github.com/prometheus/client_model/go
 # github.com/prometheus/common v0.7.0
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
+github.com/prometheus/common/log
 github.com/prometheus/common/model
-# github.com/prometheus/procfs v0.0.5
+# github.com/prometheus/node_exporter v0.18.1-0.20191116173252-c4c5f1f062b1
+github.com/prometheus/node_exporter/collector
+# github.com/prometheus/procfs v0.0.7
 github.com/prometheus/procfs
+github.com/prometheus/procfs/bcache
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
+github.com/prometheus/procfs/nfs
+github.com/prometheus/procfs/sysfs
+github.com/prometheus/procfs/xfs
 # github.com/rakyll/statik v0.1.6
 github.com/rakyll/statik/fs
 # github.com/segmentio/conf v1.1.0
@@ -114,6 +150,12 @@ github.com/sendgrid/rest
 # github.com/sendgrid/sendgrid-go v3.4.1+incompatible
 github.com/sendgrid/sendgrid-go
 github.com/sendgrid/sendgrid-go/helpers/mail
+# github.com/siebenmann/go-kstat v0.0.0-20160321171754-d34789b79745
+github.com/siebenmann/go-kstat
+# github.com/sirupsen/logrus v1.4.2
+github.com/sirupsen/logrus
+# github.com/soundcloud/go-runit v0.0.0-20150630195641-06ad41a06c4a
+github.com/soundcloud/go-runit/runit
 # github.com/stretchr/testify v1.3.0
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
@@ -121,6 +163,10 @@ github.com/stretchr/testify/require
 github.com/urfave/cli
 # github.com/vishvananda/netns v0.0.0-20190625233234-7109fa855b0f
 github.com/vishvananda/netns
+# go.uber.org/atomic v1.3.2
+go.uber.org/atomic
+# go.uber.org/multierr v1.1.0
+go.uber.org/multierr
 # golang.org/x/crypto v0.0.0-20191002192127-34f69633bfdc
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/ed25519
@@ -129,19 +175,27 @@ golang.org/x/crypto/internal/chacha20
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/ssh
-# golang.org/x/net v0.0.0-20190613194153-d28f0bde5980
+# golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297
+golang.org/x/net/bpf
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
+golang.org/x/net/internal/iana
+golang.org/x/net/internal/socket
 golang.org/x/net/internal/socks
+golang.org/x/net/ipv4
 golang.org/x/net/proxy
-# golang.org/x/sync v0.0.0-20190423024810-112230192c58
+# golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 golang.org/x/sync/errgroup
 # golang.org/x/sys v0.0.0-20191010194322-b09406accb47
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
 golang.org/x/sys/windows
+golang.org/x/sys/windows/registry
+golang.org/x/sys/windows/svc/eventlog
 # google.golang.org/appengine v1.5.0
 google.golang.org/appengine/cloudsql
+# gopkg.in/alecthomas/kingpin.v2 v2.2.6
+gopkg.in/alecthomas/kingpin.v2
 # gopkg.in/go-playground/mold.v2 v2.2.0
 gopkg.in/go-playground/mold.v2
 gopkg.in/go-playground/mold.v2/modifiers

@@ -7,10 +7,24 @@ import (
 	"net/http"
 )
 
-func GetDeviceMetrics(deviceConn net.Conn) (*http.Response, error) {
+func GetAgentMetrics(deviceConn net.Conn) (*http.Response, error) {
 	req, _ := http.NewRequest(
 		"GET",
-		"/metrics",
+		"/metrics/agent",
+		nil,
+	)
+
+	if err := req.Write(deviceConn); err != nil {
+		return nil, err
+	}
+
+	return http.ReadResponse(bufio.NewReader(deviceConn), req)
+}
+
+func GetHostMetrics(deviceConn net.Conn) (*http.Response, error) {
+	req, _ := http.NewRequest(
+		"GET",
+		"/metrics/host",
 		nil,
 	)
 
