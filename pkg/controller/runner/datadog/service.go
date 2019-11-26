@@ -61,13 +61,13 @@ func (r *Runner) getServiceMetrics(
 		// Get metrics from services
 		deviceMetricsResp, err := client.GetServiceMetrics(deviceConn, app.ID, config.Params.Service)
 		if err != nil || deviceMetricsResp.StatusCode != 200 {
-			r.st.Incr("runner.datadog.service_metrics_pull", append([]string{"status:failure"}, addedInternalTags(project, device)...), 1)
+			r.st.Incr("runner.datadog.service_metrics_pull", append([]string{"status:failure"}, addedInternalTags(project)...), 1)
 			// TODO: we want to present to the user a list
 			// of applications that don't have functioning
 			// endpoints
 			continue
 		}
-		r.st.Incr("runner.datadog.service_metrics_pull", append([]string{"status:success"}, addedInternalTags(project, device)...), 1)
+		r.st.Incr("runner.datadog.service_metrics_pull", append([]string{"status:success"}, addedInternalTags(project)...), 1)
 
 		// Convert request to DataDog format
 		serviceMetrics, err := translation.ConvertOpenMetricsToDataDog(deviceMetricsResp.Body)
