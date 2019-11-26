@@ -51,7 +51,7 @@ func (s *Service) imagePullProgress(w http.ResponseWriter, r *http.Request,
 			return
 		}
 
-		utils.ProxyResponse(w, resp)
+		utils.ProxyResponseFromDevice(w, resp)
 	})
 }
 
@@ -66,7 +66,7 @@ func (s *Service) hostMetrics(w http.ResponseWriter, r *http.Request,
 			return
 		}
 
-		utils.ProxyResponse(w, resp)
+		utils.ProxyResponseFromDevice(w, resp)
 	})
 }
 
@@ -81,7 +81,7 @@ func (s *Service) agentMetrics(w http.ResponseWriter, r *http.Request,
 			return
 		}
 
-		utils.ProxyResponse(w, resp)
+		utils.ProxyResponseFromDevice(w, resp)
 	})
 }
 
@@ -99,7 +99,7 @@ func (s *Service) serviceMetrics(w http.ResponseWriter, r *http.Request,
 			return
 		}
 
-		utils.ProxyResponse(w, resp)
+		utils.ProxyResponseFromDevice(w, resp)
 	})
 }
 

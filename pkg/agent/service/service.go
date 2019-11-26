@@ -18,6 +18,16 @@ import (
 	gossh "golang.org/x/crypto/ssh"
 )
 
+const (
+	HostMetricsBrokenMsg = "host metrics are not working, check agent logs for details"
+)
+
+var (
+	hostMetricsFallbackHandler = http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, HostMetricsBrokenMsg, http.StatusInternalServerError)
+	}))
+)
+
 type Service struct {
 	variables        variables.Interface
 	supervisorLookup supervisor.Lookup
@@ -42,18 +52,17 @@ func NewService(
 	}
 	go s.getSigner()
 
+	hostMetricsHandler, err := metrics.HostMetricsHandler(nil)
+	if err != nil {
+		log.WithError(err).Error("create host metrics handler")
+		hostMetricsHandler = &hostMetricsFallbackHandler
+	}
+
 	s.router.HandleFunc("/ssh", s.ssh).Methods("POST")
 	s.router.HandleFunc("/applications/{application}/services/{service}/imagepullprogress", s.imagePullProgress).Methods("GET")
 	s.router.HandleFunc("/applications/{application}/services/{service}/metrics", s.metrics).Methods("GET")
-
+	s.router.Handle("/metrics/host", *hostMetricsHandler)
 	s.router.Handle("/metrics/agent", promhttp.Handler())
-
-	hostMetricsHandler, err := metrics.HostMetricsHandler()
-	if err != nil {
-		log.WithError(err).Error("create host metrics handler")
-	} else {
-		s.router.Handle("/metrics/host", *hostMetricsHandler)
-	}
 
 	return s
 }

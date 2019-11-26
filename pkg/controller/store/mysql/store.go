@@ -2193,6 +2193,20 @@ func (s *Store) scanMetricTargetConfig(scanner scanner) (*models.MetricTargetCon
 	} else {
 		mtConfig.Configs = make([]models.MetricConfig, 0)
 	}
+	for i := range mtConfig.Configs {
+		if mtConfig.Configs[i].Metrics == nil {
+			mtConfig.Configs[i].Metrics = make([]models.Metric, 0)
+			continue
+		}
+		for j := range mtConfig.Configs[i].Metrics {
+			if mtConfig.Configs[i].Metrics[j].Labels == nil {
+				mtConfig.Configs[i].Metrics[j].Labels = make([]string, 0)
+			}
+			if mtConfig.Configs[i].Metrics[j].Tags == nil {
+				mtConfig.Configs[i].Metrics[j].Tags = make([]string, 0)
+			}
+		}
+	}
 
 	return &mtConfig, nil
 }

@@ -239,4 +239,5 @@ type MetricTargetConfigs interface {
 }
 
 var ErrInvalidMetricTargetType = errors.New("invalid metric config target type")
+var ErrInvalidMetricConfig = errors.New("invalid metric config value")
 var ErrMetricTargetConfigNotFound = errors.New("metric target config not found")

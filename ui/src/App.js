@@ -39,6 +39,7 @@ import ProjectSettings from './pages/project-settings';
 import Projects from './pages/projects';
 import Register from './pages/register';
 import Login from './pages/login';
+import Metrics from './pages/metrics';
 import Iam from './pages/iam';
 import PasswordRecovery from './pages/password-recovery';
 
@@ -108,9 +109,24 @@ class AddDevice extends Component {
     }
     const heading = 'Add Device';
 
-    var dockerCommand;
+    var dockerCommands = [];
+    dockerCommands.push([
+      "docker run -d --restart=always",
+      "--privileged",
+      "--net=host",
+      "--pid=host",
+      "-v /etc/deviceplane:/etc/deviceplane",
+      "-v /var/lib/deviceplane:/var/lib/deviceplane",
+      "-v /var/run/docker.sock:/var/run/docker.sock",
+      "-v /etc/os-release:/etc/os-release",
+      `--label com.deviceplane.agent-version=${config.agentVersion}`,
+      `deviceplane/agent:${config.agentVersion}`,
+      `--project=${this.state.project.id}`,
+      `--registration-token=${this.state.deviceRegistrationToken.id}`
+    ].join(" "));
+
     if (window.location.hostname === "localhost") {
-      dockerCommand = [
+      dockerCommands.push([
         "go run cmd/agent/main.go",
         "--controller=http://localhost:8080/api",
         "--conf-dir=./cmd/agent/conf",
@@ -119,22 +135,24 @@ class AddDevice extends Component {
         `--project=${this.state.project.id}`,
         `--registration-token=${this.state.deviceRegistrationToken.id}`,
         "# note, this is the local version"
-      ].join(" ");
-    } else {
-      dockerCommand = [
-        "docker run -d --restart=always",
+      ].join(" "));
+      dockerCommands.push([
+        "docker run",
         "--privileged",
         "--net=host",
         "--pid=host",
-        "-v /etc/deviceplane:/etc/deviceplane",
-        "-v /var/lib/deviceplane:/var/lib/deviceplane",
+        "-v $GOPATH/src/github.com/deviceplane/deviceplane/cmd/agent/conf:/etc/deviceplane",
+        "-v $GOPATH/src/github.com/deviceplane/deviceplane/cmd/agent/state:/var/lib/deviceplane",
         "-v /var/run/docker.sock:/var/run/docker.sock",
         "-v /etc/os-release:/etc/os-release",
-        `--label com.deviceplane.agent-version=${config.agentVersion}`,
-        `deviceplane/agent:${config.agentVersion}`,
+        `--label com.deviceplane.agent-version=arm64-dev-123456789`,
+        `deviceplane/agent:arm64-dev-123456789`,
+        "--log-level=debug",
         `--project=${this.state.project.id}`,
-        `--registration-token=${this.state.deviceRegistrationToken.id}`
-      ].join(" ");
+        `--registration-token=${this.state.deviceRegistrationToken.id}`,
+        "--controller=http://docker.for.mac.host.internal:8080/api",
+        "# note, this is the local version"
+      ].join(" "));
     }
 
     return (
@@ -191,16 +209,20 @@ class AddDevice extends Component {
                 border="muted"
                 background="tint2"
               >
-                <Text>Run the following command to register your device.</Text>
-                <Card
-                  marginTop={majorScale(1)}
-                  padding={majorScale(1)}
-                  background="#234361"
-                >
-                  <Code fontFamily="mono" color="white">
-                    {dockerCommand}
-                  </Code>
-                </Card>
+                <Text>
+                  Run the following command to register your device.
+                </Text>
+                {dockerCommands.map(cmd =>
+                  <Card
+                    marginTop={majorScale(1)}
+                    padding={majorScale(1)}
+                    background="#234361"
+                  >
+                    <Code fontFamily="mono" color="white">
+                      {cmd}
+                    </Code>
+                  </Card>
+                )}
               </Card>
             </Pane>
           </InnerCard>
@@ -648,9 +670,9 @@ class InnerOogie extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      tabs: ['devices', 'provisioning', 'applications', 'iam'],
-      tabLabels: ['Devices', 'Provisioning', 'Applications', 'IAM'],
-      icons: ['desktop', 'box', 'application', 'user'],
+      tabs: ['devices', 'provisioning', 'applications', 'metrics', 'iam'],
+      tabLabels: ['Devices', 'Provisioning', 'Applications', 'Metrics', 'IAM'],
+      icons: ['desktop', 'box', 'application', 'timeline-area-chart', 'user'],
       footerTabs: ['settings'],
       footerTabLabels: ['Settings'],
       footerIcons: ['settings']
@@ -671,8 +693,11 @@ class InnerOogie extends Component {
       case 'applications':
         selectedIndex = 2;
         break;
-      case 'iam':
+      case 'metrics':
         selectedIndex = 3;
+        break;
+      case 'iam':
+        selectedIndex = 4;
         break;
       case 'settings':
         footerSelectedIndex = 0;
@@ -909,6 +934,23 @@ class InnerOogie extends Component {
                 <Applications
                   user={user}
                   projectName={projectName}
+                  history={this.props.history}
+                />
+              )}
+            />
+          </Switch>
+        );
+      case 'metrics':
+        return (
+          <Switch>
+            <Route
+              exact
+              path={match.path}
+              render={route => (
+                <Metrics
+                  user={user}
+                  projectName={projectName}
+                  match={route.match}
                   history={this.props.history}
                 />
               )}

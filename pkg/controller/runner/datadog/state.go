@@ -24,5 +24,5 @@ func (r *Runner) getStateMetrics(ctx context.Context, project *models.Project, d
 	}
 
 	config := metricConfig.Configs[0]
-	return getFilteredMetrics(project, nil, device, metricConfig.Type, config, stateMetrics)
+	return FilterMetrics(project, nil, device, metricConfig.Type, config, stateMetrics)
 }

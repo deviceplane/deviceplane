@@ -30,5 +30,5 @@ func (r *Runner) getHostMetrics(deviceConn net.Conn, project *models.Project, de
 	}
 
 	config := metricConfig.Configs[0]
-	return getFilteredMetrics(project, nil, device, metricConfig.Type, config, metrics)
+	return FilterMetrics(project, nil, device, metricConfig.Type, config, metrics)
 }

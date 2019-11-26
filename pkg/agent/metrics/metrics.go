@@ -9,6 +9,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/log"
 	"github.com/prometheus/node_exporter/collector"
+
+	kingpin "gopkg.in/alecthomas/kingpin.v2" // This one specifically...
 )
 
 // This should be more than enough concurrent requests. We're only polling this
@@ -16,17 +18,39 @@ import (
 // calls. If we exceed this count, we're probably doing something wrong.
 const MaxRequestsInFlight = 3
 
-func HostMetricsHandler() (*http.Handler, error) {
-	nc, err := newNodeCollector(
-		"cpu",
-		"diskstats",
-		"filesystem",
-		"loadavg",
-		"meminfo",
-		"textfile",
-		"time",
-		"netdev",
-	)
+var (
+	ErrInvalidCollector = errors.New("invalid collector")
+
+	DefaultNodeCollectorConfig = NodeCollectorConfig{
+		ProcFSPath: "/host/proc",
+		SysFSPath:  "/host/sys",
+		RootFSPath: "/host",
+		Collectors: []string{
+			"cpu",
+			"diskstats",
+			"filesystem",
+			"loadavg",
+			"meminfo",
+			"textfile",
+			"time",
+			"netdev",
+		},
+	}
+)
+
+type NodeCollectorConfig struct {
+	ProcFSPath string
+	SysFSPath  string
+	RootFSPath string
+	Collectors []string
+}
+
+func HostMetricsHandler(ncConfig *NodeCollectorConfig) (*http.Handler, error) {
+	if ncConfig == nil {
+		ncConfig = &DefaultNodeCollectorConfig
+	}
+
+	nc, err := NewNodeCollector(ncConfig)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create collector: %s", err)
 	}
@@ -66,13 +90,24 @@ var collectorCreators = map[string]func() (collector.Collector, error){
 	"ntp":         collector.NewNtpCollector,
 }
 
-func newNodeCollector(collectorNames ...string) (*collector.NodeCollector, error) {
+func NewNodeCollector(config *NodeCollectorConfig) (*collector.NodeCollector, error) {
+	// We need to do this because node_exporter collectors directly read CLI
+	// arguments for config
+	_, err := kingpin.CommandLine.Parse([]string{
+		"--path.procfs", config.ProcFSPath,
+		"--path.sysfs", config.SysFSPath,
+		"--path.rootfs", config.RootFSPath,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	collectors := make(map[string]collector.Collector)
 
-	for _, name := range collectorNames {
+	for _, name := range config.Collectors {
 		cCreator, exists := collectorCreators[name]
 		if !exists {
-			return nil, errors.New("invalid collector")
+			return nil, ErrInvalidCollector
 		}
 
 		c, err := cCreator()
