@@ -1,5 +1,7 @@
 # Deviceplane
 
+[![CircleCI](https://circleci.com/gh/deviceplane/deviceplane.svg?style=svg)](https://circleci.com/gh/deviceplane/deviceplane)
+
 Deviceplane is an open source platform for managing IoT devices and edge servers with a modern developer experience. Beyond remote updates, Deviceplane handles the entire lifecycle of managing remote devices - that’s everything from provisioning to access management and monitoring.
 
 A hosted version of Deviceplane is available at [https://cloud.deviceplane.com/](https://cloud.deviceplane.com/).
