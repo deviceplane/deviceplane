@@ -33,6 +33,29 @@ jobs:
       - run: docker run --rm --privileged multiarch/qemu-user-static:register --reset
       - run: AGENT_VERSION=${CIRCLE_TAG#"agent-"} make push-agent
 
+  build-agent-binaries:
+    docker:
+      - image: circleci/golang:1.13
+    steps:
+      - *attach_workspace
+      - checkout
+      - run: mkdir -p ./dist/agent
+      - run: AGENT_VERSION=${CIRCLE_TAG#"agent-"} make agent-binaries
+      - run: mv dist /tmp/workspace
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - dist
+
+  upload-agent-binaries:
+    docker:
+      - image: circleci/python:2.7-jessie
+    steps:
+      - *attach_workspace
+      - checkout
+      - run: sudo pip install awscli
+      - run: aws s3 sync /tmp/workspace/dist/agent s3://agent.deviceplane.com/
+
   release-cli:
     machine: true
     steps:
@@ -92,6 +115,22 @@ workflows:
       - release-agent:
           requires:
             - test
+          filters:
+            tags:
+              only: /^agent.*/
+            branches:
+              ignore: /.*/
+      - build-agent-binaries:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /^agent.*/
+            branches:
+              ignore: /.*/
+      - upload-agent-binaries:
+          requires:
+            - build-agent-binaries
           filters:
             tags:
               only: /^agent.*/

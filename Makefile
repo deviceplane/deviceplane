@@ -1,11 +1,6 @@
 test:
 	go test -v ./... -mod vendor
 
-get-releases:
-	@git log | grep "Release agent" | head -n 1
-	@git log | grep "Release controller" | head -n 1
-	@git log | grep "Release CLI" | head -n 1
-
 db-reset: state-reset
 	docker-compose down
 	docker-compose build
@@ -27,6 +22,9 @@ agent:
 
 push-agent: agent
 	docker manifest push deviceplane/agent:${AGENT_VERSION}
+
+agent-binaries:
+	./scripts/build-agent-binaries
 
 cli:
 	./scripts/build-cli
