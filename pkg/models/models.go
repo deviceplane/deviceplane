@@ -118,6 +118,7 @@ type Device struct {
 	Name                string            `json:"name"`
 	RegistrationTokenID *string           `json:"registrationTokenId"`
 	DesiredAgentSpec    string            `json:"desiredAgentSpec"`
+	DesiredAgentVersion string            `json:"desiredAgentVersion"`
 	Info                DeviceInfo        `json:"info"`
 	LastSeenAt          time.Time         `json:"lastSeenAt"`
 	Status              DeviceStatus      `json:"status"`
@@ -284,6 +285,7 @@ type Bundle struct {
 	ApplicationStatuses []DeviceApplicationStatus `json:"applicationStatuses"`
 	ServiceStatuses     []DeviceServiceStatus     `json:"serviceStatuses"`
 	DesiredAgentSpec    string                    `json:"desiredAgentSpec"`
+	DesiredAgentVersion string                    `json:"desiredAgentVersion"`
 }
 
 type ApplicationFull2 struct {

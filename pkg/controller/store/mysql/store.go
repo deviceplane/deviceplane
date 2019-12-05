@@ -1355,6 +1355,7 @@ func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 		&device.Name,
 		&device.RegistrationTokenID,
 		&device.DesiredAgentSpec,
+		&device.DesiredAgentVersion,
 		&infoString,
 		&labelsString,
 		&device.LastSeenAt,

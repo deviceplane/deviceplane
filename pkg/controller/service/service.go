@@ -2641,7 +2641,8 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, d
 	}
 
 	bundle := models.Bundle{
-		DesiredAgentSpec: device.DesiredAgentSpec,
+		DesiredAgentSpec:    device.DesiredAgentSpec,
+		DesiredAgentVersion: device.DesiredAgentVersion,
 	}
 
 	for i, application := range applications {

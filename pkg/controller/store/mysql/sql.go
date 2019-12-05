@@ -399,17 +399,17 @@ const createDevice = `
 `
 
 const getDevice = `
-  select id, created_at, project_id, name, registration_token_id, desired_agent_spec, info, labels, last_seen_at from devices
+  select id, created_at, project_id, name, registration_token_id, desired_agent_spec, desired_agent_version, info, labels, last_seen_at from devices
   where id = ? and project_id = ?
 `
 
 const lookupDevice = `
-  select id, created_at, project_id, name, registration_token_id, desired_agent_spec, info, labels, last_seen_at from devices
+  select id, created_at, project_id, name, registration_token_id, desired_agent_spec, desired_agent_version, info, labels, last_seen_at from devices
   where name = ? and project_id = ?
 `
 
 const listDevices = `
-  select id, created_at, project_id, name, registration_token_id, desired_agent_spec, info, labels, last_seen_at from devices
+  select id, created_at, project_id, name, registration_token_id, desired_agent_spec, desired_agent_version, info, labels, last_seen_at from devices
   where project_id = ?
 `
 
