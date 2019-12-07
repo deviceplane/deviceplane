@@ -21,7 +21,11 @@ func (r *Runner) getHostMetrics(deviceConn net.Conn, project *models.Project, de
 	r.st.Incr("runner.datadog.host_metrics_pull", append([]string{"status:success"}, addedInternalTags(project)...), 1)
 
 	// Convert request to DataDog format
-	metrics, err := translation.ConvertOpenMetricsToDataDog(deviceMetricsResp.Body)
+	metrics, err := translation.ConvertOpenMetricsToDataDog(
+		deviceMetricsResp.Body,
+		r.statsCache,
+		translation.GetMetricsPrefix(project, device, "host"),
+	)
 	if err != nil {
 		log.WithField("project_id", project.ID).
 			WithField("device_id", device.ID).

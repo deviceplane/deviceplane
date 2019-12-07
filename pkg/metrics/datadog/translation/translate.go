@@ -2,8 +2,6 @@ package translation
 
 import (
 	"io"
-	"strings"
-	"time"
 
 	"github.com/deviceplane/deviceplane/pkg/metrics/datadog"
 
@@ -11,7 +9,7 @@ import (
 	"github.com/prometheus/common/expfmt"
 )
 
-func ConvertOpenMetricsToDataDog(in io.Reader) ([]datadog.Metric, error) {
+func ConvertOpenMetricsToDataDog(in io.Reader, statsCache *StatsCache, statsPrefix string) ([]datadog.Metric, error) {
 	parser := expfmt.TextParser{}
 	promMetrics, err := parser.TextToMetricFamilies(in)
 	if err != nil {
@@ -23,23 +21,14 @@ func ConvertOpenMetricsToDataDog(in io.Reader) ([]datadog.Metric, error) {
 		if promMetric.Type == nil {
 			continue
 		}
-		if *promMetric.Type != prometheus.MetricType_GAUGE {
-			continue
-		}
-
 		if promMetric.Metric == nil {
 			continue
 		}
 
-		points := make([][2]float32, 0)
-		tags := make([]string, 0)
-
 		promValues := promMetric.GetMetric()
 		for _, v := range promValues {
-			gauge := v.GetGauge()
-			if gauge != nil {
-				points = append(points, [2]float32{float32(time.Now().Unix()), float32(gauge.GetValue())})
-			}
+			points := make([][2]interface{}, 0)
+			tags := make([]string, 0)
 
 			labels := v.GetLabel()
 			if len(labels) != 0 {
@@ -47,19 +36,48 @@ func ConvertOpenMetricsToDataDog(in io.Reader) ([]datadog.Metric, error) {
 					if l == nil {
 						continue
 					}
-					tag := strings.Join([]string{l.GetName(), l.GetValue()}, ":")
+					tag := l.GetName() + ":" + l.GetValue()
 					tags = append(tags, tag)
 				}
 			}
-		}
 
-		m := datadog.Metric{
-			Metric: promMetric.GetName(),
-			Points: points,
-			Type:   "gauge",
-			Tags:   tags,
+			switch *promMetric.Type {
+			case prometheus.MetricType_GAUGE:
+				gauge := v.GetGauge()
+				if gauge == nil {
+					continue
+				}
+
+				points = append(points, datadog.NewPoint(float32(gauge.GetValue())))
+				m := datadog.Metric{
+					Metric: promMetric.GetName(),
+					Points: points,
+					Type:   "gauge",
+					Tags:   tags,
+				}
+				ddMetrics = append(ddMetrics, m)
+
+			case prometheus.MetricType_COUNTER:
+				counter := v.GetCounter()
+				if counter == nil {
+					continue
+				}
+
+				delta, ok := statsCache.UpdateCount(statsPrefix, promMetric.GetName(), tags, counter.GetValue())
+				if !ok {
+					continue
+				}
+
+				points = append(points, datadog.NewPoint(float32(delta)))
+				m := datadog.Metric{
+					Metric: promMetric.GetName(),
+					Points: points,
+					Type:   "count",
+					Tags:   tags,
+				}
+				ddMetrics = append(ddMetrics, m)
+			}
 		}
-		ddMetrics = append(ddMetrics, m)
 	}
 
 	return ddMetrics, nil

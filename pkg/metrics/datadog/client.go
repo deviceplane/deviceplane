@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 type PostMetricsRequest struct {
@@ -15,12 +16,19 @@ type PostMetricsRequest struct {
 type Series []Metric
 
 type Metric struct {
-	Metric   string       `json:"metric"`
-	Points   [][2]float32 `json:"points"`
-	Type     string       `json:"type"`
-	Interval *int64       `json:"interval,omitempty"`
-	Host     string       `json:"host,omitempty"`
-	Tags     []string     `json:"tags"`
+	Metric   string           `json:"metric"`
+	Points   [][2]interface{} `json:"points"`
+	Type     string           `json:"type"`
+	Interval *int64           `json:"interval,omitempty"`
+	Host     string           `json:"host,omitempty"`
+	Tags     []string         `json:"tags"`
+}
+
+func NewPoint(value float32) [2]interface{} {
+	return [2]interface{}{
+		time.Now().Unix(),
+		value,
+	}
 }
 
 type Client struct {

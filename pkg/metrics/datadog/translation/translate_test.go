@@ -1,15 +1,94 @@
 package translation
 
 import (
+	"fmt"
 	"strings"
 	"testing"
+
+	prometheus "github.com/prometheus/client_model/go"
+	"github.com/prometheus/common/expfmt"
 )
 
 func TestParsing(t *testing.T) {
-	reader := strings.NewReader(exampleMetrics)
-	_, err := ConvertOpenMetricsToDataDog(reader)
+	test := func(metricsString string, statsCache *StatsCache, metricTypesToCount []prometheus.MetricType) {
+		fmt.Println("Run...")
+
+		parsed := make(map[string]bool, 0)
+		parsable := make(map[string]bool, 0)
+
+		reader := strings.NewReader(exampleMetrics)
+		metrics, err := ConvertOpenMetricsToDataDog(reader, statsCache, "")
+		if err != nil {
+			t.Error("Could not parse metrics")
+		}
+
+		for _, metric := range metrics {
+			parsed[metric.Metric] = true
+		}
+
+		parser := expfmt.TextParser{}
+		promMetrics, err := parser.TextToMetricFamilies(strings.NewReader(exampleMetrics))
+		if err != nil {
+			t.Error("For some reason, prometheus's parser could not parse metrics")
+		}
+
+		var parsableMetricCount int
+		for _, promMetric := range promMetrics {
+			for _, countableMetricType := range metricTypesToCount {
+				if *promMetric.Type == countableMetricType {
+					parsable[promMetric.GetName()] = true
+					parsableMetricCount += len(promMetric.Metric)
+					break
+				}
+			}
+		}
+
+		if len(metrics) != parsableMetricCount {
+			t.Errorf("metric count (%d) is not equal to total parsable metric count (%d)",
+				len(metrics),
+				parsableMetricCount,
+			)
+		}
+
+		for k := range parsed {
+			if !parsable[k] {
+				fmt.Println("Parsed but not parsable?", k)
+			}
+		}
+		for k := range parsable {
+			if !parsed[k] {
+				fmt.Println("Parsable but not parsed...", k)
+			}
+		}
+		fmt.Println()
+	}
+
+	cache := NewStatsCache()
+
+	// statsCache's counter cache should be unpopulated
+	test(exampleMetrics, cache, []prometheus.MetricType{
+		prometheus.MetricType_GAUGE,
+	})
+
+	// statsCache's counters should now be populated (but with delta 0)
+	test(exampleMetrics, cache, []prometheus.MetricType{
+		prometheus.MetricType_GAUGE,
+		prometheus.MetricType_COUNTER,
+	})
+}
+
+func TestPrintParsing(t *testing.T) {
+	parser := expfmt.TextParser{}
+	promMetrics, err := parser.TextToMetricFamilies(strings.NewReader(exampleMetrics))
 	if err != nil {
-		t.Fail()
+		t.Error("For some reason, prometheus's parser could not parse metrics")
+	}
+
+	for _, m := range promMetrics {
+		fmt.Println("---", m.GetName())
+		for _, j := range m.GetMetric() {
+			fmt.Println("|>", j.String())
+		}
 	}
 }
 
@@ -27,7 +106,9 @@ go_gc_duration_seconds_count 130
 go_goroutines 24
 # HELP go_info Information about the Go environment.
 # TYPE go_info gauge
+go_info{version="go1.12"} 0
 go_info{version="go1.13"} 1
+go_info{version="go1.14"} 0
 # HELP go_memstats_alloc_bytes Number of bytes allocated and still in use.
 # TYPE go_memstats_alloc_bytes gauge
 go_memstats_alloc_bytes 1.037896e+06

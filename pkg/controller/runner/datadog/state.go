@@ -2,7 +2,6 @@ package datadog
 
 import (
 	"context"
-	"time"
 
 	"github.com/deviceplane/deviceplane/pkg/metrics/datadog"
 	"github.com/deviceplane/deviceplane/pkg/models"
@@ -12,11 +11,8 @@ func (r *Runner) getStateMetrics(ctx context.Context, project *models.Project, d
 	stateMetrics := []datadog.Metric{
 		datadog.Metric{
 			Metric: "devices",
-			Points: [][2]float32{
-				[2]float32{
-					float32(time.Now().Unix()),
-					1,
-				},
+			Points: [][2]interface{}{
+				datadog.NewPoint(1),
 			},
 			Type: "count",
 			Tags: []string{"status:" + string(device.Status)},

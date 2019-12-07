@@ -1,6 +1,7 @@
 package datadog
 
 import (
+	"fmt"
 	"net"
 
 	"github.com/apex/log"
@@ -70,7 +71,11 @@ func (r *Runner) getServiceMetrics(
 		r.st.Incr("runner.datadog.service_metrics_pull", append([]string{"status:success"}, addedInternalTags(project)...), 1)
 
 		// Convert request to DataDog format
-		serviceMetrics, err := translation.ConvertOpenMetricsToDataDog(deviceMetricsResp.Body)
+		serviceMetrics, err := translation.ConvertOpenMetricsToDataDog(
+			deviceMetricsResp.Body,
+			r.statsCache,
+			translation.GetMetricsPrefix(project, device, fmt.Sprintf("service-(%s)(%s)", app.ID, config.Params.Service)),
+		)
 		if err != nil {
 			log.WithField("project_id", project.ID).
 				WithField("device_id", device.ID).

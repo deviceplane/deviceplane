@@ -10,6 +10,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/controller/connman"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/metrics/datadog"
+	"github.com/deviceplane/deviceplane/pkg/metrics/datadog/translation"
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
@@ -21,6 +22,7 @@ type Runner struct {
 	metricTargetConfigs store.MetricTargetConfigs
 	st                  *statsd.Client
 	connman             *connman.ConnectionManager
+	statsCache          *translation.StatsCache
 }
 
 func NewRunner(projects store.Projects, applications store.Applications, releases store.Releases, devices store.Devices, metricTargetConfigs store.MetricTargetConfigs, st *statsd.Client, connman *connman.ConnectionManager) *Runner {
@@ -32,6 +34,7 @@ func NewRunner(projects store.Projects, applications store.Applications, release
 		metricTargetConfigs: metricTargetConfigs,
 		st:                  st,
 		connman:             connman,
+		statsCache:          translation.NewStatsCache(),
 	}
 }
 
