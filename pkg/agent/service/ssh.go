@@ -98,11 +98,7 @@ func sshServerHandler(ctx context.Context) func(s ssh.Session) {
 			innerCommand = entrypoint
 		}
 
-		command, err := nsenterCommandWrapper(innerCommand)
-		if err != nil {
-			log.WithError(err).Error("nsenter command wrapper")
-			return
-		}
+		command := []string{"/bin/sh", "-c", innerCommand}
 
 		cmd := exec.CommandContext(ctx, command[0], command[1:]...)
 

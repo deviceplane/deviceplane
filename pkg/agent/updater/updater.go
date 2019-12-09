@@ -1,39 +1,44 @@
 package updater
 
 import (
-	"context"
+	"fmt"
+	"io"
 	"io/ioutil"
-	"strings"
+	"net/http"
+	"os"
+	"runtime"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/apex/log"
-	"github.com/deviceplane/deviceplane/pkg/agent/utils"
-	"github.com/deviceplane/deviceplane/pkg/engine"
-	"github.com/deviceplane/deviceplane/pkg/models"
+)
+
+const (
+	location = "https://agent.deviceplane.com/%s/linux/%s/deviceplane-agent"
 )
 
 type Updater struct {
-	engine    engine.Engine
-	projectID string
-	version   string
+	projectID  string
+	version    string
+	binaryPath string
 
-	desiredSpec models.Service
-	once        sync.Once
-	lock        sync.RWMutex
+	desiredVersion string
+	once           sync.Once
+	lock           sync.RWMutex
 }
 
-func NewUpdater(engine engine.Engine, projectID, version string) *Updater {
+func NewUpdater(projectID, version, binaryPath string) *Updater {
 	return &Updater{
-		engine:    engine,
-		projectID: projectID,
-		version:   version,
+		projectID:  projectID,
+		version:    version,
+		binaryPath: binaryPath,
 	}
 }
 
-func (u *Updater) SetDesiredSpec(desiredSpec models.Service) {
+func (u *Updater) SetDesiredVersion(desiredVersion string) {
 	u.lock.Lock()
-	u.desiredSpec = desiredSpec
+	u.desiredVersion = desiredVersion
 	u.lock.Unlock()
 
 	u.once.Do(func() {
@@ -47,73 +52,57 @@ func (u *Updater) updater() {
 
 	for {
 		u.lock.RLock()
-		desiredSpec := u.desiredSpec
+		desiredVersion := u.desiredVersion
 		u.lock.RUnlock()
 
-		var desiredVersion string
-		if parts := strings.Split(desiredSpec.Image, ":"); len(parts) == 2 {
-			desiredVersion = parts[1]
-		} else {
-			log.Error("invalid agent image")
-			goto cont
-		}
-
 		if desiredVersion != "" && desiredVersion != u.version {
-			u.update(desiredSpec, desiredVersion)
+			if err := u.update(desiredVersion); err != nil {
+				log.WithError(err).Error("update agent")
+				goto cont
+			}
 		}
 
 	cont:
-		select {
-		case <-ticker.C:
-			continue
+		<-ticker.C
+	}
+}
+
+func (u *Updater) update(desiredVersion string) error {
+	resp, err := http.Get(fmt.Sprintf(location, desiredVersion, runtime.GOARCH))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	f, err := ioutil.TempFile("", "")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(f.Name())
+
+	for _, action := range []func() error{
+		func() error {
+			_, err := io.Copy(f, resp.Body)
+			return err
+		},
+		func() error {
+			return f.Close()
+		},
+		func() error {
+			return os.Chmod(f.Name(), 0755)
+		},
+		func() error {
+			return syscall.Unlink(u.binaryPath)
+		},
+		func() error {
+			return os.Rename(f.Name(), u.binaryPath)
+		},
+	} {
+		if err = action(); err != nil {
+			return err
 		}
 	}
-}
 
-func (u *Updater) update(desiredSpec models.Service, desiredVersion string) {
-	instances, err := utils.ContainerList(context.TODO(), u.engine, nil, map[string]string{
-		models.AgentVersionLabel: desiredVersion,
-	}, true)
-	if err != nil {
-		return
-	}
-
-	if len(instances) > 0 {
-		return
-	}
-
-	if err = utils.ImagePull(context.TODO(), u.engine, desiredSpec.Image, ioutil.Discard); err != nil {
-		return
-	}
-
-	instanceID, err := utils.ContainerCreate(
-		context.TODO(),
-		u.engine,
-		"",
-		withCommandInterpolation(withAgentVersionLabel(desiredSpec, desiredVersion), u.projectID),
-	)
-	if err != nil {
-		return
-	}
-
-	if err = utils.ContainerStart(context.TODO(), u.engine, instanceID); err != nil {
-		return
-	}
-}
-
-func withAgentVersionLabel(s models.Service, version string) models.Service {
-	if s.Labels == nil {
-		s.Labels = make(map[string]string)
-	}
-	s.Labels[models.AgentVersionLabel] = version
-	return s
-}
-
-func withCommandInterpolation(s models.Service, projectID string) models.Service {
-	var command []string
-	for _, arg := range s.Command {
-		command = append(command, strings.ReplaceAll(arg, "$PROJECT", projectID))
-	}
-	s.Command = command
-	return s
+	os.Exit(0)
+	return nil
 }

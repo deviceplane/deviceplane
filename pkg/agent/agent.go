@@ -3,14 +3,15 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"path"
 	"time"
 
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/agent/client"
-	"github.com/deviceplane/deviceplane/pkg/agent/handoff"
 	"github.com/deviceplane/deviceplane/pkg/agent/info"
 	"github.com/deviceplane/deviceplane/pkg/agent/server/local"
 	"github.com/deviceplane/deviceplane/pkg/agent/server/remote"
@@ -27,7 +28,6 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/file"
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -47,18 +47,18 @@ type Agent struct {
 	registrationToken      string
 	confDir                string
 	stateDir               string
+	serverPort             int
 	supervisor             *supervisor.Supervisor
 	statusGarbageCollector *status.GarbageCollector
 	infoReporter           *info.Reporter
 	localServer            *local.Server
 	remoteServer           *remote.Server
 	updater                *updater.Updater
-	handoffCoordinator     *handoff.Coordinator
 }
 
 func NewAgent(
 	client *client.Client, engine engine.Engine,
-	projectID, registrationToken, confDir, stateDir, version string, serverPort int,
+	projectID, registrationToken, confDir, stateDir, version, binaryPath string, serverPort int,
 ) (*Agent, error) {
 	if version == "" {
 		return nil, errVersionNotSet
@@ -96,13 +96,13 @@ func NewAgent(
 		registrationToken:      registrationToken,
 		confDir:                confDir,
 		stateDir:               stateDir,
+		serverPort:             serverPort,
 		supervisor:             supervisor,
 		statusGarbageCollector: status.NewGarbageCollector(client.DeleteDeviceApplicationStatus, client.DeleteDeviceServiceStatus),
 		infoReporter:           info.NewReporter(client, version),
 		localServer:            local.NewServer(service),
 		remoteServer:           remote.NewServer(client, service),
-		updater:                updater.NewUpdater(engine, projectID, version),
-		handoffCoordinator:     handoff.NewCoordinator(engine, version, serverPort),
+		updater:                updater.NewUpdater(projectID, version, binaryPath),
 	}, nil
 }
 
@@ -150,9 +150,18 @@ func (a *Agent) Initialize() error {
 	a.client.SetAccessKey(string(accessKeyBytes))
 	a.client.SetDeviceID(string(deviceIDBytes))
 
-	a.localServer.SetListener(a.handoffCoordinator.Takeover())
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
 
-	return nil
+	for {
+		listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", a.serverPort))
+		if err == nil {
+			a.localServer.SetListener(listener)
+			return nil
+		}
+
+		<-ticker.C
+	}
 }
 
 func (a *Agent) register() error {
@@ -189,10 +198,7 @@ func (a *Agent) runBundleApplier() {
 		if bundle := a.downloadLatestBundle(); bundle != nil {
 			a.supervisor.SetApplications(bundle.Applications)
 			a.statusGarbageCollector.SetBundle(*bundle)
-			var desiredAgentSpec models.Service
-			if err := yaml.Unmarshal([]byte(bundle.DesiredAgentSpec), &desiredAgentSpec); err == nil {
-				a.updater.SetDesiredSpec(desiredAgentSpec)
-			}
+			a.updater.SetDesiredVersion(bundle.DesiredAgentVersion)
 		}
 
 		select {

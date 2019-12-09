@@ -59,7 +59,7 @@ func main() {
 
 	client := agent_client.NewClient(controllerURL, config.Project, http.DefaultClient)
 	agent, err := agent.NewAgent(client, engine, config.Project, config.RegistrationToken,
-		config.ConfDir, config.StateDir, version, config.ServerPort)
+		config.ConfDir, config.StateDir, version, os.Args[0], config.ServerPort)
 	if err != nil {
 		log.WithError(err).Fatal("failure creating agent")
 	}

@@ -22,9 +22,9 @@ var (
 	ErrInvalidCollector = errors.New("invalid collector")
 
 	DefaultNodeCollectorConfig = NodeCollectorConfig{
-		ProcFSPath: "/host/proc",
-		SysFSPath:  "/host/sys",
-		RootFSPath: "/host",
+		ProcFSPath: "/proc",
+		SysFSPath:  "/sys",
+		RootFSPath: "/",
 		Collectors: []string{
 			"cpu",
 			"diskstats",
