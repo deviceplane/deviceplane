@@ -111,20 +111,12 @@ class AddDevice extends Component {
 
     var dockerCommands = [];
     dockerCommands.push([
-      "docker run -d --restart=always",
-      "--privileged",
-      "--net=host",
-      "--pid=host",
-      "-v /etc/deviceplane:/etc/deviceplane",
-      "-v /var/lib/deviceplane:/var/lib/deviceplane",
-      "-v /var/run/docker.sock:/var/run/docker.sock",
-      "-v /etc/os-release:/etc/os-release",
-      "-v /sys:/host/sys:ro,rslave",
-      "-v /proc:/host/proc:ro,rslave",
-      `--label com.deviceplane.agent-version=${config.agentVersion}`,
-      `deviceplane/agent:${config.agentVersion}`,
-      `--project=${this.state.project.id}`,
-      `--registration-token=${this.state.deviceRegistrationToken.id}`
+      "curl https://install.deviceplane.com",
+      "|",
+      `VERSION=${config.agentVersion}`,
+      `PROJECT=${this.state.project.id}`,
+      `REGISTRATION_TOKEN=${this.state.deviceRegistrationToken.id}`,
+      "bash",
     ].join(" "));
 
     if (window.location.hostname === "localhost") {
@@ -136,25 +128,6 @@ class AddDevice extends Component {
         "--log-level=debug",
         `--project=${this.state.project.id}`,
         `--registration-token=${this.state.deviceRegistrationToken.id}`,
-        "# note, this is the local version"
-      ].join(" "));
-      dockerCommands.push([
-        "docker run",
-        "--privileged",
-        "--net=host",
-        "--pid=host",
-        "-v $GOPATH/src/github.com/deviceplane/deviceplane/cmd/agent/conf:/etc/deviceplane",
-        "-v $GOPATH/src/github.com/deviceplane/deviceplane/cmd/agent/state:/var/lib/deviceplane",
-        "-v /var/run/docker.sock:/var/run/docker.sock",
-        "-v /etc/os-release:/etc/os-release",
-        "-v /sys:/host/sys:ro,rslave",
-        "-v /proc:/host/proc:ro,rslave",
-        `--label com.deviceplane.agent-version=arm64-dev-123456789`,
-        `deviceplane/agent:arm64-dev-123456789`,
-        "--log-level=debug",
-        `--project=${this.state.project.id}`,
-        `--registration-token=${this.state.deviceRegistrationToken.id}`,
-        "--controller=http://docker.for.mac.host.internal:8080/api",
         "# note, this is the local version"
       ].join(" "));
     }
