@@ -64,6 +64,10 @@ func NewAgent(
 		return nil, errVersionNotSet
 	}
 
+	if err := os.MkdirAll(confDir, 0700); err != nil {
+		return nil, err
+	}
+
 	variables := fsnotify.NewVariables(confDir)
 	if err := variables.Start(); err != nil {
 		return nil, errors.Wrap(err, "start fsnotify variables")
