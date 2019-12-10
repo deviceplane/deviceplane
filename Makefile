@@ -17,12 +17,6 @@ controller:
 push-controller: controller
 	docker push deviceplane/deviceplane:${CONTROLLER_VERSION}
 
-agent:
-	./scripts/build-agent
-
-push-agent: agent
-	docker manifest push deviceplane/agent:${AGENT_VERSION}
-
 agent-binaries:
 	./scripts/build-agent-binaries
 

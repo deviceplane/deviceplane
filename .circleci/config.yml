@@ -20,19 +20,6 @@ jobs:
       - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
       - run: CONTROLLER_VERSION=${CIRCLE_TAG#"controller-"} make push-controller
 
-  release-agent:
-    machine:
-      image: ubuntu-1604:201903-01
-    steps:
-      - checkout
-      - run: curl -fsSL https://get.docker.com/ -o docker-install.sh
-      - run: sh docker-install.sh
-      - run: |-
-          mkdir -p ~/.docker && echo '{"experimental":"enabled"}' > ~/.docker/config.json
-      - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
-      - run: docker run --rm --privileged multiarch/qemu-user-static:register --reset
-      - run: AGENT_VERSION=${CIRCLE_TAG#"agent-"} make push-agent
-
   build-agent-binaries:
     docker:
       - image: circleci/golang:1.13
@@ -110,14 +97,6 @@ workflows:
           filters:
             tags:
               only: /^controller.*/
-            branches:
-              ignore: /.*/
-      - release-agent:
-          requires:
-            - test
-          filters:
-            tags:
-              only: /^agent.*/
             branches:
               ignore: /.*/
       - build-agent-binaries:
