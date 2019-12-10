@@ -7,14 +7,15 @@ import (
 
 	"github.com/deviceplane/deviceplane/pkg/agent/service/client"
 	"github.com/deviceplane/deviceplane/pkg/codes"
+	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/deviceplane/deviceplane/pkg/utils"
 	"github.com/function61/holepunch-server/pkg/wsconnadapter"
 	"github.com/gorilla/mux"
 )
 
-func (s *Service) initiateDeviceConnection(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
+func (s *Service) initiateDeviceConnection(w http.ResponseWriter, r *http.Request, project models.Project, device models.Device) {
 	s.withHijackedWebSocketConnection(w, r, func(conn net.Conn) {
-		s.connman.Set(projectID+deviceID, conn)
+		s.connman.Set(project.ID+device.ID, conn)
 	})
 }
 

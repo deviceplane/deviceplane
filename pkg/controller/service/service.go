@@ -201,9 +201,6 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}", s.validateAuthorization("serviceaccounts", "UpdateServiceAccount", s.withServiceAccount(s.updateServiceAccount))).Methods("PUT")
 	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}", s.validateAuthorization("serviceaccounts", "DeleteServiceAccount", s.withServiceAccount(s.deleteServiceAccount))).Methods("DELETE")
 
-	apiRouter.HandleFunc("/projects/{project}/metrictargetconfig/{metrictargetconfigtype}", s.validateAuthorization("metrictargetconfig", "GetMetricTargetConfig", s.getMetricTargetConfig)).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/metrictargetconfig/{metrictargetconfigtype}", s.validateAuthorization("metrictargetconfig", "UpdateMetricTargetConfig", s.updateMetricTargetConfig)).Methods("PUT")
-
 	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountaccesskeys", s.validateAuthorization("serviceaccountaccesskeys", "CreateServiceAccountAccessKey", s.createServiceAccountAccessKey)).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountaccesskeys/{serviceaccountaccesskey}", s.validateAuthorization("serviceaccountaccesskeys", "GetServiceAccountAccessKey", s.getServiceAccountAccessKey)).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/serviceaccountaccesskeys", s.validateAuthorization("serviceaccountsaccesskeys", "ListServiceAccountAccessKeys", s.listServiceAccountAccessKeys)).Methods("GET")
@@ -246,6 +243,9 @@ func NewService(
 
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}/labels", s.validateAuthorization("deviceregistrationtokenlabels", "SetDeviceRegistrationTokenLabel", s.withDeviceRegistrationToken(s.setDeviceRegistrationTokenLabel))).Methods("PUT")
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}/labels/{key}", s.validateAuthorization("deviceregistrationtokenlabels", "DeleteDeviceRegistrationTokenLabel", s.withDeviceRegistrationToken(s.deleteDeviceRegistrationTokenLabel))).Methods("DELETE")
+
+	apiRouter.HandleFunc("/projects/{project}/metrictargetconfig/{metrictargetconfigtype}", s.validateAuthorization("metrictargetconfig", "GetMetricTargetConfig", s.getMetricTargetConfig)).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/metrictargetconfig/{metrictargetconfigtype}", s.validateAuthorization("metrictargetconfig", "UpdateMetricTargetConfig", s.updateMetricTargetConfig)).Methods("PUT")
 
 	apiRouter.HandleFunc("/projects/{project}/devices/register", s.registerDevice).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/bundle", s.withDeviceAuth(s.getBundle)).Methods("GET")
@@ -2554,244 +2554,6 @@ func (s *Service) deleteDeviceRegistrationTokenLabel(w http.ResponseWriter, r *h
 	}
 }
 
-func (s *Service) withDeviceAuth(handler func(http.ResponseWriter, *http.Request, string, string)) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		projectID := vars["project"]
-
-		deviceAccessKeyValue, _, _ := r.BasicAuth()
-		if deviceAccessKeyValue == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		deviceAccessKey, err := s.deviceAccessKeys.ValidateDeviceAccessKey(r.Context(), projectID, hash.Hash(deviceAccessKeyValue))
-		if err == store.ErrDeviceAccessKeyNotFound {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		} else if err != nil {
-			log.WithError(err).Error("validate device access key")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		handler(w, r, projectID, deviceAccessKey.DeviceID)
-	}
-}
-
-// TODO: verify project ID
-func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	projectID := vars["project"]
-
-	var registerDeviceRequest models.RegisterDeviceRequest
-	if err := read(r, &registerDeviceRequest); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	deviceRegistrationToken, err := s.deviceRegistrationTokens.GetDeviceRegistrationToken(r.Context(), registerDeviceRequest.DeviceRegistrationTokenID, projectID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
-
-	if deviceRegistrationToken.MaxRegistrations != nil {
-		devicesRegisteredCount, err := s.devicesRegisteredWithToken.GetDevicesRegisteredWithTokenCount(r.Context(), registerDeviceRequest.DeviceRegistrationTokenID, projectID)
-		if err != nil {
-			log.WithError(err).Error("get devices registered with token count")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		if devicesRegisteredCount.AllCount >= *deviceRegistrationToken.MaxRegistrations {
-			log.WithError(err).Error("device allocation limit reached")
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-	}
-
-	device, err := s.devices.CreateDevice(r.Context(), projectID, namesgenerator.GetRandomName(), deviceRegistrationToken.ID, deviceRegistrationToken.Labels)
-	if err != nil {
-		log.WithError(err).Error("create device")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	deviceAccessKeyValue := ksuid.New().String()
-
-	_, err = s.deviceAccessKeys.CreateDeviceAccessKey(r.Context(), projectID, device.ID, hash.Hash(deviceAccessKeyValue))
-	if err != nil {
-		log.WithError(err).Error("create device access key")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	utils.Respond(w, models.RegisterDeviceResponse{
-		DeviceID:             device.ID,
-		DeviceAccessKeyValue: deviceAccessKeyValue,
-	})
-}
-
-func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
-	s.st.Incr("get_bundle", []string{
-		fmt.Sprintf("project:%s", projectID),
-	}, 1)
-
-	if err := s.devices.UpdateDeviceLastSeenAt(r.Context(), deviceID, projectID); err != nil {
-		log.WithError(err).Error("update device last seen at")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	device, err := s.devices.GetDevice(r.Context(), deviceID, projectID)
-	if err != nil {
-		log.WithError(err).Error("get device")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	applications, err := s.applications.ListApplications(r.Context(), projectID)
-	if err != nil {
-		log.WithError(err).Error("list applications")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	bundle := models.Bundle{
-		DesiredAgentSpec:    device.DesiredAgentSpec,
-		DesiredAgentVersion: device.DesiredAgentVersion,
-	}
-
-	for i, application := range applications {
-		match, err := query.DeviceMatchesQuery(*device, application.SchedulingRule)
-		if err != nil {
-			log.WithError(err).Error("evaluate application scheduling rule")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		if !match {
-			continue
-		}
-
-		release, err := s.releases.GetLatestRelease(r.Context(), projectID, application.ID)
-		if err == store.ErrReleaseNotFound {
-			continue
-		} else if err != nil {
-			log.WithError(err).Error("get latest release")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		bundle.Applications = append(bundle.Applications, models.ApplicationFull2{
-			Application:   applications[i],
-			LatestRelease: *release,
-		})
-	}
-
-	deviceApplicationStatuses, err := s.deviceApplicationStatuses.ListDeviceApplicationStatuses(
-		r.Context(), projectID, deviceID)
-	if err == nil {
-		bundle.ApplicationStatuses = deviceApplicationStatuses
-	} else {
-		log.WithError(err).Error("list device application statuses")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	deviceServiceStatuses, err := s.deviceServiceStatuses.ListDeviceServiceStatuses(
-		r.Context(), projectID, deviceID)
-	if err == nil {
-		bundle.ServiceStatuses = deviceServiceStatuses
-	} else {
-		log.WithError(err).Error("list device service statuses")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	utils.Respond(w, bundle)
-}
-
-func (s *Service) setDeviceInfo(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
-	var setDeviceInfoRequest models.SetDeviceInfoRequest
-	if err := read(r, &setDeviceInfoRequest); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if _, err := s.devices.SetDeviceInfo(r.Context(), deviceID, projectID, setDeviceInfoRequest.DeviceInfo); err != nil {
-		log.WithError(err).Error("set device info")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-}
-
-func (s *Service) setDeviceApplicationStatus(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
-	vars := mux.Vars(r)
-	applicationID := vars["application"]
-
-	var setDeviceApplicationStatusRequest models.SetDeviceApplicationStatusRequest
-	if err := read(r, &setDeviceApplicationStatusRequest); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if err := s.deviceApplicationStatuses.SetDeviceApplicationStatus(r.Context(), projectID, deviceID,
-		applicationID, setDeviceApplicationStatusRequest.CurrentReleaseID,
-	); err != nil {
-		log.WithError(err).Error("set device application status")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-}
-
-func (s *Service) deleteDeviceApplicationStatus(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
-	vars := mux.Vars(r)
-	applicationID := vars["application"]
-
-	if err := s.deviceApplicationStatuses.DeleteDeviceApplicationStatus(r.Context(),
-		projectID, deviceID, applicationID,
-	); err != nil {
-		log.WithError(err).Error("delete device application status")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-}
-
-func (s *Service) setDeviceServiceStatus(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
-	vars := mux.Vars(r)
-	applicationID := vars["application"]
-	service := vars["service"]
-
-	var setDeviceServiceStatusRequest models.SetDeviceServiceStatusRequest
-	if err := read(r, &setDeviceServiceStatusRequest); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if err := s.deviceServiceStatuses.SetDeviceServiceStatus(r.Context(), projectID, deviceID,
-		applicationID, service, setDeviceServiceStatusRequest.CurrentReleaseID,
-	); err != nil {
-		log.WithError(err).Error("set device service status")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-}
-
-func (s *Service) deleteDeviceServiceStatus(w http.ResponseWriter, r *http.Request, projectID, deviceID string) {
-	vars := mux.Vars(r)
-	applicationID := vars["application"]
-	service := vars["service"]
-
-	if err := s.deviceServiceStatuses.DeleteDeviceServiceStatus(r.Context(),
-		projectID, deviceID, applicationID, service,
-	); err != nil {
-		log.WithError(err).Error("delete device service status")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-}
-
 func (s *Service) getMetricTargetConfig(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID string,
 ) {
@@ -2878,4 +2640,250 @@ func (s *Service) updateMetricTargetConfig(w http.ResponseWriter, r *http.Reques
 	}
 
 	utils.Respond(w, updatedMetricTargetConfig)
+}
+
+func (s *Service) withDeviceAuth(handler func(http.ResponseWriter, *http.Request, models.Project, models.Device)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		projectID := vars["project"]
+
+		deviceAccessKeyValue, _, _ := r.BasicAuth()
+		if deviceAccessKeyValue == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		deviceAccessKey, err := s.deviceAccessKeys.ValidateDeviceAccessKey(r.Context(), projectID, hash.Hash(deviceAccessKeyValue))
+		if err == store.ErrDeviceAccessKeyNotFound {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		} else if err != nil {
+			log.WithError(err).Error("validate device access key")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		project, err := s.projects.GetProject(r.Context(), projectID)
+		if err != nil {
+			log.WithError(err).Error("get project")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		device, err := s.devices.GetDevice(r.Context(), deviceAccessKey.DeviceID, projectID)
+		if err != nil {
+			log.WithError(err).Error("get device")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		handler(w, r, *project, *device)
+	}
+}
+
+// TODO: verify project ID
+func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	projectID := vars["project"]
+
+	var registerDeviceRequest models.RegisterDeviceRequest
+	if err := read(r, &registerDeviceRequest); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	deviceRegistrationToken, err := s.deviceRegistrationTokens.GetDeviceRegistrationToken(r.Context(), registerDeviceRequest.DeviceRegistrationTokenID, projectID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	if deviceRegistrationToken.MaxRegistrations != nil {
+		devicesRegisteredCount, err := s.devicesRegisteredWithToken.GetDevicesRegisteredWithTokenCount(r.Context(), registerDeviceRequest.DeviceRegistrationTokenID, projectID)
+		if err != nil {
+			log.WithError(err).Error("get devices registered with token count")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if devicesRegisteredCount.AllCount >= *deviceRegistrationToken.MaxRegistrations {
+			log.WithError(err).Error("device allocation limit reached")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	}
+
+	device, err := s.devices.CreateDevice(r.Context(), projectID, namesgenerator.GetRandomName(), deviceRegistrationToken.ID, deviceRegistrationToken.Labels)
+	if err != nil {
+		log.WithError(err).Error("create device")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	deviceAccessKeyValue := ksuid.New().String()
+
+	_, err = s.deviceAccessKeys.CreateDeviceAccessKey(r.Context(), projectID, device.ID, hash.Hash(deviceAccessKeyValue))
+	if err != nil {
+		log.WithError(err).Error("create device access key")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	utils.Respond(w, models.RegisterDeviceResponse{
+		DeviceID:             device.ID,
+		DeviceAccessKeyValue: deviceAccessKeyValue,
+	})
+}
+
+func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, project models.Project, device models.Device) {
+	s.st.Incr("get_bundle", []string{
+		fmt.Sprintf("project:%s", project.ID),
+		fmt.Sprintf("project:%s", project.Name),
+	}, 1)
+
+	if err := s.devices.UpdateDeviceLastSeenAt(r.Context(), device.ID, project.ID); err != nil {
+		log.WithError(err).Error("update device last seen at")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	applications, err := s.applications.ListApplications(r.Context(), project.ID)
+	if err != nil {
+		log.WithError(err).Error("list applications")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	bundle := models.Bundle{
+		DesiredAgentSpec:    device.DesiredAgentSpec,
+		DesiredAgentVersion: device.DesiredAgentVersion,
+	}
+
+	for i, application := range applications {
+		match, err := query.DeviceMatchesQuery(device, application.SchedulingRule)
+		if err != nil {
+			log.WithError(err).Error("evaluate application scheduling rule")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		if !match {
+			continue
+		}
+
+		release, err := s.releases.GetLatestRelease(r.Context(), project.ID, application.ID)
+		if err == store.ErrReleaseNotFound {
+			continue
+		} else if err != nil {
+			log.WithError(err).Error("get latest release")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		bundle.Applications = append(bundle.Applications, models.ApplicationFull2{
+			Application:   applications[i],
+			LatestRelease: *release,
+		})
+	}
+
+	deviceApplicationStatuses, err := s.deviceApplicationStatuses.ListDeviceApplicationStatuses(
+		r.Context(), project.ID, device.ID)
+	if err == nil {
+		bundle.ApplicationStatuses = deviceApplicationStatuses
+	} else {
+		log.WithError(err).Error("list device application statuses")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	deviceServiceStatuses, err := s.deviceServiceStatuses.ListDeviceServiceStatuses(
+		r.Context(), project.ID, device.ID)
+	if err == nil {
+		bundle.ServiceStatuses = deviceServiceStatuses
+	} else {
+		log.WithError(err).Error("list device service statuses")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	utils.Respond(w, bundle)
+}
+
+func (s *Service) setDeviceInfo(w http.ResponseWriter, r *http.Request, project models.Project, device models.Device) {
+	var setDeviceInfoRequest models.SetDeviceInfoRequest
+	if err := read(r, &setDeviceInfoRequest); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if _, err := s.devices.SetDeviceInfo(r.Context(), device.ID, project.ID, setDeviceInfoRequest.DeviceInfo); err != nil {
+		log.WithError(err).Error("set device info")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Service) setDeviceApplicationStatus(w http.ResponseWriter, r *http.Request, project models.Project, device models.Device) {
+	vars := mux.Vars(r)
+	applicationID := vars["application"]
+
+	var setDeviceApplicationStatusRequest models.SetDeviceApplicationStatusRequest
+	if err := read(r, &setDeviceApplicationStatusRequest); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := s.deviceApplicationStatuses.SetDeviceApplicationStatus(r.Context(), project.ID, device.ID,
+		applicationID, setDeviceApplicationStatusRequest.CurrentReleaseID,
+	); err != nil {
+		log.WithError(err).Error("set device application status")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Service) deleteDeviceApplicationStatus(w http.ResponseWriter, r *http.Request, project models.Project, device models.Device) {
+	vars := mux.Vars(r)
+	applicationID := vars["application"]
+
+	if err := s.deviceApplicationStatuses.DeleteDeviceApplicationStatus(r.Context(),
+		project.ID, device.ID, applicationID,
+	); err != nil {
+		log.WithError(err).Error("delete device application status")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Service) setDeviceServiceStatus(w http.ResponseWriter, r *http.Request, project models.Project, device models.Device) {
+	vars := mux.Vars(r)
+	applicationID := vars["application"]
+	service := vars["service"]
+
+	var setDeviceServiceStatusRequest models.SetDeviceServiceStatusRequest
+	if err := read(r, &setDeviceServiceStatusRequest); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := s.deviceServiceStatuses.SetDeviceServiceStatus(r.Context(), project.ID, device.ID,
+		applicationID, service, setDeviceServiceStatusRequest.CurrentReleaseID,
+	); err != nil {
+		log.WithError(err).Error("set device service status")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Service) deleteDeviceServiceStatus(w http.ResponseWriter, r *http.Request, project models.Project, device models.Device) {
+	vars := mux.Vars(r)
+	applicationID := vars["application"]
+	service := vars["service"]
+
+	if err := s.deviceServiceStatuses.DeleteDeviceServiceStatus(r.Context(),
+		project.ID, device.ID, applicationID, service,
+	); err != nil {
+		log.WithError(err).Error("delete device service status")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
