@@ -421,32 +421,44 @@ func (s *Service) validateAuthorization(requestedResource, requestedAction strin
 		}
 
 		var roles []string
+		superAdmin := false
 		if authenticatedUserID != "" {
-			if _, err := s.memberships.GetMembership(r.Context(),
-				authenticatedUserID, projectID,
-			); err == store.ErrMembershipNotFound {
-				http.Error(w, err.Error(), http.StatusNotFound)
-				return
-			} else if err != nil {
-				// TODO: better logging all around
-				log.WithField("user_id", authenticatedUserID).
-					WithField("project_id", projectID).
-					WithError(err).
-					Error("get membership")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			roleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(),
-				authenticatedUserID, projectID)
+			authenticatedUser, err := s.users.GetUser(r.Context(), authenticatedUserID)
 			if err != nil {
-				log.WithError(err).Error("list membership role bindings")
+				log.WithError(err).Error("get user")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
-			for _, roleBinding := range roleBindings {
-				roles = append(roles, roleBinding.RoleID)
+			if authenticatedUser.SuperAdmin {
+				superAdmin = true
+			} else {
+				if _, err := s.memberships.GetMembership(r.Context(),
+					authenticatedUserID, projectID,
+				); err == store.ErrMembershipNotFound {
+					http.Error(w, err.Error(), http.StatusNotFound)
+					return
+				} else if err != nil {
+					// TODO: better logging all around
+					log.WithField("user_id", authenticatedUserID).
+						WithField("project_id", projectID).
+						WithError(err).
+						Error("get membership")
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				roleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(),
+					authenticatedUserID, projectID)
+				if err != nil {
+					log.WithError(err).Error("list membership role bindings")
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				for _, roleBinding := range roleBindings {
+					roles = append(roles, roleBinding.RoleID)
+				}
 			}
 		} else if authenticatedServiceAccountID != "" {
 			// Sanity check that this service account belongs to this project
@@ -475,22 +487,28 @@ func (s *Service) validateAuthorization(requestedResource, requestedAction strin
 		}
 
 		var configs []authz.Config
-		for _, roleID := range roles {
-			role, err := s.roles.GetRole(r.Context(), roleID, projectID)
-			if err == store.ErrRoleNotFound {
-				continue
-			} else if err != nil {
-				log.WithError(err).Error("get role")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
+		if superAdmin {
+			configs = []authz.Config{
+				authz.AdminAllRole,
 			}
-			var config authz.Config
-			if err := yaml.Unmarshal([]byte(role.Config), &config); err != nil {
-				log.WithError(err).Error("unmarshal role config")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
+		} else {
+			for _, roleID := range roles {
+				role, err := s.roles.GetRole(r.Context(), roleID, projectID)
+				if err == store.ErrRoleNotFound {
+					continue
+				} else if err != nil {
+					log.WithError(err).Error("get role")
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				var config authz.Config
+				if err := yaml.Unmarshal([]byte(role.Config), &config); err != nil {
+					log.WithError(err).Error("unmarshal role config")
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				configs = append(configs, config)
 			}
-			configs = append(configs, config)
 		}
 
 		if !authz.Evaluate(requestedResource, requestedAction, configs) {
