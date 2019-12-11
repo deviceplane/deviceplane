@@ -1,38 +1,41 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
-	"github.com/urfave/cli"
+	"github.com/deviceplane/deviceplane/cmd/deviceplane/application"
+	"github.com/deviceplane/deviceplane/cmd/deviceplane/cliutils"
+	"github.com/deviceplane/deviceplane/cmd/deviceplane/configure"
+	"github.com/deviceplane/deviceplane/cmd/deviceplane/device"
+	"github.com/deviceplane/deviceplane/cmd/deviceplane/global"
+	"github.com/deviceplane/deviceplane/cmd/deviceplane/project"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
-var version = "dev"
-var name = "deviceplane"
+var (
+	app = kingpin.New("deviceplane", "The Deviceplane CLI.").UsageTemplate(cliutils.CustomTemplate).Version("dev")
+
+	config = global.Config{
+		App:             app,
+		ParsedCorrectly: app.Flag("internal-parsing-validator", "").Hidden().Default("true").Bool(),
+
+		Flags: global.ConfigFlags{
+			APIEndpoint: app.Flag("url", "API Endpoint.").Hidden().Default("https://cloud.deviceplane.com:443/api").URL(),
+			AccessKey:   app.Flag("access-key", "Access key used for authentication.").Envar("DEVICEPLANE_ACCESS_KEY").String(),
+			Project:     app.Flag("project", "Project name.").Envar("DEVICEPLANE_PROJECT").String(),
+			ConfigFile:  app.Flag("config", "Config file to use.").Default("~/.deviceplane/config").String(),
+		},
+
+		APIClient: nil,
+	}
+)
 
 func main() {
-	app := cli.NewApp()
+	configure.Initialize(&config)
+	project.Initialize(&config)
+	application.Initialize(&config)
+	device.Initialize(&config)
 
-	app.EnableBashCompletion = true
-	app.Name = name
-	app.Version = version
-	app.Usage = "Deviceplane CLI"
-
-	app.Flags = []cli.Flag{
-		urlFlag,
-		accessKeyFlag,
-	}
-
-	app.Commands = []cli.Command{
-		project,
-		application,
-		edit,
-		deploy,
-		ssh,
-	}
-
-	if err := app.Run(os.Args); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	app.PreAction(cliutils.InitializeAPIClient(&config))
+	kingpin.MustParse(app.Parse(os.Args[1:]))
 }

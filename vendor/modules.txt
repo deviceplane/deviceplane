@@ -79,6 +79,8 @@ github.com/gorilla/handlers
 github.com/gorilla/mux
 # github.com/gorilla/websocket v1.4.0
 github.com/gorilla/websocket
+# github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
+github.com/hako/durafmt
 # github.com/hodgesds/perf-utils v0.0.7
 github.com/hodgesds/perf-utils
 # github.com/konsorten/go-windows-terminal-sequences v1.0.2
@@ -89,6 +91,8 @@ github.com/kr/pty
 github.com/leodido/go-urn
 # github.com/lufia/iostat v0.0.0-20170605150913-9f7362b77ad3
 github.com/lufia/iostat
+# github.com/mattn/go-runewidth v0.0.6
+github.com/mattn/go-runewidth
 # github.com/mattn/go-xmlrpc v0.0.3
 github.com/mattn/go-xmlrpc
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
@@ -101,6 +105,8 @@ github.com/mdlayher/netlink/nlenc
 # github.com/mdlayher/wifi v0.0.0-20190303161829-b1436901ddee
 github.com/mdlayher/wifi
 github.com/mdlayher/wifi/internal/nl80211
+# github.com/olekukonko/tablewriter v0.0.3
+github.com/olekukonko/tablewriter
 # github.com/opencontainers/go-digest v1.0.0-rc1
 github.com/opencontainers/go-digest
 # github.com/pkg/errors v0.8.1
@@ -159,8 +165,6 @@ github.com/soundcloud/go-runit/runit
 # github.com/stretchr/testify v1.3.0
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
-# github.com/urfave/cli v1.20.0
-github.com/urfave/cli
 # github.com/vishvananda/netns v0.0.0-20190625233234-7109fa855b0f
 github.com/vishvananda/netns
 # go.uber.org/atomic v1.3.2
