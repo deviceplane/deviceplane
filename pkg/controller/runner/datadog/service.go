@@ -85,7 +85,7 @@ func (r *Runner) getServiceMetrics(
 
 		metrics = append(
 			metrics,
-			FilterMetrics(project, app, device, metricConfig.Type, config, serviceMetrics)...,
+			FilterMetrics(project, app, &config.Params.Service, device, metricConfig.Type, config, serviceMetrics)...,
 		)
 	}
 

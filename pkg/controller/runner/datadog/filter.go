@@ -12,6 +12,7 @@ const WildcardMetric = string("*")
 func FilterMetrics(
 	project *models.Project,
 	app *models.Application,
+	serviceName *string,
 	device *models.Device,
 	targetType models.MetricTargetType,
 	config models.MetricConfig,
@@ -22,9 +23,9 @@ func FilterMetrics(
 	case models.MetricHostTargetType:
 		metricPrefix = "deviceplane.host"
 	case models.MetricServiceTargetType:
-		metricPrefix = "deviceplane.service"
+		metricPrefix = fmt.Sprintf("deviceplane.userdefined.%s.%s", app.Name, *serviceName)
 	case models.MetricStateTargetType:
-		metricPrefix = "deviceplane.state"
+		metricPrefix = "deviceplane"
 	default:
 		return nil
 	}
@@ -60,26 +61,20 @@ func FilterMetrics(
 		for _, label := range correspondingConfig.Labels {
 			labelValue, ok := device.Labels[label]
 			if ok {
-				addTag("label"+"."+label, labelValue)
+				addTag("deviceplane.labels."+label, labelValue)
 			}
 		}
 
-		// Optional tags
-		// implementation could be less manual
+		// Optional properties
 		for _, tag := range correspondingConfig.Tags {
 			switch tag {
 			case "device":
-				addTag(tag, device.Name)
-			case "application":
-				if app == nil {
-					continue
-				}
-				addTag(tag, app.Name)
+				addTag("deviceplane.device", device.Name)
 			}
 		}
 
 		// Guaranteed tags
-		addTag("project", project.Name)
+		addTag("deviceplane.project", project.Name)
 
 		passedMetrics = append(passedMetrics, m)
 	}
