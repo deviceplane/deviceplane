@@ -1,0 +1,9 @@
+#!/bin/bash
+set -e
+
+if [ -z "$CONTROLLER_WITH_DB_VERSION" ]; then
+    echo "CONTROLLER_WITH_DB_VERSION not set"
+    exit 1
+fi
+
+docker build -t deviceplane/deviceplane-with-db:${CONTROLLER_WITH_DB_VERSION} -f dockerfiles/controller-with-db/Dockerfile --build-arg version=${CONTROLLER_WITH_DB_VERSION} .

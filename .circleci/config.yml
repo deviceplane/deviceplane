@@ -20,6 +20,13 @@ jobs:
       - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
       - run: CONTROLLER_VERSION=${CIRCLE_TAG#"controller-"} make push-controller
 
+  release-controller-with-db:
+    machine: true
+    steps:
+      - checkout
+      - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
+      - run: CONTROLLER_WITH_DB_VERSION=${CIRCLE_TAG#"controller-"} make push-controller-with-db
+
   build-agent-binaries:
     docker:
       - image: circleci/golang:1.13
@@ -92,6 +99,14 @@ workflows:
             tags:
               only: /.*/
       - release-controller:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /^controller.*/
+            branches:
+              ignore: /.*/
+      - release-controller-with-db:
           requires:
             - test
           filters:

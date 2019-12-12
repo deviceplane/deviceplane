@@ -36,11 +36,11 @@ var config struct {
 
 func init() {
 	config.Addr = ":8080"
-	config.MySQLPrimary = "user:pass@tcp(localhost:3306)/deviceplane?parseTime=true"
+	config.MySQLPrimary = "deviceplane:deviceplane@tcp(localhost:3306)/deviceplane?parseTime=true"
 	config.Statsd = "127.0.0.1:8125"
 	config.CookieDomain = "localhost"
 	config.CookieSecure = false
-	config.AllowedOrigins = []string{"http://localhost:3000"}
+	config.AllowedOrigins = []string{"http://localhost:8080", "http://localhost:3000"}
 }
 
 func main() {
@@ -98,7 +98,7 @@ func tryConnect(uri string) (*sql.DB, error) {
 	var db *sql.DB
 	var err error
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 30; i++ {
 		if db, err = sql.Open("mysql", uri); err != nil {
 			time.Sleep(time.Second)
 			continue

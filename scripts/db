@@ -1,4 +1,4 @@
 #!/bin/bash
 set -e
 
-mysql -h 127.0.0.1 -u user --password=pass -P 3306 -D deviceplane
+mysql -h 127.0.0.1 -u deviceplane --password=deviceplane -P 3306 -D deviceplane
