@@ -4,8 +4,8 @@ db:
   - --performance_schema=0
   environment:
   - MYSQL_ROOT_PASSWORD=root
-  - MYSQL_USER=user
-  - MYSQL_PASSWORD=pass
+  - MYSQL_USER=deviceplane
+  - MYSQL_PASSWORD=deviceplane
   - MYSQL_DATABASE=deviceplane
   ports:
   - "3306:3306"
