@@ -2,7 +2,7 @@
   "name": "deviceplane",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://app.deviceplane.com",
+  "homepage": "https://deviceplane.com",
   "dependencies": {
     "@types/react": "^16.9.11",
     "@types/react-router-dom": "^5.1.0",
