@@ -8,6 +8,7 @@ import (
 	"github.com/deviceplane/deviceplane/cmd/deviceplane/configure"
 	"github.com/deviceplane/deviceplane/cmd/deviceplane/device"
 	"github.com/deviceplane/deviceplane/cmd/deviceplane/global"
+	"github.com/deviceplane/deviceplane/cmd/deviceplane/metrics"
 	"github.com/deviceplane/deviceplane/cmd/deviceplane/project"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
@@ -35,6 +36,7 @@ func main() {
 	project.Initialize(&config)
 	application.Initialize(&config)
 	device.Initialize(&config)
+	metrics.Initialize(&config)
 
 	app.PreAction(cliutils.InitializeAPIClient(&config))
 	kingpin.MustParse(app.Parse(os.Args[1:]))

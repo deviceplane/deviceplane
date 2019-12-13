@@ -14,8 +14,7 @@ var (
 
 	deviceArg *string = &[]string{""}[0]
 
-	deviceMetricsServiceArg     *string = &[]string{""}[0]
-	deviceMetricsApplicationArg *string = &[]string{""}[0]
+	deviceFilterListFlag *[]string = &[][]string{[]string{}}[0]
 
 	deviceOutputFlag *string = &[]string{""}[0]
 
@@ -28,6 +27,7 @@ func Initialize(c *global.Config) {
 	deviceCmd := c.App.Command("device", "Manage devices.")
 
 	deviceListCmd := deviceCmd.Command("list", "List devices.")
+	deviceListCmd.Flag("filter", `Label key/values used to filter devices. e.g. "--filter status=online --filter labels.location=hq2"`).StringsVar(deviceFilterListFlag)
 	cliutils.AddFormatFlag(deviceOutputFlag, deviceListCmd,
 		cliutils.FormatTable,
 		cliutils.FormatYAML,
@@ -50,18 +50,6 @@ func Initialize(c *global.Config) {
 		cliutils.FormatJSON,
 	)
 	deviceInspectCmd.Action(deviceInspectAction)
-
-	deviceMetricsCmd := deviceCmd.Command("metrics", "Get device metrics.")
-
-	deviceMetricsHostCmd := deviceMetricsCmd.Command("host", "Get metrics on the device itself.")
-	addDeviceArg(deviceMetricsHostCmd)
-	deviceMetricsHostCmd.Action(deviceHostMetricsAction)
-
-	deviceMetricsServiceCmd := deviceMetricsCmd.Command("service", "Get the metrics from a service running on the device.")
-	addDeviceArg(deviceMetricsServiceCmd)
-	deviceMetricsServiceCmd.Arg("application", "The application under which the service is running.").Required().StringVar(deviceMetricsApplicationArg)
-	deviceMetricsServiceCmd.Arg("service", "The name of the service which is exposing a metrics endpoint.").Required().StringVar(deviceMetricsServiceArg)
-	deviceMetricsServiceCmd.Action(deviceServiceMetricsAction)
 }
 
 func addDeviceArg(cmd *kingpin.CmdClause) *kingpin.ArgClause {
@@ -71,7 +59,7 @@ func addDeviceArg(cmd *kingpin.CmdClause) *kingpin.ArgClause {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 
-		devices, err := config.APIClient.ListDevices(ctx, *config.Flags.Project)
+		devices, err := config.APIClient.ListDevices(ctx, nil, *config.Flags.Project)
 		if err != nil {
 			return []string{}
 		}

@@ -11,13 +11,24 @@ import (
 	"strings"
 
 	"github.com/deviceplane/deviceplane/cmd/deviceplane/cliutils"
+	"github.com/deviceplane/deviceplane/pkg/models"
 	"golang.org/x/sync/errgroup"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 func deviceListAction(c *kingpin.ParseContext) error {
-	devices, err := config.APIClient.ListDevices(context.TODO(), *config.Flags.Project)
+	var filters []models.Filter
+	for _, textFilter := range *deviceFilterListFlag {
+		filter, err := parseTextFilter(textFilter)
+		if err != nil {
+			return err
+		}
+
+		filters = append(filters, filter)
+	}
+
+	devices, err := config.APIClient.ListDevices(context.TODO(), filters, *config.Flags.Project)
 	if err != nil {
 		return err
 	}
@@ -61,26 +72,6 @@ func deviceInspectAction(c *kingpin.ParseContext) error {
 	}
 
 	return cliutils.PrintWithFormat(device, *deviceOutputFlag)
-}
-
-func deviceHostMetricsAction(c *kingpin.ParseContext) error {
-	metrics, err := config.APIClient.GetDeviceHostMetrics(context.TODO(), *config.Flags.Project, *deviceArg)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(*metrics)
-	return nil
-}
-
-func deviceServiceMetricsAction(c *kingpin.ParseContext) error {
-	metrics, err := config.APIClient.GetDeviceServiceMetrics(context.TODO(), *config.Flags.Project, *deviceArg, *deviceMetricsApplicationArg, *deviceMetricsServiceArg)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(*metrics)
-	return nil
 }
 
 func deviceSSHAction(c *kingpin.ParseContext) error {

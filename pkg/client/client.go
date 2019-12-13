@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -84,9 +85,26 @@ func (c *Client) ListApplications(ctx context.Context, project string) ([]models
 	return applications, nil
 }
 
-func (c *Client) ListDevices(ctx context.Context, project string) ([]models.Device, error) {
+func (c *Client) ListDevices(ctx context.Context, filters []models.Filter, project string) ([]models.Device, error) {
 	var devices []models.Device
-	if err := c.get(ctx, &devices, projectsURL, project, devicesURL); err != nil {
+
+	urlValues := url.Values{}
+	for _, filter := range filters {
+		bytes, err := json.Marshal(filter)
+		if err != nil {
+			return nil, err
+		}
+
+		b64Filter := base64.StdEncoding.EncodeToString(bytes)
+		urlValues.Add("filter", b64Filter)
+	}
+
+	var queryString string
+	if encoded := urlValues.Encode(); encoded != "" {
+		queryString = "?" + encoded
+	}
+
+	if err := c.get(ctx, &devices, projectsURL, project, devicesURL+queryString); err != nil {
 		return nil, err
 	}
 	return devices, nil
