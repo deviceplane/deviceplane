@@ -20,6 +20,25 @@ const Container = styled(Group)`
   }
 `;
 
+const PasswordButton = styled(Row)`
+  user-select: none;
+  cursor: pointer;
+  align-items: center;
+
+  & span {
+    transition: color 150ms;
+  }
+  &:hover span {
+    color: ${props => props.theme.colors.primary};
+  }
+  & svg {
+    transition: fill 150ms;
+  }
+  &:hover svg {
+    fill: ${props => props.theme.colors.primary} !important;
+  }
+`;
+
 const FieldLabel = styled.label`
 ${space} ${color} ${typography}
 `;
@@ -87,9 +106,7 @@ const Field = forwardRef(
             <Row justifyContent="space-between">
               {label && <FieldLabel htmlFor={name}>{label}</FieldLabel>}
               {props.type === 'password' && (
-                <Row
-                  style={{ cursor: 'pointer' }}
-                  alignItems="center"
+                <PasswordButton
                   onClick={() =>
                     setType(type => (type === 'password' ? 'text' : 'password'))
                   }
@@ -98,10 +115,16 @@ const Field = forwardRef(
                     icon={type === 'password' ? 'eye-open' : 'eye-off'}
                     size={16}
                   />
-                  <Text fontSize={0} marginLeft={2} fontWeight={3}>
+                  <Text
+                    fontSize={0}
+                    marginLeft={2}
+                    fontWeight={3}
+                    width="40px"
+                    textAlign="right"
+                  >
                     {type === 'password' ? 'SHOW' : 'HIDE'}
                   </Text>
-                </Row>
+                </PasswordButton>
               )}
             </Row>
 
