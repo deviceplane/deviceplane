@@ -23,7 +23,7 @@ func FilterMetrics(
 	case models.MetricHostTargetType:
 		metricPrefix = "deviceplane.host"
 	case models.MetricServiceTargetType:
-		metricPrefix = fmt.Sprintf("deviceplane.userdefined.%s.%s", app.Name, *serviceName)
+		metricPrefix = fmt.Sprintf("deviceplane.user_defined.%s.%s", app.Name, *serviceName)
 	case models.MetricStateTargetType:
 		metricPrefix = "deviceplane"
 	default:
