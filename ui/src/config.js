@@ -1,6 +1,6 @@
 const development = {
   endpoint: 'http://localhost:8080/api',
-  wsEndpoint: 'ws://localhost:8080/api'
+  wsEndpoint: 'ws://localhost:8080/api',
 };
 
 const endpointBase = window.location.port
@@ -8,15 +8,19 @@ const endpointBase = window.location.port
   : `${window.location.hostname}/api`;
 const production = {
   endpoint: `${window.location.protocol}//${endpointBase}`,
-  wsEndpoint: window.location.protocol === 'http:' ? `ws://${endpointBase}` : `wss://${endpointBase}`,
+  wsEndpoint:
+    window.location.protocol === 'http:'
+      ? `ws://${endpointBase}`
+      : `wss://${endpointBase}`,
 };
 
-const config = process.env.REACT_APP_ENVIRONMENT === 'development'
-  ? development
-  : production;
+const config =
+  process.env.REACT_APP_ENVIRONMENT === 'development'
+    ? development
+    : production;
 
 export default {
   agentVersion: '1.8.1',
   cliEndpoint: 'https://cli.deviceplane.com',
-  ...config
+  ...config,
 };

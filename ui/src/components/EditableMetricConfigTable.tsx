@@ -1,57 +1,58 @@
-import React, { Component, Fragment } from "react";
-import axios from "axios";
+// @ts-nocheck
+
+import React, { Component, Fragment } from 'react';
+import axios from 'axios';
 import {
   Pane,
   Table,
   Dialog,
   IconButton,
   TextInputField,
-  toaster
-  // @ts-ignore
-} from "evergreen-ui";
+  toaster,
+} from 'evergreen-ui';
 
 interface Props {
-  setterEndpoint: string,
-  configs: realConfig[],
+  setterEndpoint: string;
+  configs: realConfig[];
 }
 
 interface State {
-  configs: editableConfig[],
+  configs: editableConfig[];
 }
 
 interface realConfig {
-  metric: string,
-  labels: string[],
-  tags: string[],
+  metric: string;
+  labels: string[];
+  tags: string[];
 }
 
 interface editableConfig {
-  values: configStringValues,
-  editedValues?: configStringValues,
-  mode: string,
+  values: configStringValues;
+  editedValues?: configStringValues;
+  mode: string;
 }
 
 interface configStringValues {
-  metricStr: string,
-  labelsStr: string,
-  tagsStr: string,
+  metricStr: string;
+  labelsStr: string;
+  tagsStr: string;
 }
 
 const MODE = {
   NOEDIT: 'noedit',
   EDIT: 'edit',
-}
+};
 
 export class EditableMetricConfigTable extends Component<Props, State> {
   constructor(props: Props) {
-    super(props)
+    super(props);
 
     this.state = {
       configs: this.props.configs.map(c => ({
         values: {
           metricStr: c.metric,
-          labelsStr: c.labels.join(", "),
-          tagsStr: c.tags.join(", "),
+          labelsStr: c.labels.join(', '),
+          tagsStr: c.tags.join(', '),
         },
         mode: MODE.NOEDIT,
       })),
@@ -92,14 +93,14 @@ export class EditableMetricConfigTable extends Component<Props, State> {
 
     configs = configs.sort(configSortFn);
     this.setState({ configs }, this.syncUpdate);
-  }
+  };
 
   revertConfig = (i: number) => {
     var config = this.state.configs[i];
     config.mode = MODE.NOEDIT;
     config.editedValues = undefined;
     this.updateConfig(i, config);
-  }
+  };
 
   deleteConfig = (i: number) => {
     var configs = this.state.configs;
@@ -114,7 +115,7 @@ export class EditableMetricConfigTable extends Component<Props, State> {
       metricStr: '',
       labelsStr: '',
       tagsStr: '',
-    }
+    };
 
     var newConfig = {
       values: Object.assign({}, values),
@@ -132,12 +133,14 @@ export class EditableMetricConfigTable extends Component<Props, State> {
       .put(
         this.props.setterEndpoint,
         {
-          configs: [{
-            metrics: realConfigsFromEditableConfigs(this.state.configs)
-          }],
+          configs: [
+            {
+              metrics: realConfigsFromEditableConfigs(this.state.configs),
+            },
+          ],
         },
         {
-          withCredentials: true
+          withCredentials: true,
         }
       )
       .catch(error => {
@@ -146,10 +149,10 @@ export class EditableMetricConfigTable extends Component<Props, State> {
         //     backendError: utils.convertErrorMessage(error.response.data)
         //   });
         // } else {
-          console.log(error);
+        console.log(error);
         // }
       });
-  }
+  };
 
   renderMetricConfig(i: number) {
     var config = this.state.configs[i];
@@ -186,10 +189,10 @@ export class EditableMetricConfigTable extends Component<Props, State> {
                 intent="danger"
                 // onCloseComplete={() => this.hideShowRemoveDialog(i)}
                 onConfirm={() => this.deleteConfig(i)}
-                confirmConfig="Remove config"
+                // confirmConfig="Remove config"
               >
-                You are about to remove label <strong>{config.values.metricStr}</strong>
-                .
+                You are about to remove label{' '}
+                <strong>{config.values.metricStr}</strong>.
               </Dialog>
             </Pane>
           </Fragment>
@@ -276,9 +279,7 @@ export class EditableMetricConfigTable extends Component<Props, State> {
           ></Table.TextHeaderCell>
         </Table.Head>
         <Table.Body>
-          {this.state.configs.map((_, i) =>
-            this.renderMetricConfig(i)
-          )}
+          {this.state.configs.map((_, i) => this.renderMetricConfig(i))}
           <Table.Row key="add">
             <Table.TextCell>
               <IconButton
@@ -302,11 +303,14 @@ export class EditableMetricConfigTable extends Component<Props, State> {
 }
 
 function arrayFromArrayString(str: string) {
-  return str.split(',').map(x => x.trim()).filter(x => x.length);
+  return str
+    .split(',')
+    .map(x => x.trim())
+    .filter(x => x.length);
 }
 
 function reformatArrayString(str: string) {
-  return arrayFromArrayString(str).join(", ");
+  return arrayFromArrayString(str).join(', ');
 }
 
 function configSortFn(a: editableConfig, b: editableConfig) {
@@ -337,12 +341,14 @@ function configSortFn(a: editableConfig, b: editableConfig) {
   return 1;
 }
 
-function realConfigsFromEditableConfigs(editableConfigs: editableConfig[]): realConfig[] {
+function realConfigsFromEditableConfigs(
+  editableConfigs: editableConfig[]
+): realConfig[] {
   return editableConfigs.map(config => {
     return {
       metric: config.values.metricStr,
       labels: arrayFromArrayString(config.values.labelsStr),
       tags: arrayFromArrayString(config.values.tagsStr),
-    }
-  })
+    };
+  });
 }

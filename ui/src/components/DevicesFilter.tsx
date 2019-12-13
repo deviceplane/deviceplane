@@ -1,91 +1,91 @@
-import React, { Fragment, Component } from 'react';
+// @ts-nocheck
+
+import React, { Component } from 'react';
 import {
-  Pane,
-  Dialog,
+  Icon,
   Select,
-  IconButton,
-  Button,
-  majorScale,
-  Strong,
-  TextInput,
-  minorScale
   // @ts-ignore
 } from 'evergreen-ui';
+
 import utils from '../utils';
+import { Column, Row, Group, Button, Input, Text } from './core';
+import Card from './card';
+import Popup from './popup';
 
-export type Query = Filter[]
+export type Query = Filter[];
 
-export type Filter = Condition[]
+export type Filter = Condition[];
 
 export type Condition = {
-  type:  ConditionType
-  params: ConditionParams
-}
+  type: ConditionType;
+  params: ConditionParams;
+};
 
-type ConditionType = string
-export const DevicePropertyCondition: ConditionType = "DevicePropertyCondition";
-export const LabelValueCondition: ConditionType = "LabelValueCondition";
-export const LabelExistenceCondition: ConditionType = "LabelExistenceCondition";
+type ConditionType = string;
+export const DevicePropertyCondition: ConditionType = 'DevicePropertyCondition';
+export const LabelValueCondition: ConditionType = 'LabelValueCondition';
+export const LabelExistenceCondition: ConditionType = 'LabelExistenceCondition';
 
-export type ConditionParams = DevicePropertyConditionParams |
-  LabelValueConditionParams |
-  LabelExistenceConditionParams;
+export type ConditionParams =
+  | DevicePropertyConditionParams
+  | LabelValueConditionParams
+  | LabelExistenceConditionParams;
 
 export type DevicePropertyConditionParams = {
-  property: string
-  operator: Operator
-  value:    string
-}
+  property: string;
+  operator: Operator;
+  value: string;
+};
 
 export type LabelValueConditionParams = {
-  key: string
-  operator: Operator
-  value: string
-}
+  key: string;
+  operator: Operator;
+  value: string;
+};
 
 export type LabelExistenceConditionParams = {
-  key: string
-  operator: Operator
-}
+  key: string;
+  operator: Operator;
+};
 
 type Operator = string;
-export const OperatorIs:  Operator = "is";
-export const OperatorIsNot:  Operator = "is not";
-export const OperatorExists:  Operator = "exists";
-export const OperatorNotExists:  Operator = "does not exist";
+export const OperatorIs: Operator = 'is';
+export const OperatorIsNot: Operator = 'is not';
+export const OperatorExists: Operator = 'exists';
+export const OperatorNotExists: Operator = 'does not exist';
 
 const DefaultDevicePropertyConditionParams = (): DevicePropertyConditionParams => {
   return {
     property: 'status',
     operator: OperatorIs,
     value: 'online',
-  }
-}
+  };
+};
 
 const DefaultLabelValueConditionParams = (): LabelValueConditionParams => {
   return {
     key: '',
     operator: OperatorIs,
     value: '',
-  }
-}
+  };
+};
 
 const DefaultLabelExistenceConditionParams = (): LabelExistenceConditionParams => {
   return {
     key: '',
     operator: OperatorExists,
-  }
-}
+  };
+};
 
 interface Props {
-  whitelistedConditions?: ConditionType[]
-  show: boolean
-  onClose: () => void
-  onSubmit?: (filter: Filter) => void
+  whitelistedConditions?: ConditionType[];
+  show: boolean;
+  onClose: () => void;
+  onSubmit?: (filter: Filter) => void;
 }
 
 interface State {
-  filter: Filter
+  filter: Filter;
 }
 
 export class DevicesFilter extends Component<Props, State> {
@@ -104,13 +104,19 @@ export class DevicesFilter extends Component<Props, State> {
       {
         type: LabelExistenceCondition,
         text: 'Label Existence',
-      }
-    ].filter((c) => {
-      if (!this.props.whitelistedConditions) {
-        return true;
-      }
-      return this.props.whitelistedConditions.includes(c.type);
-    }).map(c => <option key={c.type} value={c.type}>{c.text}</option>);
+      },
+    ]
+      .filter(c => {
+        if (!this.props.whitelistedConditions) {
+          return true;
+        }
+        return this.props.whitelistedConditions.includes(c.type);
+      })
+      .map(c => (
+        <option key={c.type} value={c.type}>
+          {c.text}
+        </option>
+      ));
 
     this.defaultCondition = [
       {
@@ -124,29 +130,25 @@ export class DevicesFilter extends Component<Props, State> {
       {
         type: LabelExistenceCondition,
         params: DefaultLabelExistenceConditionParams(),
-      }
-    ].filter((c) => {
+      },
+    ].filter(c => {
       if (!this.props.whitelistedConditions) {
         return true;
       }
       return this.props.whitelistedConditions.includes(c.type);
     })[0];
     if (!this.defaultCondition) {
-      throw('No default condition was whitelisted')
+      throw 'No default condition was whitelisted';
     }
 
     this.state = {
-      filter: [
-        utils.deepClone(this.defaultCondition),
-      ]
-    }
+      filter: [utils.deepClone(this.defaultCondition)],
+    };
   }
 
   resetFilter() {
     this.setState({
-      filter: [
-        utils.deepClone(this.defaultCondition),
-      ]
+      filter: [utils.deepClone(this.defaultCondition)],
     });
   }
 
@@ -159,15 +161,11 @@ export class DevicesFilter extends Component<Props, State> {
       const selectClassName: string = utils.randomClassName();
       return (
         <>
-          <Pane
-            display="flex"
-            flexDirection="column"
-            flex="1"
-          >
-            <TextInput
+          <Column>
+            <Input
               width="auto"
               placeholder="Key"
-              marginBottom={minorScale(2)}
+              padding={2}
               onChange={(event: any) => {
                 const { value: key } = event.target;
                 this.setState({
@@ -176,14 +174,14 @@ export class DevicesFilter extends Component<Props, State> {
                       condition.params.key = key;
                     }
                     return condition;
-                  })
-                })
+                  }),
+                });
               }}
             />
 
             <Select
               className={selectClassName}
-              marginBottom={minorScale(2)}
+              marginY={12}
               value={cond.operator}
               onChange={(event: any) => {
                 const { value: operator } = event.target;
@@ -193,22 +191,17 @@ export class DevicesFilter extends Component<Props, State> {
                       condition.params.operator = operator;
                     }
                     return condition;
-                  })
+                  }),
                 });
               }}
             >
               <option value={OperatorIs}>{OperatorIs}</option>
               <option value={OperatorIsNot}>{OperatorIsNot}</option>
             </Select>
-            <style>{`
-              .${selectClassName} > select {
-                padding-top: 7px;
-                padding-bottom: 7px;
-              }
-            `}</style>
-            <TextInput
+            <Input
               width="auto"
               placeholder="Value"
+              padding={2}
               onChange={(event: any) => {
                 const { value: value } = event.target;
                 this.setState({
@@ -217,11 +210,11 @@ export class DevicesFilter extends Component<Props, State> {
                       condition.params.value = value;
                     }
                     return condition;
-                  })
-                })
+                  }),
+                });
               }}
             />
-          </Pane>
+          </Column>
         </>
       );
     }
@@ -230,23 +223,23 @@ export class DevicesFilter extends Component<Props, State> {
       let cond = condition.params as LabelExistenceConditionParams;
       return (
         <>
-          <Pane display="flex" flex="1" marginRight={majorScale(1)}>
-            <TextInput
-              width="auto"
-              placeholder="Key"
-              onChange={(event: any) => {
-                const { value: key } = event.target;
-                this.setState({
-                  filter: this.state.filter.map((condition: any, i) => {
-                    if (i === index) {
-                      condition.params.key = key;
-                    }
-                    return condition;
-                  })
-                })
-              }}
-            />
-          </Pane>
+          <Input
+            width="auto"
+            placeholder="Key"
+            padding={2}
+            marginRight={3}
+            onChange={(event: any) => {
+              const { value: key } = event.target;
+              this.setState({
+                filter: this.state.filter.map((condition: any, i) => {
+                  if (i === index) {
+                    condition.params.key = key;
+                  }
+                  return condition;
+                }),
+              });
+            }}
+          />
           <Select
             value={cond.operator}
             onChange={(event: any) => {
@@ -257,10 +250,9 @@ export class DevicesFilter extends Component<Props, State> {
                     condition.params.operator = operator;
                   }
                   return condition;
-                })
+                }),
               });
             }}
-            marginRight={majorScale(1)}
           >
             <option value={OperatorExists}>{OperatorExists}</option>
             <option value={OperatorNotExists}>{OperatorNotExists}</option>
@@ -283,10 +275,10 @@ export class DevicesFilter extends Component<Props, State> {
                     condition.params.property = property;
                   }
                   return condition;
-                })
+                }),
               });
             }}
-            marginRight={majorScale(1)}
+            marginRight={16}
           >
             <option value={'status'}>Status</option>
           </Select>
@@ -300,10 +292,10 @@ export class DevicesFilter extends Component<Props, State> {
                     condition.params.operator = operator;
                   }
                   return condition;
-                })
+                }),
               });
             }}
-            marginRight={majorScale(1)}
+            marginRight={16}
           >
             <option value={OperatorIs}>{OperatorIs}</option>
             <option value={OperatorIsNot}>{OperatorIsNot}</option>
@@ -318,10 +310,9 @@ export class DevicesFilter extends Component<Props, State> {
                     condition.params.value = value;
                   }
                   return condition;
-                })
-              })
+                }),
+              });
             }}
-            marginRight={majorScale(1)}
           >
             <option value="online">Online</option>
             <option value="offline">Offline</option>
@@ -337,131 +328,117 @@ export class DevicesFilter extends Component<Props, State> {
     const selectClassName: string = utils.randomClassName();
 
     return (
-      <Pane>
-        <Dialog
-          isShown={show}
+      <Popup
+        show={show}
+        onClose={() => {
+          onClose();
+          this.resetFilter();
+        }}
+      >
+        <Card
+          border
+          size="xlarge"
           title="Filter Devices"
-          onCloseComplete={onClose}
-          onConfirm={() => {
-            if (onSubmit) {
-              onSubmit(filter);
-            }
-            this.resetFilter();
-          }}
-          confirmLabel="Filter"
-          hasCancel={false}
-          style={{ maxHeight: majorScale(12), overflowY: 'auto' }}
+          actions={[
+            {
+              title: 'Add Condition',
+              variant: 'secondary',
+              onClick: () => {
+                this.setState({
+                  filter: [...filter, utils.deepClone(this.defaultCondition)],
+                });
+              },
+            },
+          ]}
         >
-          <Pane display="flex" flexDirection="column">
-            {filter.map((condition, index) => {return (
-              <Fragment key={index}>
-                <Pane display="flex" justifyContent="space-around">
-                  <Select
-                    value={condition.type}
-                    onChange={(event: Event) => {
-                      if (event.target == null) {
-                        return;
-                      }
-                      var { value: property } = event.target as HTMLSelectElement;
-                      this.setState({
-                        filter: filter.map((condition, i) => {
-                          if (i !== index) {
-                            return condition;
-                          }
-                          if (condition.type === property) {
-                            return condition;
-                          }
-
-                          let params: ConditionParams;
-                          switch (property) {
-                            case DevicePropertyCondition:
-                              params = DefaultDevicePropertyConditionParams();
-                              break;
-                            case LabelValueCondition:
-                              params = DefaultLabelValueConditionParams();
-                              break;
-                            case LabelExistenceCondition:
-                              params = DefaultLabelExistenceConditionParams();
-                              break;
-                            default:
-                              property = DevicePropertyCondition;
-                              params = DefaultDevicePropertyConditionParams();
-                          };
-                          condition = {
-                            type: property,
-                            params,
-                          }
+          {filter.map((condition, index) => (
+            <Group key={index}>
+              <Row justifyContent="space-between" alignItems="center">
+                <Select
+                  value={condition.type}
+                  onChange={event => {
+                    if (event.target == null) {
+                      return;
+                    }
+                    var { value: property } = event.target as HTMLSelectElement;
+                    this.setState({
+                      filter: filter.map((condition, i) => {
+                        if (i !== index) {
                           return condition;
-                        })
-                      });
-                    }}
-                    className={selectClassName}
-                    marginRight={majorScale(1)}
-                  >
-                    {this.conditionOptions}
-                  </Select>
-                  <style>{`
+                        }
+                        if (condition.type === property) {
+                          return condition;
+                        }
+
+                        let params: ConditionParams;
+                        switch (property) {
+                          case DevicePropertyCondition:
+                            params = DefaultDevicePropertyConditionParams();
+                            break;
+                          case LabelValueCondition:
+                            params = DefaultLabelValueConditionParams();
+                            break;
+                          case LabelExistenceCondition:
+                            params = DefaultLabelExistenceConditionParams();
+                            break;
+                          default:
+                            property = DevicePropertyCondition;
+                            params = DefaultDevicePropertyConditionParams();
+                        }
+                        condition = {
+                          type: property,
+                          params,
+                        };
+                        return condition;
+                      }),
+                    });
+                  }}
+                  className={selectClassName}
+                  marginRight={16}
+                >
+                  {this.conditionOptions}
+                </Select>
+                <style>{`
                     .${selectClassName} > select {
                       width: auto;
                     }
                   `}</style>
 
-                  {this.renderCondition(condition, index)}
+                {this.renderCondition(condition, index)}
 
-                  {index > 0 ? (
-                    <IconButton
-                      icon="cross"
-                      intent="danger"
-                      appearance="minimal"
-                      onClick={() =>
-                        this.setState({
-                          filter: filter.filter((_, i) => i !== index)
-                        })
-                      }
-                    />
-                  ) : (
-                    <Pane width={majorScale(4)} />
-                  )}
-                </Pane>
-                {index < filter.length - 1 && (
-                  <Pane marginY={majorScale(2)}>
-                    <Strong
-                      size={300}
-                      paddingX={majorScale(2)}
-                      paddingY={majorScale(1)}
-                      backgroundColor="#E4E7EB"
-                      borderRadius={3}
-                    >
-                      OR
-                    </Strong>
-                  </Pane>
+                {index > 0 && (
+                  <Button
+                    title={<Icon icon="cross" size={18} color="white" />}
+                    marginLeft={2}
+                    variant="icon"
+                    onClick={() =>
+                      this.setState({
+                        filter: filter.filter((_, i) => i !== index),
+                      })
+                    }
+                  />
                 )}
-              </Fragment>
-            )})}
-          </Pane>
-          <Pane
-          display="flex"
-          flexDirection="column"
-          marginTop={majorScale(4)}>
-            <Pane>
-              <Button
-                intent="none"
-                iconBefore="plus"
-                onClick={() => {
-                  this.setState({
-                    filter: [
-                      ...filter,
-                      utils.deepClone(this.defaultCondition),
-                    ]
-                  });
-                }}
-              >
-                Add Condition
-              </Button>
-            </Pane>
-          </Pane>
-        </Dialog>
-      </Pane>
+              </Row>
+              {index < filter.length - 1 && (
+                <Row marginTop={6}>
+                  <Text fontWeight={4} fontSize={3}>
+                    OR
+                  </Text>
+                </Row>
+              )}
+            </Group>
+          ))}
+          <Button
+            title="Apply Filter"
+            onClick={() => {
+              if (onSubmit) {
+                onSubmit(filter);
+              }
+              this.resetFilter();
+            }}
+          />
+        </Card>
+      </Popup>
     );
   }
 }

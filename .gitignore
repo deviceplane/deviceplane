@@ -6,3 +6,5 @@ cmd/controller/controller
 cmd/deviceplane/deviceplane
 ui/build
 ui/node_modules
+ui/screenshotsFolder
+ui/videosFolder

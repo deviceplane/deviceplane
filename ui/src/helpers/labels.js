@@ -1,8 +1,6 @@
-import React, { Fragment, Component } from "react";
-import {
-  Pane,
-  minorScale,
-} from "evergreen-ui";
+import React from 'react';
+
+import { Row, Text } from '../components/core';
 
 export function buildLabelColorMap(oldLabelColorMap, labelColors, items) {
   var x = [];
@@ -16,50 +14,49 @@ export function buildLabelColorMap(oldLabelColorMap, labelColors, items) {
   var labelColorMap = Object.assign({}, oldLabelColorMap);
   labelKeys.forEach((key, i) => {
     if (!labelColorMap[key]) {
-      labelColorMap[key] = labelColors[i % (labelColors.length - 1)]
+      labelColorMap[key] = labelColors[i % (labelColors.length - 1)];
     }
   });
   return labelColorMap;
-};
+}
 
 export function renderLabels(labels, labelColorMap) {
   return (
-    <Pane display="flex" flexWrap="wrap">
+    <Row flexWrap="wrap" overflow="hidden">
       {Object.keys(labels).map((key, i) => (
-        <Pane
-          display="flex"
-          marginRight={minorScale(2)}
-          marginY={minorScale(1)}
+        <Row
+          marginRight={3}
+          marginBottom={2}
           overflow="hidden"
           key={key}
+          fontSize={0}
+          fontWeight={3}
         >
-          <Pane
+          <Text
             backgroundColor={labelColorMap[key]}
-            paddingX={6}
-            paddingY={2}
-            color="white"
-            borderTopLeftRadius={3}
-            borderBottomLeftRadius={3}
-            textOverflow="ellipsis"
-            overflow="hidden"
+            paddingX={2}
+            paddingY={1}
+            color="black"
+            borderTopLeftRadius={1}
+            borderBottomLeftRadius={1}
             whiteSpace="nowrap"
+            overflow="hidden"
           >
             {key}
-          </Pane>
-          <Pane
-            backgroundColor="#E4E7EB"
-            paddingX={6}
-            paddingY={2}
-            borderTopRightRadius={3}
-            borderBottomRightRadius={3}
-            textOverflow="ellipsis"
+          </Text>
+          <Text
+            backgroundColor="grays.3"
+            paddingX={2}
+            paddingY={1}
+            borderTopRightRadius={1}
+            borderBottomRightRadius={1}
             overflow="hidden"
             whiteSpace="nowrap"
           >
             {labels[key]}
-          </Pane>
-        </Pane>
+          </Text>
+        </Row>
       ))}
-    </Pane>
+    </Row>
   );
 }
