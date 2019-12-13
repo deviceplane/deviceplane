@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState } from 'react';
 import { RHFInput } from 'react-hook-form-input';
 import styled from 'styled-components';
 import { space, color, typography } from 'styled-system';
@@ -34,7 +34,6 @@ const Field = forwardRef(
       label,
       hint,
       description,
-      type,
       name,
       as,
       setValue,
@@ -47,6 +46,8 @@ const Field = forwardRef(
     },
     ref
   ) => {
+    const [type, setType] = useState(props.type);
+
     errors = Array.isArray(errors) ? errors : [errors];
     const getComponent = () => {
       if (as) {
@@ -69,11 +70,11 @@ const Field = forwardRef(
           return (
             <Input
               autoComplete={autoComplete}
-              type={type}
               name={name}
               id={name}
               ref={ref}
               {...props}
+              type={type}
             />
           );
       }
@@ -83,7 +84,27 @@ const Field = forwardRef(
       <Container group={group}>
         {(label || description) && (
           <Column marginBottom={Label.defaultProps.marginBottom}>
-            {label && <FieldLabel htmlFor={name}>{label}</FieldLabel>}
+            <Row justifyContent="space-between">
+              {label && <FieldLabel htmlFor={name}>{label}</FieldLabel>}
+              {props.type === 'password' && (
+                <Row
+                  style={{ cursor: 'pointer' }}
+                  alignItems="center"
+                  onClick={() =>
+                    setType(type => (type === 'password' ? 'text' : 'password'))
+                  }
+                >
+                  <Icon
+                    icon={type === 'password' ? 'eye-open' : 'eye-off'}
+                    size={16}
+                  />
+                  <Text fontSize={0} marginLeft={2} fontWeight={3}>
+                    {type === 'password' ? 'SHOW' : 'HIDE'}
+                  </Text>
+                </Row>
+              )}
+            </Row>
+
             {description && (
               <Text marginTop={2} fontSize={1} color="grays.8">
                 {description}
