@@ -227,6 +227,7 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "UpdateDevice", s.withDevice(s.updateDevice))).Methods("PATCH")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization("devices", "DeleteDevice", s.withDevice(s.deleteDevice))).Methods("DELETE")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/ssh", s.validateAuthorization("devices", "SSH", s.withDevice(s.initiateSSH))).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/reboot", s.validateAuthorization("devices", "Reboot", s.withDevice(s.initiateReboot))).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/imagepullprogress", s.validateAuthorization("devices", "GetImagePullProgress", s.withDevice(s.imagePullProgress))).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/metrics/host", s.validateAuthorization("devices", "GetMetrics", s.withDevice(s.hostMetrics))).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/metrics/agent", s.validateAuthorization("devices", "GetMetrics", s.withDevice(s.agentMetrics))).Methods("GET")

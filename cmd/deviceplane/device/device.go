@@ -65,6 +65,16 @@ func deviceListAction(c *kingpin.ParseContext) error {
 	return cliutils.PrintWithFormat(devices, *deviceOutputFlag)
 }
 
+func deviceRebootAction(c *kingpin.ParseContext) error {
+	err := config.APIClient.RebootDevice(context.TODO(), *config.Flags.Project, *deviceArg)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Successfully initiated reboot")
+	return nil
+}
+
 func deviceInspectAction(c *kingpin.ParseContext) error {
 	device, err := config.APIClient.GetDevice(context.TODO(), *config.Flags.Project, *deviceArg)
 	if err != nil {

@@ -25,6 +25,7 @@ const (
 	devicesURL      = "devices"
 	sshURL          = "ssh"
 	executeURL      = "execute"
+	rebootURL       = "reboot"
 	bundleURL       = "bundle"
 	metricsURL      = "metrics"
 	servicesURL     = "services"
@@ -158,6 +159,13 @@ func (c *Client) CreateRelease(ctx context.Context, project, application, yamlCo
 		return nil, err
 	}
 	return &release, nil
+}
+
+func (c *Client) RebootDevice(ctx context.Context, project, device string) error {
+	if err := c.post(ctx, []byte{}, nil, projectsURL, project, devicesURL, device, rebootURL); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Client) Execute(ctx context.Context, project, deviceID, command string) (*models.ExecuteResponse, error) {

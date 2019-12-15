@@ -73,3 +73,17 @@ func InitiateSSH(deviceConn net.Conn) error {
 	req, _ := http.NewRequest("POST", "/ssh", nil)
 	return req.Write(deviceConn)
 }
+
+func InitiateReboot(deviceConn net.Conn) (*http.Response, error) {
+	req, _ := http.NewRequest(
+		"POST",
+		"/reboot",
+		nil,
+	)
+
+	if err := req.Write(deviceConn); err != nil {
+		return nil, err
+	}
+
+	return http.ReadResponse(bufio.NewReader(deviceConn), req)
+}
