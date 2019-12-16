@@ -64,6 +64,14 @@ const Table = ({ columns, data, onRowSelect, placeholder }) => {
     useSortBy
   );
 
+  const handleRowClick = index => () => {
+    const selection = window.getSelection();
+    // Only select row if user is not highlighting text
+    if (selection.type !== 'Range') {
+      onRowSelect(data[index]);
+    }
+  };
+
   return (
     <Container {...getTableProps()}>
       <Header flex={1}>
@@ -118,7 +126,7 @@ const Table = ({ columns, data, onRowSelect, placeholder }) => {
             <TableRow
               {...row.getRowProps()}
               selectable={selectable}
-              onClick={() => onRowSelect(data[row.index])}
+              onClick={handleRowClick(row.index)}
             >
               {row.cells.map(cell => (
                 <Cell {...cell.getCellProps()} style={cell.column.style || {}}>
