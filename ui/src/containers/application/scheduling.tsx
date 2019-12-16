@@ -42,6 +42,7 @@ const Scheduling = ({
   );
   const [backendError, setBackendError] = useState();
   const [showFilterDialog, setShowFilterDialog] = useState();
+  const [filterToEdit, setFilterToEdit] = useState();
   const navigation = useNavigation();
 
   const submit = async () => {
@@ -114,6 +115,10 @@ const Scheduling = ({
             canRemoveFilter
             query={schedulingRule}
             removeFilter={removeFilter}
+            onEdit={filter => {
+              setShowFilterDialog(true);
+              setFilterToEdit(filter);
+            }}
           />
         ) : (
           <Row flex={1} justifyContent="center" alignItems="center">
@@ -123,12 +128,17 @@ const Scheduling = ({
           </Row>
         )}
       </Row>
-      <DevicesFilter
-        whitelistedConditions={[LabelValueCondition]}
-        show={showFilterDialog}
-        onClose={() => setShowFilterDialog(false)}
-        onSubmit={addFilter}
-      />
+      {showFilterDialog && (
+        <DevicesFilter
+          filter={filterToEdit}
+          whitelistedConditions={[LabelValueCondition]}
+          onClose={() => {
+            setShowFilterDialog(false);
+            setFilterToEdit(null);
+          }}
+          onSubmit={addFilter}
+        />
+      )}
       <Button
         title="Set Scheduling Rule"
         marginTop={6}

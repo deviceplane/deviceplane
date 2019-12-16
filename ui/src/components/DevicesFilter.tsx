@@ -82,6 +82,7 @@ interface Props {
   show: boolean;
   onClose: () => void;
   onSubmit?: (filter: Filter) => void;
+  filter: Filter;
 }
 
 interface State {
@@ -142,7 +143,7 @@ export class DevicesFilter extends Component<Props, State> {
     }
 
     this.state = {
-      filter: [utils.deepClone(this.defaultCondition)],
+      filter: props.filter || [utils.deepClone(this.defaultCondition)],
     };
   }
 
@@ -166,6 +167,7 @@ export class DevicesFilter extends Component<Props, State> {
               width="auto"
               placeholder="Key"
               padding={2}
+              value={cond.key}
               onChange={(event: any) => {
                 const { value: key } = event.target;
                 this.setState({
@@ -202,6 +204,7 @@ export class DevicesFilter extends Component<Props, State> {
               width="auto"
               placeholder="Value"
               padding={2}
+              value={cond.value}
               onChange={(event: any) => {
                 const { value: value } = event.target;
                 this.setState({
@@ -228,6 +231,7 @@ export class DevicesFilter extends Component<Props, State> {
             placeholder="Key"
             padding={2}
             marginRight={3}
+            value={cond.key}
             onChange={(event: any) => {
               const { value: key } = event.target;
               this.setState({
@@ -323,13 +327,13 @@ export class DevicesFilter extends Component<Props, State> {
   };
 
   render() {
-    const { show, onClose, onSubmit } = this.props;
+    const { onClose, onSubmit } = this.props;
     const { filter } = this.state;
     const selectClassName: string = utils.randomClassName();
 
     return (
       <Popup
-        show={show}
+        show={true}
         onClose={() => {
           onClose();
           this.resetFilter();

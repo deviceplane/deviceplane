@@ -31,7 +31,7 @@ const ConditionComp = ({ type, params }) => {
     case LabelValueCondition:
       return (
         <>
-          <Text fontWeight={3} marginRight={2}>
+          <Text fontWeight={3} marginRight={2} color="primary">
             {params.key}
           </Text>
 
@@ -45,7 +45,7 @@ const ConditionComp = ({ type, params }) => {
     case LabelExistenceCondition:
       return (
         <>
-          <Text fontWeight={3} marginRight={2}>
+          <Text fontWeight={3} marginRight={2} color="primary">
             {params.key}
           </Text>
 
@@ -57,7 +57,7 @@ const ConditionComp = ({ type, params }) => {
     case DevicePropertyCondition:
       return (
         <>
-          <Text fontWeight={3} marginRight={2}>
+          <Text fontWeight={3} marginRight={2} color="primary">
             {params.property}
           </Text>
 
@@ -81,6 +81,7 @@ export const DevicesFilterButtons = ({
   query,
   removeFilter,
   canRemoveFilter,
+  onEdit,
 }) => {
   return (
     <Row flexWrap="wrap">
@@ -92,6 +93,8 @@ export const DevicesFilterButtons = ({
             borderColor="white"
             padding={2}
             alignItems="center"
+            style={{ cursor: 'pointer' }}
+            onClick={() => onEdit(filter)}
           >
             {filter.map((condition, i) => (
               <React.Fragment key={i}>
@@ -106,15 +109,15 @@ export const DevicesFilterButtons = ({
                 )}
               </React.Fragment>
             ))}
-            {canRemoveFilter && (
-              <Button
-                marginLeft={2}
-                variant="icon"
-                title={<Icon icon="cross" color="white" size={14} />}
-                onClick={() => (removeFilter ? removeFilter(index) : null)}
-              />
-            )}
           </Row>
+          {canRemoveFilter && (
+            <Button
+              marginLeft={2}
+              variant="icon"
+              title={<Icon icon="cross" color="white" size={14} />}
+              onClick={() => (removeFilter ? removeFilter(index) : null)}
+            />
+          )}
         </Row>
       ))}
     </Row>

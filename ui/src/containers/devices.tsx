@@ -46,6 +46,7 @@ const Devices = ({ route }) => {
   const [labelColorMap, setLabelColorMap] = useState(
     buildLabelColorMap({}, labelColors, devices)
   );
+  const [filterToEdit, setFilterToEdit] = useState();
 
   useEffect(() => {
     queryDevices();
@@ -232,17 +233,6 @@ const Devices = ({ route }) => {
     setFilterQuery([...filterQuery, ...builtQuery]);
   };
 
-  const getIconForOrder = (order?: string) => {
-    switch (order) {
-      case Order.ASC:
-        return 'arrow-up';
-      case Order.DESC:
-        return 'arrow-down';
-      default:
-        return 'caret-down';
-    }
-  };
-
   return (
     <Layout title="Devices">
       <Card
@@ -275,6 +265,10 @@ const Devices = ({ route }) => {
               canRemoveFilter
               query={filterQuery}
               removeFilter={removeFilter}
+              onEdit={filter => {
+                setFilterToEdit(filter);
+                setShowFilterDialog(true);
+              }}
             />
           </Row>
         )}
@@ -292,11 +286,16 @@ const Devices = ({ route }) => {
         />
       </Card>
 
-      <DevicesFilter
-        show={showFilterDialog}
-        onClose={() => setShowFilterDialog(false)}
-        onSubmit={addFilter}
-      />
+      {showFilterDialog && (
+        <DevicesFilter
+          filter={filterToEdit}
+          onClose={() => {
+            setShowFilterDialog(false);
+            setFilterToEdit(null);
+          }}
+          onSubmit={addFilter}
+        />
+      )}
     </Layout>
   );
 };

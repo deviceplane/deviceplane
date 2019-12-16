@@ -48,7 +48,7 @@ const CloseButton = styled.button`
   border: 2px solid ${props => props.theme.colors.white};
 
   transition: background-color 200ms;
-  background-color: white;
+  background-color: ${props => props.theme.colors.white};
 
   &:hover {
     background-color: ${props => props.theme.colors.black};
