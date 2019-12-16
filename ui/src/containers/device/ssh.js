@@ -12,7 +12,7 @@ Terminal.defaultProps = {
   padding: 3,
   border: 0,
   borderRadius: 1,
-  height: 10,
+  flex: 1,
 };
 
 var process = require('process');
@@ -93,7 +93,7 @@ const DeviceSsh = ({
   }, []);
 
   return (
-    <Card size="xlarge">
+    <Card size="full" height="100%">
       <Terminal bg="grays.0">
         <Column id="terminal" flex={1} />
       </Terminal>
