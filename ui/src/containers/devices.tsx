@@ -21,6 +21,7 @@ import { buildLabelColorMap, renderLabels } from '../helpers/labels';
 // Runtime type safety
 import * as deviceTypes from '../components/DevicesFilter-ti';
 import { createCheckers } from 'ts-interface-checker';
+import storage from '../storage.js';
 const typeCheckers = createCheckers(deviceTypes.default);
 
 const Params = {
@@ -30,16 +31,13 @@ const Params = {
   OrderDirection: 'order',
 };
 
-const Order = {
-  ASC: 'asc',
-  DESC: 'desc',
-};
-
 const Devices = ({ route }) => {
   const navigation = useNavigation();
   const [showFilterDialog, setShowFilterDialog] = useState();
   const [devices, setDevices] = useState(route.data.devices);
-  const [filterQuery, setFilterQuery] = useState([]);
+  const [filterQuery, setFilterQuery] = useState(
+    storage.get('devicesFilter') || []
+  );
   const [page, setPage] = useState(0);
   const [orderedColumn, setOrderedColumn] = useState();
   const [order, setOrder] = useState();
@@ -49,12 +47,13 @@ const Devices = ({ route }) => {
   const [filterToEdit, setFilterToEdit] = useState();
 
   useEffect(() => {
-    queryDevices();
-  }, [filterQuery]);
-
-  useEffect(() => {
     parseQueryString();
   }, []);
+
+  useEffect(() => {
+    queryDevices();
+    storage.set('devicesFilter', filterQuery);
+  }, [filterQuery]);
 
   const columns = useMemo(
     () => [
@@ -230,7 +229,7 @@ const Devices = ({ route }) => {
     setPage(page);
     setOrderedColumn(orderedColumn);
     setOrder(order);
-    setFilterQuery([...filterQuery, ...builtQuery]);
+    setFilterQuery(builtQuery);
   };
 
   return (
