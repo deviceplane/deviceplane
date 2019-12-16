@@ -7,4 +7,4 @@ MYSQL_USER=deviceplane \
   MYSQL_DATABASE=deviceplane \
   docker-entrypoint.sh mysqld &
 
-exec controller
+exec controller $@
