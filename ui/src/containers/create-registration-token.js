@@ -22,7 +22,7 @@ const validationSchema = yup.object().shape({
     .nullable(),
 });
 
-const CreateDeviceRegistrationToken = ({
+const CreateRegistrationToken = ({
   route: {
     data: { params },
   },
@@ -35,22 +35,22 @@ const CreateDeviceRegistrationToken = ({
 
   const submit = async data => {
     try {
-      await api.createDeviceRegistrationToken({
+      await api.createRegistrationToken({
         projectId: params.project,
         data,
       });
-      toaster.success('Device Registration Token created successfully.');
+      toaster.success('Registration Token created successfully.');
       navigation.navigate(`/${params.project}/provisioning`);
     } catch (error) {
       setBackendError(utils.parseError(error));
-      toaster.danger('Device Registration Token was not updated.');
+      toaster.danger('Registration Token was not updated.');
       console.log(error);
     }
   };
 
   return (
     <Layout alignItems="center">
-      <Card title="Create Device Registration Token" size="medium">
+      <Card title="Create Registration Token" size="medium">
         <Alert show={backendError} variant="error" description={backendError} />
         <Form
           onSubmit={e => {
@@ -97,4 +97,4 @@ const CreateDeviceRegistrationToken = ({
   );
 };
 
-export default CreateDeviceRegistrationToken;
+export default CreateRegistrationToken;

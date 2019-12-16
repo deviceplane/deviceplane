@@ -22,18 +22,18 @@ const validationSchema = yup.object().shape({
     .nullable(),
 });
 
-const DeviceRegistrationTokenSettings = ({
+const RegistrationTokenSettings = ({
   route: {
-    data: { params, deviceRegistrationToken },
+    data: { params, registrationToken },
   },
 }) => {
   const navigation = useNavigation();
   const { register, handleSubmit, formState, errors } = useForm({
     validationSchema,
     defaultValues: {
-      name: deviceRegistrationToken.name,
-      description: deviceRegistrationToken.description,
-      maxRegistrations: deviceRegistrationToken.maxRegistrations,
+      name: registrationToken.name,
+      description: registrationToken.description,
+      maxRegistrations: registrationToken.maxRegistrations,
     },
   });
   const [showDeletePopup, setShowDeletePopup] = useState();
@@ -41,19 +41,19 @@ const DeviceRegistrationTokenSettings = ({
 
   const submit = async data => {
     try {
-      await api.updateDeviceRegistrationToken({
+      await api.updateRegistrationToken({
         projectId: params.project,
-        tokenId: deviceRegistrationToken.id,
+        tokenId: registrationToken.id,
         data: {
           ...data,
-          settings: deviceRegistrationToken.settings,
+          settings: registrationToken.settings,
         },
       });
       navigation.navigate(`/${params.project}/provisioning`);
-      toaster.success('Device Registration Token updated successfully.');
+      toaster.success('Registration Token updated successfully.');
     } catch (error) {
       setBackendError(utils.parseError(error));
-      toaster.danger('Device Registration Token was not updated.');
+      toaster.danger('Registration Token was not updated.');
       console.log(error);
     }
   };
@@ -61,15 +61,15 @@ const DeviceRegistrationTokenSettings = ({
   const submitDelete = async () => {
     setBackendError(null);
     try {
-      await api.deleteDeviceRegistrationToken({
+      await api.deleteRegistrationToken({
         projectId: params.project,
-        tokenId: deviceRegistrationToken.id,
+        tokenId: registrationToken.id,
       });
-      toaster.success('Successfully deleted Device Registration Token.');
+      toaster.success('Registration Token deleted successfully.');
       navigation.navigate(`/${params.project}/provisioning`);
     } catch (error) {
       setBackendError(utils.parseError(error));
-      toaster.danger('Device Registration Token was not deleted.');
+      toaster.danger('Registration Token was not deleted.');
       console.log(error);
     }
     setShowDeletePopup(false);
@@ -77,7 +77,7 @@ const DeviceRegistrationTokenSettings = ({
 
   return (
     <Card
-      title="Device Registration Token Settings"
+      title="Registration Token Settings"
       actions={[
         {
           title: 'Delete',
@@ -113,11 +113,10 @@ const DeviceRegistrationTokenSettings = ({
         <Button title="Update" disabled={!formState.dirty} />
       </Form>
       <Popup show={showDeletePopup} onClose={() => setShowDeletePopup(false)}>
-        <Card title="Delete Device Registration Token" border>
+        <Card title="Delete Registration Token" border>
           <Text>
             You are about to delete the{' '}
-            <strong>{deviceRegistrationToken.name}</strong> Device Registration
-            Token.
+            <strong>{registrationToken.name}</strong> Registration Token.
           </Text>
           <Button title="Delete" marginTop={5} onClick={submitDelete} />
         </Card>
@@ -126,4 +125,4 @@ const DeviceRegistrationTokenSettings = ({
   );
 };
 
-export default DeviceRegistrationTokenSettings;
+export default RegistrationTokenSettings;

@@ -5,47 +5,45 @@ import { Column, Label, Value } from '../../components/core';
 import Card from '../../components/card';
 import EditableLabelTable from '../../components/EditableLabelTable';
 
-const DeviceRegistrationTokenOverview = ({
+const RegistrationTokenOverview = ({
   route: {
-    data: { params, deviceRegistrationToken },
+    data: { params, registrationToken },
   },
 }) => {
   return (
     <>
       <Card
         size="xlarge"
-        title={deviceRegistrationToken.name}
-        subtitle={deviceRegistrationToken.description}
+        title={registrationToken.name}
+        subtitle={registrationToken.description}
       >
         <Column marginBottom={6}>
           <Label>ID</Label>
-          <Value>{deviceRegistrationToken.id}</Value>
+          <Value>{registrationToken.id}</Value>
         </Column>
         <Column marginBottom={6}>
           <Label>Devices Registered</Label>
-          <Value>{deviceRegistrationToken.deviceCounts.allCount}</Value>
+          <Value>{registrationToken.deviceCounts.allCount}</Value>
         </Column>
         <Column>
           <Label>Maximum Device Registerations</Label>
-          <Value>
-            {deviceRegistrationToken.maxRegistrations || 'Unlimited'}
-          </Value>
+          <Value>{registrationToken.maxRegistrations || 'Unlimited'}</Value>
         </Column>
       </Card>
       <Column marginTop={4}>
         <EditableLabelTable
-          data={deviceRegistrationToken.labels}
+          data={registrationToken.labels}
           onAdd={label =>
-            api.addDeviceRegistrationTokenLabel({
+            api.addRegistrationTokenLabel({
               projectId: params.project,
-              tokenId: deviceRegistrationToken.id,
+              tokenId: registrationToken.id,
               data: label,
             })
           }
           onRemove={labelId =>
-            api.removeDeviceRegistrationTokenLabel({
+            api.removeRegistrationTokenLabel({
               projectId: params.project,
-              tokenId: deviceRegistrationToken.id,
+              tokenId: registrationToken.id,
               labelId,
             })
           }
@@ -55,4 +53,4 @@ const DeviceRegistrationTokenOverview = ({
   );
 };
 
-export default DeviceRegistrationTokenOverview;
+export default RegistrationTokenOverview;

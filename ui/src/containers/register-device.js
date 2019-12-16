@@ -29,34 +29,33 @@ const getDockerCommand = ({ id, projectId }) =>
 
 const AddDevice = ({
   route: {
-    data: { params, deviceRegistrationToken },
+    data: { params, registrationToken },
   },
 }) => {
   useEffect(() => {
-    console.log(getLocalCommand(deviceRegistrationToken));
+    console.log(getLocalCommand(registrationToken));
   }, []);
 
   return (
     <Layout alignItems="center">
       <Card title="Register Device">
-        {deviceRegistrationToken ? (
+        {registrationToken ? (
           <>
             <Row marginBottom={4}>
               <Text>
-                Default device registration token with ID{' '}
-                <Code>{deviceRegistrationToken.id}</Code> is being used.
+                Default registration token with ID{' '}
+                <Code>{registrationToken.id}</Code> is being used.
               </Text>
             </Row>
             <Text marginBottom={2}>
               Run the following command on the device you want to register:
             </Text>
-            <Code>{getDockerCommand(deviceRegistrationToken)}</Code>
+            <Code>{getDockerCommand(registrationToken)}</Code>
           </>
         ) : (
           <>
             <Text>
-              Create a <strong>default</strong> Device Registration Token from
-              the{' '}
+              Create a <strong>default</strong> Registration Token from the{' '}
               <Link href={`/${params.project}/provisioning`}>Provisioning</Link>{' '}
               page to enable device registration from the UI.{' '}
             </Text>

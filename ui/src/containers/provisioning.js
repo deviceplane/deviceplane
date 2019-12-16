@@ -11,12 +11,12 @@ import { Text } from '../components/core';
 
 const Provisioning = ({
   route: {
-    data: { params, deviceRegistrationTokens },
+    data: { params, registrationTokens },
   },
 }) => {
   const navigation = useNavigation();
   const [labelColorMap] = useState(
-    buildLabelColorMap({}, labelColors, deviceRegistrationTokens)
+    buildLabelColorMap({}, labelColors, registrationTokens)
   );
   const columns = useMemo(
     () => [
@@ -48,19 +48,17 @@ const Provisioning = ({
     ],
     []
   );
-  const tableData = useMemo(() => deviceRegistrationTokens, [
-    deviceRegistrationTokens,
-  ]);
+  const tableData = useMemo(() => registrationTokens, [registrationTokens]);
 
   return (
     <Layout title="Provisioning">
       <Card
-        title="Device Registration Tokens"
+        title="Registration Tokens"
         size="full"
         actions={[
           {
-            href: 'device-registration-tokens/create',
-            title: 'Create Device Registration Token',
+            href: 'registration-tokens/create',
+            title: 'Create Registration Token',
           },
         ]}
       >
@@ -69,12 +67,12 @@ const Provisioning = ({
           columns={columns}
           onRowSelect={({ name }) =>
             navigation.navigate(
-              `/${params.project}/provisioning/device-registration-tokens/${name}`
+              `/${params.project}/provisioning/registration-tokens/${name}`
             )
           }
           placeholder={
             <Text>
-              There are no <strong>Device Registration Tokens</strong>.
+              There are no <strong>Registration Tokens</strong>.
             </Text>
           }
         />

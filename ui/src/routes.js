@@ -118,11 +118,11 @@ export default mount({
               title: 'Register Device',
               getData: async request => {
                 try {
-                  const response = await api.defaultDeviceRegistrationToken({
+                  const response = await api.defaultRegistrationToken({
                     projectId: request.params.project,
                   });
                   return {
-                    deviceRegistrationToken: response.data,
+                    registrationToken: response.data,
                   };
                 } catch (e) {
                   console.log(e);
@@ -359,34 +359,31 @@ export default mount({
             '/': route({
               title: 'Provisioning',
               getData: async request => {
-                const response = await api.deviceRegistrationTokens({
+                const response = await api.registrationTokens({
                   projectId: request.params.project,
                 });
 
                 return {
-                  deviceRegistrationTokens: response.data,
+                  registrationTokens: response.data,
                 };
               },
               getView: () => import('./containers/provisioning'),
             }),
-            '/device-registration-tokens': mount({
+            '/registration-tokens': mount({
               '/create': route({
-                title: 'Create Device Registration Token',
-                getView: () =>
-                  import('./containers/create-device-registration-token'),
+                title: 'Create Registration Token',
+                getView: () => import('./containers/create-registration-token'),
               }),
               '/:token': compose(
-                withView(() =>
-                  import('./containers/device-registration-token')
-                ),
+                withView(() => import('./containers/registration-token')),
                 withData(async request => {
                   try {
-                    const response = await api.deviceRegistrationToken({
+                    const response = await api.registrationToken({
                       projectId: request.params.project,
                       tokenId: request.params.token,
                     });
                     return {
-                      deviceRegistrationToken: response.data,
+                      registrationToken: response.data,
                     };
                   } catch (e) {
                     console.log(e);
@@ -395,14 +392,14 @@ export default mount({
                 mount({
                   '/': redirect('overview'),
                   '/overview': route({
-                    title: 'Overview - Device Registration Token',
+                    title: 'Overview - Registration Token',
                     getView: () =>
-                      import('./containers/device-registration-token/overview'),
+                      import('./containers/registration-token/overview'),
                   }),
                   '/settings': route({
-                    title: 'Settings - Device Registration Token',
+                    title: 'Settings - Registration Token',
                     getView: () =>
-                      import('./containers/device-registration-token/settings'),
+                      import('./containers/registration-token/settings'),
                   }),
                 })
               ),

@@ -84,16 +84,16 @@ const api = {
   removeDeviceLabel: ({ projectId, deviceId, labelId }) =>
     del(`projects/${projectId}/devices/${deviceId}/labels/${labelId}`),
 
-  defaultDeviceRegistrationToken: ({ projectId }) =>
+  defaultRegistrationToken: ({ projectId }) =>
     get(`projects/${projectId}/deviceregistrationtokens/default`),
 
-  deviceRegistrationToken: ({ projectId, tokenId }) =>
+  registrationToken: ({ projectId, tokenId }) =>
     get(`projects/${projectId}/deviceregistrationtokens/${tokenId}?full`),
 
-  deviceRegistrationTokens: ({ projectId }) =>
+  registrationTokens: ({ projectId }) =>
     get(`projects/${projectId}/deviceregistrationtokens?full`),
 
-  createDeviceRegistrationToken: ({
+  createRegistrationToken: ({
     projectId,
     data: { name, description, maxRegistrations },
   }) =>
@@ -103,7 +103,7 @@ const api = {
       maxRegistrations: Number.parseInt(maxRegistrations),
     }),
 
-  updateDeviceRegistrationToken: ({
+  updateRegistrationToken: ({
     projectId,
     tokenId,
     data: { name, description, maxRegistrations, settings },
@@ -115,16 +115,16 @@ const api = {
       settings,
     }),
 
-  deleteDeviceRegistrationToken: ({ projectId, tokenId }) =>
+  deleteRegistrationToken: ({ projectId, tokenId }) =>
     del(`projects/${projectId}/deviceregistrationtokens/${tokenId}`),
 
-  addDeviceRegistrationTokenLabel: ({ projectId, tokenId, data }) =>
+  addRegistrationTokenLabel: ({ projectId, tokenId, data }) =>
     put(
       `projects/${projectId}/deviceregistrationtokens/${tokenId}/labels`,
       data
     ),
 
-  removeDeviceRegistrationTokenLabel: ({ projectId, tokenId, labelId }) =>
+  removeRegistrationTokenLabel: ({ projectId, tokenId, labelId }) =>
     del(
       `projects/${projectId}/deviceregistrationtokens/${tokenId}/labels/${labelId}`
     ),

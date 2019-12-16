@@ -15,7 +15,7 @@ const tabs = [
   },
 ];
 
-const DeviceRegistrationToken = ({ route }) => {
+const RegistrationToken = ({ route }) => {
   if (!route) {
     return null;
   }
@@ -26,7 +26,7 @@ const DeviceRegistrationToken = ({ route }) => {
         <Tabs
           content={tabs.map(({ to, title }) => ({
             title,
-            href: `/${route.data.params.project}/provisioning/device-registration-tokens/${route.data.deviceRegistrationToken.name}/${to}`,
+            href: `/${route.data.params.project}/provisioning/registration-tokens/${route.data.registrationToken.name}/${to}`,
           }))}
         />
       }
@@ -37,4 +37,4 @@ const DeviceRegistrationToken = ({ route }) => {
   );
 };
 
-export default DeviceRegistrationToken;
+export default RegistrationToken;
