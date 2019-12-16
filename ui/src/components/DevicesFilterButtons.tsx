@@ -86,7 +86,7 @@ export const DevicesFilterButtons = ({
   return (
     <Row flexWrap="wrap">
       {query.map((filter, index) => (
-        <Row alignItems="center" key={index} marginRight={4}>
+        <Row alignItems="center" key={index} marginRight={4} marginBottom={4}>
           <Row
             border={0}
             borderRadius={1}

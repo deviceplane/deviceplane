@@ -1,9 +1,9 @@
 // @ts-nocheck
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigation } from 'react-navi';
 
-import api from '../api.js';
+import api from '../api';
 import { labelColors } from '../theme';
 import Layout from '../components/layout';
 import Card from '../components/card';
@@ -14,6 +14,8 @@ import {
   Query,
   Filter,
   Condition,
+  OperatorIs,
+  LabelValueCondition,
 } from '../components/DevicesFilter';
 import { DevicesFilterButtons } from '../components/DevicesFilterButtons';
 import { buildLabelColorMap, renderLabels } from '../helpers/labels';
@@ -21,7 +23,8 @@ import { buildLabelColorMap, renderLabels } from '../helpers/labels';
 // Runtime type safety
 import * as deviceTypes from '../components/DevicesFilter-ti';
 import { createCheckers } from 'ts-interface-checker';
-import storage from '../storage.js';
+import storage from '../storage';
+import utils from '../utils';
 const typeCheckers = createCheckers(deviceTypes.default);
 
 const Params = {
@@ -54,6 +57,25 @@ const Devices = ({ route }) => {
     queryDevices();
     storage.set('devicesFilter', filterQuery);
   }, [filterQuery]);
+
+  const addLabelFilter = useCallback(
+    (key, value) => {
+      const labelFilter = [
+        {
+          type: LabelValueCondition,
+          params: {
+            key,
+            operator: OperatorIs,
+            value,
+          },
+        },
+      ];
+      if (!filterQuery.find(filter => utils.deepEqual(filter, labelFilter))) {
+        setFilterQuery(filterQuery => [...filterQuery, labelFilter]);
+      }
+    },
+    [filterQuery]
+  );
 
   const columns = useMemo(
     () => [
@@ -96,7 +118,7 @@ const Devices = ({ route }) => {
         Header: 'Labels',
         Cell: ({ row }) =>
           row.original.labels
-            ? renderLabels(row.original.labels, labelColorMap)
+            ? renderLabels(row.original.labels, labelColorMap, addLabelFilter)
             : null,
         style: {
           flex: 2,
@@ -104,7 +126,7 @@ const Devices = ({ route }) => {
         },
       },
     ],
-    []
+    [filterQuery]
   );
   const tableData = useMemo(() => devices, [devices]);
 

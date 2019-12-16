@@ -20,7 +20,7 @@ export function buildLabelColorMap(oldLabelColorMap, labelColors, items) {
   return labelColorMap;
 }
 
-export function renderLabels(labels, labelColorMap) {
+export function renderLabels(labels, labelColorMap, onClick = () => {}) {
   return (
     <Row flexWrap="wrap" overflow="hidden">
       {Object.keys(labels).map((key, i) => (
@@ -31,6 +31,10 @@ export function renderLabels(labels, labelColorMap) {
           key={key}
           fontSize={0}
           fontWeight={3}
+          onClick={e => {
+            e.stopPropagation();
+            onClick(key, labels[key]);
+          }}
         >
           <Text
             backgroundColor={labelColorMap[key]}
