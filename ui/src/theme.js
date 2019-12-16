@@ -12,11 +12,9 @@ const colors = {
 
   overlay: 'rgba(0,0,0,.8)',
 
-  pageBackground: '#121212',
+  pageBackground: '#181818',
 
   grays: [
-    '#141414',
-    '#181818',
     '#222222',
     '#363636',
     '#484848',
