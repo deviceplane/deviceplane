@@ -13,6 +13,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/controller/runner/datadog"
 	"github.com/deviceplane/deviceplane/pkg/controller/service"
 	mysql_store "github.com/deviceplane/deviceplane/pkg/controller/store/mysql"
+	"github.com/deviceplane/deviceplane/pkg/email"
 	sendgrid_email "github.com/deviceplane/deviceplane/pkg/email/sendgrid"
 	_ "github.com/deviceplane/deviceplane/pkg/statik"
 	_ "github.com/go-sql-driver/mysql"
@@ -32,6 +33,7 @@ var config struct {
 	CookieDomain   string   `conf:"cookie-domain"`
 	CookieSecure   bool     `conf:"cookie-secure"`
 	AllowedOrigins []string `conf:"allowed-origins"`
+	EmailProvider  string   `conf:"email-provider"`
 }
 
 func init() {
@@ -41,6 +43,7 @@ func init() {
 	config.CookieDomain = "localhost"
 	config.CookieSecure = false
 	config.AllowedOrigins = []string{"http://localhost:8080", "http://localhost:3000"}
+	config.EmailProvider = "none"
 }
 
 func main() {
@@ -65,8 +68,7 @@ func main() {
 		log.WithError(err).Fatal("statsd")
 	}
 
-	sendgridClient := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
-	sendgridEmail := sendgrid_email.NewEmail(sendgridClient)
+	emailProvider := getEmailProvider(config.EmailProvider)
 
 	connman := connman.New()
 
@@ -77,7 +79,7 @@ func main() {
 
 	svc := service.NewService(sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
 		sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
-		sendgridEmail, config.CookieDomain, config.CookieSecure, statikFS, st, connman)
+		emailProvider, config.CookieDomain, config.CookieSecure, statikFS, st, connman)
 
 	server := &http.Server{
 		Addr: config.Addr,
@@ -114,4 +116,14 @@ func tryConnect(uri string) (*sql.DB, error) {
 	}
 
 	return db, err
+}
+
+func getEmailProvider(emailProvider string) email.Interface {
+	switch emailProvider {
+	case "sendgrid":
+		sendgridClient := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
+		return sendgrid_email.NewEmail(sendgridClient)
+	default:
+		return nil
+	}
 }

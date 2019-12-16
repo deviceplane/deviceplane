@@ -60,6 +60,21 @@ setup_env() {
 
     # --- service file location ---
     FILE_SERVICE=${SYSTEMD_DIR}/${SERVICE}
+
+    # --- deviceplane project ---
+    if [ -z "${PROJECT}" ]; then
+        fatal "PROJECT is a required environment variable"
+    fi
+
+    # --- deviceplane registration token ---
+    if [ -z "${REGISTRATION_TOKEN}" ]; then
+        fatal "REGISTRATION_TOKEN is a required environment variable"
+    fi
+
+    # --- deviceplane controller ---
+    if [ -z "${CONTROLLER}" ]; then
+        CONTROLLER=https://cloud.deviceplane.com:443/api
+    fi
 }
 
 # --- set arch and suffix, fatal if architecture not supported ---
@@ -181,7 +196,9 @@ RestartSec=5s
 ExecStartPre=-/sbin/modprobe br_netfilter
 ExecStartPre=-/sbin/modprobe overlay
 ExecStart=${BIN_DIR}/deviceplane-agent \\
-    --project=${PROJECT} --registration-token=${REGISTRATION_TOKEN}
+    --controller=${CONTROLLER}
+    --project=${PROJECT} \\
+    --registration-token=${REGISTRATION_TOKEN} \\
 
 EOF
 }
@@ -201,7 +218,7 @@ systemd_start() {
 # --- run the install process --
 {
     verify_system
-    setup_env "$@"
+    setup_env
     download_and_verify
     create_systemd_service_file
     systemd_enable

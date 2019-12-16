@@ -551,29 +551,40 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	registrationTokenValue := ksuid.New().String()
+	if s.email == nil {
+		// If email provider is nil then skip the registration workflow
+		if _, err := s.users.MarkRegistrationCompleted(r.Context(), user.ID); err != nil {
+			log.WithError(err).Error("mark registration completed")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	} else {
+		registrationTokenValue := ksuid.New().String()
 
-	if _, err := s.registrationTokens.CreateRegistrationToken(r.Context(), user.ID, hash.Hash(registrationTokenValue)); err != nil {
-		log.WithError(err).Error("create registration token")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		if _, err := s.registrationTokens.CreateRegistrationToken(r.Context(), user.ID, hash.Hash(registrationTokenValue)); err != nil {
+			log.WithError(err).Error("create registration token")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		name := user.FirstName + " " + user.LastName
+
+		if err := s.email.Send(email.Request{
+			FromName:         "Deviceplane",
+			FromAddress:      "noreply@deviceplane.com",
+			ToName:           name,
+			ToAddress:        user.Email,
+			Subject:          "Deviceplane Registration Confirmation",
+			PlainTextContent: "Please go to the following URL to complete registration. https://cloud.deviceplane.com/confirm/" + registrationTokenValue,
+			HTMLContent:      "Please go to the following URL to complete registration. https://cloud.deviceplane.com/confirm/" + registrationTokenValue,
+		}); err != nil {
+			log.WithError(err).Error("send registration email")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 
-	name := user.FirstName + " " + user.LastName
-
-	if err := s.email.Send(email.Request{
-		FromName:         "Deviceplane",
-		FromAddress:      "noreply@deviceplane.com",
-		ToName:           name,
-		ToAddress:        user.Email,
-		Subject:          "Deviceplane Registration Confirmation",
-		PlainTextContent: "Please go to the following URL to complete registration. https://cloud.deviceplane.com/confirm/" + registrationTokenValue,
-		HTMLContent:      "Please go to the following URL to complete registration. https://cloud.deviceplane.com/confirm/" + registrationTokenValue,
-	}); err != nil {
-		log.WithError(err).Error("send registration email")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	utils.Respond(w, user)
 }
 
 func (s *Service) confirmRegistration(w http.ResponseWriter, r *http.Request) {
