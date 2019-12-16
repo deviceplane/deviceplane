@@ -20,14 +20,14 @@ const Overlay = styled(Column)`
 
 const Container = styled(Column)`
   position: relative;
-  max-height: 80vh;
   z-index: 9999999;
 `;
 
 const Content = styled(Column)`
+  max-height: 80vh;
   overflow: hidden;
   & > div {
-    overflow: auto;
+    overflow: scroll;
   }
 `;
 
