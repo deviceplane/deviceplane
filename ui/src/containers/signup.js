@@ -35,9 +35,13 @@ const Signup = () => {
 
   const submit = async data => {
     try {
-      await api.signup(data);
+      const response = await api.signup(data);
       navigation.navigate('/login');
-      toaster.success('Please check your email to confirm your registration.');
+      if (!response.data.registrationCompleted) {
+        toaster.success(
+          'Please check your email to confirm your registration.'
+        );
+      }
     } catch (error) {
       setBackendError(utils.parseError(error));
       toaster.danger(
