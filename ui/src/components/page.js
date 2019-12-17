@@ -26,12 +26,13 @@ const GlobalStyle = createGlobalStyle`
     padding: 0;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+    overflow: hidden;
   }
 
-  html, body, main, #root, #root > div  {
+  html, body, #root, #root > div, main {
     height: 100%;
+    overflow: hidden;
   }
-
 
   .ace_editor {
     background: ${props => props.theme.colors.grays[0]} !important;

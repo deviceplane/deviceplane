@@ -49,7 +49,6 @@ const Card = ({
       border={border ? 0 : undefined}
       borderColor="white"
       boxShadow={1}
-      overflow="hidden"
       {...props}
     >
       {logo && (

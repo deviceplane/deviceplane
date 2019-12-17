@@ -82,6 +82,8 @@ const Sidebar = () => {
   return (
     <Column
       width={136}
+      position="fixed"
+      height="100%"
       alignSelf="stretch"
       bg="black"
       alignItems="center"

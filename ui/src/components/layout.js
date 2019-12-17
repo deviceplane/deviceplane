@@ -7,9 +7,9 @@ import Sidebar from './sidebar';
 const Layout = ({ children, header, ...rest }) => (
   <Row height="100%">
     <Sidebar />
-    <Column flex={1} height="100%">
+    <Column flex={1} height="100%" overflow="hidden">
       <Header>{header}</Header>
-      <Column flex={1} {...rest} padding={5} overflow="hidden">
+      <Column flex={1} {...rest} padding={5} overflow="auto">
         {children}
       </Column>
     </Column>
