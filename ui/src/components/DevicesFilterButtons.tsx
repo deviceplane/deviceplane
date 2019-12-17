@@ -31,7 +31,12 @@ const ConditionComp = ({ type, params }) => {
     case LabelValueCondition:
       return (
         <>
-          <Text fontWeight={3} marginRight={2} color="primary">
+          <Text
+            fontWeight={3}
+            marginRight={2}
+            color="primary"
+            style={{ textTransform: 'none' }}
+          >
             {params.key}
           </Text>
 
@@ -47,7 +52,12 @@ const ConditionComp = ({ type, params }) => {
     case LabelExistenceCondition:
       return (
         <>
-          <Text fontWeight={3} marginRight={2} color="primary">
+          <Text
+            fontWeight={3}
+            marginRight={2}
+            color="primary"
+            style={{ textTransform: 'none' }}
+          >
             {params.key}
           </Text>
 
@@ -67,9 +77,7 @@ const ConditionComp = ({ type, params }) => {
             {params.operator}
           </Text>
 
-          <Text fontWeight={3} style={{ textTransform: 'none' }}>
-            {params.value}
-          </Text>
+          <Text fontWeight={3}>{params.value}</Text>
         </>
       );
     default:
