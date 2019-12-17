@@ -18,10 +18,13 @@ const Applications = ({
       { Header: 'Name', accessor: 'name', style: { flex: 2 } },
       {
         Header: 'Last Release',
-        Cell: ({ row: { original } }) =>
-          original.latestRelease
-            ? moment(original.latestRelease.createdAt).fromNow()
-            : '-',
+        Cell: ({ row: { original } }) => (
+          <Text>
+            {original.latestRelease
+              ? moment(original.latestRelease.createdAt).fromNow()
+              : '-'}
+          </Text>
+        ),
       },
       {
         Header: 'Device Count',

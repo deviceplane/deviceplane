@@ -22,7 +22,7 @@ const Members = ({
               user: { firstName, lastName },
             },
           },
-        }) => `${firstName} ${lastName}`,
+        }) => <Text>{`${firstName} ${lastName}`}</Text>,
       },
       {
         Header: 'Roles',
@@ -30,7 +30,7 @@ const Members = ({
           row: {
             original: { roles },
           },
-        }) => roles.map(({ name }) => name).join(', '),
+        }) => <Text>{roles.map(({ name }) => name).join(', ')}</Text>,
       },
     ],
     []

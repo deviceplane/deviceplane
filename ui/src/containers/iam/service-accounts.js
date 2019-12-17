@@ -21,7 +21,7 @@ const ServiceAccounts = ({
           row: {
             original: { roles },
           },
-        }) => roles.map(({ name }) => name).join(', '),
+        }) => <Text>{roles.map(({ name }) => name).join(', ')}</Text>,
       },
     ],
     []

@@ -98,21 +98,27 @@ const Devices = ({ route }) => {
       },
       {
         Header: 'IP Address',
-        Cell: ({ row }) =>
-          row.original.info.hasOwnProperty('ipAddress')
-            ? row.original.info.ipAddress
-            : '',
+        Cell: ({ row }) => (
+          <Text>
+            {row.original.info.hasOwnProperty('ipAddress')
+              ? row.original.info.ipAddress
+              : ''}
+          </Text>
+        ),
         style: {
           flex: '0 0 150px',
         },
       },
       {
         Header: 'OS',
-        Cell: ({ row }) =>
-          row.original.info.hasOwnProperty('osRelease') &&
-          row.original.info.osRelease.hasOwnProperty('prettyName')
-            ? row.original.info.osRelease.prettyName
-            : '-',
+        Cell: ({ row }) => (
+          <Text>
+            {row.original.info.hasOwnProperty('osRelease') &&
+            row.original.info.osRelease.hasOwnProperty('prettyName')
+              ? row.original.info.osRelease.prettyName
+              : '-'}
+          </Text>
+        ),
       },
       {
         Header: 'Labels',

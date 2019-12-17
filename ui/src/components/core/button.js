@@ -86,6 +86,7 @@ export const Btn = styled.button`
   transition: all 250ms;
   transform: translateZ(0);
   backface-visibility: hidden;
+  user-select: none;
 
   &:disabled {
     cursor: not-allowed;
@@ -112,6 +113,7 @@ export const LinkButton = styled.a`
   padding: 10px 12px;
   transform: translateZ(0);
   backface-visibility: hidden;
+  user-select: none;
 
   &:disabled {
     opacity: .3;

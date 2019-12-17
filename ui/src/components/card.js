@@ -20,6 +20,9 @@ const Container = styled(Column)`
       xlarge: {
         width: 13,
       },
+      xxlarge: {
+        width: 14,
+      },
       full: {
         width: 'unset',
         alignSelf: 'stretch',

@@ -273,6 +273,14 @@ const api = {
   createUserAccessKey: () => post(`useraccesskeys`, {}),
 
   deleteUserAccessKey: ({ id }) => del(`useraccesskeys/${id}`),
+
+  hostMetrics: ({ projectId, deviceId }) =>
+    get(`projects/${projectId}/devices/${deviceId}/metrics/host`),
+
+  serviceMetrics: ({ projectId, deviceId, applicationId, serviceId }) =>
+    get(
+      `projects/${projectId}/devices/${deviceId}/applications/${applicationId}/services/${serviceId}/metrics`
+    ),
 };
 
 export default api;

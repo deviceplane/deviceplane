@@ -1,9 +1,12 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import { Icon, toaster } from 'evergreen-ui';
 
 import api from '../../api';
+import theme from '../../theme';
 import {
   Row,
   Column,
+  Button,
   Value,
   Badge,
   Link,
@@ -12,17 +15,19 @@ import {
 } from '../../components/core';
 import Card from '../../components/card';
 import Table from '../../components/table';
+import Popup from '../../components/popup';
+import Editor from '../../components/editor';
 import EditableLabelTable from '../../components/EditableLabelTable';
-import { toaster } from 'evergreen-ui';
 
-const DeviceServices = ({ project, applicationStatusInfo }) => {
+const DeviceServices = ({ projectId, deviceId, applicationStatusInfo }) => {
+  const [serviceMetrics, setServiceMetrics] = useState({});
   const columns = useMemo(
     () => [
       {
         Header: 'Service',
         Cell: ({ row: { original } }) => (
           <Link
-            href={`/${project}/applications/${original.application.name}`}
+            href={`/${projectId}/applications/${original.application.name}`}
           >{`${original.application.name} / ${original.service}`}</Link>
         ),
       },
@@ -30,11 +35,41 @@ const DeviceServices = ({ project, applicationStatusInfo }) => {
         Header: 'Current Release',
         Cell: ({ row: { original } }) => (
           <Link
-            href={`/${project}/applications/${original.application.name}/releases/${original.currentReleaseId}`}
+            href={`/${projectId}/applications/${original.application.name}/releases/${original.currentReleaseId}`}
           >
             {original.currentReleaseId}
           </Link>
         ),
+      },
+      {
+        Header: ' ',
+        Cell: ({ row: { original } }) => (
+          <Button
+            title={<Icon icon="pulse" size={18} color={theme.colors.white} />}
+            variant="icon"
+            onClick={async () => {
+              try {
+                const response = await api.serviceMetrics({
+                  projectId,
+                  deviceId,
+                  applicationId: original.application.name,
+                  serviceId: original.service,
+                });
+                setServiceMetrics({
+                  service: original.service,
+                  metrics: response.data,
+                });
+              } catch (error) {
+                console.log(error);
+                toaster.danger('Service Metrics are currently unavailable.');
+              }
+            }}
+          />
+        ),
+        style: {
+          flex: '0 0 50px',
+          justifyContent: 'flex-end',
+        },
       },
     ],
     []
@@ -55,15 +90,35 @@ const DeviceServices = ({ project, applicationStatusInfo }) => {
   );
 
   return (
-    <Table
-      columns={columns}
-      data={tableData}
-      placeholder={
-        <Text>
-          There are no <strong>Services</strong>.
-        </Text>
-      }
-    />
+    <>
+      <Table
+        columns={columns}
+        data={tableData}
+        placeholder={
+          <Text>
+            There are no <strong>Services</strong>.
+          </Text>
+        }
+      />
+      <Popup
+        show={!!serviceMetrics.service}
+        onClose={() => setServiceMetrics(null)}
+      >
+        <Card
+          border
+          title="Service Metrics"
+          subtitle={serviceMetrics.service}
+          size="xxlarge"
+        >
+          <Editor
+            width="100%"
+            height="70vh"
+            value={serviceMetrics.metrics}
+            readOnly
+          />
+        </Card>
+      </Popup>
+    </>
   );
 };
 
@@ -72,6 +127,7 @@ const DeviceOverview = ({
     data: { params, device },
   },
 }) => {
+  const [hostMetrics, setHostMetrics] = useState();
   return (
     <>
       <Card
@@ -79,6 +135,22 @@ const DeviceOverview = ({
         title={device.name}
         marginBottom={4}
         actions={[
+          {
+            title: <Icon icon="pulse" size={18} color={theme.colors.white} />,
+            variant: 'icon',
+            onClick: async () => {
+              try {
+                const response = await api.hostMetrics({
+                  projectId: params.project,
+                  deviceId: device.id,
+                });
+                setHostMetrics(response.data);
+              } catch (error) {
+                toaster.danger('Host metrics are currently unavailable.');
+                console.log(error);
+              }
+            },
+          },
           {
             title: 'Reboot',
             variant: 'secondary',
@@ -144,10 +216,16 @@ const DeviceOverview = ({
       </Column>
       <Card title="Services" size="xlarge">
         <DeviceServices
-          project={params.project}
+          projectId={params.project}
+          deviceId={device.id}
           applicationStatusInfo={device.applicationStatusInfo}
         />
       </Card>
+      <Popup show={!!hostMetrics} onClose={() => setHostMetrics(null)}>
+        <Card border title="Host Metrics" subtitle={device.name} size="xxlarge">
+          <Editor width="100%" height="70vh" value={hostMetrics} readOnly />
+        </Card>
+      </Popup>
     </>
   );
 };

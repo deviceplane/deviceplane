@@ -10,7 +10,7 @@ const colors = {
 
   transparent: 'transparent',
 
-  overlay: 'rgba(0,0,0,.8)',
+  overlay: 'rgba(24, 24, 24, .8)',
 
   pageBackground: '#181818',
 

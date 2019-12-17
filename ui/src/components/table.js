@@ -3,7 +3,7 @@ import { useTable, useSortBy } from 'react-table';
 import styled from 'styled-components';
 import { Icon } from 'evergreen-ui';
 
-import { Column, Row } from './core';
+import { Column, Row, Text } from './core';
 
 const Container = styled(Column)``;
 
@@ -130,7 +130,7 @@ const Table = ({ columns, data, onRowSelect, placeholder }) => {
             >
               {row.cells.map(cell => (
                 <Cell {...cell.getCellProps()} style={cell.column.style || {}}>
-                  {cell.render('Cell')}
+                  {cell.value ? <Text>{cell.value}</Text> : cell.render('Cell')}
                 </Cell>
               ))}
             </TableRow>

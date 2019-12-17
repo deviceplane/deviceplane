@@ -25,10 +25,14 @@ const Releases = ({
   const navigation = useNavigation();
   const columns = useMemo(
     () => [
-      { Header: 'Release ID', accessor: 'id' },
+      { Header: 'Release ID', accessor: 'id', style: { flex: 2 } },
       {
         Header: 'Released by',
-        Cell: ({ row: { original } }) => <ReleasedBy release={original} />,
+        Cell: ({ row: { original } }) => (
+          <Text>
+            <ReleasedBy release={original} />
+          </Text>
+        ),
       },
       {
         Header: 'Started',
@@ -36,7 +40,7 @@ const Releases = ({
           row: {
             original: { createdAt },
           },
-        }) => moment(createdAt).fromNow(),
+        }) => <Text>{moment(createdAt).fromNow()}</Text>,
       },
       {
         Header: 'Device count',

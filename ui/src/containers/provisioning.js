@@ -23,8 +23,11 @@ const Provisioning = ({
       { Header: 'Name', accessor: 'name' },
       {
         Header: 'Created At',
-        Cell: ({ row: { original } }) =>
-          original.createdAt ? moment(original.createdAt).fromNow() : '-',
+        Cell: ({ row: { original } }) => (
+          <Text>
+            {original.createdAt ? moment(original.createdAt).fromNow() : '-'}
+          </Text>
+        ),
       },
       {
         Header: 'Devices Registered',
@@ -32,10 +35,13 @@ const Provisioning = ({
       },
       {
         Header: 'Registration Limit',
-        Cell: ({ row: { original } }) =>
-          typeof original.maxRegistrations === 'number'
-            ? original.maxRegistrations
-            : 'Unlimited',
+        Cell: ({ row: { original } }) => (
+          <Text>
+            {typeof original.maxRegistrations === 'number'
+              ? original.maxRegistrations
+              : 'Unlimited'}
+          </Text>
+        ),
       },
       {
         Header: 'Labels',
