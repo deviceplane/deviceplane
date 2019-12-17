@@ -5,8 +5,8 @@ const colors = {
 
   black: '#000',
   white: '#E6E6E6',
-  green: '#9EE493',
-  red: '#D7263D',
+  green: '#A2FAA3',
+  red: '#F93943',
 
   transparent: 'transparent',
 
