@@ -46,7 +46,7 @@ const Applications = ({
           }
           placeholder={
             <Text>
-              There are no <strong>Releases</strong>.
+              There are no <strong>Applications</strong>.
             </Text>
           }
         />
