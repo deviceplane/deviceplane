@@ -5,11 +5,11 @@ import Header from './header';
 import Sidebar from './sidebar';
 
 const Layout = ({ children, header, ...rest }) => (
-  <Row minHeight="100%">
+  <Row height="100%">
     <Sidebar />
-    <Column flex={1}>
+    <Column flex={1} height="100%">
       <Header>{header}</Header>
-      <Column flex={1} {...rest} padding={5}>
+      <Column flex={1} {...rest} padding={5} overflow="hidden">
         {children}
       </Column>
     </Column>

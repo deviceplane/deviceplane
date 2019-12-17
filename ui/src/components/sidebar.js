@@ -91,27 +91,29 @@ const Sidebar = () => {
           <Logo />
         </Link>
       </Row>
-      {projectSelected &&
-        links.map(({ to, title, icon }) => {
-          const href = `/${route.data.params.project}${to}`;
+      <Column overflow="auto" alignItems="center" height="100%">
+        {projectSelected &&
+          links.map(({ to, title, icon }) => {
+            const href = `/${route.data.params.project}${to}`;
 
-          return (
-            <SidebarLink
-              href={href}
-              width={120}
-              paddingY={4}
-              marginBottom={2}
-              key={title}
-              fontSize={0}
-              active={useActive(href, { exact: false })}
-            >
-              <Column alignItems="center">
-                <Icon icon={icon} color="white" size={24} />
-                <Text marginTop={3}>{title}</Text>
-              </Column>
-            </SidebarLink>
-          );
-        })}
+            return (
+              <SidebarLink
+                href={href}
+                width={120}
+                paddingY={4}
+                marginBottom={2}
+                key={title}
+                fontSize={0}
+                active={useActive(href, { exact: false })}
+              >
+                <Column alignItems="center">
+                  <Icon icon={icon} color="white" size={24} />
+                  <Text marginTop={3}>{title}</Text>
+                </Column>
+              </SidebarLink>
+            );
+          })}
+      </Column>
     </Column>
   );
 };

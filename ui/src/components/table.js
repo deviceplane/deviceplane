@@ -73,7 +73,7 @@ const Table = ({ columns, data, onRowSelect, placeholder }) => {
   };
 
   return (
-    <Container {...getTableProps()}>
+    <Container {...getTableProps()} overflow="hidden">
       <Header flex={1}>
         {headerGroups.map(headerGroup => (
           <Row flex={1} {...headerGroup.getHeaderGroupProps()}>
@@ -109,7 +109,7 @@ const Table = ({ columns, data, onRowSelect, placeholder }) => {
           </Row>
         ))}
       </Header>
-      <Column {...getTableBodyProps()}>
+      <Column {...getTableBodyProps()} overflow="auto">
         {rows.length === 0 && (
           <Row
             justifyContent="center"
