@@ -44,12 +44,13 @@ const SidebarLink = styled(Link)`
   text-decoration: none !important;
 
   background-color: ${props =>
-    props.active ? props.theme.colors.grays[0] : 'inherit'};
+    props.active ? props.theme.colors.grays[1] : 'inherit'};
   color: ${props =>
     props.active ? props.theme.colors.primary : props.theme.colors.white};
 
   &:hover {
-    background-color: ${props => props.theme.colors.grays[0]};
+    background-color: ${props =>
+      props.active ? props.theme.colors.grays[1] : props.theme.colors.grays[0]};
   }
 
   & span {

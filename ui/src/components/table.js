@@ -20,7 +20,7 @@ Cell.defaultProps = {
 
 const TableRow = styled(Row)`
   align-items: flex-start;
-  border-bottom: 1px solid ${props => props.theme.colors.grays[2]};
+  border-bottom: 1px solid ${props => props.theme.colors.grays[1]};
   cursor: ${props => (props.selectable ? 'pointer' : 'default')};
   transition: background-color 150ms;
 

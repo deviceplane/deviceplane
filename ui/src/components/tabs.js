@@ -38,7 +38,8 @@ const LinkTab = styled.a`
   background-color: ${props =>
     props.active ? props.theme.colors.black : 'transparent'};
     &:hover {
-      background-color: ${props => props.theme.colors.black};
+      background-color: ${props =>
+        props.active ? props.theme.colors.black : props.theme.colors.grays[1]};
     }
 `;
 
