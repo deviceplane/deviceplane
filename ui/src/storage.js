@@ -1,24 +1,24 @@
-const id = key => `deviceplane:${key}`;
+const id = (key, scope) => `deviceplane:${scope ? `${scope}:${key}` : key}`;
 
 const storage = {
-  get: key => {
+  get: (key, scope) => {
     try {
-      return JSON.parse(localStorage.getItem(id(key)));
+      return JSON.parse(localStorage.getItem(id(key, scope)));
     } catch (e) {
       return null;
     }
   },
-  set: (key, value) => {
+  set: (key, value, scope) => {
     try {
-      localStorage.setItem(id(key), JSON.stringify(value));
+      localStorage.setItem(id(key, scope), JSON.stringify(value));
       return true;
     } catch (e) {
       return false;
     }
   },
-  remove: key => {
+  remove: (key, scope) => {
     try {
-      localStorage.removeItem(id(key));
+      localStorage.removeItem(id(key, scope));
       return true;
     } catch (e) {
       return false;

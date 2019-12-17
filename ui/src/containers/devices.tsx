@@ -39,7 +39,7 @@ const Devices = ({ route }) => {
   const [showFilterDialog, setShowFilterDialog] = useState();
   const [devices, setDevices] = useState(route.data.devices);
   const [filterQuery, setFilterQuery] = useState(
-    storage.get('devicesFilter') || []
+    storage.get('devicesFilter', route.data.params.project) || []
   );
   const [page, setPage] = useState(0);
   const [orderedColumn, setOrderedColumn] = useState();
@@ -55,7 +55,7 @@ const Devices = ({ route }) => {
 
   useEffect(() => {
     queryDevices();
-    storage.set('devicesFilter', filterQuery);
+    storage.set('devicesFilter', filterQuery, route.data.params.project);
   }, [filterQuery]);
 
   const addLabelFilter = useCallback(
