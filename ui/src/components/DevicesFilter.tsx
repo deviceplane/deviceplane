@@ -433,7 +433,7 @@ export class DevicesFilter extends Component<Props, State> {
             </Group>
           ))}
           <Button
-            title="Apply Filter"
+            title={this.props.filter ? 'Edit Filter' : 'Apply Filter'}
             onClick={() => {
               if (onSubmit) {
                 onSubmit(filter);

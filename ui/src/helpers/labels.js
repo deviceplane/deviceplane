@@ -25,8 +25,8 @@ export function renderLabels(labels, labelColorMap, onClick = () => {}) {
     <Row flexWrap="wrap" overflow="hidden">
       {Object.keys(labels).map((key, i) => (
         <Row
-          marginRight={3}
           marginBottom={2}
+          marginRight={2}
           overflow="hidden"
           key={key}
           fontSize={0}

@@ -39,7 +39,9 @@ const ConditionComp = ({ type, params }) => {
             {params.operator}
           </Text>
 
-          <Text fontWeight={3}>{params.value}</Text>
+          <Text fontWeight={3} style={{ textTransform: 'none' }}>
+            {params.value}
+          </Text>
         </>
       );
     case LabelExistenceCondition:
@@ -65,7 +67,9 @@ const ConditionComp = ({ type, params }) => {
             {params.operator}
           </Text>
 
-          <Text fontWeight={3}>{params.value}</Text>
+          <Text fontWeight={3} style={{ textTransform: 'none' }}>
+            {params.value}
+          </Text>
         </>
       );
     default:
@@ -86,7 +90,7 @@ export const DevicesFilterButtons = ({
   return (
     <Row flexWrap="wrap">
       {query.map((filter, index) => (
-        <Row alignItems="center" key={index} marginRight={4} marginBottom={4}>
+        <Row alignItems="center" key={index} margin={2}>
           <Row
             border={0}
             borderRadius={1}
@@ -94,7 +98,7 @@ export const DevicesFilterButtons = ({
             padding={2}
             alignItems="center"
             style={{ cursor: 'pointer' }}
-            onClick={() => onEdit(filter)}
+            onClick={() => onEdit(index)}
           >
             {filter.map((condition, i) => (
               <React.Fragment key={i}>

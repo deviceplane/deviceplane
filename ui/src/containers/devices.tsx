@@ -47,7 +47,7 @@ const Devices = ({ route }) => {
   const [labelColorMap, setLabelColorMap] = useState(
     buildLabelColorMap({}, labelColors, devices)
   );
-  const [filterToEdit, setFilterToEdit] = useState();
+  const [filterToEdit, setFilterToEdit] = useState(null);
 
   useEffect(() => {
     parseQueryString();
@@ -172,7 +172,14 @@ const Devices = ({ route }) => {
   const addFilter = (filter: Filter) => {
     setPage(0);
     setShowFilterDialog(false);
-    setFilterQuery([...filterQuery, filter]);
+    if (filterToEdit !== null) {
+      setFilterQuery(filterQuery =>
+        filterQuery.map((f, index) => (index === filterToEdit ? filter : f))
+      );
+    } else {
+      setFilterQuery(filterQuery => [...filterQuery, filter]);
+    }
+    setFilterToEdit(null);
   };
 
   const clearFilters = () => {
@@ -286,8 +293,8 @@ const Devices = ({ route }) => {
               canRemoveFilter
               query={filterQuery}
               removeFilter={removeFilter}
-              onEdit={filter => {
-                setFilterToEdit(filter);
+              onEdit={index => {
+                setFilterToEdit(index);
                 setShowFilterDialog(true);
               }}
             />
@@ -309,7 +316,7 @@ const Devices = ({ route }) => {
 
       {showFilterDialog && (
         <DevicesFilter
-          filter={filterToEdit}
+          filter={filterToEdit !== null && filterQuery[filterToEdit]}
           onClose={() => {
             setShowFilterDialog(false);
             setFilterToEdit(null);

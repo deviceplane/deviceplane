@@ -42,7 +42,7 @@ const Scheduling = ({
   );
   const [backendError, setBackendError] = useState();
   const [showFilterDialog, setShowFilterDialog] = useState();
-  const [filterToEdit, setFilterToEdit] = useState();
+  const [filterToEdit, setFilterToEdit] = useState(null);
   const navigation = useNavigation();
 
   const submit = async () => {
@@ -81,7 +81,16 @@ const Scheduling = ({
 
   const addFilter = (filter: Filter) => {
     setShowFilterDialog(false);
-    setSchedulingRule([...schedulingRule, filter]);
+    if (filterToEdit !== null) {
+      setSchedulingRule(schedulingRule =>
+        schedulingRule.map((rule, index) =>
+          index === filterToEdit ? filter : rule
+        )
+      );
+    } else {
+      setSchedulingRule(schedulingRule => [...schedulingRule, filter]);
+    }
+    setFilterToEdit(null);
     filterDevices();
   };
 
@@ -115,9 +124,9 @@ const Scheduling = ({
             canRemoveFilter
             query={schedulingRule}
             removeFilter={removeFilter}
-            onEdit={filter => {
+            onEdit={index => {
               setShowFilterDialog(true);
-              setFilterToEdit(filter);
+              setFilterToEdit(index);
             }}
           />
         ) : (
@@ -130,7 +139,7 @@ const Scheduling = ({
       </Row>
       {showFilterDialog && (
         <DevicesFilter
-          filter={filterToEdit}
+          filter={filterToEdit !== null && schedulingRule[filterToEdit]}
           whitelistedConditions={[LabelValueCondition]}
           onClose={() => {
             setShowFilterDialog(false);
