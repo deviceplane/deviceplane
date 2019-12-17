@@ -87,7 +87,6 @@ const Role = ({
           }}
         >
           <Field
-            autoFocus
             required
             label="Name"
             name="name"

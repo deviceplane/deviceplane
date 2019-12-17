@@ -88,7 +88,6 @@ const ApplicationSettings = ({
           }}
         >
           <Field
-            autoFocus
             required
             label="Name"
             name="name"
