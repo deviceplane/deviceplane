@@ -13,6 +13,7 @@ import {
 import Card from '../../components/card';
 import Table from '../../components/table';
 import EditableLabelTable from '../../components/EditableLabelTable';
+import { toaster } from 'evergreen-ui';
 
 const DeviceServices = ({ project, applicationStatusInfo }) => {
   const columns = useMemo(
@@ -73,7 +74,30 @@ const DeviceOverview = ({
 }) => {
   return (
     <>
-      <Card size="xlarge" title={device.name} marginBottom={4}>
+      <Card
+        size="xlarge"
+        title={device.name}
+        marginBottom={4}
+        actions={[
+          {
+            title: 'Reboot',
+            variant: 'secondary',
+            disabled: device.status === 'offline',
+            onClick: async () => {
+              try {
+                await api.reboot({
+                  projectId: params.project,
+                  deviceId: device.id,
+                });
+                toaster.success('Reboot was initiated successfully.');
+              } catch (error) {
+                toaster.danger('Reboot was not successful.');
+                console.log(error);
+              }
+            },
+          },
+        ]}
+      >
         <Row marginBottom={6}>
           {device.status === 'offline' ? (
             <Badge bg="red">offline</Badge>

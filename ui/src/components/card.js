@@ -77,7 +77,14 @@ const Card = ({
           </Column>
           <Row marginLeft={7}>
             {actions.map(
-              ({ href, variant = 'primary', title, onClick, show = true }) =>
+              ({
+                href,
+                variant = 'primary',
+                title,
+                onClick,
+                disabled,
+                show = true,
+              }) =>
                 show && (
                   <Button
                     key={title}
@@ -85,6 +92,7 @@ const Card = ({
                     href={href}
                     variant={variant}
                     onClick={onClick}
+                    disabled={disabled}
                     marginLeft={5}
                   />
                 )

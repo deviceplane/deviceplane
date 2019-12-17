@@ -78,6 +78,9 @@ const api = {
   deleteDevice: ({ projectId, deviceId }) =>
     del(`projects/${projectId}/devices/${deviceId}`),
 
+  reboot: ({ projectId, deviceId }) =>
+    post(`projects/${projectId}/devices/${deviceId}/reboot`, {}),
+
   addDeviceLabel: ({ projectId, deviceId, data }) =>
     put(`projects/${projectId}/devices/${deviceId}/labels`, data),
 
