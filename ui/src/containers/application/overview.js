@@ -2,7 +2,7 @@ import React from 'react';
 
 import Editor from '../../components/editor';
 import Card from '../../components/card';
-import { Group, Link, Label, Value } from '../../components/core';
+import { Row, Group, Link, Label, Value } from '../../components/core';
 import { DevicesFilterButtons } from '../../components/DevicesFilterButtons';
 
 const ApplicationOverview = ({
@@ -18,10 +18,12 @@ const ApplicationOverview = ({
       <Group>
         <Label>Scheduling Rule</Label>
         {schedulingRule.length ? (
-          <DevicesFilterButtons
-            query={schedulingRule}
-            canRemoveFilter={false}
-          />
+          <Row bg="grays.0" borderRadius={1} minHeight={7} padding={2}>
+            <DevicesFilterButtons
+              query={schedulingRule}
+              canRemoveFilter={false}
+            />
+          </Row>
         ) : (
           <Value>
             No scheduling rule set. You can set one in the{' '}

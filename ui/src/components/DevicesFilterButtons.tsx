@@ -105,8 +105,8 @@ export const DevicesFilterButtons = ({
             borderColor="white"
             padding={2}
             alignItems="center"
-            style={{ cursor: 'pointer' }}
-            onClick={() => onEdit(index)}
+            style={{ cursor: canRemoveFilter ? 'pointer' : 'default' }}
+            onClick={canRemoveFilter ? () => onEdit(index) : () => {}}
           >
             {filter.map((condition, i) => (
               <React.Fragment key={i}>
