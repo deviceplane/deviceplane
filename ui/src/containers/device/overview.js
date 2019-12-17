@@ -19,7 +19,7 @@ import Popup from '../../components/popup';
 import Editor from '../../components/editor';
 import EditableLabelTable from '../../components/EditableLabelTable';
 
-const DeviceServices = ({ projectId, deviceId, applicationStatusInfo }) => {
+const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
   const [serviceMetrics, setServiceMetrics] = useState({});
   const columns = useMemo(
     () => [
@@ -45,13 +45,14 @@ const DeviceServices = ({ projectId, deviceId, applicationStatusInfo }) => {
         Header: ' ',
         Cell: ({ row: { original } }) => (
           <Button
+            disabled={device.status === 'offline'}
             title={<Icon icon="pulse" size={18} color={theme.colors.white} />}
             variant="icon"
             onClick={async () => {
               try {
                 const response = await api.serviceMetrics({
                   projectId,
-                  deviceId,
+                  deviceId: device.id,
                   applicationId: original.application.name,
                   serviceId: original.service,
                 });
@@ -150,6 +151,7 @@ const DeviceOverview = ({
                 console.log(error);
               }
             },
+            disabled: device.status === 'offline',
           },
           {
             title: 'Reboot',
@@ -217,7 +219,7 @@ const DeviceOverview = ({
       <Card title="Services" size="xlarge">
         <DeviceServices
           projectId={params.project}
-          deviceId={device.id}
+          device={device}
           applicationStatusInfo={device.applicationStatusInfo}
         />
       </Card>
