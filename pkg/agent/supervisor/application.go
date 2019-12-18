@@ -7,6 +7,7 @@ import (
 
 	"github.com/deviceplane/deviceplane/pkg/agent/utils"
 	"github.com/deviceplane/deviceplane/pkg/agent/validator"
+	"github.com/deviceplane/deviceplane/pkg/agent/variables"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
@@ -14,6 +15,7 @@ import (
 type ApplicationSupervisor struct {
 	applicationID string
 	engine        engine.Engine
+	variables     variables.Interface
 	reporter      *Reporter
 	validators    []validator.Validator
 
@@ -32,6 +34,7 @@ type ApplicationSupervisor struct {
 func NewApplicationSupervisor(
 	applicationID string,
 	engine engine.Engine,
+	variables variables.Interface,
 	reporter *Reporter,
 	validators []validator.Validator,
 ) *ApplicationSupervisor {
@@ -39,6 +42,7 @@ func NewApplicationSupervisor(
 	return &ApplicationSupervisor{
 		applicationID: applicationID,
 		engine:        engine,
+		variables:     variables,
 		reporter:      reporter,
 		validators:    validators,
 
@@ -74,6 +78,7 @@ func (s *ApplicationSupervisor) SetApplication(application models.ApplicationFul
 				application.Application.ID,
 				serviceName,
 				s.engine,
+				s.variables,
 				s.reporter,
 				s.validators,
 			)
