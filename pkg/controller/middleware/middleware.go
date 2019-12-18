@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	TotalPagesHeader = "Total-Pages"
+	TotalPagesHeader     = "Total-Pages"
+	TotalItemCountHeader = "Total-Item-Count"
 )
 
 const MaxPageSize = int(100)
@@ -102,6 +103,9 @@ func SortAndPaginateAndRespond(r http.Request, w http.ResponseWriter, arr []inte
 	// Set total pages header, as pages are required
 	totalPages := int(math.Ceil(float64(len(arr)) / float64(*pageSize)))
 	w.Header().Set(TotalPagesHeader, strconv.Itoa(totalPages))
+
+	// Set total count header
+	w.Header().Set(TotalItemCountHeader, strconv.Itoa(len(arr)))
 
 	// If there are no items, and only initial page is requested, don't 404
 	if len(arr) == 0 && *pageNum == 0 {
