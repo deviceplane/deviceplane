@@ -11,7 +11,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
-func (r *Runner) getHostMetrics(deviceConn net.Conn, project *models.Project, device *models.Device, metricConfig *models.MetricTargetConfig) datadog.Series {
+func (r *Runner) getHostMetrics(deviceConn net.Conn, project *models.Project, device *models.Device, metricConfig *models.ExposedMetricConfigHolder) datadog.Series {
 	// Get metrics from host
 	deviceMetricsResp, err := client.GetHostMetrics(deviceConn)
 	if err != nil || deviceMetricsResp.StatusCode != 200 {

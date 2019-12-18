@@ -108,8 +108,19 @@ func (s *Service) serviceMetrics(w http.ResponseWriter, r *http.Request,
 	vars := mux.Vars(r)
 	service := vars["service"]
 
+	app, err := s.applications.GetApplication(r.Context(), applicationID, projectID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	serviceMetricsConfig, exists := app.ServiceMetricsConfig[service]
+	if !exists {
+		serviceMetricsConfig.Port = 2112
+		serviceMetricsConfig.Path = "/metrics"
+	}
+
 	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-		resp, err := client.GetServiceMetrics(deviceConn, applicationID, service)
+		resp, err := client.GetServiceMetrics(deviceConn, applicationID, service, serviceMetricsConfig.Path, serviceMetricsConfig.Port)
 		if err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return

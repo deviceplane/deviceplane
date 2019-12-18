@@ -189,6 +189,7 @@ type Applications interface {
 	UpdateApplicationName(ctx context.Context, id, projectID, name string) (*models.Application, error)
 	UpdateApplicationDescription(ctx context.Context, id, projectID, description string) (*models.Application, error)
 	UpdateApplicationSchedulingRule(ctx context.Context, id, projectID string, schedulingRule models.Query) (*models.Application, error)
+	UpdateApplicationServiceMetricsConfig(ctx context.Context, id, projectID string, serviceMetricsConfig map[string]models.ServiceMetricConfig) (*models.Application, error)
 	DeleteApplication(ctx context.Context, id, projectID string) error
 }
 
@@ -231,13 +232,13 @@ type DeviceServiceStatuses interface {
 
 var ErrDeviceServiceStatusNotFound = errors.New("device service status not found")
 
-type MetricTargetConfigs interface {
-	CreateMetricTargetConfig(ctx context.Context, projectID, configType string, configs []models.MetricConfig) (*models.MetricTargetConfig, error)
-	GetMetricTargetConfig(ctx context.Context, projectID, id string) (*models.MetricTargetConfig, error)
-	LookupMetricTargetConfig(ctx context.Context, projectID, configType string) (*models.MetricTargetConfig, error)
-	UpdateMetricTargetConfig(ctx context.Context, projectID, id string, configs []models.MetricConfig) (*models.MetricTargetConfig, error)
+type ExposedMetricConfigHolders interface {
+	CreateExposedMetricConfigHolder(ctx context.Context, projectID, configType string, configs []models.ExposedMetricConfig) (*models.ExposedMetricConfigHolder, error)
+	GetExposedMetricConfigHolder(ctx context.Context, projectID, id string) (*models.ExposedMetricConfigHolder, error)
+	LookupExposedMetricConfigHolder(ctx context.Context, projectID, configType string) (*models.ExposedMetricConfigHolder, error)
+	UpdateExposedMetricConfigHolder(ctx context.Context, projectID, id string, configs []models.ExposedMetricConfig) (*models.ExposedMetricConfigHolder, error)
 }
 
 var ErrInvalidMetricTargetType = errors.New("invalid metric config target type")
 var ErrInvalidMetricConfig = errors.New("invalid metric config value")
-var ErrMetricTargetConfigNotFound = errors.New("metric target config not found")
+var ErrExposedMetricConfigHolderNotFound = errors.New("metric target config not found")

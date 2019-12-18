@@ -7,7 +7,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
-func (r *Runner) getStateMetrics(ctx context.Context, project *models.Project, device *models.Device, metricConfig *models.MetricTargetConfig) datadog.Series {
+func (r *Runner) getStateMetrics(ctx context.Context, project *models.Project, device *models.Device, metricConfig *models.ExposedMetricConfigHolder) datadog.Series {
 	stateMetrics := []datadog.Metric{
 		datadog.Metric{
 			Metric: "devices",

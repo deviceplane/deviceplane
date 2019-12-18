@@ -15,26 +15,26 @@ import (
 )
 
 type Runner struct {
-	projects            store.Projects
-	applications        store.Applications
-	devices             store.Devices
-	releases            store.Releases
-	metricTargetConfigs store.MetricTargetConfigs
-	st                  *statsd.Client
-	connman             *connman.ConnectionManager
-	statsCache          *translation.StatsCache
+	projects                   store.Projects
+	applications               store.Applications
+	devices                    store.Devices
+	releases                   store.Releases
+	exposedMetricConfigHolders store.ExposedMetricConfigHolders
+	st                         *statsd.Client
+	connman                    *connman.ConnectionManager
+	statsCache                 *translation.StatsCache
 }
 
-func NewRunner(projects store.Projects, applications store.Applications, releases store.Releases, devices store.Devices, metricTargetConfigs store.MetricTargetConfigs, st *statsd.Client, connman *connman.ConnectionManager) *Runner {
+func NewRunner(projects store.Projects, applications store.Applications, releases store.Releases, devices store.Devices, exposedMetricConfigHolders store.ExposedMetricConfigHolders, st *statsd.Client, connman *connman.ConnectionManager) *Runner {
 	return &Runner{
-		projects:            projects,
-		applications:        applications,
-		devices:             devices,
-		releases:            releases,
-		metricTargetConfigs: metricTargetConfigs,
-		st:                  st,
-		connman:             connman,
-		statsCache:          translation.NewStatsCache(),
+		projects:                   projects,
+		applications:               applications,
+		devices:                    devices,
+		releases:                   releases,
+		exposedMetricConfigHolders: exposedMetricConfigHolders,
+		st:                         st,
+		connman:                    connman,
+		statsCache:                 translation.NewStatsCache(),
 	}
 }
 
@@ -57,21 +57,21 @@ func (r *Runner) Do(ctx context.Context) {
 		}
 
 		// Get metric configs
-		stateMetricConfig, err := r.metricTargetConfigs.LookupMetricTargetConfig(ctx, project.ID, string(models.MetricStateTargetType))
+		stateMetricConfig, err := r.exposedMetricConfigHolders.LookupExposedMetricConfigHolder(ctx, project.ID, string(models.ExposedStateMetric))
 		if err != nil {
 			log.WithField("project_id", project.ID).
 				WithError(err).Error("getting state metric config")
 			continue
 		}
 
-		hostMetricConfig, err := r.metricTargetConfigs.LookupMetricTargetConfig(ctx, project.ID, string(models.MetricHostTargetType))
+		hostMetricConfig, err := r.exposedMetricConfigHolders.LookupExposedMetricConfigHolder(ctx, project.ID, string(models.ExposedHostMetric))
 		if err != nil {
 			log.WithField("project_id", project.ID).
 				WithError(err).Error("getting host metric config")
 			continue
 		}
 
-		serviceMetricConfig, err := r.metricTargetConfigs.LookupMetricTargetConfig(ctx, project.ID, string(models.MetricServiceTargetType))
+		serviceMetricConfig, err := r.exposedMetricConfigHolders.LookupExposedMetricConfigHolder(ctx, project.ID, string(models.ExposedServiceMetric))
 		if err != nil {
 			log.WithField("project_id", project.ID).
 				WithError(err).Error("getting service metric config")

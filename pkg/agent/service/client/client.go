@@ -2,9 +2,12 @@ package client
 
 import (
 	"bufio"
+	"encoding/base64"
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
+	"strconv"
 )
 
 func GetAgentMetrics(deviceConn net.Conn) (*http.Response, error) {
@@ -35,13 +38,19 @@ func GetHostMetrics(deviceConn net.Conn) (*http.Response, error) {
 	return http.ReadResponse(bufio.NewReader(deviceConn), req)
 }
 
-func GetServiceMetrics(deviceConn net.Conn, applicationID, service string) (*http.Response, error) {
-	req, _ := http.NewRequest(
-		"GET",
-		fmt.Sprintf(
+func GetServiceMetrics(deviceConn net.Conn, applicationID, service string, metricPath string, metricPort uint) (*http.Response, error) {
+	serviceURL := url.URL{
+		Path: fmt.Sprintf(
 			"/applications/%s/services/%s/metrics",
 			applicationID, service,
 		),
+	}
+	serviceURL.Query().Set("path", base64.RawURLEncoding.EncodeToString([]byte(metricPath)))
+	serviceURL.Query().Set("port", strconv.Itoa(int(metricPort)))
+
+	req, _ := http.NewRequest(
+		"GET",
+		serviceURL.RequestURI(),
 		nil,
 	)
 

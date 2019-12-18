@@ -17,7 +17,7 @@ func (r *Runner) getServiceMetrics(
 	deviceConn net.Conn,
 	project *models.Project,
 	device *models.Device,
-	metricConfig *models.MetricTargetConfig,
+	metricConfig *models.ExposedMetricConfigHolder,
 	apps []models.Application,
 	appsByID map[string]*models.Application,
 	latestAppReleaseByAppID map[string]*models.Release,
@@ -59,8 +59,14 @@ func (r *Runner) getServiceMetrics(
 			continue
 		}
 
+		serviceMetricsConfig, exists := app.ServiceMetricsConfig[config.Params.Service]
+		if !exists {
+			serviceMetricsConfig.Port = 2112
+			serviceMetricsConfig.Path = "/metrics"
+		}
+
 		// Get metrics from services
-		deviceMetricsResp, err := client.GetServiceMetrics(deviceConn, app.ID, config.Params.Service)
+		deviceMetricsResp, err := client.GetServiceMetrics(deviceConn, app.ID, config.Params.Service, serviceMetricsConfig.Path, serviceMetricsConfig.Port)
 		if err != nil || deviceMetricsResp.StatusCode != 200 {
 			r.st.Incr("runner.datadog.service_metrics_pull", append([]string{"status:failure"}, addedInternalTags(project)...), 1)
 			// TODO: we want to present to the user a list

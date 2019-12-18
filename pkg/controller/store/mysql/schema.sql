@@ -318,6 +318,7 @@ create table if not exists applications (
   name varchar(100) not null,
   description longtext not null,
   scheduling_rule longtext not null,
+  service_metrics_config longtext not null,
 
   primary key (id),
   unique(name, project_id),

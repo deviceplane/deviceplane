@@ -14,23 +14,23 @@ func FilterMetrics(
 	app *models.Application,
 	serviceName *string,
 	device *models.Device,
-	targetType models.MetricTargetType,
-	config models.MetricConfig,
+	targetType models.ExposedMetricType,
+	config models.ExposedMetricConfig,
 	metrics []datadog.Metric,
 ) (passedMetrics []datadog.Metric) {
 	var metricPrefix string
 	switch targetType {
-	case models.MetricHostTargetType:
+	case models.ExposedHostMetric:
 		metricPrefix = "deviceplane.host"
-	case models.MetricServiceTargetType:
+	case models.ExposedServiceMetric:
 		metricPrefix = fmt.Sprintf("deviceplane.user_defined.%s.%s", app.Name, *serviceName)
-	case models.MetricStateTargetType:
+	case models.ExposedStateMetric:
 		metricPrefix = "deviceplane"
 	default:
 		return nil
 	}
 
-	allowedMetrics := make(map[string]*models.Metric, len(config.Metrics))
+	allowedMetrics := make(map[string]*models.ExposedMetric, len(config.Metrics))
 
 	for i, m := range config.Metrics {
 		allowedMetrics[m.Metric] = &config.Metrics[i]

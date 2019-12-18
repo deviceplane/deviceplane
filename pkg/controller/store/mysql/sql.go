@@ -523,17 +523,17 @@ const createApplication = `
 `
 
 const getApplication = `
-  select id, created_at, project_id, name, description, scheduling_rule from applications
+  select id, created_at, project_id, name, description, scheduling_rule, service_metrics_config from applications
   where id = ? and project_id = ?
 `
 
 const lookupApplication = `
-  select id, created_at, project_id, name, description, scheduling_rule from applications
+  select id, created_at, project_id, name, description, scheduling_rule, service_metrics_config from applications
   where name = ? and project_id = ?
 `
 
 const listApplications = `
-  select id, created_at, project_id, name, description, scheduling_rule from applications
+  select id, created_at, project_id, name, description, scheduling_rule, service_metrics_config from applications
   where project_id = ?
 `
 
@@ -552,6 +552,12 @@ const updateApplicationDescription = `
 const updateApplicationSchedulingRule = `
   update applications
   set scheduling_rule = ?
+  where id = ? and project_id = ?
+`
+
+const updateApplicationServiceMetricsConfig = `
+  update applications
+  set service_metrics_config = ?
   where id = ? and project_id = ?
 `
 
@@ -664,7 +670,7 @@ const deleteDeviceServiceStatus = `
   where project_id = ? and device_id = ? and application_id = ? and service = ?
 `
 
-const createMetricTargetConfig = `
+const createExposedMetricConfigHolder = `
   insert into metric_target_configs (
     id,
     project_id,
@@ -674,18 +680,18 @@ const createMetricTargetConfig = `
   values (?, ?, ?, ?)
 `
 
-const updateMetricTargetConfig = `
+const updateExposedMetricConfigHolder = `
   update metric_target_configs
   set configs = ?
   where id = ? and project_id = ?
 `
 
-const getMetricTargetConfig = `
+const getExposedMetricConfigHolder = `
   select id, created_at, project_id, type, configs from metric_target_configs
   where id = ? and project_id = ?
 `
 
-const lookupMetricTargetConfig = `
+const lookupExposedMetricConfigHolder = `
   select id, created_at, project_id, type, configs from metric_target_configs
   where type = ? and project_id = ?
 `

@@ -64,7 +64,7 @@ type Service struct {
 	releaseDeviceCounts        store.ReleaseDeviceCounts
 	deviceApplicationStatuses  store.DeviceApplicationStatuses
 	deviceServiceStatuses      store.DeviceServiceStatuses
-	metricTargetConfigs        store.MetricTargetConfigs
+	exposedMetricConfigHolders store.ExposedMetricConfigHolders
 	email                      email.Interface
 	cookieDomain               string
 	cookieSecure               bool
@@ -100,7 +100,7 @@ func NewService(
 	releasesDeviceCounts store.ReleaseDeviceCounts,
 	deviceApplicationStatuses store.DeviceApplicationStatuses,
 	deviceServiceStatuses store.DeviceServiceStatuses,
-	metricTargetConfigs store.MetricTargetConfigs,
+	exposedMetricConfigHolders store.ExposedMetricConfigHolders,
 	email email.Interface,
 	cookieDomain string,
 	cookieSecure bool,
@@ -133,7 +133,7 @@ func NewService(
 		releaseDeviceCounts:        releasesDeviceCounts,
 		deviceApplicationStatuses:  deviceApplicationStatuses,
 		deviceServiceStatuses:      deviceServiceStatuses,
-		metricTargetConfigs:        metricTargetConfigs,
+		exposedMetricConfigHolders: exposedMetricConfigHolders,
 		email:                      email,
 		cookieDomain:               cookieDomain,
 		cookieSecure:               cookieSecure,
@@ -245,8 +245,8 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}/labels", s.validateAuthorization("deviceregistrationtokenlabels", "SetDeviceRegistrationTokenLabel", s.withDeviceRegistrationToken(s.setDeviceRegistrationTokenLabel))).Methods("PUT")
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}/labels/{key}", s.validateAuthorization("deviceregistrationtokenlabels", "DeleteDeviceRegistrationTokenLabel", s.withDeviceRegistrationToken(s.deleteDeviceRegistrationTokenLabel))).Methods("DELETE")
 
-	apiRouter.HandleFunc("/projects/{project}/metrictargetconfig/{metrictargetconfigtype}", s.validateAuthorization("metrictargetconfig", "GetMetricTargetConfig", s.getMetricTargetConfig)).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/metrictargetconfig/{metrictargetconfigtype}", s.validateAuthorization("metrictargetconfig", "UpdateMetricTargetConfig", s.updateMetricTargetConfig)).Methods("PUT")
+	apiRouter.HandleFunc("/projects/{project}/exposedmetricconfig/{exposedmetrictype}", s.validateAuthorization("exposedmetricconfig", "GetExposedMetricConfigHolder", s.getExposedMetricConfigHolder)).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/exposedmetricconfig/{exposedmetrictype}", s.validateAuthorization("exposedmetricconfig", "UpdateExposedMetricConfigHolder", s.updateExposedMetricConfigHolder)).Methods("PUT")
 
 	apiRouter.HandleFunc("/projects/{project}/devices/register", s.registerDevice).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/bundle", s.withDeviceAuth(s.getBundle)).Methods("GET")
@@ -1129,8 +1129,8 @@ func (s *Service) createProject(w http.ResponseWriter, r *http.Request, authenti
 		return
 	}
 
-	allowAllMetrics := models.MetricConfig{
-		Metrics: []models.Metric{
+	allowAllMetrics := models.ExposedMetricConfig{
+		Metrics: []models.ExposedMetric{
 			{
 				Metric: "*",
 				Labels: []string{},
@@ -1140,24 +1140,24 @@ func (s *Service) createProject(w http.ResponseWriter, r *http.Request, authenti
 	}
 
 	// Create default metrics configs
-	defaultConfigs := []models.MetricTargetConfig{
+	defaultConfigs := []models.ExposedMetricConfigHolder{
 		{
-			Type: models.MetricStateTargetType,
-			Configs: []models.MetricConfig{
+			Type: models.ExposedStateMetric,
+			Configs: []models.ExposedMetricConfig{
 				allowAllMetrics,
 			},
 		},
 		{
-			Type:    models.MetricHostTargetType,
-			Configs: []models.MetricConfig{},
+			Type:    models.ExposedHostMetric,
+			Configs: []models.ExposedMetricConfig{},
 		},
 		{
-			Type:    models.MetricServiceTargetType,
-			Configs: []models.MetricConfig{},
+			Type:    models.ExposedServiceMetric,
+			Configs: []models.ExposedMetricConfig{},
 		},
 	}
 	for _, config := range defaultConfigs {
-		_, err := s.metricTargetConfigs.CreateMetricTargetConfig(
+		_, err := s.exposedMetricConfigHolders.CreateExposedMetricConfigHolder(
 			r.Context(),
 			project.ID,
 			string(config.Type),
@@ -1999,9 +1999,10 @@ func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request,
 	applicationID string,
 ) {
 	var updateApplicationRequest struct {
-		Name           *string       `json:"name" validate:"name,omitempty"`
-		Description    *string       `json:"description" validate:"description,omitempty"`
-		SchedulingRule *models.Query `json:"schedulingRule"`
+		Name                 *string                                `json:"name" validate:"name,omitempty"`
+		Description          *string                                `json:"description" validate:"description,omitempty"`
+		SchedulingRule       *models.Query                          `json:"schedulingRule"`
+		ServiceMetricsConfig *map[string]models.ServiceMetricConfig `json:"serviceMetricsConfig"`
 	}
 	if err := read(r, &updateApplicationRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -2043,6 +2044,13 @@ func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request,
 
 		if application, err = s.applications.UpdateApplicationSchedulingRule(r.Context(), applicationID, projectID, *updateApplicationRequest.SchedulingRule); err != nil {
 			log.WithError(err).Error("update application scheduling rule")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+	if updateApplicationRequest.ServiceMetricsConfig != nil {
+		if application, err = s.applications.UpdateApplicationServiceMetricsConfig(r.Context(), applicationID, projectID, *updateApplicationRequest.ServiceMetricsConfig); err != nil {
+			log.WithError(err).Error("update application service metrics config")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -2566,21 +2574,21 @@ func (s *Service) deleteDeviceRegistrationTokenLabel(w http.ResponseWriter, r *h
 	}
 }
 
-func (s *Service) getMetricTargetConfig(w http.ResponseWriter, r *http.Request,
+func (s *Service) getExposedMetricConfigHolder(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID string,
 ) {
 	vars := mux.Vars(r)
-	configType := vars["metrictargetconfigtype"]
+	configType := vars["exposedmetrictype"]
 
-	if configType != string(models.MetricHostTargetType) &&
-		configType != string(models.MetricServiceTargetType) &&
-		configType != string(models.MetricStateTargetType) {
+	if configType != string(models.ExposedHostMetric) &&
+		configType != string(models.ExposedServiceMetric) &&
+		configType != string(models.ExposedStateMetric) {
 		http.Error(w, store.ErrInvalidMetricTargetType.Error(), http.StatusBadRequest)
 		return
 	}
 
-	metricTargetConfig, err := s.metricTargetConfigs.LookupMetricTargetConfig(r.Context(), projectID, configType)
-	if err == store.ErrMetricTargetConfigNotFound {
+	metricTargetConfig, err := s.exposedMetricConfigHolders.LookupExposedMetricConfigHolder(r.Context(), projectID, configType)
+	if err == store.ErrExposedMetricConfigHolderNotFound {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -2592,14 +2600,14 @@ func (s *Service) getMetricTargetConfig(w http.ResponseWriter, r *http.Request,
 	utils.Respond(w, metricTargetConfig.Configs)
 }
 
-func (s *Service) updateMetricTargetConfig(w http.ResponseWriter, r *http.Request,
+func (s *Service) updateExposedMetricConfigHolder(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID string,
 ) {
 	vars := mux.Vars(r)
-	configType := vars["metrictargetconfigtype"]
+	configType := vars["exposedmetrictype"]
 
 	var updateMetricTargetConfigRequest struct {
-		Configs []models.MetricConfig `json:"configs"`
+		Configs []models.ExposedMetricConfig `json:"configs"`
 	}
 	if err := read(r, &updateMetricTargetConfigRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -2608,9 +2616,9 @@ func (s *Service) updateMetricTargetConfig(w http.ResponseWriter, r *http.Reques
 
 	// Validation
 	switch configType {
-	case string(models.MetricStateTargetType):
+	case string(models.ExposedStateMetric):
 		fallthrough
-	case string(models.MetricHostTargetType):
+	case string(models.ExposedHostMetric):
 		if len(updateMetricTargetConfigRequest.Configs) == 0 {
 			break
 		}
@@ -2622,7 +2630,7 @@ func (s *Service) updateMetricTargetConfig(w http.ResponseWriter, r *http.Reques
 			http.Error(w, store.ErrInvalidMetricConfig.Error(), http.StatusBadRequest)
 			return
 		}
-	case string(models.MetricServiceTargetType):
+	case string(models.ExposedServiceMetric):
 		for _, c := range updateMetricTargetConfigRequest.Configs {
 			if c.Params == nil {
 				http.Error(w, store.ErrInvalidMetricConfig.Error(), http.StatusBadRequest)
@@ -2634,7 +2642,7 @@ func (s *Service) updateMetricTargetConfig(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	metricTargetConfig, err := s.metricTargetConfigs.LookupMetricTargetConfig(
+	metricTargetConfig, err := s.exposedMetricConfigHolders.LookupExposedMetricConfigHolder(
 		r.Context(), projectID, configType,
 	)
 	if err != nil {
@@ -2642,7 +2650,7 @@ func (s *Service) updateMetricTargetConfig(w http.ResponseWriter, r *http.Reques
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	updatedMetricTargetConfig, err := s.metricTargetConfigs.UpdateMetricTargetConfig(
+	updatedMetricTargetConfig, err := s.exposedMetricConfigHolders.UpdateExposedMetricConfigHolder(
 		r.Context(), projectID, metricTargetConfig.ID, updateMetricTargetConfigRequest.Configs,
 	)
 	if err != nil {
