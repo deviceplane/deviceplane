@@ -2,16 +2,18 @@ package docker
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
 
-	"github.com/docker/docker/api/types/filters"
-
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
+	"github.com/pkg/errors"
 )
 
 var _ engine.Engine = &Engine{}
@@ -112,12 +114,45 @@ func (e *Engine) RemoveContainer(ctx context.Context, id string) error {
 	return nil
 }
 
-func (e *Engine) PullImage(ctx context.Context, image string, w io.Writer) error {
-	out, err := e.client.ImagePull(ctx, image, types.ImagePullOptions{})
+func (e *Engine) PullImage(ctx context.Context, image, registryAuth string, w io.Writer) error {
+	processedRegistryAuth := ""
+	if registryAuth != "" {
+		var err error
+		processedRegistryAuth, err = getProcessedRegistryAuth(registryAuth)
+		if err != nil {
+			return err
+		}
+	}
+
+	out, err := e.client.ImagePull(ctx, image, types.ImagePullOptions{
+		RegistryAuth: processedRegistryAuth,
+	})
 	if err != nil {
 		return err
 	}
 	defer out.Close()
 	_, err = io.Copy(w, out)
 	return err
+}
+
+func getProcessedRegistryAuth(registryAuth string) (string, error) {
+	decodedRegistryAuth, err := base64.StdEncoding.DecodeString(registryAuth)
+	if err != nil {
+		return "", errors.Wrap(err, "invalid registry auth")
+	}
+
+	registryAuthParts := strings.SplitN(string(decodedRegistryAuth), ":", 2)
+	if len(registryAuthParts) != 2 {
+		return "", errors.New("invalid registry auth")
+	}
+
+	processedRegistryAuthBytes, err := json.Marshal(types.AuthConfig{
+		Username: registryAuthParts[0],
+		Password: registryAuthParts[1],
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return base64.URLEncoding.EncodeToString(processedRegistryAuthBytes), nil
 }

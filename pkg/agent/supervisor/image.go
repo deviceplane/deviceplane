@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 
 	agent_utils "github.com/deviceplane/deviceplane/pkg/agent/utils"
+	"github.com/deviceplane/deviceplane/pkg/agent/variables"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/utils"
 )
@@ -27,6 +28,7 @@ type imagePuller struct {
 	applicationID string
 	serviceName   string
 	engine        engine.Engine
+	variables     variables.Interface
 
 	currentlyPulling atomic.Value
 	progress         map[string]PullEvent
@@ -37,11 +39,13 @@ func newImagePuller(
 	applicationID string,
 	serviceName string,
 	engine engine.Engine,
+	variables variables.Interface,
 ) *imagePuller {
 	p := &imagePuller{
 		applicationID: applicationID,
 		serviceName:   serviceName,
 		engine:        engine,
+		variables:     variables,
 
 		progress: make(map[string]PullEvent),
 	}
@@ -75,7 +79,7 @@ func (p *imagePuller) Pull(ctx context.Context, image string) error {
 		}
 	}()
 
-	return agent_utils.ImagePull(ctx, p.engine, image, w)
+	return agent_utils.ImagePull(ctx, p.engine, image, p.variables.GetRegistryAuth, w)
 }
 
 func (p *imagePuller) Progress() (map[string]PullEvent, bool) {

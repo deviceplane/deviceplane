@@ -73,9 +73,9 @@ func ContainerRemove(ctx context.Context, eng engine.Engine, id string) error {
 	}, 2*time.Minute)
 }
 
-func ImagePull(ctx context.Context, eng engine.Engine, image string, w io.Writer) error {
+func ImagePull(ctx context.Context, eng engine.Engine, image string, getRegistryAuth func() string, w io.Writer) error {
 	return Retry(ctx, func(ctx context.Context) error {
-		if err := eng.PullImage(ctx, canonical_image.ToCanonical(image), w); err != nil {
+		if err := eng.PullImage(ctx, canonical_image.ToCanonical(image), getRegistryAuth(), w); err != nil {
 			log.WithError(err).Error("pull image")
 			return err
 		}

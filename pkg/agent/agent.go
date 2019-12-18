@@ -75,6 +75,7 @@ func NewAgent(
 
 	supervisor := supervisor.NewSupervisor(
 		engine,
+		variables,
 		func(ctx context.Context, applicationID, currentReleaseID string) error {
 			return client.SetDeviceApplicationStatus(ctx, applicationID, models.SetDeviceApplicationStatusRequest{
 				CurrentReleaseID: currentReleaseID,

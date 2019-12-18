@@ -22,6 +22,8 @@ type Variables struct {
 	disableSSHSet            bool
 	authorizedSSHKeys        []ssh.PublicKey
 	authorizedSSHKeysSet     bool
+	registryAuth             string
+	registryAuthSet          bool
 	whitelistedImages        []string
 	whitelistedImagesSet     bool
 	disableCustomCommands    bool
@@ -66,6 +68,7 @@ func (v *Variables) refresh() {
 	for _, refresher := range []func() error{
 		v.refreshDisableSSH,
 		v.refreshAuthorizedSSHKeys,
+		v.refreshRegistryAuth,
 		v.refreshWhitelistedImages,
 		v.refreshDisableCustomCommands,
 	} {
@@ -110,6 +113,25 @@ func (v *Variables) refreshAuthorizedSSHKeys() error {
 	} else if os.IsNotExist(err) {
 		v.authorizedSSHKeys = make([]ssh.PublicKey, 0)
 		v.authorizedSSHKeysSet = true
+	} else {
+		return err
+	}
+
+	return nil
+}
+
+func (v *Variables) refreshRegistryAuth() error {
+	bytes, err := ioutil.ReadFile(path.Join(v.dir, variables.RegistryAuth))
+
+	v.lock.Lock()
+	defer v.lock.Unlock()
+
+	if err == nil {
+		v.registryAuth = strings.TrimSpace(string(bytes))
+		v.registryAuthSet = true
+	} else if os.IsNotExist(err) {
+		v.registryAuth = ""
+		v.registryAuthSet = true
 	} else {
 		return err
 	}
@@ -175,6 +197,13 @@ func (v *Variables) GetAuthorizedSSHKeys() []ssh.PublicKey {
 		return v.authorizedSSHKeysSet
 	})
 	return v.authorizedSSHKeys
+}
+
+func (v *Variables) GetRegistryAuth() string {
+	v.waitFor(func() bool {
+		return v.registryAuthSet
+	})
+	return v.registryAuth
 }
 
 func (v *Variables) GetWhitelistedImages() []string {

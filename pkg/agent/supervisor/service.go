@@ -13,6 +13,7 @@ import (
 
 	"github.com/deviceplane/deviceplane/pkg/agent/utils"
 	"github.com/deviceplane/deviceplane/pkg/agent/validator"
+	"github.com/deviceplane/deviceplane/pkg/agent/variables"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/hash"
 	"github.com/deviceplane/deviceplane/pkg/models"
@@ -47,6 +48,7 @@ func NewServiceSupervisor(
 	applicationID string,
 	serviceName string,
 	engine engine.Engine,
+	variables variables.Interface,
 	reporter *Reporter,
 	validators []validator.Validator,
 ) *ServiceSupervisor {
@@ -58,7 +60,7 @@ func NewServiceSupervisor(
 		reporter:      reporter,
 		validators:    validators,
 
-		imagePuller: newImagePuller(applicationID, serviceName, engine),
+		imagePuller: newImagePuller(applicationID, serviceName, engine, variables),
 
 		keepAliveRelease:    make(chan string),
 		keepAliveService:    make(chan models.Service),

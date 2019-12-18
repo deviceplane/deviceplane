@@ -7,6 +7,7 @@ import (
 const (
 	DisableSSH            = "disable-ssh"
 	AuthorizedSSHKeys     = "authorized-ssh-keys"
+	RegistryAuth          = "registry-auth"
 	WhitelistedImages     = "whitelisted-images"
 	DisableCustomCommands = "disable-custom-commands"
 )
@@ -14,6 +15,7 @@ const (
 type Interface interface {
 	GetDisableSSH() bool
 	GetAuthorizedSSHKeys() []ssh.PublicKey
+	GetRegistryAuth() string
 	GetWhitelistedImages() []string
 	GetDisableCustomCommands() bool
 }

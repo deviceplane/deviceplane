@@ -20,7 +20,7 @@ type Engine interface {
 	StopContainer(context.Context, string) error
 	RemoveContainer(context.Context, string) error
 
-	PullImage(context.Context, string, io.Writer) error
+	PullImage(context.Context, string, string, io.Writer) error
 }
 
 type Instance struct {
