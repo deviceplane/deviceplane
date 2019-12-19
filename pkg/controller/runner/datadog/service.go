@@ -17,18 +17,14 @@ func (r *Runner) getServiceMetrics(
 	deviceConn net.Conn,
 	project *models.Project,
 	device *models.Device,
-	metricConfig *models.ExposedMetricConfigHolder,
 	apps []models.Application,
 	appsByID map[string]*models.Application,
 	latestAppReleaseByAppID map[string]*models.Release,
+	serviceMetricsConfigs []models.ServiceMetricsConfig,
 ) (metrics datadog.Series) {
 	appIsScheduled := map[string]bool{} // we have denormalized (app, serv), (app, serv2) tuples in metricConfig.Configs
-	for _, config := range metricConfig.Configs {
-		if config.Params == nil {
-			return nil
-		}
-
-		app, exists := appsByID[config.Params.ApplicationID]
+	for _, serviceMetricsConfig := range serviceMetricsConfigs {
+		app, exists := appsByID[serviceMetricsConfig.ApplicationID]
 		if !exists {
 			return nil
 		}
@@ -54,19 +50,19 @@ func (r *Runner) getServiceMetrics(
 			continue
 		}
 
-		_, exists = release.Config[config.Params.Service]
+		_, exists = release.Config[serviceMetricsConfig.Service]
 		if !exists {
 			continue
 		}
 
-		serviceMetricsConfig, exists := app.ServiceMetricsConfig[config.Params.Service]
+		serviceMetricEndpointConfig, exists := app.MetricEndpointConfigs[serviceMetricsConfig.Service]
 		if !exists {
-			serviceMetricsConfig.Port = 2112
-			serviceMetricsConfig.Path = "/metrics"
+			serviceMetricEndpointConfig.Port = models.DefaultMetricPort
+			serviceMetricEndpointConfig.Path = models.DefaultMetricPath
 		}
 
 		// Get metrics from services
-		deviceMetricsResp, err := client.GetServiceMetrics(deviceConn, app.ID, config.Params.Service, serviceMetricsConfig.Path, serviceMetricsConfig.Port)
+		deviceMetricsResp, err := client.GetServiceMetrics(deviceConn, app.ID, serviceMetricsConfig.Service, serviceMetricEndpointConfig.Path, serviceMetricEndpointConfig.Port)
 		if err != nil || deviceMetricsResp.StatusCode != 200 {
 			r.st.Incr("runner.datadog.service_metrics_pull", append([]string{"status:failure"}, addedInternalTags(project)...), 1)
 			// TODO: we want to present to the user a list
@@ -80,7 +76,7 @@ func (r *Runner) getServiceMetrics(
 		serviceMetrics, err := translation.ConvertOpenMetricsToDataDog(
 			deviceMetricsResp.Body,
 			r.statsCache,
-			translation.GetMetricsPrefix(project, device, fmt.Sprintf("service-(%s)(%s)", app.ID, config.Params.Service)),
+			translation.GetMetricsPrefix(project, device, fmt.Sprintf("service-(%s)(%s)", app.ID, serviceMetricsConfig.Service)),
 		)
 		if err != nil {
 			log.WithField("project_id", project.ID).
@@ -91,7 +87,7 @@ func (r *Runner) getServiceMetrics(
 
 		metrics = append(
 			metrics,
-			FilterMetrics(project, app, &config.Params.Service, device, metricConfig.Type, config, serviceMetrics)...,
+			FilterMetrics(serviceMetrics, project, device, models.ServiceMetricsConfigKey, serviceMetricsConfig.ExposedMetrics, app, &serviceMetricsConfig.Service)...,
 		)
 	}
 

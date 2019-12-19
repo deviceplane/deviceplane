@@ -76,7 +76,7 @@ func (s *Service) hostMetrics(w http.ResponseWriter, r *http.Request,
 	deviceID string,
 ) {
 	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-		resp, err := client.GetHostMetrics(deviceConn)
+		resp, err := client.GetDeviceMetrics(deviceConn)
 		if err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return
@@ -113,14 +113,14 @@ func (s *Service) serviceMetrics(w http.ResponseWriter, r *http.Request,
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	serviceMetricsConfig, exists := app.ServiceMetricsConfig[service]
+	serviceMetricEndpointConfig, exists := app.MetricEndpointConfigs[service]
 	if !exists {
-		serviceMetricsConfig.Port = 2112
-		serviceMetricsConfig.Path = "/metrics"
+		serviceMetricEndpointConfig.Port = models.DefaultMetricPort
+		serviceMetricEndpointConfig.Path = models.DefaultMetricPath
 	}
 
 	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-		resp, err := client.GetServiceMetrics(deviceConn, applicationID, service, serviceMetricsConfig.Path, serviceMetricsConfig.Port)
+		resp, err := client.GetServiceMetrics(deviceConn, applicationID, service, serviceMetricEndpointConfig.Path, serviceMetricEndpointConfig.Port)
 		if err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return

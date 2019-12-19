@@ -10,39 +10,38 @@ import (
 const WildcardMetric = string("*")
 
 func FilterMetrics(
+	metrics []datadog.Metric,
 	project *models.Project,
+	device *models.Device,
+	metricType string,
+	exposedMetrics []models.ExposedMetric,
 	app *models.Application,
 	serviceName *string,
-	device *models.Device,
-	targetType models.ExposedMetricType,
-	config models.ExposedMetricConfig,
-	metrics []datadog.Metric,
-) (passedMetrics []datadog.Metric) {
+) (filteredMetrics []datadog.Metric) {
 	var metricPrefix string
-	switch targetType {
-	case models.ExposedHostMetric:
-		metricPrefix = "deviceplane.host"
-	case models.ExposedServiceMetric:
-		metricPrefix = fmt.Sprintf("deviceplane.user_defined.%s.%s", app.Name, *serviceName)
-	case models.ExposedStateMetric:
+	switch metricType {
+	case models.DeviceMetricsConfigKey:
+		metricPrefix = "deviceplane.device"
+	case models.ServiceMetricsConfigKey:
+		metricPrefix = fmt.Sprintf("deviceplane.application.%s.service.%s", app.Name, *serviceName)
+	case models.ProjectMetricsConfigKey:
 		metricPrefix = "deviceplane"
 	default:
 		return nil
 	}
 
-	allowedMetrics := make(map[string]*models.ExposedMetric, len(config.Metrics))
-
-	for i, m := range config.Metrics {
-		allowedMetrics[m.Metric] = &config.Metrics[i]
+	// Build kv pair for efficiency
+	allowedMetricsByName := make(map[string]*models.ExposedMetric, len(exposedMetrics))
+	for i, m := range exposedMetrics {
+		allowedMetricsByName[m.Name] = &exposedMetrics[i]
 	}
 
 	for _, m := range metrics {
-		correspondingConfig := allowedMetrics[m.Metric]
-		if correspondingConfig == nil {
-			correspondingConfig = allowedMetrics[WildcardMetric]
+		exposedMetric := allowedMetricsByName[m.Metric]
+		if exposedMetric == nil {
+			exposedMetric = allowedMetricsByName[WildcardMetric]
 		}
-
-		if correspondingConfig == nil {
+		if exposedMetric == nil {
 			continue
 		}
 
@@ -58,7 +57,7 @@ func FilterMetrics(
 		}
 
 		// Optional labels
-		for _, label := range correspondingConfig.Labels {
+		for _, label := range exposedMetric.Labels {
 			labelValue, ok := device.Labels[label]
 			if ok {
 				addTag("deviceplane.labels."+label, labelValue)
@@ -66,7 +65,7 @@ func FilterMetrics(
 		}
 
 		// Optional properties
-		for _, tag := range correspondingConfig.Tags {
+		for _, tag := range exposedMetric.Properties {
 			switch tag {
 			case "device":
 				addTag("deviceplane.device", device.Name)
@@ -76,8 +75,8 @@ func FilterMetrics(
 		// Guaranteed tags
 		addTag("deviceplane.project", project.Name)
 
-		passedMetrics = append(passedMetrics, m)
+		filteredMetrics = append(filteredMetrics, m)
 	}
 
-	return passedMetrics
+	return filteredMetrics
 }

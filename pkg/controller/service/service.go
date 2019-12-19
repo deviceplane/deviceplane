@@ -64,7 +64,7 @@ type Service struct {
 	releaseDeviceCounts        store.ReleaseDeviceCounts
 	deviceApplicationStatuses  store.DeviceApplicationStatuses
 	deviceServiceStatuses      store.DeviceServiceStatuses
-	exposedMetricConfigHolders store.ExposedMetricConfigHolders
+	metricConfigs              store.MetricConfigs
 	email                      email.Interface
 	cookieDomain               string
 	cookieSecure               bool
@@ -100,7 +100,7 @@ func NewService(
 	releasesDeviceCounts store.ReleaseDeviceCounts,
 	deviceApplicationStatuses store.DeviceApplicationStatuses,
 	deviceServiceStatuses store.DeviceServiceStatuses,
-	exposedMetricConfigHolders store.ExposedMetricConfigHolders,
+	metricConfigs store.MetricConfigs,
 	email email.Interface,
 	cookieDomain string,
 	cookieSecure bool,
@@ -133,7 +133,7 @@ func NewService(
 		releaseDeviceCounts:        releasesDeviceCounts,
 		deviceApplicationStatuses:  deviceApplicationStatuses,
 		deviceServiceStatuses:      deviceServiceStatuses,
-		exposedMetricConfigHolders: exposedMetricConfigHolders,
+		metricConfigs:              metricConfigs,
 		email:                      email,
 		cookieDomain:               cookieDomain,
 		cookieSecure:               cookieSecure,
@@ -245,8 +245,8 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}/labels", s.validateAuthorization("deviceregistrationtokenlabels", "SetDeviceRegistrationTokenLabel", s.withDeviceRegistrationToken(s.setDeviceRegistrationTokenLabel))).Methods("PUT")
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}/labels/{key}", s.validateAuthorization("deviceregistrationtokenlabels", "DeleteDeviceRegistrationTokenLabel", s.withDeviceRegistrationToken(s.deleteDeviceRegistrationTokenLabel))).Methods("DELETE")
 
-	apiRouter.HandleFunc("/projects/{project}/exposedmetricconfig/{exposedmetrictype}", s.validateAuthorization("exposedmetricconfig", "GetExposedMetricConfigHolder", s.getExposedMetricConfigHolder)).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/exposedmetricconfig/{exposedmetrictype}", s.validateAuthorization("exposedmetricconfig", "UpdateExposedMetricConfigHolder", s.updateExposedMetricConfigHolder)).Methods("PUT")
+	apiRouter.HandleFunc("/projects/{project}/configs/{key}", s.validateAuthorization("projectconfigs", "GetProjectConfig", s.getProjectConfig)).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/configs/{key}", s.validateAuthorization("projectconfigs", "SetProjectConfig", s.setProjectConfig)).Methods("PUT")
 
 	apiRouter.HandleFunc("/projects/{project}/devices/register", s.registerDevice).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/bundle", s.withDeviceAuth(s.getBundle)).Methods("GET")
@@ -1129,47 +1129,6 @@ func (s *Service) createProject(w http.ResponseWriter, r *http.Request, authenti
 		return
 	}
 
-	allowAllMetrics := models.ExposedMetricConfig{
-		Metrics: []models.ExposedMetric{
-			{
-				Metric: "*",
-				Labels: []string{},
-				Tags:   []string{"device"},
-			},
-		},
-	}
-
-	// Create default metrics configs
-	defaultConfigs := []models.ExposedMetricConfigHolder{
-		{
-			Type: models.ExposedStateMetric,
-			Configs: []models.ExposedMetricConfig{
-				allowAllMetrics,
-			},
-		},
-		{
-			Type:    models.ExposedHostMetric,
-			Configs: []models.ExposedMetricConfig{},
-		},
-		{
-			Type:    models.ExposedServiceMetric,
-			Configs: []models.ExposedMetricConfig{},
-		},
-	}
-	for _, config := range defaultConfigs {
-		_, err := s.exposedMetricConfigHolders.CreateExposedMetricConfigHolder(
-			r.Context(),
-			project.ID,
-			string(config.Type),
-			config.Configs,
-		)
-		if err != nil {
-			log.WithError(err).Error("create default metrics type " + string(config.Type))
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-	}
-
 	utils.Respond(w, project)
 }
 
@@ -1999,10 +1958,10 @@ func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request,
 	applicationID string,
 ) {
 	var updateApplicationRequest struct {
-		Name                 *string                                `json:"name" validate:"name,omitempty"`
-		Description          *string                                `json:"description" validate:"description,omitempty"`
-		SchedulingRule       *models.Query                          `json:"schedulingRule"`
-		ServiceMetricsConfig *map[string]models.ServiceMetricConfig `json:"serviceMetricsConfig"`
+		Name                  *string                                 `json:"name" validate:"name,omitempty"`
+		Description           *string                                 `json:"description" validate:"description,omitempty"`
+		SchedulingRule        *models.Query                           `json:"schedulingRule"`
+		MetricEndpointConfigs *map[string]models.MetricEndpointConfig `json:"metricEndpointConfigs"`
 	}
 	if err := read(r, &updateApplicationRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -2048,8 +2007,8 @@ func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request,
 			return
 		}
 	}
-	if updateApplicationRequest.ServiceMetricsConfig != nil {
-		if application, err = s.applications.UpdateApplicationServiceMetricsConfig(r.Context(), applicationID, projectID, *updateApplicationRequest.ServiceMetricsConfig); err != nil {
+	if updateApplicationRequest.MetricEndpointConfigs != nil {
+		if application, err = s.applications.UpdateApplicationMetricEndpointConfigs(r.Context(), applicationID, projectID, *updateApplicationRequest.MetricEndpointConfigs); err != nil {
 			log.WithError(err).Error("update application service metrics config")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -2574,92 +2533,79 @@ func (s *Service) deleteDeviceRegistrationTokenLabel(w http.ResponseWriter, r *h
 	}
 }
 
-func (s *Service) getExposedMetricConfigHolder(w http.ResponseWriter, r *http.Request,
+func (s *Service) getProjectConfig(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID string,
 ) {
 	vars := mux.Vars(r)
-	configType := vars["exposedmetrictype"]
+	key := vars["key"]
 
-	if configType != string(models.ExposedHostMetric) &&
-		configType != string(models.ExposedServiceMetric) &&
-		configType != string(models.ExposedStateMetric) {
-		http.Error(w, store.ErrInvalidMetricTargetType.Error(), http.StatusBadRequest)
+	var value interface{}
+	var err error
+	switch key {
+	case string(models.ProjectMetricsConfigKey):
+		value, err = s.metricConfigs.GetProjectMetricsConfig(r.Context(), projectID)
+	case string(models.DeviceMetricsConfigKey):
+		value, err = s.metricConfigs.GetDeviceMetricsConfig(r.Context(), projectID)
+	case string(models.ServiceMetricsConfigKey):
+		value, err = s.metricConfigs.GetServiceMetricsConfigs(r.Context(), projectID)
+	default:
+		http.Error(w, store.ErrProjectConfigNotFound.Error(), http.StatusBadRequest)
 		return
 	}
 
-	metricTargetConfig, err := s.exposedMetricConfigHolders.LookupExposedMetricConfigHolder(r.Context(), projectID, configType)
-	if err == store.ErrExposedMetricConfigHolderNotFound {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	} else if err != nil {
-		log.WithError(err).Error("get metric target config")
+	if err != nil {
+		log.WithError(err).Error("get project config with key " + key)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	utils.Respond(w, metricTargetConfig.Configs)
+	utils.Respond(w, value)
 }
 
-func (s *Service) updateExposedMetricConfigHolder(w http.ResponseWriter, r *http.Request,
+func (s *Service) setProjectConfig(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID string,
 ) {
 	vars := mux.Vars(r)
-	configType := vars["exposedmetrictype"]
+	key := vars["key"]
 
-	var updateMetricTargetConfigRequest struct {
-		Configs []models.ExposedMetricConfig `json:"configs"`
-	}
-	if err := read(r, &updateMetricTargetConfigRequest); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// Validation
-	switch configType {
-	case string(models.ExposedStateMetric):
-		fallthrough
-	case string(models.ExposedHostMetric):
-		if len(updateMetricTargetConfigRequest.Configs) == 0 {
-			break
-		}
-		if len(updateMetricTargetConfigRequest.Configs) > 1 {
-			http.Error(w, store.ErrInvalidMetricConfig.Error(), http.StatusBadRequest)
+	var err error
+	switch key {
+	case string(models.ProjectMetricsConfigKey):
+		var value models.ProjectMetricsConfig
+		if err := read(r, &value); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		if updateMetricTargetConfigRequest.Configs[0].Params != nil {
-			http.Error(w, store.ErrInvalidMetricConfig.Error(), http.StatusBadRequest)
+
+		err = s.metricConfigs.SetProjectMetricsConfig(r.Context(), projectID, value)
+	case string(models.DeviceMetricsConfigKey):
+		var value models.DeviceMetricsConfig
+		if err := read(r, &value); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-	case string(models.ExposedServiceMetric):
-		for _, c := range updateMetricTargetConfigRequest.Configs {
-			if c.Params == nil {
-				http.Error(w, store.ErrInvalidMetricConfig.Error(), http.StatusBadRequest)
-				return
-			}
+
+		err = s.metricConfigs.SetDeviceMetricsConfig(r.Context(), projectID, value)
+	case string(models.ServiceMetricsConfigKey):
+		var values []models.ServiceMetricsConfig
+		if err := read(r, &values); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
+
+		err = s.metricConfigs.SetServiceMetricsConfigs(r.Context(), projectID, values)
 	default:
-		http.Error(w, store.ErrInvalidMetricTargetType.Error(), http.StatusBadRequest)
+		http.Error(w, store.ErrProjectConfigNotFound.Error(), http.StatusBadRequest)
 		return
 	}
 
-	metricTargetConfig, err := s.exposedMetricConfigHolders.LookupExposedMetricConfigHolder(
-		r.Context(), projectID, configType,
-	)
 	if err != nil {
-		log.WithError(err).Error("lookup metric target config")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	updatedMetricTargetConfig, err := s.exposedMetricConfigHolders.UpdateExposedMetricConfigHolder(
-		r.Context(), projectID, metricTargetConfig.ID, updateMetricTargetConfigRequest.Configs,
-	)
-	if err != nil {
-		log.WithError(err).Error("update metric target config")
+		log.WithError(err).Error("set project config with key " + key)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	utils.Respond(w, updatedMetricTargetConfig)
+	w.WriteHeader(200)
 }
 
 func (s *Service) withDeviceAuth(handler func(http.ResponseWriter, *http.Request, models.Project, models.Device)) func(http.ResponseWriter, *http.Request) {

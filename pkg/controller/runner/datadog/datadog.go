@@ -15,26 +15,26 @@ import (
 )
 
 type Runner struct {
-	projects                   store.Projects
-	applications               store.Applications
-	devices                    store.Devices
-	releases                   store.Releases
-	exposedMetricConfigHolders store.ExposedMetricConfigHolders
-	st                         *statsd.Client
-	connman                    *connman.ConnectionManager
-	statsCache                 *translation.StatsCache
+	projects      store.Projects
+	applications  store.Applications
+	devices       store.Devices
+	releases      store.Releases
+	metricConfigs store.MetricConfigs
+	st            *statsd.Client
+	connman       *connman.ConnectionManager
+	statsCache    *translation.StatsCache
 }
 
-func NewRunner(projects store.Projects, applications store.Applications, releases store.Releases, devices store.Devices, exposedMetricConfigHolders store.ExposedMetricConfigHolders, st *statsd.Client, connman *connman.ConnectionManager) *Runner {
+func NewRunner(projects store.Projects, applications store.Applications, releases store.Releases, devices store.Devices, metricConfigs store.MetricConfigs, st *statsd.Client, connman *connman.ConnectionManager) *Runner {
 	return &Runner{
-		projects:                   projects,
-		applications:               applications,
-		devices:                    devices,
-		releases:                   releases,
-		exposedMetricConfigHolders: exposedMetricConfigHolders,
-		st:                         st,
-		connman:                    connman,
-		statsCache:                 translation.NewStatsCache(),
+		projects:      projects,
+		applications:  applications,
+		devices:       devices,
+		releases:      releases,
+		metricConfigs: metricConfigs,
+		st:            st,
+		connman:       connman,
+		statsCache:    translation.NewStatsCache(),
 	}
 }
 
@@ -57,24 +57,24 @@ func (r *Runner) Do(ctx context.Context) {
 		}
 
 		// Get metric configs
-		stateMetricConfig, err := r.exposedMetricConfigHolders.LookupExposedMetricConfigHolder(ctx, project.ID, string(models.ExposedStateMetric))
+		projectMetricsConfig, err := r.metricConfigs.GetProjectMetricsConfig(ctx, project.ID)
 		if err != nil {
 			log.WithField("project_id", project.ID).
-				WithError(err).Error("getting state metric config")
+				WithError(err).Error("getting project metrics config")
 			continue
 		}
 
-		hostMetricConfig, err := r.exposedMetricConfigHolders.LookupExposedMetricConfigHolder(ctx, project.ID, string(models.ExposedHostMetric))
+		deviceMetricsConfig, err := r.metricConfigs.GetDeviceMetricsConfig(ctx, project.ID)
 		if err != nil {
 			log.WithField("project_id", project.ID).
-				WithError(err).Error("getting host metric config")
+				WithError(err).Error("getting device metrics config")
 			continue
 		}
 
-		serviceMetricConfig, err := r.exposedMetricConfigHolders.LookupExposedMetricConfigHolder(ctx, project.ID, string(models.ExposedServiceMetric))
+		serviceMetricsConfigs, err := r.metricConfigs.GetServiceMetricsConfigs(ctx, project.ID)
 		if err != nil {
 			log.WithField("project_id", project.ID).
-				WithError(err).Error("getting service metric config")
+				WithError(err).Error("getting service metrics configs")
 			continue
 		}
 
@@ -87,7 +87,7 @@ func (r *Runner) Do(ctx context.Context) {
 		}
 		appsByID := make(map[string]*models.Application, len(apps))
 		latestAppReleaseByAppID := make(map[string]*models.Release, len(apps))
-		if len(serviceMetricConfig.Configs) != 0 {
+		if len(serviceMetricsConfigs) != 0 {
 			for i, app := range apps {
 				appsByID[app.ID] = &apps[i]
 
@@ -112,11 +112,12 @@ func (r *Runner) Do(ctx context.Context) {
 			go func(device models.Device) {
 				defer wg.Done()
 
-				if len(stateMetricConfig.Configs) != 0 {
-					stateMetrics := r.getStateMetrics(ctx, &project, &device, stateMetricConfig)
-					if len(stateMetrics) != 0 {
+				if len(projectMetricsConfig.ExposedMetrics) != 0 {
+					projectMetrics := r.getProjectMetrics(ctx, &project, &device)
+					filteredProjectMetrics := FilterMetrics(projectMetrics, &project, &device, models.ProjectMetricsConfigKey, projectMetricsConfig.ExposedMetrics, nil, nil)
+					if len(filteredProjectMetrics) != 0 {
 						lock.Lock()
-						req.Series = append(req.Series, stateMetrics...)
+						req.Series = append(req.Series, filteredProjectMetrics...)
 						lock.Unlock()
 					}
 				}
@@ -132,17 +133,18 @@ func (r *Runner) Do(ctx context.Context) {
 					return
 				}
 
-				if len(hostMetricConfig.Configs) != 0 {
-					hostMetrics := r.getHostMetrics(deviceConn, &project, &device, hostMetricConfig)
-					if len(hostMetrics) != 0 {
+				if len(deviceMetricsConfig.ExposedMetrics) != 0 {
+					deviceMetrics := r.getDeviceMetrics(deviceConn, &project, &device)
+					filteredDeviceMetrics := FilterMetrics(deviceMetrics, &project, &device, models.DeviceMetricsConfigKey, deviceMetricsConfig.ExposedMetrics, nil, nil)
+					if len(filteredDeviceMetrics) != 0 {
 						lock.Lock()
-						req.Series = append(req.Series, hostMetrics...)
+						req.Series = append(req.Series, filteredDeviceMetrics...)
 						lock.Unlock()
 					}
 				}
 
-				if len(serviceMetricConfig.Configs) != 0 {
-					serviceMetrics := r.getServiceMetrics(deviceConn, &project, &device, serviceMetricConfig, apps, appsByID, latestAppReleaseByAppID)
+				if len(serviceMetricsConfigs) != 0 {
+					serviceMetrics := r.getServiceMetrics(deviceConn, &project, &device, apps, appsByID, latestAppReleaseByAppID, serviceMetricsConfigs)
 					if len(serviceMetrics) != 0 {
 						lock.Lock()
 						req.Series = append(req.Series, serviceMetrics...)

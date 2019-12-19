@@ -11,20 +11,24 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
-func (r *Runner) getHostMetrics(deviceConn net.Conn, project *models.Project, device *models.Device, metricConfig *models.ExposedMetricConfigHolder) datadog.Series {
-	// Get metrics from host
-	deviceMetricsResp, err := client.GetHostMetrics(deviceConn)
+func (r *Runner) getDeviceMetrics(
+	deviceConn net.Conn,
+	project *models.Project,
+	device *models.Device,
+) []datadog.Metric {
+	// Get metrics from device
+	deviceMetricsResp, err := client.GetDeviceMetrics(deviceConn)
 	if err != nil || deviceMetricsResp.StatusCode != 200 {
-		r.st.Incr("runner.datadog.host_metrics_pull", append([]string{"status:failure"}, addedInternalTags(project)...), 1)
+		r.st.Incr("runner.datadog.device_metrics_pull", append([]string{"status:failure"}, addedInternalTags(project)...), 1)
 		return nil
 	}
-	r.st.Incr("runner.datadog.host_metrics_pull", append([]string{"status:success"}, addedInternalTags(project)...), 1)
+	r.st.Incr("runner.datadog.device_metrics_pull", append([]string{"status:success"}, addedInternalTags(project)...), 1)
 
 	// Convert request to DataDog format
 	metrics, err := translation.ConvertOpenMetricsToDataDog(
 		deviceMetricsResp.Body,
 		r.statsCache,
-		translation.GetMetricsPrefix(project, device, "host"),
+		translation.GetMetricsPrefix(project, device, models.DeviceMetricsConfigKey),
 	)
 	if err != nil {
 		log.WithField("project_id", project.ID).
@@ -33,6 +37,5 @@ func (r *Runner) getHostMetrics(deviceConn net.Conn, project *models.Project, de
 		return nil
 	}
 
-	config := metricConfig.Configs[0]
-	return FilterMetrics(project, nil, nil, device, metricConfig.Type, config, metrics)
+	return metrics
 }

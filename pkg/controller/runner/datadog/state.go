@@ -7,8 +7,12 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
-func (r *Runner) getStateMetrics(ctx context.Context, project *models.Project, device *models.Device, metricConfig *models.ExposedMetricConfigHolder) datadog.Series {
-	stateMetrics := []datadog.Metric{
+func (r *Runner) getProjectMetrics(
+	ctx context.Context,
+	project *models.Project,
+	device *models.Device,
+) datadog.Series {
+	return []datadog.Metric{
 		datadog.Metric{
 			Metric: "devices",
 			Points: [][2]interface{}{
@@ -18,7 +22,4 @@ func (r *Runner) getStateMetrics(ctx context.Context, project *models.Project, d
 			Tags: []string{"status:" + string(device.Status)},
 		},
 	}
-
-	config := metricConfig.Configs[0]
-	return FilterMetrics(project, nil, nil, device, metricConfig.Type, config, stateMetrics)
 }

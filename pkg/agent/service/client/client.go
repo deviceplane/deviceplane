@@ -24,7 +24,7 @@ func GetAgentMetrics(deviceConn net.Conn) (*http.Response, error) {
 	return http.ReadResponse(bufio.NewReader(deviceConn), req)
 }
 
-func GetHostMetrics(deviceConn net.Conn) (*http.Response, error) {
+func GetDeviceMetrics(deviceConn net.Conn) (*http.Response, error) {
 	req, _ := http.NewRequest(
 		"GET",
 		"/metrics/host",

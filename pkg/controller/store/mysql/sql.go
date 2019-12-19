@@ -523,17 +523,17 @@ const createApplication = `
 `
 
 const getApplication = `
-  select id, created_at, project_id, name, description, scheduling_rule, service_metrics_config from applications
+  select id, created_at, project_id, name, description, scheduling_rule, metric_endpoint_configs from applications
   where id = ? and project_id = ?
 `
 
 const lookupApplication = `
-  select id, created_at, project_id, name, description, scheduling_rule, service_metrics_config from applications
+  select id, created_at, project_id, name, description, scheduling_rule, metric_endpoint_configs from applications
   where name = ? and project_id = ?
 `
 
 const listApplications = `
-  select id, created_at, project_id, name, description, scheduling_rule, service_metrics_config from applications
+  select id, created_at, project_id, name, description, scheduling_rule, metric_endpoint_configs from applications
   where project_id = ?
 `
 
@@ -555,9 +555,9 @@ const updateApplicationSchedulingRule = `
   where id = ? and project_id = ?
 `
 
-const updateApplicationServiceMetricsConfig = `
+const updateApplicationMetricEndpointConfigs = `
   update applications
-  set service_metrics_config = ?
+  set metric_endpoint_configs = ?
   where id = ? and project_id = ?
 `
 
@@ -670,28 +670,16 @@ const deleteDeviceServiceStatus = `
   where project_id = ? and device_id = ? and application_id = ? and service = ?
 `
 
-const createExposedMetricConfigHolder = `
-  insert into metric_target_configs (
-    id,
+const setProjectConfig = `
+  replace into project_configs (
     project_id,
-    type,
-    configs
+    k,
+    v
   )
-  values (?, ?, ?, ?)
+  values (?, ?, ?)
 `
 
-const updateExposedMetricConfigHolder = `
-  update metric_target_configs
-  set configs = ?
-  where id = ? and project_id = ?
-`
-
-const getExposedMetricConfigHolder = `
-  select id, created_at, project_id, type, configs from metric_target_configs
-  where id = ? and project_id = ?
-`
-
-const lookupExposedMetricConfigHolder = `
-  select id, created_at, project_id, type, configs from metric_target_configs
-  where type = ? and project_id = ?
+const getProjectConfig = `
+  select project_id, k, v from project_configs
+  where project_id = ? and k = ?
 `

@@ -154,13 +154,13 @@ type DeviceAccessKey struct {
 }
 
 type Application struct {
-	ID                   string                         `json:"id" yaml:"id"`
-	CreatedAt            time.Time                      `json:"createdAt" yaml:"createdAt"`
-	ProjectID            string                         `json:"projectId" yaml:"projectId"`
-	Name                 string                         `json:"name" yaml:"name"`
-	Description          string                         `json:"description" yaml:"description"`
-	SchedulingRule       Query                          `json:"schedulingRule" yaml:"schedulingRule"`
-	ServiceMetricsConfig map[string]ServiceMetricConfig `json:"serviceMetricsConfig" yaml:"serviceMetricsConfig"`
+	ID                    string                          `json:"id" yaml:"id"`
+	CreatedAt             time.Time                       `json:"createdAt" yaml:"createdAt"`
+	ProjectID             string                          `json:"projectId" yaml:"projectId"`
+	Name                  string                          `json:"name" yaml:"name"`
+	Description           string                          `json:"description" yaml:"description"`
+	SchedulingRule        Query                           `json:"schedulingRule" yaml:"schedulingRule"`
+	MetricEndpointConfigs map[string]MetricEndpointConfig `json:"metricEndpointConfigs" yaml:"metricEndpointConfigs"`
 }
 
 type ApplicationDeviceCounts struct {
@@ -275,4 +275,14 @@ type OSRelease struct {
 	Version    string `json:"version" yaml:"version"`
 	ID         string `json:"id" yaml:"id"`
 	IDLike     string `json:"idLike" yaml:"idLike"`
+}
+
+const (
+	DefaultMetricPort uint = 2112
+	DefaultMetricPath      = "/metrics"
+)
+
+type MetricEndpointConfig struct {
+	Port uint   `json:"port" yaml:"port"`
+	Path string `json:"path" yaml:"path"`
 }

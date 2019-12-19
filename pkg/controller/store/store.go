@@ -189,7 +189,7 @@ type Applications interface {
 	UpdateApplicationName(ctx context.Context, id, projectID, name string) (*models.Application, error)
 	UpdateApplicationDescription(ctx context.Context, id, projectID, description string) (*models.Application, error)
 	UpdateApplicationSchedulingRule(ctx context.Context, id, projectID string, schedulingRule models.Query) (*models.Application, error)
-	UpdateApplicationServiceMetricsConfig(ctx context.Context, id, projectID string, serviceMetricsConfig map[string]models.ServiceMetricConfig) (*models.Application, error)
+	UpdateApplicationMetricEndpointConfigs(ctx context.Context, id, projectID string, metricEndpointConfigs map[string]models.MetricEndpointConfig) (*models.Application, error)
 	DeleteApplication(ctx context.Context, id, projectID string) error
 }
 
@@ -232,13 +232,13 @@ type DeviceServiceStatuses interface {
 
 var ErrDeviceServiceStatusNotFound = errors.New("device service status not found")
 
-type ExposedMetricConfigHolders interface {
-	CreateExposedMetricConfigHolder(ctx context.Context, projectID, configType string, configs []models.ExposedMetricConfig) (*models.ExposedMetricConfigHolder, error)
-	GetExposedMetricConfigHolder(ctx context.Context, projectID, id string) (*models.ExposedMetricConfigHolder, error)
-	LookupExposedMetricConfigHolder(ctx context.Context, projectID, configType string) (*models.ExposedMetricConfigHolder, error)
-	UpdateExposedMetricConfigHolder(ctx context.Context, projectID, id string, configs []models.ExposedMetricConfig) (*models.ExposedMetricConfigHolder, error)
-}
+var ErrProjectConfigNotFound = errors.New("project config not found")
 
-var ErrInvalidMetricTargetType = errors.New("invalid metric config target type")
-var ErrInvalidMetricConfig = errors.New("invalid metric config value")
-var ErrExposedMetricConfigHolderNotFound = errors.New("metric target config not found")
+type MetricConfigs interface {
+	GetProjectMetricsConfig(ctx context.Context, projectID string) (*models.ProjectMetricsConfig, error)
+	SetProjectMetricsConfig(ctx context.Context, projectID string, value models.ProjectMetricsConfig) error
+	GetDeviceMetricsConfig(ctx context.Context, projectID string) (*models.DeviceMetricsConfig, error)
+	SetDeviceMetricsConfig(ctx context.Context, projectID string, value models.DeviceMetricsConfig) error
+	GetServiceMetricsConfigs(ctx context.Context, projectID string) ([]models.ServiceMetricsConfig, error)
+	SetServiceMetricsConfigs(ctx context.Context, projectID string, value []models.ServiceMetricsConfig) error
+}

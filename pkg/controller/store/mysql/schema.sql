@@ -318,11 +318,27 @@ create table if not exists applications (
   name varchar(100) not null,
   description longtext not null,
   scheduling_rule longtext not null,
-  service_metrics_config longtext not null,
+  metric_endpoint_configs longtext not null,
 
   primary key (id),
   unique(name, project_id),
   foreign key applications_project_id(project_id)
+  references projects(id)
+  on delete cascade
+);
+
+--
+-- Project Configs
+--
+
+create table if not exists project_configs (
+  project_id varchar(32) not null,
+
+  k varchar(100) not null,
+  v longtext not null,
+
+  primary key (project_id, k),
+  foreign key project_configs_project_id(project_id)
   references projects(id)
   on delete cascade
 );
@@ -398,25 +414,6 @@ create table if not exists device_service_statuses (
   on delete cascade,
   foreign key device_service_statuses_application_id(application_id)
   references applications(id)
-  on delete cascade
-);
-
---
--- MetricTargetConfigs
---
-
-create table if not exists metric_target_configs (
-  id varchar(32) not null,
-  created_at timestamp not null default current_timestamp,
-  project_id varchar(32) not null,
-
-  type varchar(100) not null,
-  configs longtext not null,
-
-  primary key (id),
-  unique(type, project_id),
-  foreign key metric_target_configs_project_id(project_id)
-  references projects(id)
   on delete cascade
 );
 
