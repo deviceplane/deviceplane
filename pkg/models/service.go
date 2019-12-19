@@ -9,6 +9,7 @@ type Service struct {
 	CPUSet         string                    `yaml:"cpuset,omitempty"`
 	CPUShares      yamltypes.StringorInt     `yaml:"cpu_shares,omitempty"`
 	CPUQuota       yamltypes.StringorInt     `yaml:"cpu_quota,omitempty"`
+	Devices        []string                  `yaml:"devices,omitempty"`
 	DNS            yamltypes.Stringorslice   `yaml:"dns,omitempty"`
 	DNSOpts        []string                  `yaml:"dns_opt,omitempty"`
 	DNSSearch      yamltypes.Stringorslice   `yaml:"dns_search,omitempty"`
@@ -32,6 +33,7 @@ type Service struct {
 	Privileged     bool                      `yaml:"privileged,omitempty"`
 	ReadOnly       bool                      `yaml:"read_only,omitempty"`
 	Restart        string                    `yaml:"restart,omitempty"`
+	Runtime        string                    `yaml:"runtime,omitempty"`
 	SecurityOpt    []string                  `yaml:"security_opt,omitempty"`
 	ShmSize        yamltypes.MemStringorInt  `yaml:"shm_size,omitempty"`
 	StopSignal     string                    `yaml:"stop_signal,omitempty"`

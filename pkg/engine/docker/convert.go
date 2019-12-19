@@ -2,6 +2,7 @@ package docker
 
 import (
 	"path/filepath"
+	"strings"
 
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/models"
@@ -49,6 +50,7 @@ func convert(s models.Service) (*container.Config, *container.HostConfig, error)
 				CpusetCpus:        s.CPUSet,
 				CPUShares:         int64(s.CPUShares),
 				CPUQuota:          int64(s.CPUQuota),
+				Devices:           devices(s.Devices),
 				Memory:            int64(s.MemLimit),
 				MemoryReservation: int64(s.MemReservation),
 				MemorySwap:        int64(s.MemSwapLimit),
@@ -57,10 +59,34 @@ func convert(s models.Service) (*container.Config, *container.HostConfig, error)
 			RestartPolicy: container.RestartPolicy{
 				Name: s.Restart,
 			},
+			Runtime:     s.Runtime,
 			ShmSize:     int64(s.ShmSize),
 			SecurityOpt: s.SecurityOpt,
 			UTSMode:     container.UTSMode(s.Uts),
 		}, nil
+}
+
+func devices(devices []string) []container.DeviceMapping {
+	var deviceMappings []container.DeviceMapping
+
+	for _, device := range devices {
+		var deviceMapping container.DeviceMapping
+
+		parts := strings.SplitN(device, ":", 2)
+		deviceMapping = container.DeviceMapping{
+			PathOnHost:        parts[0],
+			CgroupPermissions: "rwm",
+		}
+		if len(parts) == 1 {
+			deviceMapping.PathInContainer = parts[0]
+		} else if len(parts) == 2 {
+			deviceMapping.PathInContainer = parts[1]
+		}
+
+		deviceMappings = append(deviceMappings, deviceMapping)
+	}
+
+	return deviceMappings
 }
 
 func ports(portSpecs []string) (map[nat.Port]struct{}, nat.PortMap, error) {
