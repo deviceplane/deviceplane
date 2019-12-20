@@ -283,7 +283,8 @@ create table if not exists devices (
   on delete cascade,
   foreign key devices_registration_token_id(registration_token_id)
   references device_registration_tokens(id)
-  on delete set null
+  on delete set null,
+  fulltext(name, labels)
 );
 
 --
