@@ -60,33 +60,43 @@ func paginateAfter(after, paginateOn string, pageSize int, arr []interface{}) (r
 
 	// Get the index and type of the json-tagged field
 	var fieldIndex int
+	var foundField bool
 	for i := 0; i < arrayType.NumField(); i++ {
 		tags := arrayType.Field(i).Tag
 		jsonTag := tags.Get("json")
 		if jsonTag == paginateOn {
 			fieldIndex = i
+			foundField = true
 			break
 		}
+	}
+	if !foundField {
+		return nil, ErrPageNotFound
 	}
 
 	// Paginate
 	var startIndex int
-	var found bool
+	var foundStart bool
 	if after == "" {
 		startIndex = 0
-		found = true
+		foundStart = true
 	} else {
 		for i := range arr {
 			// Find index where `after`'s value equals the `orderby` field's value
 			if after == fmt.Sprint(reflect.ValueOf(arr[i]).Field(fieldIndex).Interface()) {
-				startIndex = i
-				found = true
+				startIndex = i + 1
+				foundStart = true
 				break
 			}
 		}
 	}
-	if !found {
+	if !foundStart {
 		return nil, ErrPageNotFound
+	}
+
+	// First page after last element returns empty page
+	if startIndex == len(arr) {
+		return make([]interface{}, 0), nil
 	}
 
 	page, exists := simplePaginate(startIndex, pageSize, arr)
