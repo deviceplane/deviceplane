@@ -16,18 +16,16 @@ const (
 )
 
 const MaxPageSize = int(100)
+const DefaultOrderByParam = "id"
 
 const (
-	PageNumParam  = "page"
 	PageSizeParam = "page_size"
-	OrderByParam  = "order_by"
+	AfterParam    = "after"
 	OrderParam    = "order"
+	OrderByParam  = "order_by"
 )
 
 var (
-	ErrPageNotFound = errors.New("the requested page was not found")
-
-	ErrInvalidPageNumParameter  = errors.New(fmt.Sprintf("invalid %s parameter", PageNumParam))
 	ErrInvalidPageSizeParameter = errors.New(fmt.Sprintf("invalid %s parameter", PageSizeParam))
 	ErrInvalidOrderByParameter  = errors.New(fmt.Sprintf("invalid %s parameter", OrderByParam))
 	ErrInvalidOrderParameter    = errors.New(fmt.Sprintf("invalid %s parameter", OrderParam))
@@ -42,19 +40,7 @@ const (
 
 func SortAndPaginateAndRespond(r http.Request, w http.ResponseWriter, arr []interface{}) {
 	values := r.URL.Query()
-	var pageNum *int
-	if pageNumStr := values.Get(PageNumParam); pageNumStr != "" {
-		p, err := strconv.Atoi(pageNumStr)
-		if err != nil {
-			http.Error(w, ErrInvalidPageNumParameter.Error(), http.StatusBadRequest)
-			return
-		}
-		pageNum = &p
-	}
-	if pageNum == nil {
-		p := 0
-		pageNum = &p
-	}
+	after := values.Get(AfterParam)
 
 	var pageSize *int
 	if pageSizeStr := values.Get(PageSizeParam); pageSizeStr != "" {
@@ -90,7 +76,9 @@ func SortAndPaginateAndRespond(r http.Request, w http.ResponseWriter, arr []inte
 	}
 
 	var orderBy string = values.Get(OrderByParam)
+	paginateOn := orderBy
 	if orderBy == "" {
+		paginateOn = "id"
 		// Do nothing, no order
 	} else {
 		err := order(orderBy, *direction, arr)
@@ -107,18 +95,10 @@ func SortAndPaginateAndRespond(r http.Request, w http.ResponseWriter, arr []inte
 	// Set total count header
 	w.Header().Set(TotalItemCountHeader, strconv.Itoa(len(arr)))
 
-	// If there are no items, and only initial page is requested, don't 404
-	if len(arr) == 0 && *pageNum == 0 {
-		utils.Respond(w, make([]interface{}, 0))
+	arr, err := paginateAfter(after, paginateOn, *pageSize, arr)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	var exists bool
-	arr, exists = paginate(*pageNum, *pageSize, arr)
-	if !exists {
-		http.Error(w, ErrPageNotFound.Error(), http.StatusNotFound)
-		return
-	}
-
 	utils.Respond(w, arr)
 }
