@@ -30,8 +30,6 @@ var config struct {
 	Addr           string   `conf:"addr"`
 	MySQLPrimary   string   `conf:"mysql-primary"`
 	Statsd         string   `conf:"statsd"`
-	CookieDomain   string   `conf:"cookie-domain"`
-	CookieSecure   bool     `conf:"cookie-secure"`
 	AllowedOrigins []string `conf:"allowed-origins"`
 	EmailProvider  string   `conf:"email-provider"`
 }
@@ -40,9 +38,7 @@ func init() {
 	config.Addr = ":8080"
 	config.MySQLPrimary = "deviceplane:deviceplane@tcp(localhost:3306)/deviceplane?parseTime=true"
 	config.Statsd = "127.0.0.1:8125"
-	config.CookieDomain = "localhost"
-	config.CookieSecure = false
-	config.AllowedOrigins = []string{"http://localhost:8080", "http://localhost:3000"}
+	config.AllowedOrigins = []string{}
 	config.EmailProvider = "none"
 }
 
@@ -79,7 +75,7 @@ func main() {
 
 	svc := service.NewService(sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
 		sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
-		emailProvider, config.CookieDomain, config.CookieSecure, statikFS, st, connman)
+		emailProvider, statikFS, st, connman)
 
 	server := &http.Server{
 		Addr: config.Addr,

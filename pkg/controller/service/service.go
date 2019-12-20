@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -66,8 +67,6 @@ type Service struct {
 	deviceServiceStatuses      store.DeviceServiceStatuses
 	metricConfigs              store.MetricConfigs
 	email                      email.Interface
-	cookieDomain               string
-	cookieSecure               bool
 	st                         *statsd.Client
 	connman                    *connman.ConnectionManager
 
@@ -102,8 +101,6 @@ func NewService(
 	deviceServiceStatuses store.DeviceServiceStatuses,
 	metricConfigs store.MetricConfigs,
 	email email.Interface,
-	cookieDomain string,
-	cookieSecure bool,
 	fileSystem http.FileSystem,
 	st *statsd.Client,
 	connman *connman.ConnectionManager,
@@ -135,8 +132,6 @@ func NewService(
 		deviceServiceStatuses:      deviceServiceStatuses,
 		metricConfigs:              metricConfigs,
 		email:                      email,
-		cookieDomain:               cookieDomain,
-		cookieSecure:               cookieSecure,
 		st:                         st,
 		connman:                    connman,
 
@@ -522,69 +517,76 @@ func (s *Service) validateAuthorization(requestedResource, requestedAction strin
 }
 
 func (s *Service) register(w http.ResponseWriter, r *http.Request) {
-	var registerRequest struct {
-		Email     string `json:"email" validate:"email"`
-		Password  string `json:"password" validate:"password"`
-		FirstName string `json:"firstName" validate:"required,min=1,max=100"`
-		LastName  string `json:"lastName" validate:"required,min=1,max=100"`
-		Company   string `json:"company" validate:"max=100"`
-	}
-	if err := read(r, &registerRequest); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if _, err := s.users.LookupUser(r.Context(), registerRequest.Email); err == nil {
-		http.Error(w, errEmailAlreadyTaken.Error(), http.StatusBadRequest)
-		return
-	} else if err != store.ErrUserNotFound {
-		log.WithError(err).Error("lookup user")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	user, err := s.users.CreateUser(r.Context(), registerRequest.Email, hash.Hash(registerRequest.Password),
-		registerRequest.FirstName, registerRequest.LastName, registerRequest.Company)
-	if err != nil {
-		log.WithError(err).Error("create user")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	if s.email == nil {
-		// If email provider is nil then skip the registration workflow
-		if _, err := s.users.MarkRegistrationCompleted(r.Context(), user.ID); err != nil {
-			log.WithError(err).Error("mark registration completed")
-			w.WriteHeader(http.StatusInternalServerError)
+	utils.WithReferrer(w, r, func(referrer *url.URL) {
+		var registerRequest struct {
+			Email     string `json:"email" validate:"email"`
+			Password  string `json:"password" validate:"password"`
+			FirstName string `json:"firstName" validate:"required,min=1,max=100"`
+			LastName  string `json:"lastName" validate:"required,min=1,max=100"`
+			Company   string `json:"company" validate:"max=100"`
+		}
+		if err := read(r, &registerRequest); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-	} else {
-		registrationTokenValue := ksuid.New().String()
 
-		if _, err := s.registrationTokens.CreateRegistrationToken(r.Context(), user.ID, hash.Hash(registrationTokenValue)); err != nil {
-			log.WithError(err).Error("create registration token")
+		if _, err := s.users.LookupUser(r.Context(), registerRequest.Email); err == nil {
+			http.Error(w, errEmailAlreadyTaken.Error(), http.StatusBadRequest)
+			return
+		} else if err != store.ErrUserNotFound {
+			log.WithError(err).Error("lookup user")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		name := user.FirstName + " " + user.LastName
-
-		if err := s.email.Send(email.Request{
-			FromName:         "Deviceplane",
-			FromAddress:      "noreply@deviceplane.com",
-			ToName:           name,
-			ToAddress:        user.Email,
-			Subject:          "Deviceplane Registration Confirmation",
-			PlainTextContent: "Please go to the following URL to complete registration. https://cloud.deviceplane.com/confirm/" + registrationTokenValue,
-			HTMLContent:      "Please go to the following URL to complete registration. https://cloud.deviceplane.com/confirm/" + registrationTokenValue,
-		}); err != nil {
-			log.WithError(err).Error("send registration email")
+		user, err := s.users.CreateUser(r.Context(), registerRequest.Email, hash.Hash(registerRequest.Password),
+			registerRequest.FirstName, registerRequest.LastName, registerRequest.Company)
+		if err != nil {
+			log.WithError(err).Error("create user")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-	}
 
-	utils.Respond(w, user)
+		if s.email == nil {
+			// If email provider is nil then skip the registration workflow
+			if _, err := s.users.MarkRegistrationCompleted(r.Context(), user.ID); err != nil {
+				log.WithError(err).Error("mark registration completed")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		} else {
+			registrationTokenValue := ksuid.New().String()
+
+			if _, err := s.registrationTokens.CreateRegistrationToken(r.Context(), user.ID, hash.Hash(registrationTokenValue)); err != nil {
+				log.WithError(err).Error("create registration token")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			content := fmt.Sprintf(
+				"Please go to the following URL to complete registration. %s://%s/confirm/%s",
+				referrer.Scheme,
+				referrer.Host,
+				registrationTokenValue,
+			)
+
+			if err := s.email.Send(email.Request{
+				FromName:         "Deviceplane",
+				FromAddress:      "noreply@deviceplane.com",
+				ToName:           user.FirstName + " " + user.LastName,
+				ToAddress:        user.Email,
+				Subject:          "Deviceplane Registration Confirmation",
+				PlainTextContent: content,
+				HTMLContent:      content,
+			}); err != nil {
+				log.WithError(err).Error("send registration email")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
+
+		utils.Respond(w, user)
+	})
 }
 
 func (s *Service) confirmRegistration(w http.ResponseWriter, r *http.Request) {
@@ -614,48 +616,55 @@ func (s *Service) confirmRegistration(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) recoverPassword(w http.ResponseWriter, r *http.Request) {
-	var recoverPasswordRequest struct {
-		Email string `json:"email" validate:"email"`
-	}
-	if err := read(r, &recoverPasswordRequest); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	utils.WithReferrer(w, r, func(referrer *url.URL) {
+		var recoverPasswordRequest struct {
+			Email string `json:"email" validate:"email"`
+		}
+		if err := read(r, &recoverPasswordRequest); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
-	user, err := s.users.LookupUser(r.Context(), recoverPasswordRequest.Email)
-	if err == store.ErrUserNotFound {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	} else if err != nil {
-		log.WithError(err).Error("lookup user")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+		user, err := s.users.LookupUser(r.Context(), recoverPasswordRequest.Email)
+		if err == store.ErrUserNotFound {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		} else if err != nil {
+			log.WithError(err).Error("lookup user")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	passwordRecoveryTokenValue := ksuid.New().String()
+		passwordRecoveryTokenValue := ksuid.New().String()
 
-	if _, err := s.passwordRecoveryTokens.CreatePasswordRecoveryToken(r.Context(),
-		user.ID, hash.Hash(passwordRecoveryTokenValue)); err != nil {
-		log.WithError(err).Error("create password recovery token")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+		if _, err := s.passwordRecoveryTokens.CreatePasswordRecoveryToken(r.Context(),
+			user.ID, hash.Hash(passwordRecoveryTokenValue)); err != nil {
+			log.WithError(err).Error("create password recovery token")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	name := user.FirstName + " " + user.LastName
+		content := fmt.Sprintf(
+			"Please go to the following URL to recover your password. %s://%s/recover/%s",
+			referrer.Scheme,
+			referrer.Host,
+			passwordRecoveryTokenValue,
+		)
 
-	if err := s.email.Send(email.Request{
-		FromName:         "Deviceplane",
-		FromAddress:      "noreply@deviceplane.com",
-		ToName:           name,
-		ToAddress:        user.Email,
-		Subject:          "Deviceplane Password Recovery",
-		PlainTextContent: "Please go to the following URL to recover your password. https://cloud.deviceplane.com/recover/" + passwordRecoveryTokenValue,
-		HTMLContent:      "Please go to the following URL to recover your password. https://cloud.deviceplane.com/recover/" + passwordRecoveryTokenValue,
-	}); err != nil {
-		log.WithError(err).Error("send recovery email")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+		if err := s.email.Send(email.Request{
+			FromName:         "Deviceplane",
+			FromAddress:      "noreply@deviceplane.com",
+			ToName:           user.FirstName + " " + user.LastName,
+			ToAddress:        user.Email,
+			Subject:          "Deviceplane Password Recovery",
+			PlainTextContent: content,
+			HTMLContent:      content,
+		}); err != nil {
+			log.WithError(err).Error("send recovery email")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	})
 }
 
 func (s *Service) getPasswordRecoveryToken(w http.ResponseWriter, r *http.Request) {
@@ -747,23 +756,40 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) newSession(w http.ResponseWriter, r *http.Request, userID string) {
-	sessionValue := ksuid.New().String()
+	utils.WithReferrer(w, r, func(referrer *url.URL) {
+		sessionValue := ksuid.New().String()
 
-	if _, err := s.sessions.CreateSession(r.Context(), userID, hash.Hash(sessionValue)); err != nil {
-		log.WithError(err).Error("create session")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+		if _, err := s.sessions.CreateSession(r.Context(), userID, hash.Hash(sessionValue)); err != nil {
+			log.WithError(err).Error("create session")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:  sessionCookie,
-		Value: sessionValue,
+		var secure bool
+		switch referrer.Scheme {
+		case "http":
+			secure = false
+		case "https":
+			secure = true
+		}
 
-		Domain:  s.cookieDomain,
-		Expires: time.Now().AddDate(0, 1, 0),
+		cookie := &http.Cookie{
+			Name:  sessionCookie,
+			Value: sessionValue,
 
-		Secure:   s.cookieSecure,
-		HttpOnly: true,
+			Expires: time.Now().AddDate(0, 1, 0),
+
+			Secure:   secure,
+			HttpOnly: true,
+		}
+
+		// Hack to keeo previous sessions valid
+		// TODO: remove this
+		if referrer.Host == "cloud.deviceplane.com" {
+			cookie.Domain = "cloud.deviceplane.com"
+		}
+
+		http.SetCookie(w, cookie)
 	})
 }
 
