@@ -23,4 +23,5 @@ COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.
 COPY --from=2 /app/controller /bin/controller
 COPY ./pkg/controller/store/mysql/schema.sql /docker-entrypoint-initdb.d/
 COPY ./dockerfiles/controller-with-db/entry.sh /entry.sh
+VOLUME /var/lib/mysql /var/log/mysql
 ENTRYPOINT ["/entry.sh"]
