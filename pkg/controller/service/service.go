@@ -2588,7 +2588,8 @@ func (s *Service) setProjectConfig(w http.ResponseWriter, r *http.Request,
 		err = s.metricConfigs.SetDeviceMetricsConfig(r.Context(), projectID, value)
 	case string(models.ServiceMetricsConfigKey):
 		var values []models.ServiceMetricsConfig
-		if err := read(r, &values); err != nil {
+		// TODO: use read() here
+		if err := json.NewDecoder(r.Body).Decode(&values); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
