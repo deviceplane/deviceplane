@@ -21,7 +21,7 @@ controller-with-db:
 	./scripts/build-controller-with-db
 
 push-controller-with-db: controller-with-db
-	docker push deviceplane/deviceplane-with-db:${CONTROLLER_WITH_DB_VERSION}
+	docker push deviceplane/deviceplane:${CONTROLLER_WITH_DB_VERSION}-with-db
 
 agent-binaries:
 	./scripts/build-agent-binaries
