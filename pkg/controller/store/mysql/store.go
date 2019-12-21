@@ -1265,8 +1265,14 @@ func (s *Store) LookupDevice(ctx context.Context, name, projectID string) (*mode
 	return device, nil
 }
 
-func (s *Store) ListDevices(ctx context.Context, projectID string) ([]models.Device, error) {
-	deviceRows, err := s.db.QueryContext(ctx, listDevices, projectID)
+func (s *Store) ListDevices(ctx context.Context, projectID, searchQuery string) ([]models.Device, error) {
+	var deviceRows *sql.Rows
+	var err error
+	if searchQuery == "" {
+		deviceRows, err = s.db.QueryContext(ctx, listDevices, projectID)
+	} else {
+		deviceRows, err = s.db.QueryContext(ctx, searchDevices, projectID, searchQuery)
+	}
 	if err != nil {
 		return nil, err
 	}

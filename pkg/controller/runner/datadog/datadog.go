@@ -50,7 +50,7 @@ func (r *Runner) Do(ctx context.Context) {
 			continue
 		}
 
-		devices, err := r.devices.ListDevices(ctx, project.ID)
+		devices, err := r.devices.ListDevices(ctx, project.ID, "")
 		if err != nil {
 			log.WithError(err).Error("list devices")
 			continue

@@ -143,7 +143,7 @@ type Devices interface {
 	CreateDevice(ctx context.Context, projectID, name, registrationTokenID string, deviceLabels map[string]string) (*models.Device, error)
 	GetDevice(ctx context.Context, deviceID, projectID string) (*models.Device, error)
 	LookupDevice(ctx context.Context, name, projectID string) (*models.Device, error)
-	ListDevices(ctx context.Context, projectID string) ([]models.Device, error)
+	ListDevices(ctx context.Context, projectID, searchQuery string) ([]models.Device, error)
 	UpdateDeviceName(ctx context.Context, deviceID, projectID, name string) (*models.Device, error)
 	DeleteDevice(ctx context.Context, deviceID, projectID string) error
 	SetDeviceInfo(ctx context.Context, deviceID, projectID string, deviceInfo models.DeviceInfo) (*models.Device, error)

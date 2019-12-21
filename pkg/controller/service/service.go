@@ -2190,7 +2190,9 @@ func (s *Service) listReleases(w http.ResponseWriter, r *http.Request,
 func (s *Service) listDevices(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID string,
 ) {
-	devices, err := s.devices.ListDevices(r.Context(), projectID)
+	searchQuery := r.URL.Query().Get("search")
+
+	devices, err := s.devices.ListDevices(r.Context(), projectID, searchQuery)
 	if err != nil {
 		log.WithError(err).Error("list devices")
 		w.WriteHeader(http.StatusInternalServerError)
