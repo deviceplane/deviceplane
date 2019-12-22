@@ -41,9 +41,9 @@ func paginateAfter(after, paginateOn string, pageSize int, arr []interface{}) (r
 		if r != nil {
 			switch typedPanicMessage := r.(type) {
 			case error:
-				err = errors.New("Error thrown while pagianting: " + typedPanicMessage.Error())
+				err = errors.New("Error thrown while paginating: " + typedPanicMessage.Error())
 			case string:
-				err = errors.New("Error thrown while pagianting: " + typedPanicMessage)
+				err = errors.New("Error thrown while paginating: " + typedPanicMessage)
 			default:
 				err = errors.New("Unknown panic")
 			}

@@ -76,9 +76,7 @@ func SortAndPaginateAndRespond(r http.Request, w http.ResponseWriter, arr []inte
 	}
 
 	var orderBy string = values.Get(OrderByParam)
-	paginateOn := orderBy
 	if orderBy == "" {
-		paginateOn = "id"
 		// Do nothing, no order
 	} else {
 		err := order(orderBy, *direction, arr)
@@ -95,7 +93,7 @@ func SortAndPaginateAndRespond(r http.Request, w http.ResponseWriter, arr []inte
 	// Set total count header
 	w.Header().Set(TotalItemCountHeader, strconv.Itoa(len(arr)))
 
-	arr, err := paginateAfter(after, paginateOn, *pageSize, arr)
+	arr, err := paginateAfter(after, "id", *pageSize, arr)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
