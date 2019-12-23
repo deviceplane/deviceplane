@@ -8,3 +8,4 @@ ui/build
 ui/node_modules
 ui/screenshotsFolder
 ui/videosFolder
+.DS_Store
