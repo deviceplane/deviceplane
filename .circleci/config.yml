@@ -13,6 +13,29 @@ jobs:
       - checkout
       - run: go test -v ./... -mod vendor
 
+  build-ui:
+    docker:
+      - image: circleci/node:10
+    steps:
+      - *attach_workspace
+      - checkout
+      - run: cd ui && yarn
+      - run: cd ui && yarn run build
+      - run: cd ui && mv build /tmp/workspace
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - build
+
+  deploy-ui:
+    docker:
+      - image: circleci/python:2.7-jessie
+    steps:
+      - *attach_workspace
+      - run: sudo pip install awscli
+      - run: aws s3 sync /tmp/workspace/build s3://cloud.deviceplane.com/ --delete
+      - run: aws cloudfront create-invalidation --distribution-id E1KI7J9N1K8JLB --paths "/*"
+
   release-controller:
     machine: true
     steps:
@@ -98,6 +121,20 @@ workflows:
               only: /.*/
             tags:
               only: /.*/
+
+      - build-ui:
+          requires:
+            - test
+          filters:
+            branches:
+              only: ui
+      - deploy-ui:
+          requires:
+            - build-ui
+          filters:
+            branches:
+              only: ui
+
       - release-controller:
           requires:
             - test
