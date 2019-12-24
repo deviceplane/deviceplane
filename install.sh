@@ -193,12 +193,10 @@ TasksMax=infinity
 TimeoutStartSec=0
 Restart=always
 RestartSec=5s
-ExecStartPre=-/sbin/modprobe br_netfilter
-ExecStartPre=-/sbin/modprobe overlay
 ExecStart=${BIN_DIR}/deviceplane-agent \\
-    --controller=${CONTROLLER}
+    --controller=${CONTROLLER} \\
     --project=${PROJECT} \\
-    --registration-token=${REGISTRATION_TOKEN} \\
+    --registration-token=${REGISTRATION_TOKEN}
 
 EOF
 }
