@@ -27,13 +27,21 @@ jobs:
           paths:
             - build
 
-  deploy-ui:
+  deploy-ui-production:
     docker:
       - image: circleci/python:2.7-jessie
     steps:
       - *attach_workspace
       - run: sudo pip install awscli
       - run: aws s3 sync /tmp/workspace/build s3://cloud.deviceplane.com/ --delete
+
+  deploy-ui-playground:
+    docker:
+      - image: circleci/python:2.7-jessie
+    steps:
+      - *attach_workspace
+      - run: sudo pip install awscli
+      - run: aws s3 sync /tmp/workspace/build s3://playground.deviceplane.com/ --delete
 
   release-controller:
     machine: true
@@ -126,13 +134,19 @@ workflows:
             - test
           filters:
             branches:
-              only: ui
-      - deploy-ui:
+              only: /^ui|playground$/
+      - deploy-ui-production:
           requires:
             - build-ui
           filters:
             branches:
               only: ui
+      - deploy-ui-playground:
+          requires:
+            - build-ui
+          filters:
+            branches:
+              only: playground
 
       - release-controller:
           requires:
