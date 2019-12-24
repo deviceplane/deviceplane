@@ -20,7 +20,7 @@ const config =
     : production;
 
 export default {
-  agentVersion: '1.8.1',
+  agentVersion: '1.8.5',
   cliEndpoint: 'https://cli.deviceplane.com',
   ...config,
 };
