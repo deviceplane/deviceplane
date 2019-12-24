@@ -254,13 +254,12 @@ func NewService(
 
 	apiRouter.Handle("/revdial", revdial.ConnHandler(s.upgrader)).Methods("GET")
 
+	apiRouter.HandleFunc("/health", s.health).Methods("GET")
+	apiRouter.HandleFunc("/500", s.withUserOrServiceAccountAuth(s.intentional500)).Methods("GET")
+
 	s.router.PathPrefix("/api").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
-
-	// TODO: scope under /api?
-	s.router.HandleFunc("/health", s.health).Methods("GET")
-	s.router.HandleFunc("/500", s.withUserOrServiceAccountAuth(s.intentional500)).Methods("GET")
 
 	s.router.PathPrefix("/").Handler(spaserver.NewSPAFileServer(fileSystem))
 
