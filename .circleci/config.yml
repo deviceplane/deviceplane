@@ -34,7 +34,6 @@ jobs:
       - *attach_workspace
       - run: sudo pip install awscli
       - run: aws s3 sync /tmp/workspace/build s3://cloud.deviceplane.com/ --delete
-      - run: aws cloudfront create-invalidation --distribution-id E1KI7J9N1K8JLB --paths "/*"
 
   release-controller:
     machine: true
