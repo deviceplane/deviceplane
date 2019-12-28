@@ -132,6 +132,4 @@ var (
 		ActionDeleteServiceAccountRoleBinding,
 		ActionSetProjectConfig,
 	}...)
-
-	actionsByResource = map[Resource][]Action{}
 )

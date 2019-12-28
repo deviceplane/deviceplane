@@ -13,6 +13,13 @@ jobs:
       - checkout
       - run: go test -v ./... -mod vendor
 
+  release-controller-master:
+    machine: true
+    steps:
+      - checkout
+      - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
+      - run: CONTROLLER_VERSION=$CIRCLE_SHA1 make push-controller
+
   build-ui:
     docker:
       - image: circleci/node:10
@@ -129,6 +136,12 @@ workflows:
             tags:
               only: /.*/
 
+      - release-controller-master:
+          requires:
+            - test
+          filters:
+            branches:
+              only: master
       - build-ui:
           requires:
             - test
