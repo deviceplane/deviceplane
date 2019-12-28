@@ -5,134 +5,71 @@ type Config struct {
 }
 
 type Rule struct {
-	Resources       []string `yaml:"resources,omitempty"`
-	Actions         []string `yaml:"actions,omitempty"`
-	ParentResources []string `yaml:"parent_resources,omitempty"`
-	Effect          string   `yaml:"effect,omitempty"`
+	Resources []Resource `yaml:"resources,omitempty"`
+	Actions   []Action   `yaml:"actions,omitempty"`
+	Effect    Effect     `yaml:"effect,omitempty"`
 }
 
 var (
 	ReadAllRole = Config{
 		Rules: []Rule{
 			{
-				Resources: []string{"*"},
-				Actions:   []string{"read"},
+				Resources: []Resource{ResourceAny},
+				Actions:   []Action{ActionReadAll},
 			},
 		},
 	}
 	WriteAllRole = Config{
 		Rules: []Rule{
 			{
-				Resources: []string{"*"},
-				Actions:   []string{"write"},
+				Resources: []Resource{ResourceAny},
+				Actions:   []Action{ActionWriteAll},
 			},
 		},
 	}
 	AdminAllRole = Config{
 		Rules: []Rule{
 			{
-				Resources: []string{"*"},
-				Actions:   []string{"admin"},
+				Resources: []Resource{ResourceAny},
+				Actions:   []Action{ActionAdminAll},
 			},
 		},
 	}
 )
 
-var (
-	readActions = []string{
-		"GetProject",
-		"GetRole",
-		"ListRoles",
-		"GetMembership",
-		"ListMembershipsByProject",
-		"GetMembershipRoleBinding",
-		"ListMembershipRoleBindings",
-		"GetServiceAccount",
-		"ListServiceAccounts",
-		"GetApplication",
-		"ListApplications",
-		"GetLatestRelease",
-		"GetRelease",
-		"ListReleases",
-		"GetDevice",
-		"ListDevices",
-		"GetImagePullProgress",
-		"GetMetrics",
-		"GetServiceMetrics",
-		"GetDeviceLabel",
-		"ListDeviceLabels",
-		"GetDeviceRegistrationToken",
-		"ListDeviceRegistrationTokens",
-		"GetProjectConfig",
-	}
-	writeActions = append(readActions, []string{
-		"CreateApplication",
-		"UpdateApplication",
-		"DeleteApplication",
-		"CreateRelease",
-		"UpdateDevice",
-		"DeleteDevice",
-		"SSH",
-		"Reboot",
-		"SetDeviceLabel",
-		"DeleteDeviceLabel",
-		"CreateDeviceRegistrationToken",
-		"UpdateDeviceRegistrationToken",
-		"DeleteDeviceRegistrationToken",
-		"SetDeviceRegistrationTokenLabel",
-		"DeleteDeviceRegistrationTokenLabel",
-	}...)
-	adminActions = append(writeActions, []string{
-		"UpdateProject",
-		"DeleteProject",
-		"CreateRole",
-		"UpdateRole",
-		"DeleteRole",
-		"CreateMembership",
-		"DeleteMembership",
-		"CreateMembershipRoleBinding",
-		"DeleteMembershipRoleBinding",
-		"CreateServiceAccount",
-		"UpdateServiceAccount",
-		"DeleteServiceAccount",
-		"CreateServiceAccountAccessKey",
-		"GetServiceAccountAccessKey",
-		"ListServiceAccountAccessKeys",
-		"DeleteServiceAccountAccessKey",
-		"CreateServiceAccountRoleBinding",
-		"DeleteServiceAccountRoleBinding",
-		"SetProjectConfig",
-	}...)
-)
-
-func Evaluate(requestedResource, requestedAction string, configs []Config) bool {
+func Evaluate(requestedResource Resource, requestedAction Action, configs []Config) bool {
 	oneAllow := false
+	oneDeny := false
 	for _, config := range configs {
 		for _, rule := range config.Rules {
 			rule = resolveRule(rule)
 			for _, ruleResource := range rule.Resources {
-				if ruleResource == requestedResource || ruleResource == "*" {
+				if ruleResource == requestedResource || ruleResource == ResourceAny {
 					for _, ruleAction := range rule.Actions {
 						if ruleAction == requestedAction {
-							oneAllow = true
+							if rule.Effect == EffectDeny {
+								oneDeny = true
+							} else {
+								oneAllow = true
+							}
 						}
 					}
 				}
 			}
 		}
 	}
-	return oneAllow
+	return oneAllow && !oneDeny
 }
 
 func resolveRule(rule Rule) Rule {
-	var finalActions []string
+	var finalActions []Action
 	for _, action := range rule.Actions {
 		switch action {
-		case "read":
+		case ActionReadAll:
 			finalActions = append(finalActions, readActions...)
-		case "write":
+		case ActionWriteAll:
 			finalActions = append(finalActions, writeActions...)
-		case "admin":
+		case ActionAdminAll:
 			finalActions = append(finalActions, adminActions...)
 		default:
 			finalActions = append(finalActions, action)

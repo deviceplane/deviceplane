@@ -9,38 +9,38 @@ import (
 func TestEvaluate(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
 		for _, scenario := range []struct {
-			resource string
-			action   string
+			resource Resource
+			action   Action
 			configs  []Config
 		}{
 			{
-				"applications",
-				"GetApplication",
+				ResourceApplications,
+				ActionGetApplication,
 				[]Config{ReadAllRole},
 			},
 			{
-				"applications",
-				"GetApplication",
+				ResourceApplications,
+				ActionGetApplication,
 				[]Config{WriteAllRole},
 			},
 			{
-				"applications",
-				"CreateApplication",
+				ResourceApplications,
+				ActionCreateApplication,
 				[]Config{WriteAllRole},
 			},
 			{
-				"applications",
-				"GetApplication",
+				ResourceApplications,
+				ActionGetApplication,
 				[]Config{AdminAllRole},
 			},
 			{
-				"applications",
-				"CreateApplication",
+				ResourceApplications,
+				ActionCreateApplication,
 				[]Config{AdminAllRole},
 			},
 			{
-				"memberships",
-				"CreateMembership",
+				ResourceMemberships,
+				ActionCreateMembership,
 				[]Config{AdminAllRole},
 			},
 		} {
@@ -48,23 +48,23 @@ func TestEvaluate(t *testing.T) {
 		}
 
 		for _, scenario := range []struct {
-			resource string
-			action   string
+			resource Resource
+			action   Action
 			configs  []Config
 		}{
 			{
-				"applications",
-				"CreateApplication",
+				ResourceApplications,
+				ActionCreateApplication,
 				[]Config{ReadAllRole},
 			},
 			{
-				"memberships",
-				"CreateMembership",
+				ResourceMemberships,
+				ActionCreateMembership,
 				[]Config{ReadAllRole},
 			},
 			{
-				"memberships",
-				"CreateMembership",
+				ResourceMemberships,
+				ActionCreateMembership,
 				[]Config{WriteAllRole},
 			},
 		} {
@@ -74,19 +74,52 @@ func TestEvaluate(t *testing.T) {
 
 	t.Run("custom", func(t *testing.T) {
 		for _, scenario := range []struct {
-			resource string
-			action   string
+			resource Resource
+			action   Action
 			configs  []Config
 		}{
 			{
-				"applications",
-				"GetApplication",
+				ResourceApplications,
+				ActionGetApplication,
 				[]Config{
 					{
 						Rules: []Rule{
 							{
-								Resources: []string{"applications"},
-								Actions:   []string{"GetApplication"},
+								Resources: []Resource{ResourceApplications},
+								Actions:   []Action{ActionGetApplication},
+							},
+						},
+					},
+				},
+			},
+			{
+				ResourceApplications,
+				ActionGetApplication,
+				[]Config{
+					{
+						Rules: []Rule{
+							{
+								Resources: []Resource{ResourceAny},
+								Actions:   []Action{ActionGetApplication},
+							},
+						},
+					},
+				},
+			},
+			{
+				ResourceApplications,
+				ActionCreateApplication,
+				[]Config{
+					{
+						Rules: []Rule{
+							{
+								Resources: []Resource{ResourceAny},
+								Actions:   []Action{ActionWriteAll},
+							},
+							{
+								Resources: []Resource{ResourceAny},
+								Actions:   []Action{ActionReadAll},
+								Effect:    EffectDeny,
 							},
 						},
 					},
@@ -97,33 +130,114 @@ func TestEvaluate(t *testing.T) {
 		}
 
 		for _, scenario := range []struct {
-			resource string
-			action   string
+			resource Resource
+			action   Action
 			configs  []Config
 		}{
 			{
-				"applications",
-				"CreateApplication",
+				ResourceApplications,
+				ActionCreateApplication,
 				[]Config{
 					{
 						Rules: []Rule{
 							{
-								Resources: []string{"applications"},
-								Actions:   []string{"GetApplication"},
+								Resources: []Resource{ResourceApplications},
+								Actions:   []Action{ActionGetApplication},
 							},
 						},
 					},
 				},
 			},
 			{
-				"applications",
-				"GetApplication",
+				ResourceApplications,
+				ActionGetApplication,
 				[]Config{
 					{
 						Rules: []Rule{
 							{
-								Resources: []string{"releases"},
-								Actions:   []string{"GetApplication"},
+								Resources: []Resource{ResourceReleases},
+								Actions:   []Action{ActionGetApplication},
+							},
+						},
+					},
+				},
+			},
+			{
+				ResourceApplications,
+				ActionGetApplication,
+				[]Config{
+					{
+						Rules: []Rule{
+							{
+								Resources: []Resource{ResourceAny},
+								Actions:   []Action{ActionGetRelease},
+							},
+						},
+					},
+				},
+			},
+			{
+				ResourceApplications,
+				ActionGetApplication,
+				[]Config{
+					{
+						Rules: []Rule{
+							{
+								Resources: []Resource{ResourceReleases},
+								Actions:   []Action{ActionReadAll},
+							},
+						},
+					},
+				},
+			},
+			{
+				ResourceApplications,
+				ActionGetApplication,
+				[]Config{
+					{
+						Rules: []Rule{
+							{
+								Resources: []Resource{ResourceApplications},
+								Actions:   []Action{ActionGetApplication},
+								Effect:    EffectDeny,
+							},
+						},
+					},
+				},
+			},
+			{
+				ResourceApplications,
+				ActionGetApplication,
+				[]Config{
+					{
+						Rules: []Rule{
+							{
+								Resources: []Resource{ResourceAny},
+								Actions:   []Action{ActionReadAll},
+							},
+							{
+								Resources: []Resource{ResourceApplications},
+								Actions:   []Action{ActionGetApplication},
+								Effect:    EffectDeny,
+							},
+						},
+					},
+				},
+			},
+			{
+				ResourceApplications,
+				ActionGetApplication,
+				[]Config{
+					{
+						Rules: []Rule{
+							{
+								Resources: []Resource{ResourceAny},
+								Actions:   []Action{ActionWriteAll},
+							},
+							{
+								Resources: []Resource{ResourceAny},
+								Actions:   []Action{ActionReadAll},
+								Effect:    EffectDeny,
 							},
 						},
 					},
