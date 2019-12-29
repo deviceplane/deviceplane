@@ -3,7 +3,6 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -2369,32 +2368,35 @@ func (s *Service) deleteDeviceLabel(w http.ResponseWriter, r *http.Request,
 func (s *Service) createDeviceRegistrationToken(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID string,
 ) {
-	var deviceRegistrationTokenRequest struct {
+	var createDeviceRegistrationTokenRequest struct {
 		Name             string `json:"name" validate:"name"`
 		Description      string `json:"description" validate:"description"`
 		MaxRegistrations *int   `json:"maxRegistrations"`
 	}
-
-	// We'll accept empty requests for backwards compatibility.
-	// We may change this in the future.
-	err := read(r, &deviceRegistrationTokenRequest)
-	if err == io.EOF {
-		// TODO: add a frontend commit to change the way new devices are created
-		deviceRegistrationTokenRequest.Name = namesgenerator.GetRandomName()
-		deviceRegistrationTokenRequest.Description = "Single-device registration token used for device registration through the UI."
-		singleRegistration := 1
-		deviceRegistrationTokenRequest.MaxRegistrations = &singleRegistration
-	} else if err != nil {
+	if err := read(r, &createDeviceRegistrationTokenRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if _, err := s.deviceRegistrationTokens.LookupDeviceRegistrationToken(
+		r.Context(),
+		createDeviceRegistrationTokenRequest.Name,
+		projectID,
+	); err == nil {
+		http.Error(w, store.ErrDeviceRegistrationTokenNameAlreadyInUse.Error(), http.StatusBadRequest)
+		return
+	} else if err != nil && err != store.ErrDeviceRegistrationTokenNotFound {
+		log.WithError(err).Error("lookup device registration token")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	deviceRegistrationToken, err := s.deviceRegistrationTokens.CreateDeviceRegistrationToken(
 		r.Context(),
 		projectID,
-		deviceRegistrationTokenRequest.Name,
-		deviceRegistrationTokenRequest.Description,
-		deviceRegistrationTokenRequest.MaxRegistrations)
+		createDeviceRegistrationTokenRequest.Name,
+		createDeviceRegistrationTokenRequest.Description,
+		createDeviceRegistrationTokenRequest.MaxRegistrations)
 	if err != nil {
 		log.WithError(err).Error("create device registration token")
 		w.WriteHeader(http.StatusInternalServerError)
