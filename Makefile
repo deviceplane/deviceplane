@@ -3,7 +3,6 @@ test:
 
 db-reset: state-reset
 	docker-compose down
-	docker-compose build
 	docker-compose up -d
 	sleep 30
 	./scripts/seed
