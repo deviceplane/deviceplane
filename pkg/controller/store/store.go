@@ -148,6 +148,7 @@ type Devices interface {
 	DeleteDevice(ctx context.Context, deviceID, projectID string) error
 	SetDeviceInfo(ctx context.Context, deviceID, projectID string, deviceInfo models.DeviceInfo) (*models.Device, error)
 	UpdateDeviceLastSeenAt(ctx context.Context, deviceID, projectID string) error
+	ListAllDeviceLabelKeys(ctx context.Context, projectID string) ([]string, error)
 	SetDeviceLabel(ctx context.Context, deviceID, projectID, key, value string) (*string, error)
 	DeleteDeviceLabel(ctx context.Context, deviceID, projectID, key string) error
 }

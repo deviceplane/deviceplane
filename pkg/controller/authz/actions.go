@@ -38,6 +38,7 @@ const (
 	ActionDeleteDevice                       = Action("DeleteDevice")
 	ActionSSH                                = Action("SSH")
 	ActionReboot                             = Action("Reboot")
+	ActionListAllDeviceLabels                = Action("ListAllDeviceLabels")
 	ActionSetDeviceLabel                     = Action("SetDeviceLabel")
 	ActionDeleteDeviceLabel                  = Action("DeleteDeviceLabel")
 	ActionCreateDeviceRegistrationToken      = Action("CreateDeviceRegistrationToken")

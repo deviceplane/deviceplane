@@ -1392,6 +1392,63 @@ func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 	return &device, nil
 }
 
+func (s *Store) scanDeviceLabels(scanner scanner) (map[string]string, error) {
+	var labelsString string
+	if err := scanner.Scan(
+		&labelsString,
+	); err != nil {
+		return nil, err
+	}
+
+	var labels map[string]string
+	if labelsString == "" {
+		labels = map[string]string{}
+	} else {
+		if err := json.Unmarshal([]byte(labelsString), &labels); err != nil {
+			return nil, err
+		}
+	}
+
+	return labels, nil
+}
+
+func (s *Store) ListAllDeviceLabelKeys(ctx context.Context, projectID string) ([]string, error) {
+	rows, err := s.db.QueryContext(
+		ctx,
+		listAllDeviceLabels,
+		projectID,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "query device labels")
+	}
+	defer rows.Close()
+
+	allDeviceLabels := make(map[string]bool)
+	for rows.Next() {
+		deviceLabels, err := s.scanDeviceLabels(rows)
+		if err != nil {
+			return nil, err
+		}
+		for k, _ := range deviceLabels {
+			allDeviceLabels[k] = true
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	allDeviceLabelKeys := make([]string, len(allDeviceLabels))
+	i := 0
+	for k, _ := range allDeviceLabels {
+		allDeviceLabelKeys[i] = k
+		i++
+	}
+
+	return allDeviceLabelKeys, nil
+
+}
+
 func (s *Store) SetDeviceLabel(ctx context.Context, deviceID, projectID, key, value string) (*string, error) {
 	device, err := s.GetDevice(ctx, deviceID, projectID)
 	if err != nil {
