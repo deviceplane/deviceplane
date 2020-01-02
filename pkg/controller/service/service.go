@@ -208,7 +208,7 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/applications", s.validateAuthorization(authz.ResourceApplications, authz.ActionCreateApplication, s.createApplication)).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/applications/{application}", s.validateAuthorization(authz.ResourceApplications, authz.ActionGetApplication, s.withApplication(s.getApplication))).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/applications", s.validateAuthorization(authz.ResourceApplications, authz.ActionListApplications, s.listApplications)).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/applications/{application}", s.validateAuthorization(authz.ResourceApplications, authz.ActionUpdateApplication, s.withApplication(s.updateApplication))).Methods("PUT")
+	apiRouter.HandleFunc("/projects/{project}/applications/{application}", s.validateAuthorization(authz.ResourceApplications, authz.ActionUpdateApplication, s.withApplication(s.updateApplication))).Methods("PATCH")
 	apiRouter.HandleFunc("/projects/{project}/applications/{application}", s.validateAuthorization(authz.ResourceApplications, authz.ActionDeleteApplication, s.withApplication(s.deleteApplication))).Methods("DELETE")
 
 	apiRouter.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateAuthorization(authz.ResourceReleases, authz.ActionCreateRelease, s.withApplication(s.createRelease))).Methods("POST")

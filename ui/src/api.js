@@ -146,9 +146,8 @@ const api = {
       }
     ),
 
-  // change to patch?
   updateApplication: ({ projectId, applicationId, data }) =>
-    put(`projects/${projectId}/applications/${applicationId}`, data),
+    patch(`projects/${projectId}/applications/${applicationId}`, data),
 
   deleteApplication: ({ projectId, applicationId }) =>
     del(`projects/${projectId}/applications/${applicationId}`),
