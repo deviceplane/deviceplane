@@ -4,6 +4,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"sync/atomic"
 
 	"github.com/deviceplane/deviceplane/pkg/agent/service/client"
 	"github.com/deviceplane/deviceplane/pkg/codes"
@@ -19,6 +20,10 @@ func (s *Service) initiateDeviceConnection(w http.ResponseWriter, r *http.Reques
 	})
 }
 
+var currentSSHCount int64
+
+const currentSSHCountName = "current_ssh_connection_count"
+
 func (s *Service) initiateSSH(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID,
 	deviceID string,
@@ -30,6 +35,13 @@ func (s *Service) initiateSSH(w http.ResponseWriter, r *http.Request,
 				http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 				return
 			}
+
+			sshCount := atomic.AddInt64(&currentSSHCount, 1)
+			s.st.Gauge(currentSSHCountName, float64(sshCount), nil, 0)
+			defer func() {
+				sshCount := atomic.AddInt64(&currentSSHCount, -1)
+				s.st.Gauge(currentSSHCountName, float64(sshCount), nil, 0)
+			}()
 
 			go io.Copy(deviceConn, conn)
 			io.Copy(conn, deviceConn)
