@@ -17,6 +17,12 @@ var (
 	errInvalidReferrer = errors.New("invalid referrer")
 )
 
+func InternalTags(projectID string) []string {
+	return []string{
+		"project:" + projectID,
+	}
+}
+
 // Elliot Chance's github gist: https://gist.github.com/elliotchance/d419395aa776d632d897
 func ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
 	result := ""

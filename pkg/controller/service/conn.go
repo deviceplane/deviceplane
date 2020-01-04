@@ -22,7 +22,7 @@ func (s *Service) initiateDeviceConnection(w http.ResponseWriter, r *http.Reques
 
 var currentSSHCount int64
 
-const currentSSHCountName = "current_ssh_connection_count"
+const currentSSHCountName = "internal.current_ssh_connection_count"
 
 func (s *Service) initiateSSH(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID,
@@ -37,10 +37,10 @@ func (s *Service) initiateSSH(w http.ResponseWriter, r *http.Request,
 			}
 
 			sshCount := atomic.AddInt64(&currentSSHCount, 1)
-			s.st.Gauge(currentSSHCountName, float64(sshCount), nil, 0)
+			s.st.Gauge(currentSSHCountName, float64(sshCount), utils.InternalTags(projectID), 1)
 			defer func() {
 				sshCount := atomic.AddInt64(&currentSSHCount, -1)
-				s.st.Gauge(currentSSHCountName, float64(sshCount), nil, 0)
+				s.st.Gauge(currentSSHCountName, float64(sshCount), utils.InternalTags(projectID), 1)
 			}()
 
 			go io.Copy(deviceConn, conn)
