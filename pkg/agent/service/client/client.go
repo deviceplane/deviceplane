@@ -45,8 +45,11 @@ func GetServiceMetrics(deviceConn net.Conn, applicationID, service string, metri
 			applicationID, service,
 		),
 	}
-	serviceURL.Query().Set("path", base64.RawURLEncoding.EncodeToString([]byte(metricPath)))
-	serviceURL.Query().Set("port", strconv.Itoa(int(metricPort)))
+
+	query := serviceURL.Query()
+	query.Set("path", base64.RawURLEncoding.EncodeToString([]byte(metricPath)))
+	query.Set("port", strconv.Itoa(int(metricPort)))
+	serviceURL.RawQuery = query.Encode()
 
 	req, _ := http.NewRequest(
 		"GET",

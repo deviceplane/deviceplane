@@ -20,10 +20,10 @@ func (r *Runner) getDeviceMetrics(
 	// Get metrics from device
 	deviceMetricsResp, err := client.GetDeviceMetrics(deviceConn)
 	if err != nil || deviceMetricsResp.StatusCode != 200 {
-		r.st.Incr("runner.datadog.device_metrics_pull", append([]string{"status:failure"}, utils.InternalTags(project.ID)...), 1)
+		r.st.Incr("runner.datadog.device_metrics_pull", append([]string{"status:failure"}, utils.InternalTags(project.Name)...), 1)
 		return nil
 	}
-	r.st.Incr("runner.datadog.device_metrics_pull", append([]string{"status:success"}, utils.InternalTags(project.ID)...), 1)
+	r.st.Incr("runner.datadog.device_metrics_pull", append([]string{"status:success"}, utils.InternalTags(project.Name)...), 1)
 
 	// Convert request to DataDog format
 	metrics, err := translation.ConvertOpenMetricsToDataDog(
