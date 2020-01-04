@@ -26,7 +26,7 @@ func (r *Runner) getServiceMetrics(
 	for _, serviceMetricsConfig := range serviceMetricsConfigs {
 		app, exists := appsByID[serviceMetricsConfig.ApplicationID]
 		if !exists {
-			return nil
+			continue
 		}
 
 		scheduled, exists := appIsScheduled[app.ID]

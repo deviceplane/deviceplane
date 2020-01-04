@@ -19,7 +19,7 @@ func (r *Runner) getProjectMetrics(
 				datadog.NewPoint(1),
 			},
 			Type: "count",
-			Tags: []string{"status:" + string(device.Status)},
+			Tags: []string{"deviceplane.status:" + string(device.Status)},
 		},
 	}
 }
