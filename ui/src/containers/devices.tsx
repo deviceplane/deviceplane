@@ -8,7 +8,7 @@ import { labelColors } from '../theme';
 import Layout from '../components/layout';
 import Card from '../components/card';
 import Table from '../components/table';
-import { Row, Badge, Text } from '../components/core';
+import { Row, Text } from '../components/core';
 import {
   DevicesFilter,
   Query,
@@ -18,6 +18,7 @@ import {
   LabelValueCondition,
 } from '../components/DevicesFilter';
 import { DevicesFilterButtons } from '../components/DevicesFilterButtons';
+import DeviceStatus from '../components/device-status';
 import { buildLabelColorMap, renderLabels } from '../helpers/labels';
 
 // Runtime type safety
@@ -81,13 +82,8 @@ const Devices = ({ route }) => {
     () => [
       {
         Header: 'Status',
-        Cell: ({ row }) =>
-          row.original.status === 'offline' ? (
-            <Badge bg="red">offline</Badge>
-          ) : (
-            <Badge bg="green">online</Badge>
-          ),
-        sortType: 'basic',
+        accessor: ({ status }) => status,
+        Cell: ({ row }) => <DeviceStatus status={row.original.status} />,
         style: {
           flex: '0 0 100px',
         },
@@ -98,6 +94,7 @@ const Devices = ({ route }) => {
       },
       {
         Header: 'IP Address',
+        accessor: ({ info }) => info.ipAddress,
         Cell: ({ row }) => (
           <Text>
             {row.original.info.hasOwnProperty('ipAddress')
@@ -111,17 +108,12 @@ const Devices = ({ route }) => {
       },
       {
         Header: 'OS',
-        Cell: ({ row }) => (
-          <Text>
-            {row.original.info.hasOwnProperty('osRelease') &&
-            row.original.info.osRelease.hasOwnProperty('prettyName')
-              ? row.original.info.osRelease.prettyName
-              : '-'}
-          </Text>
-        ),
+        accessor: ({ info }) => info.osRelease && info.osRelease.prettyName,
+        Cell: ({ cell: { value } }) => <Text>{value || '-'}</Text>,
       },
       {
         Header: 'Labels',
+        accessor: ({ labels }) => labels,
         Cell: ({ row }) =>
           row.original.labels
             ? renderLabels(row.original.labels, labelColorMap, addLabelFilter)
@@ -226,7 +218,7 @@ const Devices = ({ route }) => {
               );
 
               const validFilter = filter.filter((c: Condition) => {
-                return typeCheckers['Condition'].strictTest(c);
+                return typeCheckers['Condition'].test(c);
               });
 
               if (validFilter.length) {
@@ -292,6 +284,7 @@ const Devices = ({ route }) => {
             href: `/${route.data.params.project}/devices/register`,
           },
         ]}
+        maxHeight="100%"
       >
         {filterQuery.length > 0 && (
           <Row marginBottom={4}>

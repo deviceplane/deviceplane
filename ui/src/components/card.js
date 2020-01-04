@@ -6,6 +6,11 @@ import Logo from './icons/logo';
 import { Column, Row, Text, Button, Link } from './core';
 
 const Container = styled(Column)`
+  pointer-events: ${props => (props.disabled ? 'none' : 'auto')};
+  opacity: ${props => (props.disabled ? 0.2 : 1)};
+  overflow: ${props =>
+    props.overflow ? `${props.overflow} !important` : 'initial'};
+
   ${variant({
     variants: {
       small: {
@@ -39,7 +44,9 @@ const Card = ({
   border = false,
   logo,
   actions = [],
+  header,
   children,
+  disabled,
   ...props
 }) => {
   return (
@@ -52,6 +59,7 @@ const Card = ({
       border={border ? 0 : undefined}
       borderColor="white"
       boxShadow={1}
+      disabled={disabled}
       {...props}
     >
       {logo && (
@@ -61,46 +69,52 @@ const Card = ({
       )}
       {top}
       {title && (
-        <Row
-          justifyContent="space-between"
-          alignItems="flex-end"
-          marginBottom={5}
-          borderColor="white"
-        >
-          <Column>
-            <Text fontSize={5} fontWeight={4}>
-              {title}
-            </Text>
-            {subtitle && (
-              <Text fontSize={1} fontWeight={2} color="grays.8" marginTop={1}>
-                {subtitle}
-              </Text>
-            )}
-          </Column>
-          <Row marginLeft={7}>
-            {actions.map(
-              ({
-                href,
-                variant = 'primary',
-                title,
-                onClick,
-                disabled,
-                show = true,
-              }) =>
-                show && (
-                  <Button
-                    key={title}
-                    title={title}
-                    href={href}
-                    variant={variant}
-                    onClick={onClick}
-                    disabled={disabled}
-                    marginLeft={5}
-                  />
-                )
-            )}
+        <Column marginBottom={5} borderColor="white">
+          <Row alignItems="center" justifyContent="space-between">
+            <Column>
+              <Row>
+                <Text fontSize={5} fontWeight={4}>
+                  {title}
+                </Text>
+              </Row>
+            </Column>
+            <Row marginLeft={7}>
+              {actions.map(
+                ({
+                  href,
+                  variant = 'primary',
+                  title,
+                  onClick,
+                  disabled,
+                  show = true,
+                }) =>
+                  show && (
+                    <Button
+                      key={title}
+                      title={title}
+                      href={href}
+                      variant={variant}
+                      onClick={onClick}
+                      disabled={disabled}
+                      marginLeft={5}
+                    />
+                  )
+              )}
+              {header}
+            </Row>
           </Row>
-        </Row>
+          {subtitle && (
+            <Row marginTop={1}>
+              {typeof subtitle === 'string' ? (
+                <Text fontSize={1} fontWeight={2} color="grays.8" marginTop={1}>
+                  {subtitle}
+                </Text>
+              ) : (
+                subtitle
+              )}
+            </Row>
+          )}
+        </Column>
       )}
       {children}
     </Container>

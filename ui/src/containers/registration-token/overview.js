@@ -1,9 +1,9 @@
 import React from 'react';
 
 import api from '../../api';
-import { Column, Label, Value } from '../../components/core';
+import { Column, Label, Group, Value } from '../../components/core';
 import Card from '../../components/card';
-import EditableLabelTable from '../../components/EditableLabelTable';
+import EditableLabelTable from '../../components/editable-label-table';
 
 const RegistrationTokenOverview = ({
   route: {
@@ -17,18 +17,18 @@ const RegistrationTokenOverview = ({
         title={registrationToken.name}
         subtitle={registrationToken.description}
       >
-        <Column marginBottom={6}>
+        <Group>
           <Label>ID</Label>
           <Value>{registrationToken.id}</Value>
-        </Column>
-        <Column marginBottom={6}>
+        </Group>
+        <Group>
           <Label>Devices Registered</Label>
           <Value>{registrationToken.deviceCounts.allCount}</Value>
-        </Column>
-        <Column>
+        </Group>
+        <Group>
           <Label>Maximum Device Registerations</Label>
           <Value>{registrationToken.maxRegistrations || 'Unlimited'}</Value>
-        </Column>
+        </Group>
       </Card>
       <Column marginTop={4}>
         <EditableLabelTable

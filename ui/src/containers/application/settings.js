@@ -71,12 +71,11 @@ const ApplicationSettings = ({
     <>
       <Card
         title="Application Settings"
-        size="medium"
         actions={[
           {
             title: 'Delete',
             onClick: () => setShowDeletePopup(true),
-            variant: 'secondary',
+            variant: 'danger',
           },
         ]}
       >
@@ -105,12 +104,17 @@ const ApplicationSettings = ({
         </Form>
       </Card>
       <Popup show={showDeletePopup} onClose={() => setShowDeletePopup(false)}>
-        <Card title="Delete Application" border size="medium">
+        <Card title="Delete Application" border>
           <Text>
             You are about to delete the <strong>{application.name}</strong>{' '}
             application.
           </Text>
-          <Button marginTop={5} title="Delete" onClick={submitDelete} />
+          <Button
+            marginTop={5}
+            title="Delete"
+            onClick={submitDelete}
+            variant="danger"
+          />
         </Card>
       </Popup>
     </>

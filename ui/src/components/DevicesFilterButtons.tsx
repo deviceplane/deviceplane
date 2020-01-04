@@ -16,6 +16,7 @@ import {
   DevicePropertyConditionParams,
 } from './DevicesFilter';
 
+import theme from '../theme';
 import { Row, Text, Button, Badge } from './core';
 
 interface Props {
@@ -98,7 +99,7 @@ export const DevicesFilterButtons = ({
   return (
     <Row flexWrap="wrap">
       {query.map((filter, index) => (
-        <Row alignItems="center" key={index} margin={2}>
+        <Row alignItems="center" key={index} margin={2} marginLeft={0}>
           <Row
             border={0}
             borderRadius={1}
@@ -126,7 +127,7 @@ export const DevicesFilterButtons = ({
             <Button
               marginLeft={2}
               variant="icon"
-              title={<Icon icon="cross" color="white" size={14} />}
+              title={<Icon icon="cross" color={theme.colors.red} size={14} />}
               onClick={() => (removeFilter ? removeFilter(index) : null)}
             />
           )}

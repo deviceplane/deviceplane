@@ -40,25 +40,25 @@ const UserAccessKeys = () => {
                 title={
                   <Icon
                     icon="tick-circle"
-                    size={18}
+                    size={16}
                     color={theme.colors.primary}
                   />
                 }
                 variant="icon"
-                marginRight={4}
                 onClick={() => deleteAccessKey(keyToDelete)}
               />
               <Button
                 title={
-                  <Icon icon="cross" size={18} color={theme.colors.grays[5]} />
+                  <Icon icon="cross" size={16} color={theme.colors.grays[5]} />
                 }
                 variant="icon"
                 onClick={() => setKeyToDelete(null)}
+                marginLeft={3}
               />
             </>
           ) : (
             <Button
-              title={<Icon icon="trash" size={18} color={theme.colors.white} />}
+              title={<Icon icon="trash" size={16} color={theme.colors.red} />}
               variant="icon"
               onClick={() => setKeyToDelete(row.original.id)}
             />

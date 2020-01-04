@@ -63,6 +63,7 @@ const Profile = ({ close }) => {
       >
         <Field
           required
+          autoCapitalize="words"
           label="First Name"
           name="firstName"
           ref={register}
@@ -70,12 +71,14 @@ const Profile = ({ close }) => {
         />
         <Field
           required
+          autoCapitalize="words"
           label="Last Name"
           name="lastName"
           ref={register}
           errors={errors.lastName}
         />
         <Field
+          autoCapitalize="words"
           label="Company"
           name="company"
           ref={register}

@@ -54,13 +54,14 @@ const Releases = ({
   return (
     <Card
       title="Releases"
-      size="xlarge"
+      size="full"
       actions={[
         {
           title: 'Create Release',
           href: `/${params.project}/applications/${application.name}/releases/create`,
         },
       ]}
+      maxHeight="100%"
     >
       <Table
         columns={columns}

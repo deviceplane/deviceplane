@@ -6,7 +6,6 @@ import AvatarMenu from './avatar-menu';
 const Header = ({ children }) => {
   return (
     <Row
-      position="fixed"
       alignItems="center"
       justifyContent="space-between"
       alignSelf="stretch"

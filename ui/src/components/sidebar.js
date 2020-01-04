@@ -23,6 +23,11 @@ const links = [
     to: '/applications',
   },
   {
+    title: 'Monitoring',
+    icon: 'pulse',
+    to: '/monitoring',
+  },
+  {
     title: 'IAM',
     icon: 'people',
     to: '/iam',
@@ -82,7 +87,6 @@ const Sidebar = () => {
   return (
     <Column
       width={136}
-      position="fixed"
       height="100%"
       alignSelf="stretch"
       bg="black"

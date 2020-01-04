@@ -82,7 +82,7 @@ const RegistrationTokenSettings = ({
         {
           title: 'Delete',
           onClick: () => setShowDeletePopup(true),
-          variant: 'secondary',
+          variant: 'danger',
         },
       ]}
     >
@@ -118,7 +118,12 @@ const RegistrationTokenSettings = ({
             You are about to delete the{' '}
             <strong>{registrationToken.name}</strong> Registration Token.
           </Text>
-          <Button title="Delete" marginTop={5} onClick={submitDelete} />
+          <Button
+            title="Delete"
+            marginTop={5}
+            onClick={submitDelete}
+            variant="danger"
+          />
         </Card>
       </Popup>
     </Card>

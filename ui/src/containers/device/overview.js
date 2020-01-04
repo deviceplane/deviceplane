@@ -4,11 +4,10 @@ import { Icon, toaster } from 'evergreen-ui';
 import api from '../../api';
 import theme from '../../theme';
 import {
-  Row,
+  Group,
   Column,
   Button,
   Value,
-  Badge,
   Link,
   Label,
   Text,
@@ -17,7 +16,8 @@ import Card from '../../components/card';
 import Table from '../../components/table';
 import Popup from '../../components/popup';
 import Editor from '../../components/editor';
-import EditableLabelTable from '../../components/EditableLabelTable';
+import EditableLabelTable from '../../components/editable-label-table';
+import DeviceStatus from '../../components/device-status';
 
 const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
   const [serviceMetrics, setServiceMetrics] = useState({});
@@ -134,6 +134,7 @@ const DeviceOverview = ({
       <Card
         size="xlarge"
         title={device.name}
+        subtitle={<DeviceStatus status={device.status} />}
         marginBottom={4}
         actions={[
           {
@@ -147,7 +148,7 @@ const DeviceOverview = ({
                 });
                 setHostMetrics(response.data);
               } catch (error) {
-                toaster.danger('Host metrics are currently unavailable.');
+                toaster.danger('Current device metrics are unavailable.');
                 console.log(error);
               }
             },
@@ -172,22 +173,16 @@ const DeviceOverview = ({
           },
         ]}
       >
-        <Row marginBottom={6}>
-          {device.status === 'offline' ? (
-            <Badge bg="red">offline</Badge>
-          ) : (
-            <Badge bg="green">online</Badge>
-          )}
-        </Row>
-        <Column marginBottom={6}>
+        <Group>
           <Label>IP Address</Label>
           <Value>
             {device.info.hasOwnProperty('ipAddress')
               ? device.info.ipAddress
               : ''}
           </Value>
-        </Column>
-        <Column>
+        </Group>
+
+        <Group>
           <Label>Operating System</Label>
           <Value>
             {device.info.hasOwnProperty('osRelease') &&
@@ -195,7 +190,7 @@ const DeviceOverview = ({
               ? device.info.osRelease.prettyName
               : '-'}
           </Value>
-        </Column>
+        </Group>
       </Card>
       <Column marginBottom={4}>
         <EditableLabelTable
@@ -224,7 +219,12 @@ const DeviceOverview = ({
         />
       </Card>
       <Popup show={!!hostMetrics} onClose={() => setHostMetrics(null)}>
-        <Card border title="Host Metrics" subtitle={device.name} size="xxlarge">
+        <Card
+          border
+          title="Current Device Metrics"
+          subtitle={device.name}
+          size="xxlarge"
+        >
           <Editor width="100%" height="70vh" value={hostMetrics} readOnly />
         </Card>
       </Popup>

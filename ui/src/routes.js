@@ -1,6 +1,8 @@
 import { mount, route, redirect, map, compose, withView, withData } from 'navi';
 
 import api from './api';
+import { useEffect } from 'react';
+import { useNavigation } from 'react-navi';
 
 export default mount({
   '/': redirect('/projects'),
@@ -405,6 +407,93 @@ export default mount({
               ),
             }),
           }),
+          '/monitoring': compose(
+            withView(() => import('./containers/monitoring')),
+            withData(async ({ params: { project: projectId } }) => {
+              const { data: project } = await api.project({
+                projectId,
+              });
+              const { data: applications } = await api.applications({
+                projectId,
+              });
+              const { data: devices } = await api.devices({ projectId });
+              return {
+                project,
+                applications,
+                devices,
+              };
+            }),
+            mount({
+              '/': route({
+                view: ({ route: { data } }) => {
+                  const navigation = useNavigation();
+                  useEffect(() => {
+                    if (data.project.datadogApiKey) {
+                      navigation.navigate('monitoring/project');
+                    } else {
+                      navigation.navigate('monitoring/integrations');
+                    }
+                  }, []);
+                  return null;
+                },
+              }),
+              '/integrations': route({
+                title: 'Integrations - Monitoring',
+                getView: () => import('./containers/monitoring/integrations'),
+              }),
+              '/project': route({
+                title: 'Project - Monitoring',
+                getData: async request => {
+                  const {
+                    data: { exposedMetrics: metrics },
+                  } = await api.projectMetricsConfig({
+                    projectId: request.params.project,
+                  });
+
+                  return {
+                    metrics,
+                  };
+                },
+                getView: () => import('./containers/monitoring/project'),
+              }),
+              '/device': compose(
+                withData(async request => {
+                  const {
+                    data: { exposedMetrics: metrics },
+                  } = await api.deviceMetricsConfig({
+                    projectId: request.params.project,
+                  });
+
+                  return {
+                    metrics,
+                  };
+                }),
+                mount({
+                  '/': route({
+                    title: 'Device - Monitoring',
+                    getView: () => import('./containers/monitoring/device'),
+                  }),
+                })
+              ),
+              '/service': compose(
+                withData(async request => {
+                  const { data: metrics } = await api.serviceMetricsConfig({
+                    projectId: request.params.project,
+                  });
+
+                  return {
+                    metrics,
+                  };
+                }),
+                mount({
+                  '/': route({
+                    title: 'Service - Monitoring',
+                    getView: () => import('./containers/monitoring/service'),
+                  }),
+                })
+              ),
+            })
+          ),
           '/settings': route({
             title: 'Settings - Project',
             getData: async request => {

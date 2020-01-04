@@ -41,7 +41,13 @@ const Login = ({
   };
 
   return (
-    <Column flex={1} alignItems="center" paddingTop={9} paddingBottom={6}>
+    <Column
+      flex={1}
+      alignItems="center"
+      paddingY={9}
+      height="100%"
+      overflow="auto"
+    >
       <Card
         logo
         title="Log in"

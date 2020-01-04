@@ -75,7 +75,7 @@ const Role = ({
           {
             title: 'Delete',
             onClick: () => setShowDeletePopup(true),
-            variant: 'secondary',
+            variant: 'danger',
           },
         ]}
       >
@@ -120,7 +120,12 @@ const Role = ({
           <Text>
             You are about to delete the <strong>{role.name}</strong> role.
           </Text>
-          <Button marginTop={5} title="Delete" onClick={submitDelete} />
+          <Button
+            marginTop={5}
+            title="Delete"
+            onClick={submitDelete}
+            variant="danger"
+          />
         </Card>
       </Popup>
     </>

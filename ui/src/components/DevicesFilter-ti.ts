@@ -11,6 +11,7 @@ export const Filter = t.array('Condition');
 export const Condition = t.iface([], {
   type: 'ConditionType',
   params: 'ConditionParams',
+  options: t.iface([], {}),
 });
 
 export const ConditionType = t.name('string');
@@ -45,6 +46,7 @@ export const Props = t.iface([], {
   show: 'boolean',
   onClose: t.func('void'),
   onSubmit: t.opt(t.func('void', t.param('filter', 'Filter'))),
+  filter: 'Filter',
 });
 
 export const State = t.iface([], {

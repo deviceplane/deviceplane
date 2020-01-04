@@ -11,15 +11,15 @@ Container.defaultProps = { borderRadius: 1, borderColor: 'white' };
 
 const Cell = styled(Row)`
   flex: 1 0 0%;
-  overflow: hidden;
 `;
 
 Cell.defaultProps = {
   padding: 3,
+  overflow: 'hidden',
 };
 
 const TableRow = styled(Row)`
-  align-items: flex-start;
+  align-items: center;
   border-bottom: 1px solid ${props => props.theme.colors.grays[1]};
   cursor: ${props => (props.selectable ? 'pointer' : 'default')};
   transition: background-color 150ms;
@@ -47,9 +47,10 @@ Header.defaultProps = {
   bg: 'grays.0',
 };
 
-const Table = ({ columns, data, onRowSelect, placeholder }) => {
+const Table = ({ columns, data, onRowSelect, placeholder, editRow }) => {
   const selectable = !!onRowSelect;
   onRowSelect = onRowSelect || function() {};
+
   const {
     getTableProps,
     getTableBodyProps,
@@ -73,14 +74,17 @@ const Table = ({ columns, data, onRowSelect, placeholder }) => {
   };
 
   return (
-    <Container {...getTableProps()} overflow="hidden">
+    <Container {...getTableProps()} overflowY="hidden">
       <Header flex={1}>
         {headerGroups.map(headerGroup => (
           <Row flex={1} {...headerGroup.getHeaderGroupProps()}>
             {headerGroup.headers.map(column => (
               <Cell
                 {...column.getHeaderProps(column.getSortByToggleProps())}
-                style={column.style}
+                style={{
+                  ...column.style,
+                  cursor: column.canSort ? 'pointer' : 'default',
+                }}
               >
                 {column.render('Header')}
                 <Row>
@@ -109,7 +113,7 @@ const Table = ({ columns, data, onRowSelect, placeholder }) => {
           </Row>
         ))}
       </Header>
-      <Column {...getTableBodyProps()} overflow="auto">
+      <Column {...getTableBodyProps()} overflowY="auto">
         {rows.length === 0 && (
           <Row
             justifyContent="center"
@@ -127,10 +131,20 @@ const Table = ({ columns, data, onRowSelect, placeholder }) => {
               {...row.getRowProps()}
               selectable={selectable}
               onClick={handleRowClick(row.index)}
+              position="relative"
+              style={{ transform: 'translate2d(0,0)' }}
             >
               {row.cells.map(cell => (
-                <Cell {...cell.getCellProps()} style={cell.column.style || {}}>
-                  {cell.value ? <Text>{cell.value}</Text> : cell.render('Cell')}
+                <Cell
+                  {...cell.getCellProps()}
+                  style={cell.column.style || {}}
+                  overflow={editRow ? 'visible' : 'hidden'}
+                >
+                  {cell.column.Cell ? (
+                    cell.render('Cell')
+                  ) : (
+                    <Text>{cell.value}</Text>
+                  )}
                 </Cell>
               ))}
             </TableRow>

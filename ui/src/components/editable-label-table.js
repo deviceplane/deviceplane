@@ -96,7 +96,7 @@ const EditableLabelTable = ({ data, onAdd, onRemove }) => {
                   title={
                     <Icon
                       icon="floppy-disk"
-                      size={18}
+                      size={16}
                       color={theme.colors.primary}
                     />
                   }
@@ -110,10 +110,14 @@ const EditableLabelTable = ({ data, onAdd, onRemove }) => {
                 />
                 <Button
                   title={
-                    <Icon icon="cross" size={18} color={theme.colors.white} />
+                    <Icon
+                      icon="cross"
+                      size={16}
+                      color={theme.colors.grays[5]}
+                    />
                   }
                   variant="icon"
-                  marginLeft={4}
+                  marginLeft={3}
                   onClick={() => cancelEdit(index, original.mode)}
                 />
               </Row>
@@ -123,17 +127,15 @@ const EditableLabelTable = ({ data, onAdd, onRemove }) => {
             <Row>
               <Button
                 title={
-                  <Icon icon="edit" size={18} color={theme.colors.primary} />
+                  <Icon icon="edit" size={16} color={theme.colors.primary} />
                 }
                 variant="icon"
                 onClick={() => setEdit(index)}
               />
               <Button
-                title={
-                  <Icon icon="trash" size={18} color={theme.colors.white} />
-                }
+                title={<Icon icon="trash" size={16} color={theme.colors.red} />}
                 variant="icon"
-                marginLeft={4}
+                marginLeft={3}
                 onClick={() => setLabelToRemove(original)}
               />
             </Row>
@@ -245,7 +247,12 @@ const EditableLabelTable = ({ data, onAdd, onRemove }) => {
             You are about to remove the{' '}
             <strong>{labelToRemove && labelToRemove.key}</strong> label.
           </Text>
-          <Button marginTop={5} title="Remove" onClick={removeLabel} />
+          <Button
+            marginTop={5}
+            title="Remove"
+            onClick={removeLabel}
+            variant="danger"
+          />
         </Card>
       </Popup>
     </>

@@ -38,7 +38,7 @@ const ApplicationOverview = ({
       {latestRelease ? (
         <>
           <Group>
-            <Label>Current Release ID</Label>
+            <Label>Current Release</Label>
             <Link
               href={`/${params.project}/applications/${name}/releases/${latestRelease.id}`}
             >

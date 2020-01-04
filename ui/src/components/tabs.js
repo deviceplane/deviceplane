@@ -31,16 +31,24 @@ const LinkTab = styled.a`
 
   ${styles}
 
+  pointer-events: ${props => (props.disabled ? 'none' : 'auto')};
   font-size: ${props => props.theme.fontSizes[1]}px;
   font-weight: ${props => props.theme.fontWeights[2]};
   color: ${props =>
     props.active ? props.theme.colors.primary : props.theme.colors.white};
   background-color: ${props =>
     props.active ? props.theme.colors.black : 'transparent'};
-    &:hover {
-      background-color: ${props =>
-        props.active ? props.theme.colors.black : props.theme.colors.grays[1]};
-    }
+
+  opacity: ${props => (props.disabled ? 0.4 : 1)};
+
+  &:hover {
+    background-color: ${props =>
+      props.active
+        ? props.theme.colors.black
+        : props.disabled
+        ? 'transparent'
+        : props.theme.colors.grays[1]};
+  }
 `;
 
 const ButtonTab = styled.button`
@@ -50,23 +58,33 @@ const ButtonTab = styled.button`
 
   ${styles}
 
+  pointer-events: ${props => (props.disabled ? 'none' : 'auto')};
   font-size: ${props => props.theme.fontSizes[1]}px;
   font-weight: ${props => props.theme.fontWeights[2]};
   color: ${props =>
     props.active ? props.theme.colors.primary : props.theme.colors.white};
   background-color: ${props =>
     props.active ? props.theme.colors.black : 'transparent'};
+
+  opacity: ${props => (props.disabled ? 0.4 : 1)};
+
   &:hover {
-    background-color: ${props => props.theme.colors.black};
+    background-color: ${props =>
+      props.active
+        ? props.theme.colors.black
+        : props.disabled
+        ? 'transparent'
+        : props.theme.colors.grays[1]};
   }
 `;
 
-const Tab = ({ title, href, onClick, active = true }) => {
+const Tab = ({ title, tooltip, href, onClick, disabled, active = true }) => {
   if (href) {
     return (
       <LinkTab
         {...useLinkProps({ href })}
         active={useActive(href, { exact: false })}
+        disabled={disabled}
       >
         {title}
       </LinkTab>
@@ -74,7 +92,7 @@ const Tab = ({ title, href, onClick, active = true }) => {
   }
 
   return (
-    <ButtonTab onClick={onClick} active={active}>
+    <ButtonTab onClick={onClick} active={active} disabled={disabled}>
       {title}
     </ButtonTab>
   );

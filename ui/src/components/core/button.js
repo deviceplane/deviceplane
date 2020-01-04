@@ -34,6 +34,7 @@ const variants = {
       color: 'white',
       border: 0,
       borderColor: 'white',
+      bg: 'transparent',
       '&:not(:disabled):hover': {
         borderColor: 'white',
         boxShadow: `0px 0px 0px 2px ${theme.colors.white} inset`,
@@ -42,9 +43,23 @@ const variants = {
         boxShadow: `0px 0px 0px 2px ${theme.colors.white} inset`,
       },
     },
+    danger: {
+      color: 'red',
+      border: 0,
+      borderColor: 'red',
+      bg: 'transparent',
+      '&:not(:disabled):hover': {
+        borderColor: 'red',
+        boxShadow: `0px 0px 0px 2px ${theme.colors.red} inset`,
+      },
+      '&:not(:disabled):focus': {
+        boxShadow: `0px 0px 0px 2px ${theme.colors.red} inset`,
+      },
+    },
     text: {
       color: 'white',
       border: 'none',
+      bg: 'transparent',
       opacity: 0.8,
       padding: 0,
       '&:not(:disabled):hover': {
@@ -73,7 +88,6 @@ const defaultProps = {
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
-  bg: 'transparent',
 };
 
 export const Btn = styled.button`
@@ -83,7 +97,7 @@ export const Btn = styled.button`
   font-family: inherit;
   cursor: pointer;
   text-transform: capitalize;
-  transition: all 250ms;
+  transition: all 200ms;
   transform: translateZ(0);
   backface-visibility: hidden;
   user-select: none;
@@ -109,7 +123,7 @@ export const LinkButton = styled.a`
   font-family: inherit;
   cursor: pointer;
   text-transform: capitalize;
-  transition: all 250ms;
+  transition: all 200ms;
   padding: 10px 12px;
   transform: translateZ(0);
   backface-visibility: hidden;

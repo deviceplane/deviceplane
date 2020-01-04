@@ -134,7 +134,7 @@ const ServiceAccount = ({
           {
             title: 'Delete',
             onClick: () => setShowDeletePopup(true),
-            variant: 'secondary',
+            variant: 'danger',
           },
         ]}
         marginBottom={6}
@@ -157,7 +157,7 @@ const ServiceAccount = ({
           <Label>Choose Individual Roles</Label>
           {roles.map(role => (
             <Field
-              group
+              multi
               key={role.id}
               name={`roles[${role.name}]`}
               as={<Checkbox label={role.name} />}
@@ -181,7 +181,12 @@ const ServiceAccount = ({
             You are about to delete the <strong>{serviceAccount.name}</strong>{' '}
             service account.
           </Text>
-          <Button marginTop={5} title="Delete" onClick={submitDelete} />
+          <Button
+            marginTop={5}
+            title="Delete"
+            onClick={submitDelete}
+            variant="danger"
+          />
         </Card>
       </Popup>
     </>
@@ -230,7 +235,7 @@ const ServiceAccountAccessKeys = ({ projectId, serviceAccount }) => {
             </>
           ) : (
             <Button
-              title={<Icon icon="trash" size={18} color={theme.colors.white} />}
+              title={<Icon icon="trash" size={18} color={theme.colors.red} />}
               variant="icon"
               onClick={() => setKeyToDelete(row.original.id)}
             />

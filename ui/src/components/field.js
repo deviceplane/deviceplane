@@ -10,7 +10,7 @@ import { Group, Row, Column, Input, Textarea, Label, Text } from './core';
 
 const Container = styled(Group)`
   margin-bottom: ${props =>
-    props.group
+    props.multi
       ? props.theme.sizes[2]
       : props.theme.sizes[Group.defaultProps.marginBottom]}px;
 
@@ -59,7 +59,7 @@ const Field = forwardRef(
       register,
       onChangeEvent,
       autoComplete = 'off',
-      group,
+      multi,
       errors = [],
       ...props
     },
@@ -78,6 +78,7 @@ const Field = forwardRef(
             register={register}
             setValue={setValue}
             onChangeEvent={data => ({ value: data[0] })}
+            {...props}
           />
         );
       }
@@ -100,7 +101,7 @@ const Field = forwardRef(
     };
 
     return (
-      <Container group={group}>
+      <Container multi={multi}>
         {(label || description) && (
           <Column marginBottom={Label.defaultProps.marginBottom}>
             <Row justifyContent="space-between">
@@ -135,7 +136,7 @@ const Field = forwardRef(
             )}
           </Column>
         )}
-        {getComponent()}
+        <Row>{getComponent()}</Row>
         {hint && (
           <Text marginTop={2} fontSize={0} color="grays.8">
             {hint}

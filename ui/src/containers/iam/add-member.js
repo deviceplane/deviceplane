@@ -88,7 +88,7 @@ const AddMember = ({
         <Label>Choose Individual Roles</Label>
         {roles.map(role => (
           <Field
-            group
+            multi
             key={role.id}
             name={`roles[${role.name}]`}
             as={<Checkbox label={role.name} />}

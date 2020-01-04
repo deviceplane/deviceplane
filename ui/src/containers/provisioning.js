@@ -61,6 +61,7 @@ const Provisioning = ({
       <Card
         title="Registration Tokens"
         size="full"
+        maxHeight="100%"
         actions={[
           {
             href: 'registration-tokens/create',

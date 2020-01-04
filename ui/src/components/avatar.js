@@ -21,7 +21,7 @@ const Avatar = ({ name }) => (
     bg="primary"
     borderRadius={6}
   >
-    <Text color="black" fontWeight={3} fontSize={1}>
+    <Text color="black" fontWeight={2} fontSize={1}>
       {getInitials(name)}
     </Text>
   </Column>

@@ -42,6 +42,7 @@ const Members = ({
       title="Members"
       size="xlarge"
       actions={[{ href: 'add', title: 'Add member' }]}
+      maxHeight="100%"
     >
       <Table
         columns={columns}

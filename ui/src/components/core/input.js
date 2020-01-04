@@ -8,7 +8,11 @@ import {
   shadow,
 } from 'styled-system';
 
-const Input = styled.input`
+const Input = styled.input.attrs(props => ({
+  spellCheck: props.spellCheck || 'off',
+  autoCorrect: props.autoCorrect || 'off',
+  autoComplete: props.autoComplete || 'off',
+}))`
   border: 1px solid ${props => props.theme.colors.grays[0]};
   outline: none;
   margin: 0;
@@ -21,8 +25,7 @@ const Input = styled.input`
 
   &::placeholder {
     font-size: 16px;
-    color: inherit;
-    opacity: .75;
+    color: ${props => props.theme.colors.grays[6]};
   }
 
   -webkit-autofill,

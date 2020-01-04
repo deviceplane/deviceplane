@@ -58,11 +58,7 @@ const api = {
       return response;
     }),
 
-  updateProject: ({ projectId, data: { name, datadogApiKey } }) =>
-    put(`projects/${projectId}`, {
-      name,
-      datadogApiKey,
-    }),
+  updateProject: ({ projectId, data }) => put(`projects/${projectId}`, data),
 
   deleteProject: ({ projectId }) => del(`projects/${projectId}`),
 
@@ -280,6 +276,28 @@ const api = {
     get(
       `projects/${projectId}/devices/${deviceId}/applications/${applicationId}/services/${serviceId}/metrics`
     ),
+
+  projectMetricsConfig: ({ projectId }) =>
+    get(`projects/${projectId}/configs/project-metrics-config`),
+
+  updateProjectMetricsConfig: ({ projectId, data }) =>
+    put(`projects/${projectId}/configs/project-metrics-config`, {
+      exposedMetrics: data,
+    }),
+
+  deviceMetricsConfig: ({ projectId }) =>
+    get(`projects/${projectId}/configs/device-metrics-config`),
+
+  updateDeviceMetricsConfig: ({ projectId, data }) =>
+    put(`projects/${projectId}/configs/device-metrics-config`, {
+      exposedMetrics: data,
+    }),
+
+  serviceMetricsConfig: ({ projectId }) =>
+    get(`projects/${projectId}/configs/service-metrics-config`),
+
+  updateServiceMetricsConfig: ({ projectId, data }) =>
+    put(`projects/${projectId}/configs/service-metrics-config`, data),
 };
 
 export default api;

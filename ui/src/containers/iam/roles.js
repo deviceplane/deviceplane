@@ -24,6 +24,7 @@ const Roles = ({
     <Card
       title="Roles"
       size="xlarge"
+      maxHeight="100%"
       actions={[
         {
           href: `create`,

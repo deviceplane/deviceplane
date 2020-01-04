@@ -20,16 +20,16 @@ const HiddenCheckbox = styled.input.attrs({ type: 'checkbox' })`
 const Icon = styled.svg`
   fill: none;
   stroke: black;
-  stroke-width: 2px;
+  stroke-width: 3px;
 `;
 
 const StyledCheckbox = styled.div`
   display: inline-block;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   background: ${props =>
     props.checked ? props.theme.colors.primary : props.theme.colors.white};
-  border-radius: 3px;
+  border-radius: 2px;
   transition: all 150ms;
   cursor: pointer;
 
@@ -54,7 +54,7 @@ const Text = styled.label`
 const Checkbox = ({ value, label, onChange, ...props }) => {
   return (
     <Container onClick={() => onChange(!value)}>
-      <HiddenCheckbox checked={value} id={label} {...props} />
+      <HiddenCheckbox checked={value} id={label} {...props} readOnly />
       <StyledCheckbox checked={value}>
         <Icon viewBox="0 0 24 24">
           <polyline points="20 6 9 17 4 12" />

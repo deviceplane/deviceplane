@@ -11,5 +11,6 @@ export { default as Value } from './value';
 export { default as Badge } from './badge';
 export { default as Group } from './group';
 export { default as Code } from './code';
+export { default as Select } from './select';
 export * from './box';
 export * from './form';

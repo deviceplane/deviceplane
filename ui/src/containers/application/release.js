@@ -10,7 +10,7 @@ import Popup from '../../components/popup';
 import Alert from '../../components/alert';
 import {
   Row,
-  Column,
+  Group,
   Text,
   Button,
   Link,
@@ -73,18 +73,20 @@ const Release = ({
         <Text fontWeight={3} fontSize={5} marginBottom={6}>
           {release.id}
         </Text>
+
         <Alert show={backendError} variant="error" description={backendError} />
-        <Column marginBottom={6}>
+
+        <Group>
           <Label>Released By</Label>
           <Row>
             <ReleasedBy project={params.project} release={release} />
           </Row>
-        </Column>
+        </Group>
 
-        <Column marginBottom={6}>
+        <Group>
           <Label>Started</Label>
           <Value>{moment(release.createdAt).fromNow()}</Value>
-        </Column>
+        </Group>
 
         <Label>Config</Label>
         <Editor

@@ -16,7 +16,6 @@ import { Text, Button, Form, Input, Label, Group } from '../components/core';
 
 const validationSchema = yup.object().shape({
   name: validators.name.required(),
-  datadogApiKey: yup.string(),
 });
 
 const ProjectSettings = ({
@@ -28,7 +27,6 @@ const ProjectSettings = ({
     validationSchema,
     defaultValues: {
       name: project.name,
-      datadogApiKey: project.datadogApiKey,
     },
   });
   const navigation = useNavigation();
@@ -72,7 +70,7 @@ const ProjectSettings = ({
           actions={[
             {
               title: 'Delete',
-              variant: 'secondary',
+              variant: 'danger',
               onClick: () => setShowDeletePopup(true),
             },
           ]}
@@ -94,12 +92,6 @@ const ProjectSettings = ({
               name="name"
               ref={register}
               errors={errors.name}
-            />
-            <Field
-              label="Datadog API Key"
-              name="datadogApiKey"
-              ref={register}
-              errors={errors.datadogApiKey}
             />
             <Button type="submit" title="Update" disabled={!formState.dirty} />
           </Form>

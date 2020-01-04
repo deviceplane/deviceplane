@@ -11,16 +11,8 @@ import Card from '../../components/card';
 import Field from '../../components/field';
 import Popup from '../../components/popup';
 import Alert from '../../components/alert';
-import {
-  Row,
-  Column,
-  Text,
-  Form,
-  Button,
-  Badge,
-  Label,
-  Value,
-} from '../../components/core';
+import DeviceStatus from '../../components/device-status';
+import { Group, Text, Form, Button, Label, Value } from '../../components/core';
 
 const validationSchema = yup.object().shape({
   name: validators.name.required(),
@@ -78,28 +70,21 @@ const DeviceSettings = ({
     <>
       <Card
         title="Device Settings"
+        subtitle={<DeviceStatus status={device.status} />}
         actions={[
           {
             title: 'Remove',
             onClick: () => setShowPopup(true),
-            variant: 'secondary',
+            variant: 'danger',
           },
         ]}
       >
         <Alert show={backendError} variant="error" description={backendError} />
 
-        <Row marginBottom={6}>
-          {device.status === 'offline' ? (
-            <Badge bg="red">offline</Badge>
-          ) : (
-            <Badge bg="green">online</Badge>
-          )}
-        </Row>
-
-        <Column marginBottom={6}>
+        <Group>
           <Label>ID</Label>
           <Value>{device.id}</Value>
-        </Column>
+        </Group>
 
         <Form
           onSubmit={e => {
@@ -123,7 +108,12 @@ const DeviceSettings = ({
             You are about to remove the <strong>{device.name}</strong> device.
           </Text>
 
-          <Button marginTop={5} title="Remove" onClick={submitDelete} />
+          <Button
+            marginTop={5}
+            title="Remove"
+            onClick={submitDelete}
+            variant="danger"
+          />
         </Card>
       </Popup>
     </>

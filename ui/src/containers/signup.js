@@ -52,7 +52,13 @@ const Signup = () => {
   };
 
   return (
-    <Column alignItems="center" flex={1} paddingTop={9} paddingBottom={6}>
+    <Column
+      alignItems="center"
+      flex={1}
+      paddingY={9}
+      height="100%"
+      overflow="auto"
+    >
       <Card
         logo
         width={10}
@@ -70,6 +76,7 @@ const Signup = () => {
             required
             autoFocus
             autoComplete="on"
+            autoCapitalize="on"
             label="First Name"
             name="firstName"
             ref={register}
@@ -79,6 +86,7 @@ const Signup = () => {
           <Field
             required
             autoComplete="on"
+            autoCapitalize="on"
             label="Last Name"
             name="lastName"
             ref={register}
@@ -87,6 +95,7 @@ const Signup = () => {
           />
           <Field
             autoComplete="on"
+            autoCapitalize="on"
             label="Company"
             name="company"
             ref={register}
@@ -110,7 +119,7 @@ const Signup = () => {
             name="password"
             ref={register}
             errors={errors.password}
-            hint="Password length must be at least 8, contain a lower case letter, a upper case letter, and no spaces."
+            hint="Password must be at least 8 characters, contain a lower case letter, an upper case letter, and no spaces."
             maxLength={64}
           />
           <Button title="Sign up" justifyContent="center" />

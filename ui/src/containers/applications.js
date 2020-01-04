@@ -40,6 +40,7 @@ const Applications = ({
         title="Applications"
         size="xlarge"
         actions={[{ title: 'Create Application', href: 'create' }]}
+        maxHeight="100%"
       >
         <Table
           columns={columns}

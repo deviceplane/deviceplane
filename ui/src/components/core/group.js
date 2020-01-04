@@ -13,7 +13,7 @@ const Group = styled.div`
 `;
 
 Group.defaultProps = {
-  marginBottom: 6,
+  marginBottom: 5,
 };
 
 export default Group;

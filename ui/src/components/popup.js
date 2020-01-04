@@ -25,7 +25,7 @@ const Container = styled(Column)`
 
 const Content = styled(Column)`
   max-height: 80vh;
-  overflow: hidden;
+  overflow: ${props => props.overflow};
   & > div {
     overflow: scroll;
   }
@@ -63,7 +63,7 @@ const CloseButton = styled.button`
   }
 `;
 
-const Popup = ({ children, show, onClose }) => {
+const Popup = ({ children, show, onClose, overflow = 'hidden' }) => {
   const node = useRef();
 
   const handleClick = e => {
@@ -116,7 +116,7 @@ const Popup = ({ children, show, onClose }) => {
                 exit={{ opacity: 0, y: -150, scale: 0.5 }}
                 transition={{ duration: 0.2, delay: 0.1 }}
               >
-                <Content>{children}</Content>
+                <Content overflow={overflow}>{children}</Content>
               </motion.div>
             </Container>
           </Overlay>

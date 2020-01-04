@@ -18,6 +18,7 @@
     "react-hook-form-input": "^1.1.6",
     "react-navi": "^0.13.6",
     "react-scripts": "2.1.5",
+    "react-select": "3.0.6",
     "react-spinners": "^0.6.1",
     "react-spring": "^8.0.27",
     "react-table": "^7.0.0-rc.5",

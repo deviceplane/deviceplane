@@ -7,10 +7,11 @@ import {
   flexbox,
   typography,
   shadow,
+  position,
 } from 'styled-system';
 
 export const Box = styled.div`
-  ${space} ${layout} ${color} ${border} ${typography} ${shadow}
+  ${space} ${layout} ${color} ${border} ${typography} ${shadow} ${position}
 `;
 
 export const Row = styled(Box)`

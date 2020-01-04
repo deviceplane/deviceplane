@@ -5,6 +5,7 @@ const Textarea = styled.textarea`
 border: 1px solid ${props => props.theme.colors.black};
 outline: none;
 appearance: none;
+width: 100%;
 
 transition: border-color 150ms;
 

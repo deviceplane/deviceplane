@@ -78,7 +78,13 @@ const PasswordRecovery = ({
   }
 
   return (
-    <Column flex={1} alignItems="center" paddingTop={9} paddingBottom={6}>
+    <Column
+      flex={1}
+      alignItems="center"
+      paddingY={9}
+      height="100%"
+      overflow="auto"
+    >
       <Card title="Recover Password" logo>
         <Alert show={backendError} variant="error" description={backendError} />
         <Form
@@ -94,7 +100,7 @@ const PasswordRecovery = ({
             name="password"
             ref={register}
             errors={errors.password}
-            hint="Password length must be at least 8, contain a lower case letter, a upper case letter, and no spaces."
+            hint="Password must be at least 8 characters, contain a lower case letter, an upper case letter, and no spaces."
           />
           <Button title="Submit" type="submit" />
         </Form>

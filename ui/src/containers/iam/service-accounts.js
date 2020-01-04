@@ -32,6 +32,7 @@ const ServiceAccounts = ({
     <Card
       title="Service Accounts"
       size="xlarge"
+      maxHeight="100%"
       actions={[
         {
           href: `create`,

@@ -39,6 +39,7 @@ const Projects = ({
       <Card
         title="Projects"
         size="xlarge"
+        maxHeight="100%"
         actions={[
           {
             href: '/projects/create',
