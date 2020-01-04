@@ -82,7 +82,7 @@ const Devices = ({ route }) => {
     () => [
       {
         Header: 'Status',
-        accessor: ({ status }) => status,
+        accessor: 'status',
         Cell: ({ row }) => <DeviceStatus status={row.original.status} />,
         style: {
           flex: '0 0 100px',
@@ -94,7 +94,7 @@ const Devices = ({ route }) => {
       },
       {
         Header: 'IP Address',
-        accessor: ({ info }) => info.ipAddress,
+        accessor: 'info.ipAddress',
         Cell: ({ row }) => (
           <Text>
             {row.original.info.hasOwnProperty('ipAddress')
@@ -108,12 +108,12 @@ const Devices = ({ route }) => {
       },
       {
         Header: 'OS',
-        accessor: ({ info }) => info.osRelease && info.osRelease.prettyName,
+        accessor: 'info.osRelease.prettyName',
         Cell: ({ cell: { value } }) => <Text>{value || '-'}</Text>,
       },
       {
         Header: 'Labels',
-        accessor: ({ labels }) => labels,
+        accessor: 'labels',
         Cell: ({ row }) =>
           row.original.labels
             ? renderLabels(row.original.labels, labelColorMap, addLabelFilter)

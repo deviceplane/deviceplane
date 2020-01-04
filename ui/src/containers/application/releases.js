@@ -6,17 +6,6 @@ import Card from '../../components/card';
 import Table from '../../components/table';
 import { Text } from '../../components/core';
 
-const ReleasedBy = ({ release }) => {
-  if (release) {
-    if (release.createdByUser) {
-      return `${release.createdByUser.firstName} ${release.createdByUser.lastName}`;
-    } else if (release.createdByServiceAccount) {
-      return release.createdByServiceAccount.name;
-    }
-  }
-  return '-';
-};
-
 const Releases = ({
   route: {
     data: { params, application, releases },
@@ -28,14 +17,20 @@ const Releases = ({
       { Header: 'Release ID', accessor: 'id', style: { flex: 2 } },
       {
         Header: 'Released by',
-        Cell: ({ row: { original } }) => (
-          <Text>
-            <ReleasedBy release={original} />
-          </Text>
-        ),
+        accessor: ({ release }) => {
+          if (release) {
+            if (release.createdByUser) {
+              return `${release.createdByUser.firstName} ${release.createdByUser.lastName}`;
+            } else if (release.createdByServiceAccount) {
+              return release.createdByServiceAccount.name;
+            }
+          }
+          return '-';
+        },
       },
       {
         Header: 'Started',
+        accessor: 'createdAt',
         Cell: ({
           row: {
             original: { createdAt },

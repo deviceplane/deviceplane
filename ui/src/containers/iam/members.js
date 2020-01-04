@@ -16,21 +16,15 @@ const Members = ({
       { Header: 'Email', accessor: 'user.email' },
       {
         Header: 'Name',
-        Cell: ({
-          row: {
-            original: {
-              user: { firstName, lastName },
-            },
-          },
-        }) => <Text>{`${firstName} ${lastName}`}</Text>,
+        accessor: ({ user: { firstName, lastName } }) =>
+          `${firstName} ${lastName}`,
       },
       {
         Header: 'Roles',
-        Cell: ({
-          row: {
-            original: { roles },
-          },
-        }) => <Text>{roles.map(({ name }) => name).join(', ')}</Text>,
+        accessor: 'roles',
+        Cell: ({ cell: { value } }) => (
+          <Text>{value.map(({ name }) => name).join(', ')}</Text>
+        ),
       },
     ],
     []

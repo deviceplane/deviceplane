@@ -115,8 +115,7 @@ const Device = ({
       },
       {
         Header: 'Labels',
-        accessor: ({ labels }) => labels,
-        id: 'labels',
+        accessor: 'labels',
         Cell: ({ cell: { value }, row: { original } }) =>
           editRow && editRow.name === original.name ? (
             <Select

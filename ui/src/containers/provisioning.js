@@ -23,6 +23,7 @@ const Provisioning = ({
       { Header: 'Name', accessor: 'name' },
       {
         Header: 'Created At',
+        accessor: 'createdAt',
         Cell: ({ row: { original } }) => (
           <Text>
             {original.createdAt ? moment(original.createdAt).fromNow() : '-'}
@@ -32,9 +33,12 @@ const Provisioning = ({
       {
         Header: 'Devices Registered',
         accessor: 'deviceCounts.allCount',
+        style: { flex: '0 0 200px' },
       },
       {
         Header: 'Registration Limit',
+        accessor: 'maxRegistrations',
+        style: { flex: '0 0 200px' },
         Cell: ({ row: { original } }) => (
           <Text>
             {typeof original.maxRegistrations === 'number'
@@ -45,6 +49,7 @@ const Provisioning = ({
       },
       {
         Header: 'Labels',
+        accessor: 'labels',
         Cell: ({ row: { original } }) =>
           original.labels ? renderLabels(original.labels, labelColorMap) : null,
         style: {

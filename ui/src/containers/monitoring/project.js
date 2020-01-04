@@ -143,8 +143,7 @@ const Project = ({
       },
       {
         Header: 'Labels',
-        id: 'labels',
-        accessor: ({ labels }) => labels,
+        accessor: 'labels',
         Cell: ({ row: { original }, cell: { value } }) =>
           editRow && editRow.name === original.name ? (
             <Select

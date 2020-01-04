@@ -17,11 +17,10 @@ const ServiceAccounts = ({
       { Header: 'Description', accessor: 'description' },
       {
         Header: 'Roles',
-        Cell: ({
-          row: {
-            original: { roles },
-          },
-        }) => <Text>{roles.map(({ name }) => name).join(', ')}</Text>,
+        accessor: 'roles',
+        Cell: ({ cell: { value } }) => (
+          <Text>{value.map(({ name }) => name).join(', ')}</Text>
+        ),
       },
     ],
     []

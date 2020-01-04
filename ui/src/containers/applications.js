@@ -18,6 +18,7 @@ const Applications = ({
       { Header: 'Name', accessor: 'name', style: { flex: 2 } },
       {
         Header: 'Last Release',
+        accessor: 'latestRelease.createdAt',
         Cell: ({ row: { original } }) => (
           <Text>
             {original.latestRelease

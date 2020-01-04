@@ -25,19 +25,24 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
     () => [
       {
         Header: 'Service',
-        Cell: ({ row: { original } }) => (
+        accessor: ({ application, service }) =>
+          `${application.name} / ${service}`,
+        Cell: ({ cell: { value }, row: { original } }) => (
           <Link
             href={`/${projectId}/applications/${original.application.name}`}
-          >{`${original.application.name} / ${original.service}`}</Link>
+          >
+            {value}
+          </Link>
         ),
       },
       {
         Header: 'Current Release',
-        Cell: ({ row: { original } }) => (
+        accessor: 'currentReleaseId',
+        Cell: ({ cell: { value }, row: { original } }) => (
           <Link
             href={`/${projectId}/applications/${original.application.name}/releases/${original.currentReleaseId}`}
           >
-            {original.currentReleaseId}
+            {value}
           </Link>
         ),
       },
