@@ -108,7 +108,7 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
       />
       <Popup
         show={!!serviceMetrics.service}
-        onClose={() => setServiceMetrics(null)}
+        onClose={() => setServiceMetrics({})}
       >
         <Card
           border
