@@ -46,13 +46,20 @@ func (r *Runner) getServiceMetrics(
 			continue
 		}
 
+		// Don't hit if there is no latest release
 		release, exists := latestAppReleaseByAppID[app.ID]
 		if !exists {
 			continue
 		}
 
+		// Don't hit if service doesn't exist in config
 		_, exists = release.Config[serviceMetricsConfig.Service]
 		if !exists {
+			continue
+		}
+
+		// Don't hit if user hasn't configured any metrics to export
+		if len(serviceMetricsConfig.ExposedMetrics) == 0 {
 			continue
 		}
 
@@ -63,8 +70,8 @@ func (r *Runner) getServiceMetrics(
 		}
 
 		// Get metrics from services
-		deviceMetricsResp, err := client.GetServiceMetrics(deviceConn, app.ID, serviceMetricsConfig.Service, serviceMetricEndpointConfig.Path, serviceMetricEndpointConfig.Port)
-		if err != nil || deviceMetricsResp.StatusCode != 200 {
+		serviceMetricsResp, err := client.GetServiceMetrics(deviceConn, app.ID, serviceMetricsConfig.Service, serviceMetricEndpointConfig.Path, serviceMetricEndpointConfig.Port)
+		if err != nil || serviceMetricsResp.StatusCode != 200 {
 			r.st.Incr("runner.datadog.service_metrics_pull", append([]string{"status:failure"}, utils.InternalTags(project.Name)...), 1)
 			// TODO: we want to present to the user a list
 			// of applications that don't have functioning
@@ -75,7 +82,7 @@ func (r *Runner) getServiceMetrics(
 
 		// Convert request to DataDog format
 		serviceMetrics, err := translation.ConvertOpenMetricsToDataDog(
-			deviceMetricsResp.Body,
+			serviceMetricsResp.Body,
 			r.statsCache,
 			translation.GetMetricsPrefix(project, device, fmt.Sprintf("service-(%s)(%s)", app.ID, serviceMetricsConfig.Service)),
 		)
