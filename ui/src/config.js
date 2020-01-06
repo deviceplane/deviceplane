@@ -116,7 +116,7 @@ const config =
     : production;
 
 export default {
-  agentVersion: '1.8.5',
+  agentVersion: '1.9.1',
   cliEndpoint: 'https://cli.deviceplane.com',
   supportedDeviceMetrics,
   supportedDeviceMetricProperties,
