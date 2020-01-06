@@ -76,7 +76,10 @@ const Service = ({
       await api.updateServiceMetricsConfig({
         projectId: params.project,
         data: metrics.map(m => {
-          if (m.service === selection.service) {
+          if (
+            m.applicationId === selection.application.id &&
+            m.service === selection.service
+          ) {
             return {
               ...m,
               exposedMetrics: m.exposedMetrics.map(em => {
@@ -114,7 +117,10 @@ const Service = ({
       await api.updateServiceMetricsConfig({
         projectId: params.project,
         data: metrics.map(m => {
-          if (m.service === selection.service) {
+          if (
+            m.applicationId === selection.application.id &&
+            m.service === selection.service
+          ) {
             return {
               ...m,
               exposedMetrics: m.exposedMetrics.filter(

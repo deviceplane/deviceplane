@@ -59,7 +59,9 @@ const ServiceMetricsForm = ({
       await api.updateServiceMetricsConfig({
         projectId: params.project,
         data: [
-          ...allMetrics.filter(m => m.service !== service),
+          ...allMetrics.filter(m =>
+            m.applicationId === application.id ? m.service !== service : true
+          ),
           {
             applicationId: application.id,
             service,
