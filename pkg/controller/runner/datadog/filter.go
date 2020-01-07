@@ -23,7 +23,7 @@ func FilterMetrics(
 	case models.DeviceMetricsConfigKey:
 		metricPrefix = "deviceplane.device"
 	case models.ServiceMetricsConfigKey:
-		metricPrefix = fmt.Sprintf("deviceplane.application.%s.service.%s", app.Name, *serviceName)
+		metricPrefix = "deviceplane.service"
 	case models.ProjectMetricsConfigKey:
 		metricPrefix = "deviceplane"
 	default:
@@ -74,6 +74,10 @@ func FilterMetrics(
 
 		// Guaranteed tags
 		addTag("deviceplane.project", project.Name)
+		if metricType == models.ServiceMetricsConfigKey {
+			addTag("deviceplane.application", app.Name)
+			addTag("deviceplane.service", *serviceName)
+		}
 
 		filteredMetrics = append(filteredMetrics, m)
 	}
