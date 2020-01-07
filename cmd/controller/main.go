@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -45,6 +46,15 @@ func init() {
 func main() {
 	conf.Load(&config)
 
+	var allowedOriginURLs []url.URL
+	for _, origin := range config.AllowedOrigins {
+		originURL, err := url.Parse(origin)
+		if err != nil {
+			log.WithError(err).Fatal("parsing allowed origin url: " + origin)
+		}
+		allowedOriginURLs = append(allowedOriginURLs, *originURL)
+	}
+
 	statikFS, err := fs.New()
 	if err != nil {
 		log.WithError(err).Fatal("statik")
@@ -75,7 +85,7 @@ func main() {
 
 	svc := service.NewService(sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
 		sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
-		emailProvider, statikFS, st, connman)
+		emailProvider, statikFS, st, connman, allowedOriginURLs)
 
 	server := &http.Server{
 		Addr: config.Addr,

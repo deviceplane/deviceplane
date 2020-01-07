@@ -103,6 +103,7 @@ func NewService(
 	fileSystem http.FileSystem,
 	st *statsd.Client,
 	connman *connman.ConnectionManager,
+	allowedOrigins []url.URL,
 ) *Service {
 	s := &Service{
 		users:                      users,
@@ -140,8 +141,7 @@ func NewService(
 			WriteBufferSize: 1024,
 			Subprotocols:    []string{"binary"},
 			CheckOrigin: func(r *http.Request) bool {
-				// TODO
-				return true
+				return utils.CheckSameOrAllowedOrigin(r, allowedOrigins)
 			},
 		},
 	}
@@ -779,14 +779,9 @@ func (s *Service) newSession(w http.ResponseWriter, r *http.Request, userID stri
 
 			Expires: time.Now().AddDate(0, 1, 0),
 
+			Domain:   r.Host,
 			Secure:   secure,
 			HttpOnly: true,
-		}
-
-		// Hack to keeo previous sessions valid
-		// TODO: remove this
-		if referrer.Host == "cloud.deviceplane.com" {
-			cookie.Domain = "cloud.deviceplane.com"
 		}
 
 		http.SetCookie(w, cookie)
