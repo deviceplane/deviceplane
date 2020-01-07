@@ -8,19 +8,25 @@ import (
 )
 
 var (
-	vldr          = validator.New()
-	standardRegex = regexp.MustCompile("^[a-zA-Z0-9_-]+$")
-	once          sync.Once
+	vldr = validator.New()
+	once sync.Once
+
+	internalTitleRegex = regexp.MustCompile("^[a-zA-Z0-9]+_[a-zA-Z0-9]+$")
+	userTitleRegex     = regexp.MustCompile("^[a-zA-Z0-9-]+$")
 )
 
 func Validate(s interface{}) error {
 	once.Do(func() {
-		vldr.RegisterValidation("standard", func(fl validator.FieldLevel) bool {
-			return standardRegex.Match([]byte(fl.Field().String()))
+		vldr.RegisterValidation("internaltitle", func(fl validator.FieldLevel) bool {
+			return internalTitleRegex.Match([]byte(fl.Field().String()))
 		})
-		vldr.RegisterAlias("id", "required,min=1,max=32,standard")
-		vldr.RegisterAlias("name", "required,min=1,max=100,standard")
-		vldr.RegisterAlias("labelkey", "required,min=1,max=100,standard")
+		vldr.RegisterValidation("usertitle", func(fl validator.FieldLevel) bool {
+			return userTitleRegex.Match([]byte(fl.Field().String()))
+		})
+
+		vldr.RegisterAlias("id", "required,min=1,max=32,internaltitle")
+		vldr.RegisterAlias("name", "required,min=1,max=100,usertitle")
+		vldr.RegisterAlias("labelkey", "required,min=1,max=100,usertitle")
 		vldr.RegisterAlias("labelvalue", "required,min=1,max=100")
 		vldr.RegisterAlias("password", "required,min=8,max=100")
 		vldr.RegisterAlias("config", "required,min=1,max=5000")
