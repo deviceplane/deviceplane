@@ -8,7 +8,7 @@ import NotFound from './not-found';
 
 const GlobalStyle = createGlobalStyle`
   * {
-      box-sizing: inherit;
+    box-sizing: inherit;
   }
 
   ::selection {
@@ -25,19 +25,17 @@ const GlobalStyle = createGlobalStyle`
     background-color: ${props => props.theme.colors.pageBackground};
   }
 
-  html,body {
+  html, body {
     text-rendering: optimizeLegibility
     -webkit-font-smoothing: antialiased;
   }
 
   body {
     margin: 0;
-    overflow: hidden;
   }
 
   html, body, #root, #root > div, main {
     height: 100%;
-    overflow: hidden;
   }
 
   .ace_editor {

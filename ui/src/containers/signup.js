@@ -56,7 +56,7 @@ const Signup = () => {
       alignItems="center"
       flex={1}
       paddingY={[0, 9]}
-      height="100%"
+      height={['initial', '100%']}
       overflow="auto"
       bg={['black', 'pageBackground']}
     >
