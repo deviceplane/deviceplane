@@ -39,8 +39,15 @@ const PasswordReset = () => {
   };
 
   return (
-    <Column flex={1} alignItems="center" paddingTop={9} paddingBottom={6}>
-      <Card logo width={10} title="Reset Password">
+    <Column
+      flex={1}
+      alignItems="center"
+      paddingY={[0, 9]}
+      height="100%"
+      overflow="auto"
+      bg={['black', 'pageBackground']}
+    >
+      <Card logo size="medium" title="Reset Password">
         <Alert
           show={backendError}
           variant="error"

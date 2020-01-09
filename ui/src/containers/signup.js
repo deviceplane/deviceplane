@@ -55,9 +55,10 @@ const Signup = () => {
     <Column
       alignItems="center"
       flex={1}
-      paddingY={9}
+      paddingY={[0, 9]}
       height="100%"
       overflow="auto"
+      bg={['black', 'pageBackground']}
     >
       <Card
         logo

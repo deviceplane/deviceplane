@@ -34,6 +34,11 @@ const Container = styled(Column)`
       },
     },
   })}
+
+  @media (max-width: 600px) {
+    width: 100%;
+    border-radius: 0;
+  }
 `;
 
 const Card = ({

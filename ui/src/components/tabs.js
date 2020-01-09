@@ -8,6 +8,8 @@ import { Btn } from './core/button';
 const TabButton = styled(Btn)`
   border: none;
   padding: 10px 14px;
+  margin: 0 12px;
+  font-size: 12px;
   cursor: ${props => (props.active ? 'default' : 'pointer')};
   text-transform: uppercase;
   white-space: nowrap;
@@ -19,6 +21,7 @@ const TabButton = styled(Btn)`
     props.active ? props.theme.colors.primary : props.theme.colors.white};
   background-color: ${props =>
     props.active ? props.theme.colors.black : props.theme.colors.grays[3]};
+
   &:focus,
   &:hover {
     color: ${props =>
@@ -30,7 +33,6 @@ const TabButton = styled(Btn)`
         ? props.theme.colors.black
         : props.theme.colors.grays[0]} !important;
   }
-  margin: 0 12px;
 `;
 
 const TabLink = styled(TabButton).attrs({ as: 'a' })`
