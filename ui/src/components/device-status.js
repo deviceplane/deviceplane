@@ -1,15 +1,26 @@
 import React from 'react';
 
-import { Badge } from './core';
+import { Text } from './core';
 
-const DeviceStatus = ({ status }) => {
+const getColor = status => {
   switch (status) {
     case 'online':
-      return <Badge bg="green">online</Badge>;
+      return 'green';
     case 'offline':
     default:
-      return <Badge bg="red">offline</Badge>;
+      return 'red';
   }
 };
+
+const DeviceStatus = ({ status }) => (
+  <Text
+    style={{ textTransform: 'uppercase' }}
+    color={getColor(status)}
+    fontSize={0}
+    fontWeight={3}
+  >
+    {status}
+  </Text>
+);
 
 export default DeviceStatus;

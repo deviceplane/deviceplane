@@ -119,7 +119,7 @@ const Signup = () => {
             name="password"
             ref={register}
             errors={errors.password}
-            hint="Password must be at least 8 characters, contain a lower case letter, an upper case letter, and no spaces."
+            hint="Password must be at least 8 characters."
             maxLength={64}
           />
           <Button title="Sign up" justifyContent="center" />
@@ -133,6 +133,7 @@ const Signup = () => {
           <Link href="https://deviceplane.com/legal/privacy">
             Privacy Policy
           </Link>
+          .
         </Text>
       </Card>
     </Column>

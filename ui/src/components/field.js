@@ -26,13 +26,13 @@ const PasswordButton = styled(Row)`
   align-items: center;
 
   & span {
-    transition: color 150ms;
+    transition: ${props => props.theme.transitions[0]};
   }
   &:hover span {
     color: ${props => props.theme.colors.primary};
   }
   & svg {
-    transition: fill 150ms;
+    transition: ${props => props.theme.transitions[0]};
   }
   &:hover svg {
     fill: ${props => props.theme.colors.primary} !important;
@@ -117,10 +117,10 @@ const Field = forwardRef(
                     size={16}
                   />
                   <Text
-                    fontSize={0}
-                    marginLeft={2}
-                    fontWeight={3}
-                    width="40px"
+                    fontSize={1}
+                    marginLeft={1}
+                    fontWeight={2}
+                    width="45px"
                     textAlign="right"
                   >
                     {type === 'password' ? 'SHOW' : 'HIDE'}
@@ -130,7 +130,7 @@ const Field = forwardRef(
             </Row>
 
             {description && (
-              <Text marginTop={2} fontSize={1} color="grays.8">
+              <Text marginTop={2} fontSize={1} fontWeight={1} color="grays.8">
                 {description}
               </Text>
             )}
@@ -138,7 +138,7 @@ const Field = forwardRef(
         )}
         <Row>{getComponent()}</Row>
         {hint && (
-          <Text marginTop={2} fontSize={0} color="grays.8">
+          <Text marginTop={2} fontSize={0} fontWeight={1} color="grays.8">
             {hint}
           </Text>
         )}

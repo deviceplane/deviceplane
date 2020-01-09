@@ -73,7 +73,7 @@ const Card = ({
           <Row alignItems="center" justifyContent="space-between">
             <Column>
               <Row>
-                <Text fontSize={5} fontWeight={4}>
+                <Text fontSize={5} fontWeight={3}>
                   {title}
                 </Text>
               </Row>
@@ -106,7 +106,7 @@ const Card = ({
           {subtitle && (
             <Row marginTop={1}>
               {typeof subtitle === 'string' ? (
-                <Text fontSize={1} fontWeight={2} color="grays.8" marginTop={1}>
+                <Text fontSize={1} fontWeight={1} color="grays.8" marginTop={1}>
                   {subtitle}
                 </Text>
               ) : (

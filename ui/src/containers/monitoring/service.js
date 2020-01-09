@@ -143,7 +143,10 @@ const Service = ({
     storage.set('selectedService', selection, params.project);
   }, [selection]);
 
-  const tableData = useMemo(() => selectedMetrics, [selectedMetrics]);
+  const tableData = useMemo(
+    () => selectedMetrics.filter(({ name }) => !!name),
+    [selectedMetrics]
+  );
 
   const columns = useMemo(
     () => [
@@ -204,7 +207,8 @@ const Service = ({
       },
       {
         id: 'device',
-        accessor: ({ properties }) => properties.includes('device'),
+        accessor: ({ properties }) =>
+          properties && properties.includes('device'),
         Header: (
           <Row alignItems="center">
             <Tooltip content="When enabled, a Datadog tag with the device name is included.">

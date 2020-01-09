@@ -7,7 +7,7 @@ const nameRegex = /^[a-zA-Z0-9-]+$/;
 export default {
   name: yup
     .string()
-    .max(100)
+    .max(128)
     .matches(nameRegex, {
       message: 'Can only include letters, numbers, and -.',
     }),
@@ -17,6 +17,6 @@ export default {
     .max(64),
   password: yup
     .string()
-    .min(8, 'Password should be 8 characters minimum.')
-    .max(100),
+    .min(8, 'Password must be at least 8 characters.')
+    .max(128),
 };

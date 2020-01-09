@@ -22,12 +22,12 @@ const TableRow = styled(Row)`
   align-items: center;
   border-bottom: 1px solid ${props => props.theme.colors.grays[1]};
   cursor: ${props => (props.selectable ? 'pointer' : 'default')};
-  transition: background-color 150ms;
+  transition: ${props => props.theme.transitions[0]};
 
   &:hover {
     background-color: ${props =>
       props.selectable
-        ? props.theme.colors.grays[1]
+        ? props.theme.colors.grays[3]
         : props.theme.colors.black};
   }
 `;
@@ -38,11 +38,15 @@ const Header = styled(Row)`
   border-top-right-radius: 3px;
   text-transform: uppercase;
   align-items: center;
+
+  & ${Cell}:hover svg {
+    display: block !important;
+  }
 `;
 
 Header.defaultProps = {
-  fontSize: 0,
-  fontWeight: 4,
+  fontSize: 1,
+  fontWeight: 2,
   color: 'white',
   bg: 'grays.0',
 };
@@ -89,24 +93,20 @@ const Table = ({ columns, data, onRowSelect, placeholder, editRow }) => {
                 {column.render('Header')}
                 <Row>
                   {column.isSorted ? (
-                    column.isSortedDesc ? (
-                      <Icon
-                        icon="chevron-down"
-                        color="white"
-                        size={14}
-                        marginLeft={8}
-                      />
-                    ) : (
-                      <Icon
-                        icon="chevron-up"
-                        color="white"
-                        size={14}
-                        marginLeft={8}
-                      />
-                    )
-                  ) : (
-                    ''
-                  )}
+                    <Icon
+                      icon={column.isSortedDesc ? 'chevron-down' : 'chevron-up'}
+                      size={14}
+                      color="white"
+                      marginLeft={8}
+                    />
+                  ) : column.canSort ? (
+                    <Icon
+                      size={14}
+                      icon="expand-all"
+                      marginLeft={8}
+                      style={{ display: 'none' }}
+                    />
+                  ) : null}
                 </Row>
               </Cell>
             ))}

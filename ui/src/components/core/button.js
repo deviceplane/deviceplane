@@ -11,6 +11,7 @@ import {
   flexbox,
 } from 'styled-system';
 import { useLinkProps } from 'react-navi';
+
 import theme from '../../theme';
 
 const variants = {
@@ -78,71 +79,48 @@ const variants = {
   },
 };
 
-const defaultProps = {
+export const Btn = styled.button`
+appearance: none;
+border: none;
+outline: none;
+font-family: inherit;
+cursor: pointer;
+transition: ${props => props.theme.transitions[0]};
+transform: translateZ(0);
+backface-visibility: hidden;
+white-space: nowrap;
+font-size: 14px;
+padding: 10px 16px;
+text-transform: uppercase;
+text-renderering: geometricPercision;
+
+&:disabled {
+  cursor: not-allowed;
+  opacity: .3;
+}
+
+&:focus {
+  outline: none;
+}
+
+${variant(variants)}
+
+${space} ${layout} ${typography} ${color} ${border} ${shadow} ${flexbox}
+`;
+Btn.defaultProps = {
   variant: 'primary',
-  fontSize: 1,
   fontWeight: 2,
-  padding: 3,
   borderRadius: 1,
-  boxShadow: 0,
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
 };
 
-export const Btn = styled.button`
-  appearance: none;
-  border: none;
-  outline: none;
-  font-family: inherit;
-  cursor: pointer;
-  text-transform: capitalize;
-  transition: all 200ms;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  user-select: none;
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: .3;
-  }
-
-  &:focus {
-    outline: none;
-  }
-
-  ${space} ${layout} ${typography} ${color} ${border} ${shadow} ${flexbox}
-
-  ${variant(variants)}
-`;
-
-Btn.defaultProps = defaultProps;
-
-export const LinkButton = styled.a`
+export const LinkButton = styled(Btn).attrs({
+  as: 'a',
+})`
   text-decoration: none;
-  font-family: inherit;
-  cursor: pointer;
-  text-transform: capitalize;
-  transition: all 200ms;
-  padding: 10px 12px;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  user-select: none;
-
-  &:disabled {
-    opacity: .3;
-    cursor: not-allowed;
-  }
-
-  &:focus {
-    outline: none;
-  }
-
-  ${space} ${layout} ${typography} ${color} ${border} ${shadow} ${flexbox}
-
-  ${variant(variants)}
 `;
-LinkButton.defaultProps = defaultProps;
 
 const Button = ({ href, title, onClick, ...rest }) => {
   if (href) {

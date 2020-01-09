@@ -57,7 +57,7 @@ const ChangePassword = ({ close }) => {
           name="password"
           ref={register}
           errors={errors.password}
-          hint="Password must be at least 8 characters, contain a lower case letter, an upper case letter, and no spaces."
+          hint="Password must be at least 8 characters."
         />
         <Button title="Change Password" type="submit" />
       </Form>

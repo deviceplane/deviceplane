@@ -11,21 +11,27 @@ const GlobalStyle = createGlobalStyle`
       box-sizing: inherit;
   }
 
+  ::selection {
+    background-color: rgba(255,255,255,.99);
+    color: #000;
+  }
+
   html {
     box-sizing: border-box;
     font-family: ${props => props.theme.fonts.default};
-    
     font-size: 16px;
-    font-weight: 400;
+    font-weight: 300;
     line-height: 1.2;
     background-color: ${props => props.theme.colors.pageBackground};
   }
 
+  html,body {
+    text-rendering: optimizeLegibility
+    -webkit-font-smoothing: antialiased;
+  }
+
   body {
     margin: 0;
-    padding: 0;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
     overflow: hidden;
   }
 
@@ -66,7 +72,7 @@ const Page = ({ children }) => {
       <Helmet>
         {route.title && <title>{`${route.title} - Deviceplane`}</title>}
         <link
-          href={`https://fonts.googleapis.com/css?family=Rubik&display=swap`}
+          href="https://fonts.googleapis.com/css?family=Rubik:300,400,500,700,900&display=swap"
           rel="stylesheet"
         />
       </Helmet>

@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { Row, Text } from '../components/core';
+import DeviceLabel from '../components/device-label';
+import { Row } from '../components/core';
 
 export function buildLabelColorMap(oldLabelColorMap, labelColors, items) {
   var x = [];
@@ -23,43 +24,12 @@ export function buildLabelColorMap(oldLabelColorMap, labelColors, items) {
 export function renderLabels(labels, labelColorMap, onClick = () => {}) {
   return (
     <Row flexWrap="wrap" overflow="hidden">
-      {Object.keys(labels).map((key, i) => (
-        <Row
-          marginY={2}
-          marginRight={2}
-          overflow="hidden"
-          key={key}
-          fontSize={0}
-          fontWeight={3}
-          onClick={e => {
-            e.stopPropagation();
-            onClick(key, labels[key]);
-          }}
-        >
-          <Text
-            backgroundColor={labelColorMap[key]}
-            paddingX={2}
-            paddingY={1}
-            color="black"
-            borderTopLeftRadius={1}
-            borderBottomLeftRadius={1}
-            whiteSpace="nowrap"
-            overflow="hidden"
-          >
-            {key}
-          </Text>
-          <Text
-            backgroundColor="grays.3"
-            paddingX={2}
-            paddingY={1}
-            borderTopRightRadius={1}
-            borderBottomRightRadius={1}
-            overflow="hidden"
-            whiteSpace="nowrap"
-          >
-            {labels[key]}
-          </Text>
-        </Row>
+      {Object.keys(labels).map(key => (
+        <DeviceLabel
+          label={{ key, value: labels[key] }}
+          color={labelColorMap[key]}
+          onClick={onClick}
+        />
       ))}
     </Row>
   );

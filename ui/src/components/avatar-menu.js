@@ -21,8 +21,10 @@ const MenuItem = styled.button`
   text-align: left;
   margin: 0;
   padding: 0;
+  text-transform: uppercase;
 
   &:hover {
+    color: ${props => props.theme.colors.pureWhite};
     background-color: ${props => props.theme.colors.grays[0]};
   }
   ${space} ${layout} ${color} ${border} ${typography}
@@ -31,7 +33,8 @@ const MenuItem = styled.button`
 MenuItem.defaultProps = {
   paddingY: 1,
   color: 'white',
-  fontSize: 2,
+  fontSize: 1,
+  fontWeight: 2,
   paddingX: 3,
   marginX: 1,
   borderRadius: 1,
@@ -97,7 +100,7 @@ const AvatarMenu = () => {
               marginBottom={1}
               paddingX={3}
               marginX={1}
-              opacity={0.8}
+              color="grays.8"
             >
               {context.currentUser.email}
             </Text>

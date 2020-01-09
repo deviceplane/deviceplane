@@ -452,7 +452,7 @@ export const DevicesFilter = props => {
               </Row>
               {index < filter.length - 1 && (
                 <Row marginTop={Group.defaultProps.marginBottom}>
-                  <Text fontWeight={4} fontSize={3}>
+                  <Text fontWeight={3} fontSize={3}>
                     OR
                   </Text>
                 </Row>

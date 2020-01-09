@@ -16,7 +16,7 @@ const Input = styled.input.attrs(props => ({
   border: 1px solid ${props => props.theme.colors.grays[0]};
   outline: none;
   margin: 0;
-  transition: border-color 200ms;
+  transition: ${props => props.theme.transitions[0]};
   width: 100%;
 
   &:focus {
@@ -40,10 +40,10 @@ const Input = styled.input.attrs(props => ({
 `;
 
 Input.defaultProps = {
-  color: 'grays.11',
+  color: 'grays.12',
   bg: 'grays.0',
   borderRadius: 1,
-  fontWeight: 2,
+  fontWeight: 0,
   boxShadow: 0,
   fontSize: 2,
   padding: 3,

@@ -11,7 +11,7 @@ const NotFound = () => {
       padding={8}
       marginTop={9}
     >
-      <Heading variant="primary" fontSize={8} fontWeight={5}>
+      <Heading variant="primary" fontSize={8} fontWeight={4}>
         404
       </Heading>
       <Text marginTop={4} fontSize={6} color="white">

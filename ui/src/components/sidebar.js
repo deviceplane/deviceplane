@@ -43,7 +43,7 @@ const SidebarLink = styled(Link)`
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: background-color 200ms;
+  transition: ${props => props.theme.transitions[0]};
   border-radius: 4px;
   text-transform: uppercase;
   text-decoration: none !important;
@@ -54,6 +54,8 @@ const SidebarLink = styled(Link)`
     props.active ? props.theme.colors.primary : props.theme.colors.white};
 
   &:hover {
+    color: ${props =>
+      props.active ? props.theme.colors.primary : props.theme.colors.pureWhite};
     background-color: ${props =>
       props.active ? props.theme.colors.grays[1] : props.theme.colors.grays[0]};
   }

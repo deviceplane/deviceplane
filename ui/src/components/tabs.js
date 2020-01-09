@@ -1,110 +1,69 @@
 import React from 'react';
 import styled from 'styled-components';
-import { space, color, typography } from 'styled-system';
 import { useActive, useLinkProps } from 'react-navi';
 
 import { Row } from './core';
+import { Btn } from './core/button';
 
-const Container = styled(Row)``;
-
-const styles = `
-    border: none;
-    outline: none;
-    border-radius: 0;
-    transition: background-color 150ms;
-    border-radius: 4px;
-    padding: 10px 14px;
-    user-select: none;
-    cursor: pointer;
-    text-transform: uppercase;
-    white-space: nowrap;
-
-    &:not(:last-child) {
-        margin-right: 18px;
-    }
-`;
-
-const LinkTab = styled.a`
+const TabButton = styled(Btn)`
+  border: none;
+  padding: 10px 14px;
+  cursor: ${props => (props.active ? 'default' : 'pointer')};
+  text-transform: uppercase;
+  white-space: nowrap;
   text-decoration: none !important;
-
-  ${color} ${typography} ${space}
-
-  ${styles}
-
+  box-shadow: none !important;
+  border-color: none !important;
   pointer-events: ${props => (props.disabled ? 'none' : 'auto')};
-  font-size: ${props => props.theme.fontSizes[1]}px;
-  font-weight: ${props => props.theme.fontWeights[2]};
   color: ${props =>
     props.active ? props.theme.colors.primary : props.theme.colors.white};
   background-color: ${props =>
-    props.active ? props.theme.colors.black : 'transparent'};
-
-  opacity: ${props => (props.disabled ? 0.4 : 1)};
-
+    props.active ? props.theme.colors.black : props.theme.colors.grays[3]};
+  &:focus,
   &:hover {
+    color: ${props =>
+      props.active
+        ? props.theme.colors.primary
+        : props.theme.colors.pureWhite} !important;
     background-color: ${props =>
       props.active
         ? props.theme.colors.black
-        : props.disabled
-        ? 'transparent'
-        : props.theme.colors.grays[1]};
+        : props.theme.colors.grays[0]} !important;
   }
+  margin: 0 12px;
 `;
 
-const ButtonTab = styled.button`
-  appearance: none;
-
-  ${color} ${typography} ${space}
-
-  ${styles}
-
-  pointer-events: ${props => (props.disabled ? 'none' : 'auto')};
-  font-size: ${props => props.theme.fontSizes[1]}px;
-  font-weight: ${props => props.theme.fontWeights[2]};
-  color: ${props =>
-    props.active ? props.theme.colors.primary : props.theme.colors.white};
-  background-color: ${props =>
-    props.active ? props.theme.colors.black : 'transparent'};
-
-  opacity: ${props => (props.disabled ? 0.4 : 1)};
-
-  &:hover {
-    background-color: ${props =>
-      props.active
-        ? props.theme.colors.black
-        : props.disabled
-        ? 'transparent'
-        : props.theme.colors.grays[1]};
-  }
+const TabLink = styled(TabButton).attrs({ as: 'a' })`
+  text-decoration: none !important;
 `;
 
 const Tab = ({ title, tooltip, href, onClick, disabled, active = true }) => {
   if (href) {
     return (
-      <LinkTab
+      <TabLink
         {...useLinkProps({ href })}
         active={useActive(href, { exact: false })}
         disabled={disabled}
       >
         {title}
-      </LinkTab>
+      </TabLink>
     );
   }
 
   return (
-    <ButtonTab onClick={onClick} active={active} disabled={disabled}>
+    <TabButton onClick={onClick} active={active} disabled={disabled}>
       {title}
-    </ButtonTab>
+    </TabButton>
   );
 };
 
 const Tabs = ({ content = [] }) => {
   return (
-    <Container marginX={4}>
+    <Row marginX={4}>
       {content.map(tab => (
         <Tab key={tab.title} {...tab} />
       ))}
-    </Container>
+    </Row>
   );
 };
 

@@ -10,9 +10,9 @@ const DeviceLabel = ({
 }) => {
   return (
     <Row
-      flex={1}
-      fontSize={0}
-      fontWeight={3}
+      overflow="hidden"
+      marginRight={2}
+      marginBottom={2}
       onClick={e => {
         e.stopPropagation();
         onClick({ key, value });
@@ -27,17 +27,21 @@ const DeviceLabel = ({
         borderBottomLeftRadius={1}
         whiteSpace="nowrap"
         overflow="hidden"
+        fontSize={0}
+        fontWeight={2}
       >
         {key}
       </Text>
       <Text
-        backgroundColor="grays.3"
+        backgroundColor="grays.2"
         paddingX={2}
         paddingY={1}
         borderTopRightRadius={1}
         borderBottomRightRadius={1}
         overflow="hidden"
         whiteSpace="nowrap"
+        fontSize={0}
+        fontWeight={1}
       >
         {value}
       </Text>
@@ -59,7 +63,7 @@ export const DeviceLabelMulti = ({ children, color }) => (
       whiteSpace="nowrap"
       overflow="hidden"
       fontSize={0}
-      fontWeight={3}
+      fontWeight={2}
     >
       {children}
     </Text>
@@ -81,7 +85,7 @@ export const DeviceLabelKey = ({ label, color }) => (
       whiteSpace="nowrap"
       overflow="hidden"
       fontSize={0}
-      fontWeight={3}
+      fontWeight={2}
     >
       {label}
     </Text>

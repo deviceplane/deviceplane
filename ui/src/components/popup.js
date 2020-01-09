@@ -47,7 +47,7 @@ const CloseButton = styled.button`
   cursor: pointer;
   border: 2px solid ${props => props.theme.colors.white};
 
-  transition: background-color 200ms;
+  transition: ${props => props.theme.transitions[0]};
   background-color: ${props => props.theme.colors.white};
 
   &:hover {
@@ -55,7 +55,7 @@ const CloseButton = styled.button`
   }
 
   & svg {
-    transition: fill 200ms;
+    transition: ${props => props.theme.transitions[0]};
   }
 
   &:hover svg {

@@ -3,19 +3,22 @@ import styled from 'styled-components';
 import { space, layout, color, typography } from 'styled-system';
 import { useLinkProps } from 'react-navi';
 
-const A = styled.a`
+import { Box } from './box';
+
+const A = styled(Box).attrs({ as: 'a' })`
   text-decoration: none;
   cursor: pointer;
+  color: ${props => props.theme.colors.primary};
 
   &:hover {
-    text-decoration: underline;
+    color: ${props => props.theme.colors.white};
   }
 
   ${color} ${layout} ${space} ${typography}
 `;
 
 A.defaultProps = {
-  color: 'primary',
+  fontWeight: 2,
 };
 
 const Link = ({ children, href, ...rest }) => {

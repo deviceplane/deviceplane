@@ -8,6 +8,8 @@ const colors = {
   green: '#A2FAA3',
   red: '#F93943',
 
+  pureWhite: '#fff',
+
   transparent: 'transparent',
 
   overlay: 'rgba(24, 24, 24, .8)',
@@ -15,6 +17,9 @@ const colors = {
   pageBackground: '#181818',
 
   grays: [
+    '#121212',
+    '#141414',
+    '#181818',
     '#222222',
     '#363636',
     '#484848',
@@ -58,11 +63,11 @@ export default {
     code: 'source-code-pro,Menlo,Monaco,Consolas,monospace',
   },
 
-  fontSizes: [13, 15, 16, 18, 24, 36, 48, 64, 72],
+  fontSizes: [12, 14, 16, 18, 24, 36, 48, 64, 72],
 
-  fontWeights: [100, 300, 400, 500, 600, 700, 900],
+  fontWeights: [300, 400, 500, 700, 900],
 
-  radii: [0, 3, 6, 8, 12, 16, 9999, '100%'],
+  radii: [0, 4, 6, 8, 12, 16, 9999, '100%'],
 
   sizes: [8, 12, 16, 24, 32, 40, 48, 64, 128, 256, 384, 448, 512, 768, 1024],
 
@@ -77,6 +82,8 @@ export default {
     medium: `@media screen and (min-width: ${breakpoints[1]})`,
     large: `@media screen and (min-width: ${breakpoints[2]})`,
   },
+
+  transitions: ['all 200ms ease'],
 };
 
 export const labelColors = [

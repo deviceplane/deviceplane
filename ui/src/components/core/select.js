@@ -11,9 +11,9 @@ const styles = {
     position: 'relative',
   }),
   option: (provided, { isFocused, isSelected, selectProps: { variant } }) => ({
-    transition: 'background-color 150ms',
+    transition: 'background-color 200ms ease',
     backgroundColor: isFocused
-      ? theme.colors.grays[1]
+      ? theme.colors.grays[3]
       : isSelected
       ? theme.colors.white
       : variant === 'black'
@@ -44,13 +44,14 @@ const styles = {
     borderRadius: `${theme.radii[1]}px`,
   }),
   input: () => ({
-    padding: 0,
+    padding: '4px',
     fontSize: theme.fontSizes[2],
-    color: theme.colors.grays[10],
+    color: theme.colors.grays[12],
+    fontWeight: theme.fontWeights[1],
   }),
   placeholder: () => ({
     fontSize: theme.fontSizes[2],
-    color: theme.colors.grays[6],
+    color: theme.colors.grays[8],
   }),
   valueContainer: provided => ({ ...provided, padding: '0 8px' }),
   multiValue: () => ({
@@ -63,8 +64,8 @@ const styles = {
     borderTopLeftRadius: '3px',
     borderBottomLeftRadius: '3px',
     color: theme.colors.black,
-    fontSize: theme.fontSizes[2],
-    fontWeight: theme.fontWeights[2],
+    fontSize: theme.fontSizes[1],
+    fontWeight: theme.fontWeights[1],
   }),
   multiValueRemove: () => ({
     display: 'flex',
@@ -78,11 +79,11 @@ const styles = {
     padding: '4px',
     fontSize: '18px',
     ':hover': {
-      color: theme.colors.white,
+      color: theme.colors.pureWhite,
     },
   }),
   singleValue: provided => {
-    return { ...provided, color: theme.colors.grays[10] };
+    return { ...provided, color: theme.colors.grays[12] };
   },
   indicatorsContainer: provided => ({
     ...provided,

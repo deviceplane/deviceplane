@@ -35,7 +35,7 @@ const Alert = ({ show, title, description, variant = 'info', children }) => {
   const color = getColor(variant);
   return (
     <Column
-      bg="grays.0"
+      bg="black"
       border={0}
       borderColor={color}
       borderRadius={1}
@@ -43,27 +43,26 @@ const Alert = ({ show, title, description, variant = 'info', children }) => {
       marginBottom={5}
     >
       <Column marginBottom={children ? 4 : 0}>
-        <Row alignItems="flex-start">
+        <Row alignItems="center">
           <Icon
             icon={getIcon(variant)}
             color={color}
             size={14}
             flexShrink={0}
-            marginTop={2}
           />
-          {!title && description && (
-            <Text color="grays.10" marginLeft={2}>
+          {title ? (
+            <Text fontSize={4} fontWeight={3} marginLeft={2}>
+              {title}
+            </Text>
+          ) : (
+            <Text fontWeight={1} marginLeft={2}>
               {description}
             </Text>
           )}
         </Row>
-        {title && (
-          <Text fontSize={4} fontWeight={4} marginTop={2}>
-            {title}
-          </Text>
-        )}
+
         {title && description && (
-          <Text color="grays.10" marginTop={2}>
+          <Text color="grays.8" marginTop={3} fontWeight={1}>
             {description}
           </Text>
         )}
