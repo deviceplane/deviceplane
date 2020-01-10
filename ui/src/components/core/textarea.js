@@ -19,7 +19,6 @@ Textarea.defaultProps = {
   color: 'white',
   bg: 'grays.0',
   borderRadius: 1,
-  boxShadow: 0,
   padding: 3,
   fontSize: 2,
   fontWeight: 0,

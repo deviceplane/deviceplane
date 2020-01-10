@@ -2,13 +2,14 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigation } from 'react-navi';
+import { Icon } from 'evergreen-ui';
 
 import api from '../api';
-import { labelColors } from '../theme';
+import theme, { labelColors } from '../theme';
 import Layout from '../components/layout';
 import Card from '../components/card';
 import Table from '../components/table';
-import { Row, Text } from '../components/core';
+import { Row, Text, Input } from '../components/core';
 import {
   DevicesFilter,
   Query,
@@ -49,6 +50,8 @@ const Devices = ({ route }) => {
     buildLabelColorMap({}, labelColors, devices)
   );
   const [filterToEdit, setFilterToEdit] = useState(null);
+  const [searchInput, setSearchInput] = useState('');
+  const [searchFocused, setSearchFocused] = useState();
 
   useEffect(() => {
     parseQueryString();
@@ -56,6 +59,9 @@ const Devices = ({ route }) => {
 
   useEffect(() => {
     queryDevices();
+  }, [filterQuery, searchInput]);
+
+  useEffect(() => {
     storage.set('devicesFilter', filterQuery, route.data.params.project);
   }, [filterQuery]);
 
@@ -83,7 +89,7 @@ const Devices = ({ route }) => {
       {
         Header: 'Status',
         accessor: 'status',
-        Cell: ({ row }) => <DeviceStatus status={row.original.status} />,
+        Cell: ({ cell: { value } }) => <DeviceStatus status={value} />,
         style: {
           flex: '0 0 100px',
         },
@@ -95,13 +101,7 @@ const Devices = ({ route }) => {
       {
         Header: 'IP Address',
         accessor: 'info.ipAddress',
-        Cell: ({ row }) => (
-          <Text>
-            {row.original.info.hasOwnProperty('ipAddress')
-              ? row.original.info.ipAddress
-              : ''}
-          </Text>
-        ),
+        Cell: ({ cell: { value } }) => <Text>{value || ''}</Text>,
         style: {
           flex: '0 0 150px',
         },
@@ -114,10 +114,8 @@ const Devices = ({ route }) => {
       {
         Header: 'Labels',
         accessor: 'labels',
-        Cell: ({ row }) =>
-          row.original.labels
-            ? renderLabels(row.original.labels, labelColorMap, addLabelFilter)
-            : null,
+        Cell: ({ cell: { value } }) =>
+          value ? renderLabels(value, labelColorMap, addLabelFilter) : null,
         style: {
           flex: 2,
           overflow: 'hidden',
@@ -150,6 +148,9 @@ const Devices = ({ route }) => {
     }
     if (order) {
       query.push(`${Params.OrderDirection}=${order}`);
+    }
+    if (searchInput) {
+      query.push(`search=${searchInput}`);
     }
     query.push(...buildFiltersQuery());
 
@@ -260,7 +261,29 @@ const Devices = ({ route }) => {
   };
 
   return (
-    <Layout title="Devices">
+    <Layout
+      title="Devices"
+      header={
+        <Row position="relative" alignItems="center">
+          <Icon
+            icon="search"
+            size={16}
+            color={searchFocused ? theme.colors.primary : theme.colors.white}
+            style={{ position: 'absolute', left: 16 }}
+          />
+          <Input
+            bg="black"
+            placeholder="Search by name or labels"
+            paddingLeft={8}
+            value={searchInput}
+            width="350px"
+            onChange={e => setSearchInput(e.target.value)}
+            onFocus={e => setSearchFocused(true)}
+            onBlur={e => setSearchFocused(false)}
+          />
+        </Row>
+      }
+    >
       <Card
         title="Devices"
         size="full"

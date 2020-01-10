@@ -63,7 +63,6 @@ const Card = ({
       padding={6}
       border={border ? 0 : undefined}
       borderColor="white"
-      boxShadow={1}
       disabled={disabled}
       {...props}
     >

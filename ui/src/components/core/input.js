@@ -18,6 +18,7 @@ const Input = styled.input.attrs(props => ({
   margin: 0;
   transition: ${props => props.theme.transitions[0]};
   width: 100%;
+  padding: 12px;
 
   &:focus {
     border-color: ${props => props.theme.colors.primary};
@@ -25,7 +26,8 @@ const Input = styled.input.attrs(props => ({
 
   &::placeholder {
     font-size: 16px;
-    color: ${props => props.theme.colors.grays[6]};
+    font-weight: 400;
+    color: ${props => props.theme.colors.grays[8]};
   }
 
   -webkit-autofill,
@@ -44,9 +46,7 @@ Input.defaultProps = {
   bg: 'grays.0',
   borderRadius: 1,
   fontWeight: 0,
-  boxShadow: 0,
   fontSize: 2,
-  padding: 3,
 };
 
 export default Input;
