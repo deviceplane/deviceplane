@@ -66,6 +66,8 @@ type Service struct {
 	deviceServiceStatuses      store.DeviceServiceStatuses
 	metricConfigs              store.MetricConfigs
 	email                      email.Interface
+	emailFromAddress           string
+	emailFromName              string
 	st                         *statsd.Client
 	connman                    *connman.ConnectionManager
 
@@ -100,6 +102,8 @@ func NewService(
 	deviceServiceStatuses store.DeviceServiceStatuses,
 	metricConfigs store.MetricConfigs,
 	email email.Interface,
+	emailFromName string,
+	emailFromAddress string,
 	fileSystem http.FileSystem,
 	st *statsd.Client,
 	connman *connman.ConnectionManager,
@@ -132,6 +136,8 @@ func NewService(
 		deviceServiceStatuses:      deviceServiceStatuses,
 		metricConfigs:              metricConfigs,
 		email:                      email,
+		emailFromName:              emailFromName,
+		emailFromAddress:           emailFromAddress,
 		st:                         st,
 		connman:                    connman,
 
@@ -571,13 +577,12 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 			)
 
 			if err := s.email.Send(email.Request{
-				FromName:         "Deviceplane",
-				FromAddress:      "noreply@deviceplane.com",
-				ToName:           user.FirstName + " " + user.LastName,
-				ToAddress:        user.Email,
-				Subject:          "Deviceplane Registration Confirmation",
-				PlainTextContent: content,
-				HTMLContent:      content,
+				FromName:    s.emailFromName,
+				FromAddress: s.emailFromAddress,
+				ToName:      user.FirstName + " " + user.LastName,
+				ToAddress:   user.Email,
+				Subject:     "Deviceplane Registration Confirmation",
+				Body:        content,
 			}); err != nil {
 				log.WithError(err).Error("send registration email")
 				w.WriteHeader(http.StatusInternalServerError)
@@ -652,13 +657,12 @@ func (s *Service) recoverPassword(w http.ResponseWriter, r *http.Request) {
 		)
 
 		if err := s.email.Send(email.Request{
-			FromName:         "Deviceplane",
-			FromAddress:      "noreply@deviceplane.com",
-			ToName:           user.FirstName + " " + user.LastName,
-			ToAddress:        user.Email,
-			Subject:          "Deviceplane Password Recovery",
-			PlainTextContent: content,
-			HTMLContent:      content,
+			FromName:    s.emailFromName,
+			FromAddress: s.emailFromAddress,
+			ToName:      user.FirstName + " " + user.LastName,
+			ToAddress:   user.Email,
+			Subject:     "Deviceplane Password Recovery",
+			Body:        content,
 		}); err != nil {
 			log.WithError(err).Error("send recovery email")
 			w.WriteHeader(http.StatusInternalServerError)

@@ -5,11 +5,10 @@ type Interface interface {
 }
 
 type Request struct {
-	FromName         string
-	FromAddress      string
-	ToName           string
-	ToAddress        string
-	Subject          string
-	PlainTextContent string
-	HTMLContent      string
+	FromName    string
+	FromAddress string
+	ToName      string
+	ToAddress   string
+	Subject     string
+	Body        string
 }

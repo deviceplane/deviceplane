@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
@@ -15,24 +14,29 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/controller/service"
 	mysql_store "github.com/deviceplane/deviceplane/pkg/controller/store/mysql"
 	"github.com/deviceplane/deviceplane/pkg/email"
-	sendgrid_email "github.com/deviceplane/deviceplane/pkg/email/sendgrid"
+	"github.com/deviceplane/deviceplane/pkg/email/smtp"
 	_ "github.com/deviceplane/deviceplane/pkg/statik"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/handlers"
 	"github.com/rakyll/statik/fs"
 	"github.com/segmentio/conf"
-	"github.com/sendgrid/sendgrid-go"
 )
 
 var version = "dev"
 var name = "deviceplane-controller"
 
 var config struct {
-	Addr           string   `conf:"addr"`
-	MySQLPrimary   string   `conf:"mysql-primary"`
-	Statsd         string   `conf:"statsd"`
-	AllowedOrigins []string `conf:"allowed-origins"`
-	EmailProvider  string   `conf:"email-provider"`
+	Addr             string   `conf:"addr"`
+	MySQLPrimary     string   `conf:"mysql-primary"`
+	Statsd           string   `conf:"statsd"`
+	AllowedOrigins   []string `conf:"allowed-origins"`
+	EmailProvider    string   `conf:"email-provider"`
+	EmailFromName    string   `conf:"email-from-name"`
+	EmailFromAddress string   `conf:"email-from-address"`
+	SMTPServer       string   `conf:"smtp-server"`
+	SMTPPort         int      `conf:"smtp-port"`
+	SMTPUsername     string   `conf:"smtp-username"`
+	SMTPPassword     string   `conf:"smtp-password"`
 }
 
 func init() {
@@ -41,6 +45,7 @@ func init() {
 	config.Statsd = "127.0.0.1:8125"
 	config.AllowedOrigins = []string{}
 	config.EmailProvider = "none"
+	config.EmailFromName = "Deviceplane"
 }
 
 func main() {
@@ -85,7 +90,7 @@ func main() {
 
 	svc := service.NewService(sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
 		sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
-		emailProvider, statikFS, st, connman, allowedOriginURLs)
+		emailProvider, config.EmailFromName, config.EmailFromAddress, statikFS, st, connman, allowedOriginURLs)
 
 	server := &http.Server{
 		Addr: config.Addr,
@@ -126,9 +131,13 @@ func tryConnect(uri string) (*sql.DB, error) {
 
 func getEmailProvider(emailProvider string) email.Interface {
 	switch emailProvider {
-	case "sendgrid":
-		sendgridClient := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
-		return sendgrid_email.NewEmail(sendgridClient)
+	case "smtp":
+		return smtp.NewEmail(
+			config.SMTPServer,
+			config.SMTPPort,
+			config.SMTPUsername,
+			config.SMTPPassword,
+		)
 	default:
 		return nil
 	}
