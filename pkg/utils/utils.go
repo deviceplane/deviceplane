@@ -2,12 +2,14 @@ package utils
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"unicode/utf8"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -16,6 +18,8 @@ const (
 
 var (
 	errInvalidReferrer = errors.New("invalid referrer")
+
+	errInvalidEmail = errors.New("invalid email")
 )
 
 // From https://github.com/gorilla/websocket
@@ -138,4 +142,12 @@ func WithReferrer(w http.ResponseWriter, r *http.Request, f func(referrer *url.U
 		return
 	}
 	f(referrer)
+}
+
+func GetDomainFromEmail(email string) (string, error) {
+	parts := strings.Split(email, "@")
+	if len(parts) != 2 {
+		return "", errInvalidEmail
+	}
+	return parts[1], nil
 }

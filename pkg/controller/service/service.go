@@ -35,8 +35,9 @@ const (
 )
 
 var (
-	errEmailAlreadyTaken = errors.New("email already taken")
-	errTokenExpired      = errors.New("token expired")
+	errEmailDomainNotAllowed = errors.New("email domain not allowed")
+	errEmailAlreadyTaken     = errors.New("email already taken")
+	errTokenExpired          = errors.New("token expired")
 )
 
 type Service struct {
@@ -66,8 +67,9 @@ type Service struct {
 	deviceServiceStatuses      store.DeviceServiceStatuses
 	metricConfigs              store.MetricConfigs
 	email                      email.Interface
-	emailFromAddress           string
 	emailFromName              string
+	emailFromAddress           string
+	allowedEmailDomains        []string
 	st                         *statsd.Client
 	connman                    *connman.ConnectionManager
 
@@ -104,6 +106,7 @@ func NewService(
 	email email.Interface,
 	emailFromName string,
 	emailFromAddress string,
+	allowedEmailDomains []string,
 	fileSystem http.FileSystem,
 	st *statsd.Client,
 	connman *connman.ConnectionManager,
@@ -138,6 +141,7 @@ func NewService(
 		email:                      email,
 		emailFromName:              emailFromName,
 		emailFromAddress:           emailFromAddress,
+		allowedEmailDomains:        allowedEmailDomains,
 		st:                         st,
 		connman:                    connman,
 
@@ -533,6 +537,29 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 		}
 		if err := read(r, &registerRequest); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		emailDomain, err := utils.GetDomainFromEmail(registerRequest.Email)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		emailDomainAllowed := false
+		if len(s.allowedEmailDomains) == 0 {
+			emailDomainAllowed = true
+		} else {
+			for _, allowedEmailDomain := range s.allowedEmailDomains {
+				if allowedEmailDomain == emailDomain {
+					emailDomainAllowed = true
+					break
+				}
+			}
+		}
+
+		if !emailDomainAllowed {
+			http.Error(w, errEmailDomainNotAllowed.Error(), http.StatusBadRequest)
 			return
 		}
 

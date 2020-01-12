@@ -19,40 +19,61 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/handlers"
 	"github.com/rakyll/statik/fs"
-	"github.com/segmentio/conf"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var version = "dev"
 var name = "deviceplane-controller"
 
-var config struct {
-	Addr             string   `conf:"addr"`
-	MySQLPrimary     string   `conf:"mysql-primary"`
-	Statsd           string   `conf:"statsd"`
-	AllowedOrigins   []string `conf:"allowed-origins"`
-	EmailProvider    string   `conf:"email-provider"`
-	EmailFromName    string   `conf:"email-from-name"`
-	EmailFromAddress string   `conf:"email-from-address"`
-	SMTPServer       string   `conf:"smtp-server"`
-	SMTPPort         int      `conf:"smtp-port"`
-	SMTPUsername     string   `conf:"smtp-username"`
-	SMTPPassword     string   `conf:"smtp-password"`
-}
-
-func init() {
-	config.Addr = ":8080"
-	config.MySQLPrimary = "deviceplane:deviceplane@tcp(localhost:3306)/deviceplane?parseTime=true"
-	config.Statsd = "127.0.0.1:8125"
-	config.AllowedOrigins = []string{}
-	config.EmailProvider = "none"
-	config.EmailFromName = "Deviceplane"
-}
+var (
+	addr = kingpin.
+		Flag("addr", "").
+		Default(":8080").
+		String()
+	mysql = kingpin.
+		Flag("mysql", "").
+		Default("deviceplane:deviceplane@tcp(localhost:3306)/deviceplane?parseTime=true").
+		String()
+	statsdAddress = kingpin.
+			Flag("statsd", "").
+			Default("127.0.0.1:8125").
+			String()
+	allowedOrigins = kingpin.
+			Flag("allowed-origin", "").
+			Strings()
+	emailProvider = kingpin.
+			Flag("email-provider", "").
+			Default("none").
+			String()
+	emailFromName = kingpin.
+			Flag("email-from-name", "").
+			Default("Deviceplane").
+			String()
+	emailFromAddress = kingpin.
+				Flag("email-from-address", "").
+				String()
+	allowedEmailDomains = kingpin.
+				Flag("allowed-email-domain", "").
+				Strings()
+	smtpServer = kingpin.
+			Flag("smtp-server", "").
+			String()
+	smtpPort = kingpin.
+			Flag("smtp-port", "").
+			Int()
+	smtpUsername = kingpin.
+			Flag("smtp-username", "").
+			String()
+	smtpPassword = kingpin.
+			Flag("smtp-password", "").
+			String()
+)
 
 func main() {
-	conf.Load(&config)
+	kingpin.Parse()
 
 	var allowedOriginURLs []url.URL
-	for _, origin := range config.AllowedOrigins {
+	for _, origin := range *allowedOrigins {
 		originURL, err := url.Parse(origin)
 		if err != nil {
 			log.WithError(err).Fatal("parsing allowed origin url: " + origin)
@@ -65,21 +86,21 @@ func main() {
 		log.WithError(err).Fatal("statik")
 	}
 
-	db, err := tryConnect(config.MySQLPrimary)
+	db, err := tryConnect(*mysql)
 	if err != nil {
-		log.WithError(err).Fatal("connect to MySQL primary")
+		log.WithError(err).Fatal("connect to MySQL")
 	}
 
 	sqlStore := mysql_store.NewStore(db)
 
-	st, err := statsd.New(config.Statsd,
+	st, err := statsd.New(*statsdAddress,
 		statsd.WithNamespace("deviceplane."),
 	)
 	if err != nil {
 		log.WithError(err).Fatal("statsd")
 	}
 
-	emailProvider := getEmailProvider(config.EmailProvider)
+	emailProvider := getEmailProvider(*emailProvider)
 
 	connman := connman.New()
 
@@ -90,15 +111,15 @@ func main() {
 
 	svc := service.NewService(sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
 		sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
-		emailProvider, config.EmailFromName, config.EmailFromAddress, statikFS, st, connman, allowedOriginURLs)
+		emailProvider, *emailFromName, *emailFromAddress, *allowedEmailDomains, statikFS, st, connman, allowedOriginURLs)
 
 	server := &http.Server{
-		Addr: config.Addr,
+		Addr: *addr,
 		Handler: handlers.CORS(
 			handlers.AllowCredentials(),
 			handlers.AllowedHeaders([]string{"Content-Type"}),
 			handlers.AllowedMethods([]string{"GET", "POST", "PUT", "PATCH", "DELETE"}),
-			handlers.AllowedOrigins(config.AllowedOrigins),
+			handlers.AllowedOrigins(*allowedOrigins),
 		)(svc),
 	}
 
@@ -133,10 +154,10 @@ func getEmailProvider(emailProvider string) email.Interface {
 	switch emailProvider {
 	case "smtp":
 		return smtp.NewEmail(
-			config.SMTPServer,
-			config.SMTPPort,
-			config.SMTPUsername,
-			config.SMTPPassword,
+			*smtpServer,
+			*smtpPort,
+			*smtpUsername,
+			*smtpPassword,
 		)
 	default:
 		return nil
