@@ -12,7 +12,7 @@ This repository contains all Deviceplane code including the backend (controller)
 
 Run `make db-reset` to setup the database. This command will reset the database to an empty state and then seed it with some basic data.
 
-Run the controller with `go run cmd/controller/main.go --allowed-origins=["http://localhost:3000"]`. By default it runs on port 8080.
+Run the controller with `go run cmd/controller/main.go --allowed-origin "http://localhost:3000"`. By default it runs on port 8080.
 
 Run the UI with `npm start` in the `ui/` folder. The login is `email@example.com` / `password`.
 
