@@ -26,6 +26,7 @@
     "ssh2": "^0.5.3",
     "styled-components": "^5.0.0",
     "styled-system": "^5.1.2",
+    "title": "^3.4.1",
     "ts-interface-checker": "^0.1.9",
     "typescript": "^3.7.4",
     "websocket-stream": "^5.5.0",
