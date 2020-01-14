@@ -69,7 +69,7 @@ const AddMember = ({
   };
 
   return (
-    <Card title="Add Member">
+    <Card title="Add Member" size="large">
       <Alert show={backendError} variant="error" description={backendError} />
       <Form
         onSubmit={e => {

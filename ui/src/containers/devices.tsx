@@ -273,7 +273,7 @@ const Devices = ({ route }) => {
           />
           <Input
             bg="black"
-            placeholder="Search by name or labels"
+            placeholder="Search devices by name or labels"
             paddingLeft={8}
             value={searchInput}
             width="350px"

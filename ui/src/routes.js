@@ -119,16 +119,13 @@ export default mount({
             '/register': route({
               title: 'Register Device',
               getData: async request => {
-                try {
-                  const response = await api.defaultRegistrationToken({
-                    projectId: request.params.project,
-                  });
-                  return {
-                    registrationToken: response.data,
-                  };
-                } catch (e) {
-                  console.log(e);
-                }
+                const response = await api.registrationTokens({
+                  projectId: request.params.project,
+                });
+
+                return {
+                  registrationTokens: response.data,
+                };
               },
               getView: () => import('./containers/register-device'),
             }),

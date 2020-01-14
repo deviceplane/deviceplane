@@ -42,7 +42,7 @@ const Container = styled(Column)`
 `;
 
 const Card = ({
-  size = 'large',
+  size,
   title,
   subtitle,
   top = null,

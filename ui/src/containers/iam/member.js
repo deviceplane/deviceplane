@@ -96,6 +96,7 @@ const Member = ({
       <Card
         title={`${member.user.firstName} ${member.user.lastName}`}
         subtitle={member.user.email}
+        size="large"
         actions={[
           {
             title: 'Remove',
@@ -125,7 +126,7 @@ const Member = ({
         title="Remove Member"
         onClose={() => setShowRemovePopup(false)}
       >
-        <Card title="Remove Member" border>
+        <Card title="Remove Member" border size="large">
           <Text>
             You are about to remove the member (
             <strong>

@@ -53,7 +53,7 @@ const Profile = ({ close }) => {
   };
 
   return (
-    <Card title="Profile" border>
+    <Card title="Profile" border size="large">
       <Alert show={backendError} variant="error" description={backendError} />
       <Form
         onSubmit={e => {

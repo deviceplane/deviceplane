@@ -275,7 +275,7 @@ const Device = ({
           />
         </Popup>
         <Popup show={!!metricToDelete} onClose={() => setMetricToDelete(null)}>
-          <Card border title="Delete Device Metric">
+          <Card border title="Delete Device Metric" size="large">
             <Text>
               You are about to delete the{' '}
               <strong>

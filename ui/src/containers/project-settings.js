@@ -66,7 +66,7 @@ const ProjectSettings = ({
       <>
         <Card
           title="Project Settings"
-          size="large"
+          width="540px"
           actions={[
             {
               title: 'Delete',
@@ -97,7 +97,7 @@ const ProjectSettings = ({
           </Form>
         </Card>
         <Popup show={showDeletePopup} onClose={() => setShowDeletePopup(false)}>
-          <Card title="Delete Project" border>
+          <Card title="Delete Project" border size="large">
             <Text marginBottom={4}>
               This action <strong>cannot</strong> be undone. This will
               permanently delete the <strong>{params.project}</strong> project.

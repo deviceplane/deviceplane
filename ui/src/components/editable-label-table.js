@@ -242,7 +242,7 @@ const EditableLabelTable = ({ data, onAdd, onRemove }) => {
         />
       </Card>
       <Popup show={!!labelToRemove} onClose={() => setLabelToRemove(null)}>
-        <Card title="Remove Label" border>
+        <Card title="Remove Label" border size="large">
           <Text>
             You are about to remove the{' '}
             <strong>{labelToRemove && labelToRemove.key}</strong> label.

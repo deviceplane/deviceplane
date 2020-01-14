@@ -39,7 +39,7 @@ const CreateServiceAccount = ({
   };
 
   return (
-    <Card title="Create Service Account">
+    <Card title="Create Service Account" size="large">
       <Alert show={backendError} variant="error" description={backendError} />
       <Form
         onSubmit={e => {

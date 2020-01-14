@@ -5,7 +5,7 @@ import Card from '../components/card';
 import { Button } from '../components/core';
 
 const CliDownload = () => (
-  <Card title="Download CLI" border>
+  <Card title="Download CLI" border size="large">
     <Button
       title="MacOS"
       marginBottom={4}

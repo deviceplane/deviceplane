@@ -50,7 +50,7 @@ const CreateRegistrationToken = ({
 
   return (
     <Layout alignItems="center">
-      <Card title="Create Registration Token">
+      <Card title="Create Registration Token" size="large">
         <Alert show={backendError} variant="error" description={backendError} />
         <Form
           onSubmit={e => {

@@ -33,7 +33,7 @@ const ChangePassword = ({ close }) => {
   };
 
   return (
-    <Card title="Change Password" border>
+    <Card title="Change Password" border size="large">
       <Alert show={backendError} variant="error" description={backendError} />
       <Form
         onSubmit={e => {

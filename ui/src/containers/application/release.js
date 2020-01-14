@@ -103,7 +103,7 @@ const Release = ({
       </Card>
 
       <Popup show={showConfirmPopup} onClose={() => setShowConfirmPopup(false)}>
-        <Card title="Revert Release" border>
+        <Card title="Revert Release" border size="large">
           <Text>
             This will create a new release to application{' '}
             <strong>{params.application}</strong> using the config from release{' '}

@@ -52,6 +52,7 @@ const Integrations = ({
   return (
     <Card
       title="Integrations"
+      size="large"
       subtitle={
         project.datadogApiKey
           ? ''

@@ -71,6 +71,7 @@ const Role = ({
     <>
       <Card
         title={role.name}
+        size="large"
         actions={[
           {
             title: 'Delete',
@@ -116,7 +117,7 @@ const Role = ({
         title="Delete Role"
         onClose={() => setShowDeletePopup(false)}
       >
-        <Card title="Delete Role" border>
+        <Card title="Delete Role" border size="large">
           <Text>
             You are about to delete the <strong>{role.name}</strong> role.
           </Text>

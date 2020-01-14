@@ -43,7 +43,7 @@ const CreateRole = ({
   };
 
   return (
-    <Card title="Create Role">
+    <Card title="Create Role" size="large">
       <Alert show={backendError} variant="error" description={backendError} />
       <Form
         onSubmit={e => {

@@ -176,7 +176,7 @@ const ServiceAccount = ({
       />
 
       <Popup show={showDeletePopup} onClose={() => setShowDeletePopup(false)}>
-        <Card title="Delete Service Account" border>
+        <Card title="Delete Service Account" border size="large">
           <Text>
             You are about to delete the <strong>{serviceAccount.name}</strong>{' '}
             service account.

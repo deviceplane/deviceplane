@@ -71,6 +71,7 @@ const DeviceSettings = ({
       <Card
         title="Device Settings"
         subtitle={<DeviceStatus status={device.status} />}
+        size="large"
         actions={[
           {
             title: 'Remove',
@@ -103,7 +104,7 @@ const DeviceSettings = ({
         </Form>
       </Card>
       <Popup show={showPopup} onClose={() => setShowPopup(false)}>
-        <Card title="Remove Device" border>
+        <Card title="Remove Device" border size="large">
           <Text>
             You are about to remove the <strong>{device.name}</strong> device.
           </Text>

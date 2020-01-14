@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 
 import config from '../config';
 import Layout from '../components/layout';
 import Card from '../components/card';
-import { Row, Text, Link, Code } from '../components/core';
+import { Label, Group, Text, Link, Code, Select } from '../components/core';
 
 const getLocalCommand = ({ id, projectId }) =>
   [
@@ -29,35 +29,58 @@ const getDockerCommand = ({ id, projectId }) =>
 
 const AddDevice = ({
   route: {
-    data: { params, registrationToken },
+    data: { params, registrationTokens },
   },
 }) => {
+  const selectOptions = useMemo(
+    () =>
+      registrationTokens.map(token => ({
+        label: token.name,
+        value: token,
+      })),
+    []
+  );
+  const [selection, setSelection] = useState(() => {
+    const defaultToken = registrationTokens.find(
+      ({ name }) => name === 'default'
+    );
+    if (defaultToken) {
+      return {
+        label: 'default',
+        value: defaultToken,
+      };
+    }
+    return null;
+  });
+
   useEffect(() => {
-    console.log(getLocalCommand(registrationToken));
-  }, []);
+    console.log(getLocalCommand(selection.value));
+  }, [selection]);
 
   return (
     <Layout alignItems="center">
-      <Card title="Register Device">
-        {registrationToken ? (
+      <Card title="Register Device" size="large">
+        {registrationTokens && registrationTokens.length > 0 ? (
           <>
-            <Row marginBottom={4}>
-              <Text>
-                Default registration token with ID{' '}
-                <Code>{registrationToken.id}</Code> is being used.
-              </Text>
-            </Row>
-            <Text marginBottom={2}>
+            <Group>
+              <Label>Registration Token</Label>
+              <Select
+                options={selectOptions}
+                value={selection}
+                onChange={setSelection}
+              />
+            </Group>
+            <Text marginBottom={2} fontWeight={1}>
               Run the following command on the device you want to register:
             </Text>
-            <Code>{getDockerCommand(registrationToken)}</Code>
+            <Code>{getDockerCommand(selection.value)}</Code>
           </>
         ) : (
           <>
             <Text>
-              Create a <strong>default</strong> Registration Token from the{' '}
+              Create a <strong>Registration Token</strong> from the{' '}
               <Link href={`/${params.project}/provisioning`}>Provisioning</Link>{' '}
-              page to enable device registration from the UI.{' '}
+              page to enable device registration.{' '}
             </Text>
           </>
         )}

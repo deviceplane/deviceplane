@@ -65,7 +65,7 @@ const PasswordRecovery = ({
   if (invalidToken) {
     return (
       <Column flex={1} alignItems="center" paddingTop={9}>
-        <Card title="Recover Password" logo>
+        <Card title="Recover Password" logo size="large">
           <Alert
             show
             variant="error"
@@ -85,7 +85,7 @@ const PasswordRecovery = ({
       height="100%"
       overflow="auto"
     >
-      <Card title="Recover Password" logo>
+      <Card title="Recover Password" logo size="large">
         <Alert show={backendError} variant="error" description={backendError} />
         <Form
           onSubmit={e => {

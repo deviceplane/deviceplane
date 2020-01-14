@@ -12,10 +12,10 @@ const styles = {
   }),
   option: (provided, { isFocused, isSelected, selectProps: { variant } }) => ({
     transition: 'background-color 200ms ease',
-    backgroundColor: isFocused
-      ? theme.colors.grays[3]
-      : isSelected
+    backgroundColor: isSelected
       ? theme.colors.white
+      : isFocused
+      ? theme.colors.grays[3]
       : variant === 'black'
       ? theme.colors.black
       : theme.colors.grays[0],

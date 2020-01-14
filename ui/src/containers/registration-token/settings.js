@@ -78,6 +78,7 @@ const RegistrationTokenSettings = ({
   return (
     <Card
       title="Registration Token Settings"
+      size="large"
       actions={[
         {
           title: 'Delete',
@@ -113,7 +114,7 @@ const RegistrationTokenSettings = ({
         <Button title="Update" disabled={!formState.dirty} />
       </Form>
       <Popup show={showDeletePopup} onClose={() => setShowDeletePopup(false)}>
-        <Card title="Delete Registration Token" border>
+        <Card title="Delete Registration Token" border size="large">
           <Text>
             You are about to delete the{' '}
             <strong>{registrationToken.name}</strong> Registration Token.

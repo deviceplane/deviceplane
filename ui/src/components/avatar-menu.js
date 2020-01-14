@@ -55,6 +55,7 @@ const AvatarMenu = () => {
   const [showUserAccessKeys, setShowUserAccessKeys] = React.useState();
   const [showChangePassword, setShowChangePassword] = React.useState();
   const navigation = useNavigation();
+  const isProjectRoute = useActive('/projects');
   const name = `${context.currentUser.firstName} ${context.currentUser.lastName}`;
 
   return (
@@ -139,7 +140,7 @@ const AvatarMenu = () => {
               Download CLI
             </MenuItem>
             <Divider />
-            {!useActive('/projects') && (
+            {!isProjectRoute && (
               <MenuItem onClick={() => navigation.navigate('/projects')}>
                 Switch Project
               </MenuItem>

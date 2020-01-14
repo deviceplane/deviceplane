@@ -42,7 +42,7 @@ const CreateApplication = ({
 
   return (
     <Layout alignItems="center">
-      <Card title="Create Application">
+      <Card title="Create Application" size="large">
         <Alert show={backendError} variant="error" description={backendError} />
         <Form
           onSubmit={e => {

@@ -70,6 +70,7 @@ const ApplicationSettings = ({
   return (
     <>
       <Card
+        size="large"
         title="Application Settings"
         actions={[
           {
@@ -104,7 +105,7 @@ const ApplicationSettings = ({
         </Form>
       </Card>
       <Popup show={showDeletePopup} onClose={() => setShowDeletePopup(false)}>
-        <Card title="Delete Application" border>
+        <Card title="Delete Application" border size="large">
           <Text>
             You are about to delete the <strong>{application.name}</strong>{' '}
             application.

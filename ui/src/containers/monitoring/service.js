@@ -360,7 +360,7 @@ const Service = ({
         />
       </Popup>
       <Popup show={!!metricToDelete} onClose={clearMetricToDelete}>
-        <Card border title="Delete Service Metric">
+        <Card border title="Delete Service Metric" size="large">
           <Text>
             You are about to delete the{' '}
             <strong>{metricToDelete && metricToDelete.name}</strong> metric.
