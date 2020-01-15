@@ -5,6 +5,8 @@
   "homepage": "https://deviceplane.com",
   "dependencies": {
     "@blueprintjs/icons": "^3.13.0",
+    "@bugsnag/js": "^6.5.0",
+    "@bugsnag/plugin-react": "^6.5.0",
     "@types/react": "^16.9.11",
     "axios": "^0.18.0",
     "evergreen-ui": "^4.12.0",
