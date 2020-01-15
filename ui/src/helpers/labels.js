@@ -26,6 +26,7 @@ export function renderLabels(labels, labelColorMap, onClick = () => {}) {
     <Row flexWrap="wrap" overflow="hidden">
       {Object.keys(labels).map(key => (
         <DeviceLabel
+          key={key}
           label={{ key, value: labels[key] }}
           color={labelColorMap[key]}
           onClick={onClick}

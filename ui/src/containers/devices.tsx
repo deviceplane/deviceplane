@@ -66,7 +66,7 @@ const Devices = ({ route }) => {
   }, [filterQuery]);
 
   const addLabelFilter = useCallback(
-    (key, value) => {
+    ({ key, value }) => {
       const labelFilter = [
         {
           type: LabelValueCondition,
