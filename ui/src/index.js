@@ -55,9 +55,13 @@ const App = () => {
 };
 
 ReactDOM.render(
-  <ErrorBoundary>
+  process.env.NODE_ENV === 'development' ? (
     <App />
-  </ErrorBoundary>,
+  ) : (
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  ),
   document.getElementById('root')
 );
 
