@@ -89,7 +89,7 @@ const AvatarMenu = () => {
           <>
             <Text
               fontSize={4}
-              fontWeight={3}
+              fontWeight={2}
               paddingX={3}
               marginX={1}
               paddingTop={2}

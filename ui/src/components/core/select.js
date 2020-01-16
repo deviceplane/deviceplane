@@ -42,6 +42,7 @@ const styles = {
     backgroundColor:
       variant === 'black' ? theme.colors.black : theme.colors.grays[0],
     borderRadius: `${theme.radii[1]}px`,
+    border: `1px solid ${theme.colors.white}`,
   }),
   input: () => ({
     padding: '4px',

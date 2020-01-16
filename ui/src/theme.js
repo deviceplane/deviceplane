@@ -65,7 +65,7 @@ export default {
 
   fontSizes: [12, 14, 16, 18, 24, 36, 48, 64, 72],
 
-  fontWeights: [300, 400, 500, 700, 900],
+  fontWeights: [300, 400, 500, 700],
 
   radii: [0, 4, 6, 8, 12, 16, 9999, '100%'],
 
@@ -73,7 +73,7 @@ export default {
 
   breakpoints,
 
-  borders: [`1px solid ${colors.primary}`, `3px solid ${colors.primary}`],
+  borders: [`1px solid ${colors.primary}`, `2px solid ${colors.primary}`],
 
   shadows: [`0 2px 4px black`, `0 3px 6px black`],
 

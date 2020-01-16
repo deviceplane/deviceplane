@@ -61,7 +61,7 @@ const Card = ({
       variant={size}
       borderRadius={2}
       padding={6}
-      border={border ? 0 : undefined}
+      border={border ? 1 : undefined}
       borderColor="white"
       disabled={disabled}
       {...props}
@@ -77,7 +77,7 @@ const Card = ({
           <Row alignItems="center" justifyContent="space-between">
             <Column>
               <Row>
-                <Text fontSize={5} fontWeight={3}>
+                <Text fontSize={5} fontWeight={2}>
                   {title}
                 </Text>
               </Row>

@@ -165,7 +165,7 @@ export const DevicesFilter = props => {
       const selectClassName: string = utils.randomClassName();
       return (
         <>
-          <Row>
+          <Row flex={2}>
             <Input
               placeholder="Key"
               padding={2}
@@ -184,7 +184,7 @@ export const DevicesFilter = props => {
             />
           </Row>
 
-          <Row marginX={2} flex="0 0 125px">
+          <Row marginX={2} flex={1}>
             <Select
               placeholder="Operator"
               className={selectClassName}
@@ -207,7 +207,7 @@ export const DevicesFilter = props => {
             />
           </Row>
 
-          <Row>
+          <Row flex={2}>
             <Input
               placeholder="Value"
               padding={2}
@@ -253,7 +253,7 @@ export const DevicesFilter = props => {
             />
           </Row>
 
-          <Row flex="0 0 200px">
+          <Row flex="0 0 150px">
             <Select
               value={condition.options.operator}
               placeholder="Operator"
@@ -391,50 +391,52 @@ export const DevicesFilter = props => {
           {filter.map((condition, index) => (
             <Group key={index}>
               <Row justifyContent="space-between" alignItems="center">
-                <Row marginRight={2} flex="0 0 200px">
-                  <Select
-                    value={condition.options.type}
-                    placeholder="Type"
-                    options={conditionOptions}
-                    onChange={option => {
-                      setFilter(
-                        filter.map((condition, i) => {
-                          if (i !== index) {
-                            return condition;
-                          }
-                          if (condition.type === option.value) {
-                            return condition;
-                          }
+                {conditionOptions.length > 1 ? (
+                  <Row marginRight={2} flex="0 0 200px">
+                    <Select
+                      value={condition.options.type}
+                      placeholder="Type"
+                      options={conditionOptions}
+                      onChange={option => {
+                        setFilter(
+                          filter.map((condition, i) => {
+                            if (i !== index) {
+                              return condition;
+                            }
+                            if (condition.type === option.value) {
+                              return condition;
+                            }
 
-                          let params: ConditionParams;
-                          switch (option.value) {
-                            case DevicePropertyCondition:
-                              params = DefaultDevicePropertyConditionParams();
-                              break;
-                            case LabelValueCondition:
-                              params = DefaultLabelValueConditionParams();
-                              break;
-                            case LabelExistenceCondition:
-                              params = DefaultLabelExistenceConditionParams();
-                              break;
-                            default:
-                              option.value = DevicePropertyCondition;
-                              params = DefaultDevicePropertyConditionParams();
-                          }
-                          condition = {
-                            type: option.value,
-                            options: {
-                              type: option,
-                            },
-                            params,
-                          };
-                          return condition;
-                        })
-                      );
-                    }}
-                    className={selectClassName}
-                  />
-                </Row>
+                            let params: ConditionParams;
+                            switch (option.value) {
+                              case DevicePropertyCondition:
+                                params = DefaultDevicePropertyConditionParams();
+                                break;
+                              case LabelValueCondition:
+                                params = DefaultLabelValueConditionParams();
+                                break;
+                              case LabelExistenceCondition:
+                                params = DefaultLabelExistenceConditionParams();
+                                break;
+                              default:
+                                option.value = DevicePropertyCondition;
+                                params = DefaultDevicePropertyConditionParams();
+                            }
+                            condition = {
+                              type: option.value,
+                              options: {
+                                type: option,
+                              },
+                              params,
+                            };
+                            return condition;
+                          })
+                        );
+                      }}
+                      className={selectClassName}
+                    />
+                  </Row>
+                ) : null}
                 {renderCondition(condition, index)}
 
                 {index > 0 && (

@@ -8,11 +8,11 @@ const Code = styled.code`
 `;
 
 Code.defaultProps = {
-  bg: 'grays.10',
+  bg: 'white',
   color: 'black',
   fontSize: 1,
   fontFamily: 'code',
-  padding: 1,
+  padding: 2,
   margin: 0,
   borderRadius: 1,
 };

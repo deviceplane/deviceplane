@@ -13,12 +13,13 @@ const Input = styled.input.attrs(props => ({
   autoCorrect: props.autoCorrect || 'off',
   autoComplete: props.autoComplete || 'off',
 }))`
-  border: 1px solid ${props => props.theme.colors.grays[0]};
+  border: 1px solid ${props => props.theme.colors.white};
   outline: none;
   margin: 0;
   transition: ${props => props.theme.transitions[0]};
   width: 100%;
   padding: 12px;
+  caret-color: ${props => props.theme.colors.primary};
 
   &:focus {
     border-color: ${props => props.theme.colors.primary};
@@ -27,7 +28,7 @@ const Input = styled.input.attrs(props => ({
   &::placeholder {
     font-size: 16px;
     font-weight: 400;
-    color: ${props => props.theme.colors.grays[8]};
+    color: ${props => props.theme.colors.grays[10]};
   }
 
   -webkit-autofill,

@@ -23,38 +23,38 @@ const variants = {
       '&:not(:disabled):hover': {
         bg: 'transparent',
         color: theme.colors.primary,
-        boxShadow: `0px 0px 0px 2px ${theme.colors.primary} inset`,
       },
       '&:not(:disabled):focus': {
         bg: 'transparent',
         color: theme.colors.primary,
-        boxShadow: `0px 0px 0px 2px ${theme.colors.primary} inset`,
       },
     },
     secondary: {
-      color: 'white',
+      color: 'black',
+      bg: 'white',
       border: 0,
       borderColor: 'white',
-      bg: 'transparent',
       '&:not(:disabled):hover': {
-        borderColor: 'white',
-        boxShadow: `0px 0px 0px 2px ${theme.colors.white} inset`,
+        bg: 'transparent',
+        color: 'white',
       },
       '&:not(:disabled):focus': {
-        boxShadow: `0px 0px 0px 2px ${theme.colors.white} inset`,
+        bg: 'transparent',
+        color: 'white',
       },
     },
     danger: {
-      color: 'red',
+      color: 'black',
       border: 0,
       borderColor: 'red',
-      bg: 'transparent',
+      bg: 'red',
       '&:not(:disabled):hover': {
-        borderColor: 'red',
-        boxShadow: `0px 0px 0px 2px ${theme.colors.red} inset`,
+        bg: 'transparent',
+        color: 'red',
       },
       '&:not(:disabled):focus': {
-        boxShadow: `0px 0px 0px 2px ${theme.colors.red} inset`,
+        bg: 'transparent',
+        color: 'red',
       },
     },
     text: {
@@ -89,7 +89,7 @@ transform: translateZ(0);
 backface-visibility: hidden;
 white-space: nowrap;
 font-size: 14px;
-padding: 10px 16px;
+padding: 10px 14px;
 text-transform: uppercase;
 text-renderering: geometricPercision;
 

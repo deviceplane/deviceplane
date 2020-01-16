@@ -51,7 +51,7 @@ const Alert = ({ show, title, description, variant = 'info', children }) => {
             flexShrink={0}
           />
           {title ? (
-            <Text fontSize={4} fontWeight={3} marginLeft={2}>
+            <Text fontSize={4} fontWeight={2} marginLeft={2}>
               {title}
             </Text>
           ) : (

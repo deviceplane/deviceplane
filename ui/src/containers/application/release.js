@@ -70,7 +70,7 @@ const Release = ({
   return (
     <>
       <Card size="xlarge">
-        <Text fontWeight={3} fontSize={5} marginBottom={6}>
+        <Text fontWeight={2} fontSize={5} marginBottom={6}>
           {release.id}
         </Text>
 

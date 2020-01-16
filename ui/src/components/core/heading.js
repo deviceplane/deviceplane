@@ -5,7 +5,7 @@ import titlify from 'title';
 
 const defaultProps = {
   color: 'white',
-  fontWeight: 3,
+  fontWeight: 2,
   margin: 0,
 };
 

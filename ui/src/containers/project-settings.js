@@ -113,8 +113,9 @@ const ProjectSettings = ({
               </Group>
 
               <Button
+                variant="danger"
                 type="submit"
-                title="Delete Project"
+                title="Delete"
                 disabled={confirmation !== project.name}
               />
             </Form>
