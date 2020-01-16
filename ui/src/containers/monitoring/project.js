@@ -256,7 +256,7 @@ const Project = ({
               />
               <Button
                 title={
-                  <Icon icon="cross" size={16} color={theme.colors.grays[5]} />
+                  <Icon icon="cross" size={16} color={theme.colors.white} />
                 }
                 variant="icon"
                 onClick={() => setEditRow(null)}

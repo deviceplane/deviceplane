@@ -217,7 +217,7 @@ const ServiceAccountAccessKeys = ({ projectId, serviceAccount }) => {
                 title={
                   <Icon
                     icon="tick-circle"
-                    size={18}
+                    size={16}
                     color={theme.colors.primary}
                   />
                 }
@@ -227,7 +227,7 @@ const ServiceAccountAccessKeys = ({ projectId, serviceAccount }) => {
               />
               <Button
                 title={
-                  <Icon icon="cross" size={18} color={theme.colors.grays[5]} />
+                  <Icon icon="cross" size={16} color={theme.colors.white} />
                 }
                 variant="icon"
                 onClick={() => setKeyToDelete(null)}
@@ -235,7 +235,7 @@ const ServiceAccountAccessKeys = ({ projectId, serviceAccount }) => {
             </>
           ) : (
             <Button
-              title={<Icon icon="trash" size={18} color={theme.colors.red} />}
+              title={<Icon icon="trash" size={16} color={theme.colors.red} />}
               variant="icon"
               onClick={() => setKeyToDelete(row.original.id)}
             />

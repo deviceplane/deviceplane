@@ -27,7 +27,7 @@ const TableRow = styled(Row)`
   &:hover {
     background-color: ${props =>
       props.selectable
-        ? props.theme.colors.grays[3]
+        ? props.theme.colors.grays[2]
         : props.theme.colors.black};
   }
 `;
@@ -88,6 +88,7 @@ const Table = ({ columns, data, onRowSelect, placeholder, editRow }) => {
                 style={{
                   ...column.style,
                   cursor: column.canSort ? 'pointer' : 'default',
+                  alignSelf: 'center',
                 }}
               >
                 {column.render('Header')}
@@ -119,7 +120,7 @@ const Table = ({ columns, data, onRowSelect, placeholder, editRow }) => {
             justifyContent="center"
             padding={3}
             borderBottom={0}
-            borderColor="grays.3"
+            borderColor="grays.1"
           >
             {placeholder}
           </Row>

@@ -78,18 +78,6 @@ const DefaultLabelExistenceConditionParams = (): LabelExistenceConditionParams =
   };
 };
 
-interface Props {
-  whitelistedConditions?: ConditionType[];
-  show: boolean;
-  onClose: () => void;
-  onSubmit?: (filter: Filter) => void;
-  filter: Filter;
-}
-
-interface State {
-  filter: Filter;
-}
-
 export const DevicesFilter = props => {
   const filterListEndRef = useRef();
 

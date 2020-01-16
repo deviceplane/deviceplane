@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { space, layout, color, border, typography } from 'styled-system';
 import { useNavigation, useActive, useCurrentRoute } from 'react-navi';
@@ -11,6 +11,7 @@ import CliDownload from '../containers/cli-download';
 import ChangePassword from '../containers/change-password';
 import Profile from '../containers/profile';
 import UserAccessKeys from '../containers/user-access-keys';
+import SSHKeys from '../containers/ssh-keys';
 import api from '../api';
 
 const MenuItem = styled.button`
@@ -42,7 +43,7 @@ MenuItem.defaultProps = {
 
 const Divider = styled.div`
   width: 100%;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  border-bottom: 1px solid ${props => props.theme.colors.grays[5]};
   margin: 8px 0;
 `;
 
@@ -50,12 +51,13 @@ const AvatarMenu = () => {
   const {
     data: { context },
   } = useCurrentRoute();
-  const [showCLI, setShowCLI] = React.useState();
-  const [showUserProfile, setShowUserProfile] = React.useState();
-  const [showUserAccessKeys, setShowUserAccessKeys] = React.useState();
-  const [showChangePassword, setShowChangePassword] = React.useState();
+  const [showCLI, setShowCLI] = useState();
+  const [showUserProfile, setShowUserProfile] = useState();
+  const [showUserAccessKeys, setShowUserAccessKeys] = useState();
+  const [showChangePassword, setShowChangePassword] = useState();
+  const [showSSHKeys, setShowSSHKeys] = useState();
+  const isProjectsRoute = useActive('/projects');
   const navigation = useNavigation();
-  const isProjectRoute = useActive('/projects');
   const name = `${context.currentUser.firstName} ${context.currentUser.lastName}`;
 
   return (
@@ -74,6 +76,9 @@ const AvatarMenu = () => {
         onClose={() => setShowUserAccessKeys(false)}
       >
         <UserAccessKeys user={context.currentUser} />
+      </Popup>
+      <Popup show={showSSHKeys} onClose={() => setShowSSHKeys(false)}>
+        <SSHKeys user={context.currentUser} />
       </Popup>
       <Popup
         show={showChangePassword}
@@ -129,8 +134,17 @@ const AvatarMenu = () => {
                 setShowUserAccessKeys(true);
               }}
             >
-              Manage Access Keys
+              Access Keys
             </MenuItem>
+            <MenuItem
+              onClick={() => {
+                close();
+                setShowSSHKeys(true);
+              }}
+            >
+              SSH Keys
+            </MenuItem>
+            <Divider />
             <MenuItem
               onClick={() => {
                 close();
@@ -140,7 +154,7 @@ const AvatarMenu = () => {
               Download CLI
             </MenuItem>
             <Divider />
-            {!isProjectRoute && (
+            {!isProjectsRoute && (
               <MenuItem onClick={() => navigation.navigate('/projects')}>
                 Switch Project
               </MenuItem>

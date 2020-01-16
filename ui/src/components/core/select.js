@@ -10,7 +10,7 @@ const styles = {
     flex: 1,
     position: 'relative',
   }),
-  option: (provided, { isFocused, isSelected, selectProps: { variant } }) => ({
+  option: (_, { isFocused, isSelected, selectProps: { variant } }) => ({
     transition: 'background-color 200ms ease',
     backgroundColor: isSelected
       ? theme.colors.white
@@ -47,11 +47,12 @@ const styles = {
   input: () => ({
     padding: '4px',
     fontSize: theme.fontSizes[2],
-    color: theme.colors.grays[12],
+    color: theme.colors.white,
     fontWeight: theme.fontWeights[1],
   }),
   placeholder: () => ({
     fontSize: theme.fontSizes[2],
+    fontWeight: theme.fontWeights[1],
     color: theme.colors.grays[8],
   }),
   valueContainer: provided => ({ ...provided, padding: '0 8px' }),

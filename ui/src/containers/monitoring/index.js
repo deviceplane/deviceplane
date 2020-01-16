@@ -31,21 +31,14 @@ const Monitoring = ({ route }) => {
   return (
     <Layout
       header={
-        <Tabs
-          content={
-            route.data.project.datadogApiKey
-              ? tabs.map(({ to, title }) => ({
-                  title,
-                  href: `/${route.data.params.project}/monitoring/${to}`,
-                }))
-              : [
-                  {
-                    title: tabs[3].title,
-                    href: `/${route.data.params.project}/monitoring/${tabs[3].to}`,
-                  },
-                ]
-          }
-        />
+        route.data.project.datadogApiKey ? (
+          <Tabs
+            content={tabs.map(({ to, title }) => ({
+              title,
+              href: `/${route.data.params.project}/monitoring/${to}`,
+            }))}
+          />
+        ) : null
       }
       alignItems="center"
     >

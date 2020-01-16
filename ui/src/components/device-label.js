@@ -33,7 +33,7 @@ const DeviceLabel = ({
         {key}
       </Text>
       <Text
-        backgroundColor="grays.2"
+        backgroundColor="grays.5"
         paddingX={2}
         paddingY={1}
         borderTopRightRadius={1}

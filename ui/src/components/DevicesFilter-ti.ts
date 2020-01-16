@@ -41,18 +41,6 @@ export const LabelExistenceConditionParams = t.iface([], {
 
 export const Operator = t.name('string');
 
-export const Props = t.iface([], {
-  whitelistedConditions: t.opt(t.array('ConditionType')),
-  show: 'boolean',
-  onClose: t.func('void'),
-  onSubmit: t.opt(t.func('void', t.param('filter', 'Filter'))),
-  filter: 'Filter',
-});
-
-export const State = t.iface([], {
-  filter: 'Filter',
-});
-
 const exportedTypeSuite: t.ITypeSuite = {
   Query,
   Filter,
@@ -63,7 +51,5 @@ const exportedTypeSuite: t.ITypeSuite = {
   LabelValueConditionParams,
   LabelExistenceConditionParams,
   Operator,
-  Props,
-  State,
 };
 export default exportedTypeSuite;

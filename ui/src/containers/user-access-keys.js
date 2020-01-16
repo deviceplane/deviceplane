@@ -38,18 +38,14 @@ const UserAccessKeys = () => {
             <>
               <Button
                 title={
-                  <Icon
-                    icon="tick-circle"
-                    size={16}
-                    color={theme.colors.primary}
-                  />
+                  <Icon icon="tick-circle" size={16} color={theme.colors.red} />
                 }
                 variant="icon"
                 onClick={() => deleteAccessKey(keyToDelete)}
               />
               <Button
                 title={
-                  <Icon icon="cross" size={16} color={theme.colors.grays[5]} />
+                  <Icon icon="cross" size={16} color={theme.colors.white} />
                 }
                 variant="icon"
                 onClick={() => setKeyToDelete(null)}
@@ -118,7 +114,7 @@ const UserAccessKeys = () => {
     <>
       <Card
         border
-        title="User Access Keys"
+        title="Access Keys"
         size="xlarge"
         actions={[{ title: 'Create Access Key', onClick: createAccessKey }]}
       >
@@ -139,7 +135,7 @@ const UserAccessKeys = () => {
           data={tableData}
           placeholder={
             <Text>
-              There are no <strong>User Access Keys</strong>.
+              There are no <strong>Access Keys</strong>.
             </Text>
           }
         />

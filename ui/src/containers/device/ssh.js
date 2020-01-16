@@ -1,19 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
+import { Tooltip, Icon } from 'evergreen-ui';
 
 import '../../lib/xterm.css';
+import theme from '../../theme';
 import config from '../../config';
+import storage from '../../storage';
 import Card from '../../components/card';
-import { Column } from '../../components/core';
-
-const Terminal = styled(Column)``;
-
-Terminal.defaultProps = {
-  padding: 3,
-  border: 0,
-  borderRadius: 1,
-  flex: 1,
-};
+import { Row, Column, Select, Link } from '../../components/core';
 
 var process = require('process');
 
@@ -28,17 +22,33 @@ var ws = require('websocket-stream');
 var xterm = require('xterm');
 require('xterm/lib/addons/fit/fit');
 
+const Terminal = styled(Column)``;
+
+Terminal.defaultProps = {
+  padding: 3,
+  border: 0,
+  borderRadius: 1,
+  flex: 1,
+};
+
 const DeviceSsh = ({
   route: {
     data: { params, device },
   },
 }) => {
-  useEffect(() => {
-    var conn = new Client();
-    var term = new xterm();
-    var wndopts = { term: 'xterm' };
+  const [selection, setSelection] = useState();
+  const sshKeys = storage.get('sshKeys');
+  const selectOptions = sshKeys
+    ? sshKeys.map(({ name, key }) => ({ label: name, value: key }))
+    : null;
 
+  const conn = new Client();
+  const term = new xterm();
+
+  useEffect(() => {
     window.term = term;
+
+    const wndopts = { term: 'xterm' };
 
     // Store current size for initialization
     term.on('resize', function(rev) {
@@ -79,25 +89,64 @@ const DeviceSsh = ({
         term.write('\r\nConnection lost.\r\n');
       });
 
-    term.open(document.getElementById('terminal'));
+    term.open(document.getElementById('terminal'), true);
     term.fit();
-    window.onresize = term.fit.bind(term);
+    term.clear();
 
-    conn.connect({
+    window.onresize = term.fit.bind(term);
+  }, []);
+
+  useEffect(() => {
+    const options = {
       sock: ws(
         `${config.wsEndpoint}/projects/${params.project}/devices/${device.id}/ssh`,
         ['binary']
       ),
-      username: '',
-    });
-  }, []);
+      username: ' ',
+    };
+
+    if (selection) {
+      options.privateKey = selection.value.trim();
+    }
+
+    term.clear();
+
+    conn.connect(options);
+  }, [selection]);
 
   return (
-    <Card size="full" height="100%">
-      <Terminal bg="grays.0">
-        <Column id="terminal" flex={1} />
-      </Terminal>
-    </Card>
+    <>
+      {selectOptions && (
+        <Row marginBottom={4} alignItems="center" width="300px">
+          <Tooltip
+            content={
+              <Link href="https://deviceplane.com/docs/managing/ssh-access/">
+                Learn about SSH access
+              </Link>
+            }
+          >
+            <Icon
+              icon="info-sign"
+              size={16}
+              marginRight={8}
+              color={theme.colors.primary}
+            />
+          </Tooltip>
+          <Select
+            variant="black"
+            onChange={setSelection}
+            value={selection}
+            options={selectOptions}
+            placeholder="Select a SSH Key (Optional)"
+          />
+        </Row>
+      )}
+      <Card size="full" height="100%">
+        <Terminal bg="grays.0">
+          <Column id="terminal" flex={1} />
+        </Terminal>
+      </Card>
+    </>
   );
 };
 

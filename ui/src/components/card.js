@@ -75,13 +75,11 @@ const Card = ({
       {title && (
         <Column marginBottom={5} borderColor="white">
           <Row alignItems="center" justifyContent="space-between">
-            <Column>
-              <Row>
-                <Text fontSize={5} fontWeight={2}>
-                  {title}
-                </Text>
-              </Row>
-            </Column>
+            <Row>
+              <Text fontSize={5} fontWeight={2}>
+                {title}
+              </Text>
+            </Row>
             <Row marginLeft={7}>
               {actions.map(
                 ({
@@ -110,7 +108,7 @@ const Card = ({
           {subtitle && (
             <Row marginTop={1}>
               {typeof subtitle === 'string' ? (
-                <Text fontSize={1} fontWeight={1} color="grays.8" marginTop={1}>
+                <Text fontSize={2} fontWeight={1} color="grays.8" marginTop={1}>
                   {subtitle}
                 </Text>
               ) : (
