@@ -12,10 +12,7 @@ import * as serviceWorker from './serviceWorker';
 import theme from './theme';
 import Page from './components/page';
 import Spinner from './components/spinner';
-
-const bugsnagClient = bugsnag('2a74913ba2df5151edd8d25004bbc820');
-bugsnagClient.use(bugsnagReact, React);
-const ErrorBoundary = bugsnagClient.getPlugin('react');
+import Intercom from './lib/intercom';
 
 const App = () => {
   const [loaded, setLoaded] = useState();
@@ -23,8 +20,15 @@ const App = () => {
 
   const load = async () => {
     try {
-      const response = await api.user();
-      setCurrentUser(response.data);
+      const { data: user } = await api.user();
+      setCurrentUser(user);
+      if (process.env.NODE_ENV !== 'development') {
+        window.Intercom('boot', {
+          app_id: process.env.REACT_APP_INTERCOM_ID,
+          name: `${user.firstName} ${user.lastName}`,
+          email: user.email,
+        });
+      }
     } catch (error) {
       console.log(error);
     }
@@ -54,16 +58,21 @@ const App = () => {
   );
 };
 
-ReactDOM.render(
-  process.env.NODE_ENV === 'development' ? (
-    <App />
-  ) : (
+if (process.env.NODE_ENV === 'development') {
+  ReactDOM.render(<App />, document.getElementById('root'));
+} else {
+  const bugsnagClient = bugsnag(process.env.REACT_APP_BUGSNAG_KEY);
+  bugsnagClient.use(bugsnagReact, React);
+  const ErrorBoundary = bugsnagClient.getPlugin('react');
+
+  ReactDOM.render(
     <ErrorBoundary>
       <App />
-    </ErrorBoundary>
-  ),
-  document.getElementById('root')
-);
+      <Intercom />
+    </ErrorBoundary>,
+    document.getElementById('root')
+  );
+}
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

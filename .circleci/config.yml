@@ -27,7 +27,7 @@ jobs:
       - *attach_workspace
       - checkout
       - run: cd ui && yarn
-      - run: cd ui && yarn run build
+      - run: cd ui && REACT_APP_BUGSNAG_KEY=$BUGSNAG_KEY REACT_APP_INTERCOM_ID=$INTERCOM_ID yarn build
       - run: cd ui && mv build /tmp/workspace
       - persist_to_workspace:
           root: /tmp/workspace
