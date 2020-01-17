@@ -1,31 +1,13 @@
-// @ts-nocheck
-
 import React from 'react';
+import { Icon } from 'evergreen-ui';
 import {
-  Icon,
-  // @ts-ignore
-} from 'evergreen-ui';
-import {
-  Query,
-  Condition,
   LabelValueCondition,
-  LabelValueConditionParams,
   LabelExistenceCondition,
-  LabelExistenceConditionParams,
   DevicePropertyCondition,
-  DevicePropertyConditionParams,
 } from './DevicesFilter';
 
 import theme from '../theme';
 import { Row, Text, Button, Badge } from './core';
-
-interface Props {
-  query: Query;
-  canRemoveFilter: boolean;
-  removeFilter?: (index: number) => void;
-}
-
-interface State {}
 
 const ConditionComp = ({ type, params }) => {
   switch (type) {

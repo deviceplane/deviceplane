@@ -1,10 +1,5 @@
-// @ts-nocheck
-
 import React, { useRef, useMemo, useState } from 'react';
-import {
-  Icon,
-  // @ts-ignore
-} from 'evergreen-ui';
+import { Icon } from 'evergreen-ui';
 
 import utils from '../utils';
 import theme from '../theme';
@@ -12,50 +7,16 @@ import { Column, Row, Group, Button, Input, Text, Select } from './core';
 import Card from './card';
 import Popup from './popup';
 
-export type Query = Filter[];
+export const DevicePropertyCondition = 'DevicePropertyCondition';
+export const LabelValueCondition = 'LabelValueCondition';
+export const LabelExistenceCondition = 'LabelExistenceCondition';
 
-export type Filter = Condition[];
+export const OperatorIs = 'is';
+export const OperatorIsNot = 'is not';
+export const OperatorExists = 'exists';
+export const OperatorNotExists = 'does not exist';
 
-export type Condition = {
-  type: ConditionType;
-  params: ConditionParams;
-  options: {};
-};
-
-type ConditionType = string;
-export const DevicePropertyCondition: ConditionType = 'DevicePropertyCondition';
-export const LabelValueCondition: ConditionType = 'LabelValueCondition';
-export const LabelExistenceCondition: ConditionType = 'LabelExistenceCondition';
-
-export type ConditionParams =
-  | DevicePropertyConditionParams
-  | LabelValueConditionParams
-  | LabelExistenceConditionParams;
-
-export type DevicePropertyConditionParams = {
-  property: string;
-  operator: Operator;
-  value: string;
-};
-
-export type LabelValueConditionParams = {
-  key: string;
-  operator: Operator;
-  value: string;
-};
-
-export type LabelExistenceConditionParams = {
-  key: string;
-  operator: Operator;
-};
-
-type Operator = string;
-export const OperatorIs: Operator = 'is';
-export const OperatorIsNot: Operator = 'is not';
-export const OperatorExists: Operator = 'exists';
-export const OperatorNotExists: Operator = 'does not exist';
-
-const DefaultDevicePropertyConditionParams = (): DevicePropertyConditionParams => {
+const DefaultDevicePropertyConditionParams = () => {
   return {
     property: 'status',
     operator: OperatorIs,
@@ -63,7 +24,7 @@ const DefaultDevicePropertyConditionParams = (): DevicePropertyConditionParams =
   };
 };
 
-const DefaultLabelValueConditionParams = (): LabelValueConditionParams => {
+const DefaultLabelValueConditionParams = () => {
   return {
     key: '',
     operator: OperatorIs,
@@ -71,7 +32,7 @@ const DefaultLabelValueConditionParams = (): LabelValueConditionParams => {
   };
 };
 
-const DefaultLabelExistenceConditionParams = (): LabelExistenceConditionParams => {
+const DefaultLabelExistenceConditionParams = () => {
   return {
     key: '',
     operator: OperatorExists,
@@ -147,10 +108,10 @@ export const DevicesFilter = props => {
 
   const resetFilter = () => setFilter([utils.deepClone(defaultCondition)]);
 
-  const renderCondition = (condition: Condition, index: number) => {
+  const renderCondition = (condition, index) => {
     if (condition.type === LabelValueCondition) {
-      let cond = condition.params as LabelValueConditionParams;
-      const selectClassName: string = utils.randomClassName();
+      let cond = condition.params;
+      const selectClassName = utils.randomClassName();
       return (
         <>
           <Row flex={2}>
@@ -158,10 +119,10 @@ export const DevicesFilter = props => {
               placeholder="Key"
               padding={2}
               value={cond.key}
-              onChange={(event: any) => {
+              onChange={event => {
                 const { value: key } = event.target;
                 setFilter(
-                  filter.map((condition: any, i) => {
+                  filter.map((condition, i) => {
                     if (i === index) {
                       condition.params.key = key;
                     }
@@ -200,10 +161,10 @@ export const DevicesFilter = props => {
               placeholder="Value"
               padding={2}
               value={cond.value}
-              onChange={(event: any) => {
+              onChange={event => {
                 const { value: value } = event.target;
                 setFilter(
-                  filter.map((condition: any, i) => {
+                  filter.map((condition, i) => {
                     if (i === index) {
                       condition.params.value = value;
                     }
@@ -218,7 +179,7 @@ export const DevicesFilter = props => {
     }
 
     if (condition.type === LabelExistenceCondition) {
-      let cond = condition.params as LabelExistenceConditionParams;
+      let cond = condition.params;
       return (
         <>
           <Row flex={1}>
@@ -227,10 +188,10 @@ export const DevicesFilter = props => {
               padding={2}
               marginRight={2}
               value={cond.key}
-              onChange={(event: any) => {
+              onChange={event => {
                 const { value: key } = event.target;
                 setFilter(
-                  filter.map((condition: any, i) => {
+                  filter.map((condition, i) => {
                     if (i === index) {
                       condition.params.key = key;
                     }
@@ -279,7 +240,7 @@ export const DevicesFilter = props => {
               options={[{ label: 'Status', value: 'status' }]}
               onChange={option => {
                 setFilter(
-                  filter.map((condition: any, i) => {
+                  filter.map((condition, i) => {
                     if (i === index) {
                       condition.options.property = option;
                       condition.params.property = option.value;
@@ -328,7 +289,7 @@ export const DevicesFilter = props => {
             ]}
             onChange={option => {
               setFilter(
-                filter.map((condition: any, i) => {
+                filter.map((condition, i) => {
                   if (i === index) {
                     condition.options.value = option;
                     condition.params.value = option.value;
@@ -344,7 +305,7 @@ export const DevicesFilter = props => {
   };
 
   const { onClose, onSubmit } = props;
-  const selectClassName: string = utils.randomClassName();
+  const selectClassName = utils.randomClassName();
 
   return (
     <Popup
@@ -395,7 +356,7 @@ export const DevicesFilter = props => {
                               return condition;
                             }
 
-                            let params: ConditionParams;
+                            let params;
                             switch (option.value) {
                               case DevicePropertyCondition:
                                 params = DefaultDevicePropertyConditionParams();

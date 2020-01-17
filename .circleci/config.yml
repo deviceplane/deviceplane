@@ -22,17 +22,17 @@ jobs:
 
   build-ui:
     docker:
-      - image: circleci/node:10
+      - image: circleci/node:13.6
     steps:
       - *attach_workspace
       - checkout
-      - run: cd ui && yarn
-      - run: cd ui && REACT_APP_BUGSNAG_KEY=$BUGSNAG_KEY REACT_APP_INTERCOM_ID=$INTERCOM_ID yarn build
-      - run: cd ui && mv build /tmp/workspace
+      - run: cd ui && npm i
+      - run: cd ui && NODE_ENV=production REACT_APP_BUGSNAG_KEY=$BUGSNAG_KEY REACT_APP_INTERCOM_ID=$INTERCOM_ID npm run-script build
+      - run: cd ui && mv dist /tmp/workspace
       - persist_to_workspace:
           root: /tmp/workspace
           paths:
-            - build
+            - dist
 
   deploy-ui-production:
     docker:
@@ -40,7 +40,7 @@ jobs:
     steps:
       - *attach_workspace
       - run: sudo pip install awscli
-      - run: aws s3 sync /tmp/workspace/build s3://cloud.deviceplane.com/ --delete
+      - run: aws s3 sync /tmp/workspace/dist s3://cloud.deviceplane.com/
 
   deploy-ui-playground:
     docker:
@@ -48,7 +48,7 @@ jobs:
     steps:
       - *attach_workspace
       - run: sudo pip install awscli
-      - run: aws s3 sync /tmp/workspace/build s3://playground.deviceplane.com/ --delete
+      - run: aws s3 sync /tmp/workspace/dist s3://playground.deviceplane.com/
 
   release-controller:
     machine: true

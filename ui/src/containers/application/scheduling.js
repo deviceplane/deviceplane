@@ -1,36 +1,17 @@
-// @ts-nocheck
-
 import React, { useState } from 'react';
-import {
-  toaster,
-  // @ts-ignore
-} from 'evergreen-ui';
+import { toaster } from 'evergreen-ui';
 import { useNavigation } from 'react-navi';
 
 import api from '../../api';
 import utils from '../../utils';
 import { DevicesFilterButtons } from '../../components/DevicesFilterButtons';
 import {
-  Query,
-  Filter,
   DevicesFilter,
   LabelValueCondition,
 } from '../../components/DevicesFilter';
 import Card from '../../components/card';
 import Alert from '../../components/alert';
 import { Button, Row, Text } from '../../components/core';
-
-interface Props {
-  application: any;
-  projectName: string;
-  history: any;
-}
-
-interface State {
-  schedulingRule: Query;
-  backendError: any;
-  showFilterDialog: boolean;
-}
 
 const Scheduling = ({
   route: {
@@ -74,12 +55,12 @@ const Scheduling = ({
     // TODO: fetch devices and show them
   };
 
-  const removeFilter = (index: number) => {
+  const removeFilter = index => {
     setSchedulingRule(schedulingRule.filter((_, i) => i !== index));
     filterDevices();
   };
 
-  const addFilter = (filter: Filter) => {
+  const addFilter = filter => {
     setShowFilterDialog(false);
     if (filterToEdit !== null) {
       setSchedulingRule(schedulingRule =>

@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigation } from 'react-navi';
 import { Icon } from 'evergreen-ui';
@@ -12,9 +10,6 @@ import Table from '../components/table';
 import { Row, Text, Input } from '../components/core';
 import {
   DevicesFilter,
-  Query,
-  Filter,
-  Condition,
   OperatorIs,
   LabelValueCondition,
 } from '../components/DevicesFilter';
@@ -22,12 +17,8 @@ import { DevicesFilterButtons } from '../components/DevicesFilterButtons';
 import DeviceStatus from '../components/device-status';
 import { buildLabelColorMap, renderLabels } from '../helpers/labels';
 
-// Runtime type safety
-import * as deviceTypes from '../components/DevicesFilter-ti';
-import { createCheckers } from 'ts-interface-checker';
 import storage from '../storage';
 import utils from '../utils';
-const typeCheckers = createCheckers(deviceTypes.default);
 
 const Params = {
   Filter: 'filter',
@@ -126,7 +117,7 @@ const Devices = ({ route }) => {
   );
   const tableData = useMemo(() => devices, [devices]);
 
-  const fetchDevices = async (queryString: string) => {
+  const fetchDevices = async queryString => {
     try {
       const { data } = await api.devices({
         projectId: route.data.params.project,
@@ -140,7 +131,7 @@ const Devices = ({ route }) => {
   };
 
   const queryDevices = () => {
-    var query: string[] = [];
+    const query = [];
 
     query.push(`${Params.Page}=${page}`);
     if (orderedColumn) {
@@ -163,12 +154,12 @@ const Devices = ({ route }) => {
     fetchDevices(queryString);
   };
 
-  const removeFilter = (index: number) => {
+  const removeFilter = index => {
     setPage(0);
     setFilterQuery(filterQuery.filter((_, i) => i !== index));
   };
 
-  const addFilter = (filter: Filter) => {
+  const addFilter = filter => {
     setPage(0);
     setShowFilterDialog(false);
     if (filterToEdit !== null) {
@@ -186,7 +177,7 @@ const Devices = ({ route }) => {
     setFilterQuery([]);
   };
 
-  const buildFiltersQuery = (): string[] =>
+  const buildFiltersQuery = () =>
     [...Array.from(new Set(filterQuery))].map(
       filter =>
         `${Params.Filter}=${encodeURIComponent(btoa(JSON.stringify(filter)))}`
@@ -197,7 +188,7 @@ const Devices = ({ route }) => {
       return;
     }
 
-    var builtQuery: Query = [];
+    var builtQuery = [];
     var page = 0;
     var orderedColumn = undefined;
     var order = undefined;
@@ -218,7 +209,7 @@ const Devices = ({ route }) => {
                 atob(decodeURIComponent(encodedFilter))
               );
 
-              const validFilter = filter.filter((c: Condition) => {
+              const validFilter = filter.filter(c => {
                 return typeCheckers['Condition'].test(c);
               });
 

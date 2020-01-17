@@ -22,7 +22,7 @@ const App = () => {
     try {
       const { data: user } = await api.user();
       setCurrentUser(user);
-      if (process.env.NODE_ENV !== 'development') {
+      if (process.env.REACT_APP_INTERCOM_ID) {
         window.Intercom('boot', {
           app_id: process.env.REACT_APP_INTERCOM_ID,
           name: `${user.firstName} ${user.lastName}`,
@@ -58,9 +58,7 @@ const App = () => {
   );
 };
 
-if (process.env.NODE_ENV === 'development') {
-  ReactDOM.render(<App />, document.getElementById('root'));
-} else {
+if (process.env.REACT_APP_BUGSNAG_KEY && process.env.REACT_APP_INTERCOM_ID) {
   const bugsnagClient = bugsnag(process.env.REACT_APP_BUGSNAG_KEY);
   bugsnagClient.use(bugsnagReact, React);
   const ErrorBoundary = bugsnagClient.getPlugin('react');
@@ -72,6 +70,8 @@ if (process.env.NODE_ENV === 'development') {
     </ErrorBoundary>,
     document.getElementById('root')
   );
+} else {
+  ReactDOM.render(<App />, document.getElementById('root'));
 }
 
 // If you want your app to work offline and load faster, you can change

@@ -1,6 +1,6 @@
 import React from 'react';
 import { NotFoundBoundary, useCurrentRoute } from 'react-navi';
-import { createGlobalStyle } from 'styled-components/macro';
+import { createGlobalStyle } from 'styled-components';
 import { Helmet } from 'react-helmet-async';
 
 import { Box } from './core';
