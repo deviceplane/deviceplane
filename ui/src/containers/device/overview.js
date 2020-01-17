@@ -179,6 +179,15 @@ const DeviceOverview = ({
         ]}
       >
         <Group>
+          <Label>Agent Version</Label>
+          <Value>
+            {device.info.hasOwnProperty('agentVersion')
+              ? device.info.agentVersion
+              : ''}
+          </Value>
+        </Group>
+
+        <Group>
           <Label>IP Address</Label>
           <Value>
             {device.info.hasOwnProperty('ipAddress')
