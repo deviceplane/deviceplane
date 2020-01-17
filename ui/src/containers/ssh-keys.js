@@ -253,6 +253,7 @@ const SSHKeys = () => {
               For security, these keys are only stored locally in the browser.
             </Text>
             <Text>
+              Keys must be in RSA format.{' '}
               <Link href="https://deviceplane.com/docs/device-variables/#authorized-ssh-keys">
                 Learn more
               </Link>{' '}

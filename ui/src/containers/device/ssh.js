@@ -7,6 +7,7 @@ import theme from '../../theme';
 import config from '../../config';
 import storage from '../../storage';
 import Card from '../../components/card';
+import Popup from '../../components/popup';
 import { Row, Column, Select, Link } from '../../components/core';
 
 var process = require('process');
@@ -36,16 +37,19 @@ const DeviceSsh = ({
     data: { params, device },
   },
 }) => {
-  const [selection, setSelection] = useState();
   const sshKeys = storage.get('sshKeys');
+  const enableSSHKeys = storage.get('enableSSHKeys', params.project);
   const selectOptions = sshKeys
     ? sshKeys.map(({ name, key }) => ({ label: name, value: key }))
     : null;
+  const [showKeyPopup, setShowKeyPopup] = useState(
+    enableSSHKeys && selectOptions
+  );
 
-  const conn = new Client();
-  const term = new xterm();
+  const startSSH = privateKey => {
+    const conn = new Client();
+    const term = new xterm();
 
-  useEffect(() => {
     window.term = term;
 
     const wndopts = { term: 'xterm' };
@@ -94,9 +98,7 @@ const DeviceSsh = ({
     term.clear();
 
     window.onresize = term.fit.bind(term);
-  }, []);
 
-  useEffect(() => {
     const options = {
       sock: ws(
         `${config.wsEndpoint}/projects/${params.project}/devices/${device.id}/ssh`,
@@ -105,47 +107,45 @@ const DeviceSsh = ({
       username: ' ',
     };
 
-    if (selection) {
-      options.privateKey = selection.value.trim();
+    if (privateKey) {
+      options.privateKey = privateKey;
     }
 
-    term.clear();
-
     conn.connect(options);
-  }, [selection]);
+  };
+
+  useEffect(() => {
+    if (!showKeyPopup) {
+      startSSH();
+    }
+  }, []);
 
   return (
     <>
-      {selectOptions && (
-        <Row marginBottom={4} alignItems="center" width="300px">
-          <Tooltip
-            content={
-              <Link href="https://deviceplane.com/docs/managing/ssh-access/">
-                Learn about SSH access
-              </Link>
-            }
-          >
-            <Icon
-              icon="info-sign"
-              size={16}
-              marginRight={8}
-              color={theme.colors.primary}
-            />
-          </Tooltip>
-          <Select
-            variant="black"
-            onChange={setSelection}
-            value={selection}
-            options={selectOptions}
-            placeholder="Select a SSH Key (Optional)"
-          />
-        </Row>
-      )}
       <Card size="full" height="100%">
         <Terminal bg="grays.0">
           <Column id="terminal" flex={1} />
         </Terminal>
       </Card>
+
+      <Popup
+        show={showKeyPopup}
+        onClose={() => {
+          setShowKeyPopup(false);
+          startSSH();
+        }}
+      >
+        <Card border>
+          <Select
+            onChange={({ value }) => {
+              setShowKeyPopup(false);
+              startSSH(value);
+            }}
+            options={selectOptions}
+            placeholder="Select a SSH Key"
+          />
+        </Card>
+      </Popup>
     </>
   );
 };

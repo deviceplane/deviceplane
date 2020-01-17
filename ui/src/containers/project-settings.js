@@ -6,13 +6,22 @@ import * as yup from 'yup';
 
 import api from '../api';
 import utils from '../utils';
+import storage from '../storage';
 import validators from '../validators';
 import Layout from '../components/layout';
 import Card from '../components/card';
 import Field from '../components/field';
 import Popup from '../components/popup';
 import Alert from '../components/alert';
-import { Text, Button, Form, Input, Label, Group } from '../components/core';
+import {
+  Text,
+  Button,
+  Form,
+  Input,
+  Label,
+  Group,
+  Checkbox,
+} from '../components/core';
 
 const validationSchema = yup.object().shape({
   name: validators.name.required(),
@@ -23,10 +32,11 @@ const ProjectSettings = ({
     data: { params, project },
   },
 }) => {
-  const { register, handleSubmit, errors, formState } = useForm({
+  const { register, handleSubmit, errors, formState, setValue } = useForm({
     validationSchema,
     defaultValues: {
       name: project.name,
+      enableSSHKeys: storage.get('enableSSHKeys', project.name),
     },
   });
   const navigation = useNavigation();
@@ -36,6 +46,7 @@ const ProjectSettings = ({
 
   const submit = async data => {
     try {
+      storage.set('enableSSHKeys', data.enableSSHKeys, project.name);
       await api.updateProject({ projectId: project.name, data });
       toaster.success('Project updated successfully.');
       navigation.navigate(`/${data.name}`);
@@ -92,6 +103,13 @@ const ProjectSettings = ({
               name="name"
               ref={register}
               errors={errors.name}
+            />
+
+            <Field
+              name="enableSSHKeys"
+              as={<Checkbox label="Enable SSH Keys" />}
+              register={register}
+              setValue={setValue}
             />
             <Button type="submit" title="Update" disabled={!formState.dirty} />
           </Form>
