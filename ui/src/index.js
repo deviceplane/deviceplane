@@ -8,11 +8,11 @@ import bugsnagReact from '@bugsnag/plugin-react';
 
 import routes from './routes';
 import api from './api';
-import * as serviceWorker from './serviceWorker';
 import theme from './theme';
 import Page from './components/page';
 import Spinner from './components/spinner';
-import Intercom from './lib/intercom';
+import { LoadIntercom, bootIntercom } from './lib/intercom';
+import { LoadSegment } from './lib/segment';
 
 const App = () => {
   const [loaded, setLoaded] = useState();
@@ -22,13 +22,7 @@ const App = () => {
     try {
       const { data: user } = await api.user();
       setCurrentUser(user);
-      if (process.env.REACT_APP_INTERCOM_ID) {
-        window.Intercom('boot', {
-          app_id: process.env.REACT_APP_INTERCOM_ID,
-          name: `${user.firstName} ${user.lastName}`,
-          email: user.email,
-        });
-      }
+      bootIntercom(user);
     } catch (error) {
       console.log(error);
     }
@@ -58,23 +52,26 @@ const App = () => {
   );
 };
 
-if (process.env.REACT_APP_BUGSNAG_KEY && process.env.REACT_APP_INTERCOM_ID) {
-  const bugsnagClient = bugsnag(process.env.REACT_APP_BUGSNAG_KEY);
+if (process.env.BUGSNAG_KEY) {
+  const bugsnagClient = bugsnag(process.env.BUGSNAG_KEY);
   bugsnagClient.use(bugsnagReact, React);
   const ErrorBoundary = bugsnagClient.getPlugin('react');
 
   ReactDOM.render(
     <ErrorBoundary>
+      <LoadSegment />
+      <LoadIntercom />
       <App />
-      <Intercom />
     </ErrorBoundary>,
     document.getElementById('root')
   );
 } else {
-  ReactDOM.render(<App />, document.getElementById('root'));
+  ReactDOM.render(
+    <>
+      <LoadSegment />
+      <LoadIntercom />
+      <App />
+    </>,
+    document.getElementById('root')
+  );
 }
-
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: http://bit.ly/CRA-PWA
-serviceWorker.unregister();

@@ -27,7 +27,7 @@ jobs:
       - *attach_workspace
       - checkout
       - run: cd ui && npm i
-      - run: cd ui && NODE_ENV=production REACT_APP_BUGSNAG_KEY=$BUGSNAG_KEY REACT_APP_INTERCOM_ID=$INTERCOM_ID npm run-script build
+      - run: cd ui && NODE_ENV=production SEGMENT_WRITE_KEY=$SEGMENT_WRITE_KEY BUGSNAG_KEY=$BUGSNAG_KEY INTERCOM_ID=$INTERCOM_ID npm run-script build
       - run: cd ui && mv dist /tmp/workspace
       - persist_to_workspace:
           root: /tmp/workspace

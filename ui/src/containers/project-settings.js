@@ -96,6 +96,7 @@ const ProjectSettings = ({
             <Button type="submit" title="Update" disabled={!formState.dirty} />
           </Form>
         </Card>
+
         <Popup show={showDeletePopup} onClose={() => setShowDeletePopup(false)}>
           <Card title="Delete Project" border size="large">
             <Text marginBottom={4}>

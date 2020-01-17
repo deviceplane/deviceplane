@@ -111,9 +111,7 @@ const supportedDeviceMetrics = [
 ];
 
 const config =
-  process.env.REACT_APP_ENVIRONMENT === 'development'
-    ? development
-    : production;
+  process.env.NODE_ENV === 'development' ? development : production;
 
 export default {
   agentVersion: '1.9.1',

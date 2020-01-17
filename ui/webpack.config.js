@@ -23,6 +23,12 @@ const config = {
     //   contextRegExp: /moment$/,
     // }),
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+    new webpack.EnvironmentPlugin([
+      'NODE_ENV',
+      'BUGSNAG_KEY',
+      'INTERCOM_ID',
+      'SEGMENT_WRITE_KEY',
+    ]),
   ],
   module: {
     rules: [
