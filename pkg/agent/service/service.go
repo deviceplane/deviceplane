@@ -36,11 +36,14 @@ func NewService(
 	variables variables.Interface, supervisorLookup supervisor.Lookup,
 	engine engine.Engine, confDir string,
 ) *Service {
+	netnsManager := netns.NewManager(engine)
+	netnsManager.Start()
+
 	s := &Service{
 		variables:        variables,
 		supervisorLookup: supervisorLookup,
 		confDir:          confDir,
-		netnsManager:     netns.NewManager(engine),
+		netnsManager:     netnsManager,
 		router:           mux.NewRouter(),
 	}
 	go s.getSigner()
