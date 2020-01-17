@@ -113,6 +113,8 @@ module.exports = () => {
       contentBase: './dist',
       hot: true,
       transportMode: 'ws',
+      clientLogLevel: 'none',
+      noInfo: true,
       proxy: {
         '/api': 'http://localhost:8080',
       },
