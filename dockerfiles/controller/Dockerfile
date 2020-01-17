@@ -1,7 +1,7 @@
 FROM alpine:3.9
 RUN apk --update add ca-certificates
 
-FROM node:10
+FROM node:13.6
 WORKDIR /app
 COPY ./ ./
 WORKDIR /app/ui
