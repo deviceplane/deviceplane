@@ -4,7 +4,7 @@ import {
   LabelValueCondition,
   LabelExistenceCondition,
   DevicePropertyCondition,
-} from './DevicesFilter';
+} from './devices-filter';
 
 import theme from '../theme';
 import { Row, Text, Button, Badge } from './core';

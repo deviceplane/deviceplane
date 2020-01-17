@@ -46,7 +46,6 @@ Input.defaultProps = {
   color: 'grays.12',
   bg: 'grays.0',
   borderRadius: 1,
-  fontWeight: 0,
   fontSize: 2,
 };
 

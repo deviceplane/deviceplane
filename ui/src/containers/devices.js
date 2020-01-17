@@ -12,8 +12,8 @@ import {
   DevicesFilter,
   OperatorIs,
   LabelValueCondition,
-} from '../components/DevicesFilter';
-import { DevicesFilterButtons } from '../components/DevicesFilterButtons';
+} from '../components/devices-filter';
+import { DevicesFilterButtons } from '../components/devices-filter-buttons';
 import DeviceStatus from '../components/device-status';
 import { buildLabelColorMap, renderLabels } from '../helpers/labels';
 

@@ -4,11 +4,11 @@ import { useNavigation } from 'react-navi';
 
 import api from '../../api';
 import utils from '../../utils';
-import { DevicesFilterButtons } from '../../components/DevicesFilterButtons';
+import { DevicesFilterButtons } from '../../components/devices-filter-buttons';
 import {
   DevicesFilter,
   LabelValueCondition,
-} from '../../components/DevicesFilter';
+} from '../../components/devices-filter';
 import Card from '../../components/card';
 import Alert from '../../components/alert';
 import { Button, Row, Text } from '../../components/core';

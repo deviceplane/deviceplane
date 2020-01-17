@@ -3,7 +3,7 @@ import React from 'react';
 import Editor from '../../components/editor';
 import Card from '../../components/card';
 import { Row, Group, Link, Label, Value } from '../../components/core';
-import { DevicesFilterButtons } from '../../components/DevicesFilterButtons';
+import { DevicesFilterButtons } from '../../components/devices-filter-buttons';
 
 const ApplicationOverview = ({
   route: {
