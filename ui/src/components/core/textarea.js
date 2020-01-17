@@ -6,6 +6,7 @@ border: 1px solid ${props => props.theme.colors.black};
 outline: none;
 appearance: none;
 width: 100%;
+resize: vertical;
 
 transition: ${props => props.theme.transitions[0]};
 
