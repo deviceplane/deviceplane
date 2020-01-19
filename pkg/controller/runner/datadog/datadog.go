@@ -132,6 +132,7 @@ func (r *Runner) Do(ctx context.Context) {
 				if err != nil {
 					return
 				}
+				defer deviceConn.Close()
 
 				if len(deviceMetricsConfig.ExposedMetrics) != 0 {
 					deviceMetrics := r.getDeviceMetrics(deviceConn, &project, &device)

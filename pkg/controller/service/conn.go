@@ -160,5 +160,7 @@ func (s *Service) withDeviceConnection(w http.ResponseWriter, r *http.Request, p
 		http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 		return
 	}
+	defer deviceConn.Close()
+
 	f(deviceConn)
 }
