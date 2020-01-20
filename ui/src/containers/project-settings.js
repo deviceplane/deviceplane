@@ -45,6 +45,7 @@ const ProjectSettings = ({
   const [backendError, setBackendError] = React.useState();
 
   const submit = async data => {
+    data.datadogApiKey = project.datadogApiKey;
     try {
       storage.set('enableSSHKeys', data.enableSSHKeys, project.name);
       await api.updateProject({ projectId: project.name, data });

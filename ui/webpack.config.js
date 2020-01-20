@@ -111,16 +111,17 @@ module.exports = () => {
     config.devtool = 'cheap-module-source-map';
     config.output.filename = 'bundle.js';
     config.devServer = {
+      host: '0.0.0.0',
       port: 3000,
       historyApiFallback: true,
       overlay: true,
       open: true,
       publicPath: '/',
-      contentBase: './dist',
       hot: true,
       transportMode: 'ws',
       clientLogLevel: 'none',
       noInfo: true,
+      quiet: true,
       proxy: {
         '/api': 'http://localhost:8080',
       },
