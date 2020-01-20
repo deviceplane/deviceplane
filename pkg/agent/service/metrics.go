@@ -44,6 +44,7 @@ func (s *Service) metrics(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), codes.StatusMetricsNotAvailable)
 		return
 	}
+	defer resp.Body.Close()
 
 	utils.ProxyResponse(w, resp)
 }

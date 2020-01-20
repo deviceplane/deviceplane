@@ -102,14 +102,14 @@ func (m *Manager) processRequest(ctx context.Context, req request) response {
 		}
 	}
 
-	httpRequest, err := http.NewRequest("GET", string(req.path), nil)
+	httpRequest, err := http.NewRequestWithContext(
+		ctx, "GET", string(req.path), nil,
+	)
 	if err != nil {
 		return response{
 			err: err,
 		}
 	}
-
-	httpRequest = httpRequest.WithContext(ctx)
 
 	if err := httpRequest.Write(conn); err != nil {
 		return response{

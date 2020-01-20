@@ -1,6 +1,7 @@
 package datadog
 
 import (
+	"context"
 	"net"
 
 	"github.com/apex/log"
@@ -13,12 +14,13 @@ import (
 )
 
 func (r *Runner) getDeviceMetrics(
+	ctx context.Context,
 	deviceConn net.Conn,
 	project *models.Project,
 	device *models.Device,
 ) []datadog.Metric {
 	// Get metrics from device
-	deviceMetricsResp, err := client.GetDeviceMetrics(deviceConn)
+	deviceMetricsResp, err := client.GetDeviceMetrics(ctx, deviceConn)
 	if err != nil || deviceMetricsResp.StatusCode != 200 {
 		r.st.Incr("runner.datadog.device_metrics_pull", append([]string{"status:failure"}, utils.InternalTags(project.Name)...), 1)
 		return nil

@@ -30,7 +30,7 @@ func (s *Service) initiateSSH(w http.ResponseWriter, r *http.Request,
 ) {
 	s.withHijackedWebSocketConnection(w, r, func(conn net.Conn) {
 		s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-			err := client.InitiateSSH(deviceConn)
+			err := client.InitiateSSH(r.Context(), deviceConn)
 			if err != nil {
 				http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 				return
@@ -54,7 +54,7 @@ func (s *Service) initiateReboot(w http.ResponseWriter, r *http.Request,
 	deviceID string,
 ) {
 	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-		resp, err := client.InitiateReboot(deviceConn)
+		resp, err := client.InitiateReboot(r.Context(), deviceConn)
 		if err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return
@@ -73,7 +73,7 @@ func (s *Service) imagePullProgress(w http.ResponseWriter, r *http.Request,
 	service := vars["service"]
 
 	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-		resp, err := client.GetImagePullProgress(deviceConn, applicationID, service)
+		resp, err := client.GetImagePullProgress(r.Context(), deviceConn, applicationID, service)
 		if err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return
@@ -88,7 +88,7 @@ func (s *Service) hostMetrics(w http.ResponseWriter, r *http.Request,
 	deviceID string,
 ) {
 	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-		resp, err := client.GetDeviceMetrics(deviceConn)
+		resp, err := client.GetDeviceMetrics(r.Context(), deviceConn)
 		if err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return
@@ -103,7 +103,7 @@ func (s *Service) agentMetrics(w http.ResponseWriter, r *http.Request,
 	deviceID string,
 ) {
 	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-		resp, err := client.GetAgentMetrics(deviceConn)
+		resp, err := client.GetAgentMetrics(r.Context(), deviceConn)
 		if err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return
@@ -132,7 +132,10 @@ func (s *Service) serviceMetrics(w http.ResponseWriter, r *http.Request,
 	}
 
 	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-		resp, err := client.GetServiceMetrics(deviceConn, applicationID, service, serviceMetricEndpointConfig.Path, serviceMetricEndpointConfig.Port)
+		resp, err := client.GetServiceMetrics(
+			r.Context(), deviceConn, applicationID, service,
+			serviceMetricEndpointConfig.Path, serviceMetricEndpointConfig.Port,
+		)
 		if err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return

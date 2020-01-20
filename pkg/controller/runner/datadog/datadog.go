@@ -135,7 +135,7 @@ func (r *Runner) Do(ctx context.Context) {
 				defer deviceConn.Close()
 
 				if len(deviceMetricsConfig.ExposedMetrics) != 0 {
-					deviceMetrics := r.getDeviceMetrics(deviceConn, &project, &device)
+					deviceMetrics := r.getDeviceMetrics(ctx, deviceConn, &project, &device)
 					filteredDeviceMetrics := FilterMetrics(deviceMetrics, &project, &device, models.DeviceMetricsConfigKey, deviceMetricsConfig.ExposedMetrics, nil, nil)
 					if len(filteredDeviceMetrics) != 0 {
 						lock.Lock()
@@ -145,7 +145,7 @@ func (r *Runner) Do(ctx context.Context) {
 				}
 
 				if len(serviceMetricsConfigs) != 0 {
-					serviceMetrics := r.getServiceMetrics(deviceConn, &project, &device, apps, appsByID, latestAppReleaseByAppID, serviceMetricsConfigs)
+					serviceMetrics := r.getServiceMetrics(ctx, deviceConn, &project, &device, apps, appsByID, latestAppReleaseByAppID, serviceMetricsConfigs)
 					if len(serviceMetrics) != 0 {
 						lock.Lock()
 						req.Series = append(req.Series, serviceMetrics...)

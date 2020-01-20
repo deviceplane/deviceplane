@@ -1,6 +1,7 @@
 package datadog
 
 import (
+	"context"
 	"fmt"
 	"net"
 
@@ -15,6 +16,7 @@ import (
 )
 
 func (r *Runner) getServiceMetrics(
+	ctx context.Context,
 	deviceConn net.Conn,
 	project *models.Project,
 	device *models.Device,
@@ -70,7 +72,7 @@ func (r *Runner) getServiceMetrics(
 		}
 
 		// Get metrics from services
-		serviceMetricsResp, err := client.GetServiceMetrics(deviceConn, app.ID, serviceMetricsConfig.Service, serviceMetricEndpointConfig.Path, serviceMetricEndpointConfig.Port)
+		serviceMetricsResp, err := client.GetServiceMetrics(ctx, deviceConn, app.ID, serviceMetricsConfig.Service, serviceMetricEndpointConfig.Path, serviceMetricEndpointConfig.Port)
 		serviceStatTags := append([]string{"service:" + serviceMetricsConfig.Service, "application:" + app.Name, "device:" + device.Name}, utils.InternalTags(project.Name)...)
 		if err != nil || serviceMetricsResp.StatusCode != 200 {
 			r.st.Incr("runner.datadog.service_metrics_pull", append(serviceStatTags, "status:failure"), 1)
