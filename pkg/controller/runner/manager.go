@@ -30,8 +30,8 @@ func (m *Manager) Start() {
 
 		for {
 			ctx, cancel := context.WithTimeout(context.Background(), repeatInverval/2)
-			wg := sync.WaitGroup{}
 
+			var wg sync.WaitGroup
 			for _, runner := range m.runners {
 				wg.Add(1)
 				go func(runner Runner) {
