@@ -69,7 +69,7 @@ const CreateRole = ({
         />
 
         <Field
-          as={<Editor width="100%" height="136px" />}
+          as={<Editor width="100%" />}
           label="Config"
           name="config"
           register={register}

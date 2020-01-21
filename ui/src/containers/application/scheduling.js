@@ -94,7 +94,6 @@ const Scheduling = ({
         {
           title: 'Add Filter',
           onClick: () => setShowFilterDialog(true),
-          variant: 'secondary',
         },
       ]}
     >

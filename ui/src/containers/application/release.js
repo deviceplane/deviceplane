@@ -89,12 +89,7 @@ const Release = ({
         </Group>
 
         <Label>Config</Label>
-        <Editor
-          readOnly
-          width="100%"
-          height="200px"
-          value={release.rawConfig}
-        />
+        <Editor readOnly width="100%" value={release.rawConfig} />
         <Button
           marginTop={6}
           title="Revert to this Release"

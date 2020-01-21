@@ -39,6 +39,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   .ace_editor {
+    font-family: ${props => props.theme.fonts.code} !important;
     background: ${props => props.theme.colors.grays[0]} !important;
     color: ${props => props.theme.colors.white} !important;
   }
@@ -51,6 +52,12 @@ const GlobalStyle = createGlobalStyle`
   }
   .ace_active-line {
     background: ${props => props.theme.colors.grays[2]} !important;
+  }
+  .ace_cursor {
+    border-left: 1px solid ${props => props.theme.colors.primary} !important;
+  }
+  .ace_gutter-cell {
+    padding-left: 0 !important;
   }
 
   svg[data-icon="caret-down"] {

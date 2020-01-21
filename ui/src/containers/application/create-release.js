@@ -59,7 +59,7 @@ const CreateRelease = ({
         }}
       >
         <Field
-          as={<Editor width="100%" height="300px" />}
+          as={<Editor width="100%" />}
           label="Config"
           name="rawConfig"
           register={register}

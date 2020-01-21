@@ -45,7 +45,7 @@ const CloseButton = styled.button`
   border-radius: 999px;
   z-index: 9999999;
   cursor: pointer;
-  border: 2px solid ${props => props.theme.colors.white};
+  border: 1px solid ${props => props.theme.colors.white};
 
   transition: ${props => props.theme.transitions[0]};
   background-color: ${props => props.theme.colors.white};

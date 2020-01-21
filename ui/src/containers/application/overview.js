@@ -48,12 +48,7 @@ const ApplicationOverview = ({
 
           <Group>
             <Label>Current Config</Label>
-            <Editor
-              width="100%"
-              height="150px"
-              value={latestRelease.rawConfig}
-              readOnly
-            />
+            <Editor width="100%" value={latestRelease.rawConfig} readOnly />
           </Group>
         </>
       ) : (

@@ -7,6 +7,7 @@ outline: none;
 appearance: none;
 width: 100%;
 resize: vertical;
+caret-color: ${props => props.theme.colors.primary};
 
 transition: ${props => props.theme.transitions[0]};
 
@@ -23,6 +24,8 @@ Textarea.defaultProps = {
   padding: 3,
   fontSize: 2,
   fontWeight: 0,
+  border: 0,
+  borderColor: 'white',
 };
 
 export default Textarea;
