@@ -2010,8 +2010,8 @@ func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request,
 	applicationID string,
 ) {
 	var updateApplicationRequest struct {
-		Name                  *string                                 `json:"name" validate:"name,omitempty"`
-		Description           *string                                 `json:"description" validate:"description,omitempty"`
+		Name                  *string                                 `json:"name" validate:"omitempty,name"`
+		Description           *string                                 `json:"description" validate:"omitempty,description"`
 		SchedulingRule        *models.Query                           `json:"schedulingRule"`
 		MetricEndpointConfigs *map[string]models.MetricEndpointConfig `json:"metricEndpointConfigs"`
 	}
