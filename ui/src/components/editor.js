@@ -26,9 +26,9 @@ const Editor = ({
     <Column
       flex={1}
       bg="grays.0"
-      border={0}
+      border={readOnly ? 'none' : 0}
       borderRadius={1}
-      borderColor={focused ? 'primary' : 'white'}
+      borderColor={!readOnly && focused ? 'primary' : 'white'}
       padding={2}
     >
       <AceEditor
