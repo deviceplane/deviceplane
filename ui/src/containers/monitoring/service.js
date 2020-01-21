@@ -15,6 +15,7 @@ import {
 } from '../../components/device-label';
 import { Button, Row, Text, Select, Checkbox } from '../../components/core';
 import ServiceMetricsForm from './service-metrics-form';
+import ServiceMetricsSettings from './service-metrics-settings';
 
 const Service = ({
   route: {
@@ -28,6 +29,7 @@ const Service = ({
     buildLabelColorMap({}, labelColors, devices)
   );
   const [showMetricsForm, setShowMetricsForm] = useState();
+  const [showSettings, setShowSettings] = useState();
   const [metricToDelete, setMetricToDelete] = useState();
   const [editRow, setEditRow] = useState();
 
@@ -56,6 +58,7 @@ const Service = ({
   const navigation = useNavigation();
 
   const hideMetricsForm = () => setShowMetricsForm(false);
+  const hideSettings = () => setShowSettings(false);
   const clearMetricToDelete = () => setMetricToDelete(null);
 
   let selectedMetrics = [];
@@ -326,6 +329,11 @@ const Service = ({
         size="full"
         actions={[
           {
+            title: 'Settings',
+            variant: 'secondary',
+            onClick: () => setShowSettings(true),
+          },
+          {
             title: 'Add Service Metrics',
             onClick: () => setShowMetricsForm(true),
           },
@@ -343,6 +351,21 @@ const Service = ({
           }
         />
       </Card>
+      <Popup show={!!showSettings} onClose={hideSettings} overflow="visible">
+        <ServiceMetricsSettings
+          projectId={params.project}
+          applicationId={
+            selection && selection.application && selection.application.id
+          }
+          service={selection && selection.service}
+          metricEndpointConfigs={
+            selection &&
+            applications.find(({ id }) => id === selection.application.id)
+              .metricEndpointConfigs
+          }
+          close={hideSettings}
+        />
+      </Popup>
       <Popup
         show={!!showMetricsForm}
         onClose={hideMetricsForm}
