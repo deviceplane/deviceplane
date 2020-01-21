@@ -6,6 +6,8 @@ Deviceplane is an open source platform for managing IoT devices and edge servers
 
 A hosted version of Deviceplane is available at [https://cloud.deviceplane.com/](https://cloud.deviceplane.com/).
 
+We also have documentation for self-hosting Deviceplane available at [https://deviceplane.com/docs/self-hosted/](https://deviceplane.com/docs/self-hosted/).
+
 This repository contains all Deviceplane code including the backend (controller), agent, and CLI.
 
 ## Local Development
