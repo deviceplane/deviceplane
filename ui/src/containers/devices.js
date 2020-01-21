@@ -22,7 +22,6 @@ import utils from '../utils';
 
 const Params = {
   Filter: 'filter',
-  Page: 'page',
   OrderedColumn: 'order_by',
   OrderDirection: 'order',
 };
@@ -34,7 +33,6 @@ const Devices = ({ route }) => {
   const [filterQuery, setFilterQuery] = useState(
     storage.get('devicesFilter', route.data.params.project) || []
   );
-  const [page, setPage] = useState(0);
   const [orderedColumn, setOrderedColumn] = useState();
   const [order, setOrder] = useState();
   const [labelColorMap, setLabelColorMap] = useState(
@@ -133,7 +131,6 @@ const Devices = ({ route }) => {
   const queryDevices = () => {
     const query = [];
 
-    query.push(`${Params.Page}=${page}`);
     if (orderedColumn) {
       query.push(`${Params.OrderedColumn}=${orderedColumn}`);
     }
@@ -144,23 +141,20 @@ const Devices = ({ route }) => {
       query.push(`search=${searchInput}`);
     }
     query.push(...buildFiltersQuery());
-
     const queryString = '?' + query.join('&');
-    window.history.pushState(
-      '',
-      '',
-      query.length ? queryString : window.location.pathname
-    );
+
+    if (query.length) {
+      window.history.replaceState({}, '', queryString);
+    }
+
     fetchDevices(queryString);
   };
 
   const removeFilter = index => {
-    setPage(0);
     setFilterQuery(filterQuery.filter((_, i) => i !== index));
   };
 
   const addFilter = filter => {
-    setPage(0);
     setShowFilterDialog(false);
     if (filterToEdit !== null) {
       setFilterQuery(filterQuery =>
@@ -173,7 +167,6 @@ const Devices = ({ route }) => {
   };
 
   const clearFilters = () => {
-    setPage(0);
     setFilterQuery([]);
   };
 
@@ -189,11 +182,11 @@ const Devices = ({ route }) => {
     }
 
     var builtQuery = [];
-    var page = 0;
     var orderedColumn = undefined;
     var order = undefined;
 
     let queryParams = window.location.search.substr(1).split('&');
+
     queryParams.forEach(queryParam => {
       const parts = queryParam.split('=');
       if (parts.length < 2) {
@@ -209,23 +202,10 @@ const Devices = ({ route }) => {
                 atob(decodeURIComponent(encodedFilter))
               );
 
-              const validFilter = filter.filter(c => {
-                return typeCheckers['Condition'].test(c);
-              });
-
-              if (validFilter.length) {
-                builtQuery.push(validFilter);
-              }
+              builtQuery.push(filter);
             } catch (e) {
               console.log('Error parsing filters:', e);
             }
-          }
-          break;
-        }
-        case Params.Page: {
-          let p = Number(parts[1]);
-          if (!isNaN(p)) {
-            page = p;
           }
           break;
         }
@@ -245,7 +225,6 @@ const Devices = ({ route }) => {
         }
       }
     });
-    setPage(page);
     setOrderedColumn(orderedColumn);
     setOrder(order);
     setFilterQuery(builtQuery);
