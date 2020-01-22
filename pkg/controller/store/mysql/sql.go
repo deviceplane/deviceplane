@@ -663,6 +663,7 @@ const getApplicationDeviceCounts = `
 const createRelease = `
   insert into releases (
     id,
+    ` + "`number`" + `,
     project_id,
     application_id,
     config,
@@ -670,18 +671,24 @@ const createRelease = `
     created_by_user_id,
     created_by_service_account_id
   )
-  values (?, ?, ?, ?, ?, ?, ?)
+  values (?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 // Index: project_id_application_id_id
 const getRelease = `
-  select id, created_at, project_id, application_id, config, raw_config, created_by_user_id, created_by_service_account_id from releases
+  select id, ` + "`number`" + `, created_at, project_id, application_id, config, raw_config, created_by_user_id, created_by_service_account_id from releases
   where id = ? and project_id = ? and application_id = ?
+`
+
+// Index: project_id_application_id_number
+const getReleaseByNumber = `
+  select id, ` + "`number`" + `, created_at, project_id, application_id, config, raw_config, created_by_user_id, created_by_service_account_id from releases
+  where ` + "`number`" + ` = ? and project_id = ? and application_id = ?
 `
 
 // Index: project_id_application_id_created_at
 const getLatestRelease = `
-  select id, created_at, project_id, application_id, config, raw_config, created_by_user_id, created_by_service_account_id from releases
+  select id, ` + "`number`" + `, created_at, project_id, application_id, config, raw_config, created_by_user_id, created_by_service_account_id from releases
   where project_id = ? and application_id = ?
   order by created_at desc
   limit 1
@@ -690,7 +697,7 @@ const getLatestRelease = `
 // TODO: real pagination
 // Index: project_id_application_id_created_at
 const listReleases = `
-  select id, created_at, project_id, application_id, config, raw_config, created_by_user_id, created_by_service_account_id from releases
+  select id, ` + "`number`" + `, created_at, project_id, application_id, config, raw_config, created_by_user_id, created_by_service_account_id from releases
   where project_id = ? and application_id = ?
   order by created_at desc
   limit 10

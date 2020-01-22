@@ -2,10 +2,12 @@ package service
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
+	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/gorilla/mux"
 )
 
@@ -93,6 +95,59 @@ func (s *Service) withApplication(handler func(http.ResponseWriter, *http.Reques
 		}
 
 		handler(w, r, projectID, authenticatedUserID, authenticatedServiceAccountID, applicationID)
+	}
+}
+
+func (s *Service) withApplicationAndRelease(handler func(http.ResponseWriter, *http.Request, string, string, string, *models.Application, *models.Release)) func(http.ResponseWriter, *http.Request, string, string, string) {
+	return func(w http.ResponseWriter, r *http.Request, projectID, authenticatedUserID, authenticatedServiceAccountID string) {
+		vars := mux.Vars(r)
+		applicationMuxVar := vars["application"]
+		releaseMuxVar := vars["release"]
+
+		if applicationMuxVar == "" || releaseMuxVar == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		var application *models.Application
+		var err error
+		if strings.Contains(applicationMuxVar, "_") {
+			application, err = s.applications.GetApplication(r.Context(), applicationMuxVar, projectID)
+		} else {
+			application, err = s.applications.LookupApplication(r.Context(), applicationMuxVar, projectID)
+		}
+		if err == store.ErrApplicationNotFound {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		} else if err != nil {
+			log.WithError(err).Error("get application")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		var release *models.Release
+		if strings.Contains(releaseMuxVar, "_") {
+			release, err = s.releases.GetRelease(r.Context(), releaseMuxVar, projectID, application.ID)
+		} else if releaseMuxVar == "latest" { // TODO: models.LatestRelease
+			release, err = s.releases.GetLatestRelease(r.Context(), projectID, application.ID)
+		} else {
+			id, parseErr := strconv.ParseUint(releaseMuxVar, 10, 32)
+			if parseErr != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			release, err = s.releases.GetReleaseByNumber(r.Context(), uint32(id), projectID, application.ID)
+		}
+		if err == store.ErrReleaseNotFound {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		} else if err != nil {
+			log.WithError(err).Error("get release")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		handler(w, r, projectID, authenticatedUserID, authenticatedServiceAccountID, application, release)
 	}
 }
 

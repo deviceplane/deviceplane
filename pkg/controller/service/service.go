@@ -223,7 +223,7 @@ func NewService(
 
 	apiRouter.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateAuthorization(authz.ResourceReleases, authz.ActionCreateRelease, s.withApplication(s.createRelease))).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/applications/{application}/releases/latest", s.validateAuthorization(authz.ResourceReleases, authz.ActionGetLatestRelease, s.withApplication(s.getLatestRelease))).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/applications/{application}/releases/{release}", s.validateAuthorization(authz.ResourceReleases, authz.ActionGetRelease, s.withApplication(s.getRelease))).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/applications/{application}/releases/{release}", s.validateAuthorization(authz.ResourceReleases, authz.ActionGetRelease, s.withApplicationAndRelease(s.getRelease))).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/applications/{application}/releases", s.validateAuthorization(authz.ResourceReleases, authz.ActionListReleases, s.withApplication(s.listReleases))).Methods("GET")
 
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization(authz.ResourceDevices, authz.ActionGetDevice, s.withDevice(s.getDevice))).Methods("GET")
@@ -2128,23 +2128,12 @@ func (s *Service) createRelease(w http.ResponseWriter, r *http.Request,
 }
 
 func (s *Service) getRelease(w http.ResponseWriter, r *http.Request,
-	projectID, authenticatedUserID, authenticatedServiceAccountID,
-	applicationID string,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+	application *models.Application,
+	release *models.Release,
 ) {
-	vars := mux.Vars(r)
-	releaseID := vars["release"]
-
-	release, err := s.releases.GetRelease(r.Context(), releaseID, projectID, applicationID)
-	if err == store.ErrReleaseNotFound {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	} else if err != nil {
-		log.WithError(err).Error("get release")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
 	var ret interface{} = release
+	var err error
 	if _, ok := r.URL.Query()["full"]; ok {
 		ret, err = s.getReleaseFull(r.Context(), *release)
 		if err != nil {

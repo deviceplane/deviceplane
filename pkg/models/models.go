@@ -169,6 +169,7 @@ type ApplicationDeviceCounts struct {
 
 type Release struct {
 	ID                        string             `json:"id" yaml:"id"`
+	Number                    uint32             `json:"number" yaml:"number"`
 	CreatedAt                 time.Time          `json:"createdAt" yaml:"createdAt"`
 	ProjectID                 string             `json:"projectId" yaml:"projectId"`
 	ApplicationID             string             `json:"applicationId" yaml:"applicationId"`

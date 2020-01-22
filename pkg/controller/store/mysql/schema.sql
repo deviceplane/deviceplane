@@ -364,6 +364,7 @@ create table if not exists applications (
 
 create table if not exists releases (
   id varchar(32) not null,
+  `number` int unsigned not null,
   created_at timestamp not null default current_timestamp,
   project_id varchar(32) not null,
   application_id varchar(32) not null,
@@ -374,6 +375,7 @@ create table if not exists releases (
   created_by_service_account_id varchar(32),
 
   primary key (id),
+  unique application_release_count (`number`, application_id, project_id),
   foreign key releases_application_id(application_id)
   references applications(id)
   on delete cascade,
@@ -383,6 +385,7 @@ create table if not exists releases (
   foreign key releases_created_by_service_account_id(created_by_service_account_id)
   references service_accounts(id)
   on delete set null,
+  index project_id_application_id_number (project_id, application_id, `number`),
   index project_id_application_id_id (project_id, application_id, id),
   index project_id_application_id_created_at (project_id, application_id, created_at)
 );

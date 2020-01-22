@@ -1975,10 +1975,22 @@ func (s *Store) CreateRelease(ctx context.Context, projectID, applicationID, yam
 		createdByServiceAccountIDNullable = &createdByServiceAccountID
 	}
 
+	lastRelease, err := s.GetLatestRelease(ctx, projectID, applicationID)
+	var number uint32
+	if err != nil && err != store.ErrReleaseNotFound {
+		return nil, err
+	}
+	if err == store.ErrReleaseNotFound {
+		number = 1
+	} else {
+		number = lastRelease.Number + 1
+	}
+
 	if _, err := s.db.ExecContext(
 		ctx,
 		createRelease,
 		id,
+		number,
 		projectID,
 		applicationID,
 		jsonConfig,
@@ -1994,6 +2006,19 @@ func (s *Store) CreateRelease(ctx context.Context, projectID, applicationID, yam
 
 func (s *Store) GetRelease(ctx context.Context, id, projectID, applicationID string) (*models.Release, error) {
 	applicationRow := s.db.QueryRowContext(ctx, getRelease, id, projectID, applicationID)
+
+	release, err := s.scanRelease(applicationRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrReleaseNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return release, nil
+}
+
+func (s *Store) GetReleaseByNumber(ctx context.Context, number uint32, projectID, applicationID string) (*models.Release, error) {
+	applicationRow := s.db.QueryRowContext(ctx, getReleaseByNumber, number, projectID, applicationID)
 
 	release, err := s.scanRelease(applicationRow)
 	if err == sql.ErrNoRows {
@@ -2046,6 +2071,7 @@ func (s *Store) scanRelease(scanner scanner) (*models.Release, error) {
 	var release models.Release
 	if err := scanner.Scan(
 		&release.ID,
+		&release.Number,
 		&release.CreatedAt,
 		&release.ProjectID,
 		&release.ApplicationID,
