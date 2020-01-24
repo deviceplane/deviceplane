@@ -62,7 +62,7 @@ jobs:
     steps:
       - checkout
       - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
-      - run: CONTROLLER_WITH_DB_VERSION=${CIRCLE_TAG#"controller-"} make push-controller-with-db
+      - run: CONTROLLER_WITH_DB_VERSION=${CIRCLE_TAG#"controller-"} make push-controller-with-db-latest
 
   build-agent-binaries:
     docker:
