@@ -6,4 +6,4 @@ if [ -z "$CONTROLLER_WITH_DB_VERSION" ]; then
     exit 1
 fi
 
-docker build -t deviceplane/deviceplane:${CONTROLLER_WITH_DB_VERSION}-with-db -f dockerfiles/controller-with-db/Dockerfile --build-arg version=${CONTROLLER_WITH_DB_VERSION} .
+docker build -t deviceplane/deviceplane:${CONTROLLER_WITH_DB_VERSION} -f dockerfiles/controller-with-db/Dockerfile --build-arg version=${CONTROLLER_WITH_DB_VERSION} .

@@ -6,4 +6,4 @@ if [ -z "$CONTROLLER_VERSION" ]; then
     exit 1
 fi
 
-docker build -t deviceplane/deviceplane:${CONTROLLER_VERSION} -f dockerfiles/controller/Dockerfile --build-arg version=${CONTROLLER_VERSION} .
+docker build -t deviceplane/controller:${CONTROLLER_VERSION} -f dockerfiles/controller/Dockerfile --build-arg version=${CONTROLLER_VERSION} .
