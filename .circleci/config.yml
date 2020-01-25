@@ -86,6 +86,7 @@ jobs:
       - checkout
       - run: sudo pip install awscli
       - run: aws s3 sync /tmp/workspace/dist/agent s3://agent.deviceplane.com/
+      - run: aws s3 sync /tmp/workspace/dist/agent s3://downloads.deviceplane.com/agent
 
   release-cli:
     machine: true
