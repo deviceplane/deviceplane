@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	location = "https://agent.deviceplane.com/%s/linux/%s/deviceplane-agent"
+	location = "https://downloads.deviceplane.com/agent/%s/linux/%s/deviceplane-agent"
 )
 
 type Updater struct {
