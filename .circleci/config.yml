@@ -115,7 +115,7 @@ jobs:
       - *attach_workspace
       - checkout
       - run: sudo pip install awscli
-      - run: aws s3 sync /tmp/workspace/dist/cli s3://cli.deviceplane.com/
+      - run: aws s3 sync /tmp/workspace/dist/cli s3://downloads.deviceplane.com/cli
 
   upload-cli-binary-redirects:
     docker:
