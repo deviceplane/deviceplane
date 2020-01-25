@@ -115,7 +115,7 @@ const config =
 
 export default {
   agentVersion: '1.9.1',
-  cliEndpoint: 'https://cli.deviceplane.com',
+  cliEndpoint: 'https://downloads.deviceplane.com/cli',
   supportedDeviceMetrics,
   supportedDeviceMetricProperties,
   supportedServiceMetricProperties,
