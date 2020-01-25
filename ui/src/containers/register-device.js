@@ -17,9 +17,9 @@ const getLocalCommand = ({ id, projectId }) =>
     '# note, this is the local version',
   ].join(' ');
 
-const getDockerCommand = ({ id, projectId }) =>
+const getCommand = ({ id, projectId }) =>
   [
-    'curl https://install.deviceplane.com',
+    'curl https://downloads.deviceplane.com/install.sh',
     '|',
     `VERSION=${config.agentVersion}`,
     `PROJECT=${projectId}`,
@@ -73,7 +73,7 @@ const AddDevice = ({
             <Text marginBottom={2} fontWeight={1}>
               Run the following command on the device you want to register:
             </Text>
-            <Code>{getDockerCommand(selection.value)}</Code>
+            <Code>{getCommand(selection.value)}</Code>
           </>
         ) : (
           <>
