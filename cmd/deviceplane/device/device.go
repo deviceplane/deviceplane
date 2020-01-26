@@ -115,12 +115,6 @@ func deviceSSHAction(c *kingpin.ParseContext) error {
 
 		port := strconv.Itoa(listener.Addr().(*net.TCPAddr).Port)
 
-		var trailingArgs = []string{}
-		nextArg := c.Next()
-		for nextArg != nil && nextArg.Value != "" {
-			trailingArgs = append(trailingArgs, nextArg.Value)
-		}
-
 		sshArguments := append([]string{
 			"-p", port,
 			"-o",
@@ -128,7 +122,7 @@ func deviceSSHAction(c *kingpin.ParseContext) error {
 			"127.0.0.1",
 			"-o",
 			fmt.Sprintf("ConnectTimeout=%d", *sshTimeoutFlag),
-		}, trailingArgs...)
+		}, *sshCommandsArg...)
 
 		cmd := exec.CommandContext(
 			ctx,

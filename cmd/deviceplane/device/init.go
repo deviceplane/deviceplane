@@ -18,6 +18,8 @@ var (
 
 	deviceOutputFlag *string = &[]string{""}[0]
 
+	sshCommandsArg *[]string = &[][]string{[]string{}}[0]
+
 	config *global.Config
 )
 
@@ -41,6 +43,7 @@ func Initialize(c *global.Config) {
 		addDeviceArg(deviceSSHCmd)
 		deviceSSHCmd.Flag("timeout", "Maximum length to attempt establishing a connection.").Default("60").IntVar(sshTimeoutFlag)
 		deviceSSHCmd.Action(deviceSSHAction)
+		deviceSSHCmd.Arg("ssh-commands", "If provided, runs commands, prints output, and exits after SSH completes.").StringsVar(sshCommandsArg)
 	})
 
 	deviceInspectCmd := deviceCmd.Command("inspect", "Inspect a device's properties and labels.")
