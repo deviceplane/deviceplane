@@ -2,13 +2,25 @@
 
 [![CircleCI](https://circleci.com/gh/deviceplane/deviceplane.svg?style=svg)](https://circleci.com/gh/deviceplane/deviceplane)
 
-Deviceplane is an open source platform for managing IoT devices and edge servers with a modern developer experience. Beyond remote updates, Deviceplane handles the entire lifecycle of managing remote devices - that’s everything from provisioning to access management and monitoring.
+Deviceplane is an open source device management tool for embedded systems and edge computing. It helps solve various infrastructure problems relating to remote device management such as:
 
-A hosted version of Deviceplane is available at [https://cloud.deviceplane.com/](https://cloud.deviceplane.com/).
+- Network connectivity and SSH access
+- Orchestrating and deployment of remote updates
+- Host and application monitoring
+- Device organization: naming, labeling, searching, and filtering of devices
+- Access and security controls
 
-We also have documentation for self-hosting Deviceplane available at [https://deviceplane.com/docs/self-hosted/](https://deviceplane.com/docs/self-hosted/).
+Deviceplane integrates with your device by running a lightweight static binary via your system supervisor. It can be used with nearly any Linux distro, which means you can continue using Ubuntu, Raspbian, a Yocto build, or whatever else fits your needs.
 
-This repository contains all Deviceplane code including the backend (controller), agent, and CLI.
+Deviceplane is completely open source and all of our code, including the code for the backend and UI, can be found in this repo. The architecture of Deviceplane is simple and designed to be very easy to run and manage. The backend can even be run with one simple Docker command:
+
+```
+docker run -d --restart=unless-stopped -p 8080:8080 deviceplane/deviceplane
+```
+
+For more information on hosting Deviceplane yourself, check out our [self-hosted docs](https://deviceplane.com/docs/self-hosted/).
+
+If you'd rather jump right into managing devices there's a hosted version of Deviceplane available at [https://cloud.deviceplane.com/](https://cloud.deviceplane.com/).
 
 ## Local Development
 
