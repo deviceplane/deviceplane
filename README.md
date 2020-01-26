@@ -30,7 +30,7 @@ Run the controller with `go run cmd/controller/main.go --allowed-origin "http://
 
 Run the UI with `npm start` in the `ui/` folder. The login is `email@example.com` / `password`.
 
-To run the agent navigate to the "Add Device" button in the UI. A command to run the agent locally will be generated.
+To run the agent navigate to the "Add Device" button in the UI. A command to run the agent locally will be generated and printed to the console.
 
 ## Releasing
 
