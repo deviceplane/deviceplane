@@ -11,6 +11,7 @@ Container.defaultProps = { borderRadius: 1, borderColor: 'white' };
 
 const Cell = styled(Row)`
   flex: 1 0 0%;
+  min-width: 50px;
   box-sizing: content-box;
   padding: 8px 16px;
 `;

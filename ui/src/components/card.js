@@ -11,33 +11,32 @@ const Container = styled(Column)`
   overflow: ${props =>
     props.overflow ? `${props.overflow} !important` : 'initial'};
   transition: all 250ms;
+  width: 100%;
 
   ${variant({
     variants: {
       small: {
-        width: 11,
+        maxWidth: 11,
       },
       medium: {
-        width: 13,
+        maxWidth: 13,
       },
       large: {
-        width: 14,
+        maxWidth: 14,
       },
       xlarge: {
-        width: 15,
+        maxWidth: 15,
       },
       xxlarge: {
-        width: 16,
+        maxWidth: 16,
       },
       full: {
-        width: 'unset',
         alignSelf: 'stretch',
       },
     },
   })}
 
   @media (max-width: 600px) {
-    width: 100%;
     border-radius: 0;
   }
 `;
@@ -77,7 +76,11 @@ const Card = ({
       {top}
       {title && (
         <Column marginBottom={6} borderColor="white">
-          <Row alignItems="center" justifyContent="space-between">
+          <Row
+            alignItems="center"
+            justifyContent="space-between"
+            flexWrap="wrap"
+          >
             <Row>
               <Text fontSize={5} fontWeight={2} marginRight={6}>
                 {title}
