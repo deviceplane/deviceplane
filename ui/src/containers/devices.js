@@ -244,7 +244,7 @@ const Devices = ({ route }) => {
             <Input
               bg="black"
               placeholder="Search devices by name or labels"
-              paddingLeft={8}
+              paddingLeft={7}
               value={searchInput}
               width="300px"
               onChange={e => setSearchInput(e.target.value)}
