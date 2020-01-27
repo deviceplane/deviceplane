@@ -7,8 +7,8 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
-func hostMetricsAction(c *kingpin.ParseContext) error {
-	metrics, err := config.APIClient.GetDeviceHostMetrics(context.TODO(), *config.Flags.Project, *deviceArgVar)
+func deviceMetricsAction(c *kingpin.ParseContext) error {
+	metrics, err := config.APIClient.GetDeviceMetrics(context.TODO(), *config.Flags.Project, *deviceArgVar)
 	if err != nil {
 		return err
 	}
@@ -17,8 +17,8 @@ func hostMetricsAction(c *kingpin.ParseContext) error {
 	return nil
 }
 
-func userDefinedMetricsAction(c *kingpin.ParseContext) error {
-	metrics, err := config.APIClient.GetDeviceServiceMetrics(
+func serviceMetricsAction(c *kingpin.ParseContext) error {
+	metrics, err := config.APIClient.GetServiceMetrics(
 		context.TODO(),
 		*config.Flags.Project,
 		*deviceArgVar, *metricsApplicationArgVar, *metricsServiceArgVar,

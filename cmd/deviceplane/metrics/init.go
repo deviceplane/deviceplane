@@ -23,12 +23,12 @@ func Initialize(c *global.Config) {
 
 	metricsCmd := c.App.Command("metrics", "Get device and service metrics.")
 
-	metricsHostCmd := metricsCmd.Command("host", "Get metrics that tell you about the device itself.")
-	addDeviceArg(metricsHostCmd)
-	metricsHostCmd.Action(hostMetricsAction)
+	metricsDeviceCmd := metricsCmd.Command("device", "Get metrics on the device itself.")
+	addDeviceArg(metricsDeviceCmd)
+	metricsDeviceCmd.Action(deviceMetricsAction)
 
-	metricsUserDefinedCmd := metricsCmd.Command("user-defined", "Get user-defined metrics from a device.")
-	metricsApplicationArg := metricsUserDefinedCmd.Arg("application", "Application name.").Required()
+	metricsServiceCmd := metricsCmd.Command("service", "Get metrics on a service running on a device.")
+	metricsApplicationArg := metricsServiceCmd.Arg("application", "Application name.").Required()
 	metricsApplicationArg.StringVar(metricsApplicationArgVar)
 	metricsApplicationArg.HintAction(func() []string {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
@@ -45,7 +45,7 @@ func Initialize(c *global.Config) {
 		fmt.Println("-") // TODO: find out kingpin won't autocomplete without this
 		return appnames
 	})
-	metricsServiceArg := metricsUserDefinedCmd.Arg("service", "The name of the service exposing the metrics endpoint.").Required()
+	metricsServiceArg := metricsServiceCmd.Arg("service", "The name of the service exposing the metrics endpoint.").Required()
 	metricsServiceArg.StringVar(metricsServiceArgVar)
 	metricsServiceArg.HintAction(func() []string {
 		if metricsApplicationArgVar == nil || *metricsApplicationArgVar == "" {
@@ -66,8 +66,8 @@ func Initialize(c *global.Config) {
 		fmt.Println("-") // TODO: find out kingpin won't autocomplete without this
 		return services
 	})
-	addDeviceArg(metricsUserDefinedCmd)
-	metricsUserDefinedCmd.Action(userDefinedMetricsAction)
+	addDeviceArg(metricsServiceCmd)
+	metricsServiceCmd.Action(serviceMetricsAction)
 }
 
 func addDeviceArg(cmd *kingpin.CmdClause) *kingpin.ArgClause {

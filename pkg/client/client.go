@@ -127,7 +127,7 @@ func (c *Client) GetDevice(ctx context.Context, project, device string) (*models
 	return &d, nil
 }
 
-func (c *Client) GetDeviceHostMetrics(ctx context.Context, project, device string) (*string, error) {
+func (c *Client) GetDeviceMetrics(ctx context.Context, project, device string) (*string, error) {
 	var rawOpenMetrics string
 	if err := c.get(ctx, &rawOpenMetrics, projectsURL, project, devicesURL, device, metricsURL, "host"); err != nil {
 		return nil, err
@@ -135,7 +135,7 @@ func (c *Client) GetDeviceHostMetrics(ctx context.Context, project, device strin
 	return &rawOpenMetrics, nil
 }
 
-func (c *Client) GetDeviceServiceMetrics(ctx context.Context, project, device, application, service string) (*string, error) {
+func (c *Client) GetServiceMetrics(ctx context.Context, project, device, application, service string) (*string, error) {
 	var rawOpenMetrics string
 	if err := c.get(ctx, &rawOpenMetrics, projectsURL, project, devicesURL, device, applicationsURL, application, servicesURL, service, metricsURL); err != nil {
 		return nil, err
