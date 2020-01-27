@@ -109,7 +109,6 @@ export const DevicesFilter = props => {
   const resetFilter = () => setFilter([utils.deepClone(defaultCondition)]);
 
   const renderCondition = (condition, index) => {
-    console.log(condition);
     if (condition.type === LabelValueCondition) {
       let cond = condition.params;
       const selectClassName = utils.randomClassName();

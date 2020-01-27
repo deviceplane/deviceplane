@@ -27,7 +27,6 @@ const strHash = str => {
 
 export const labelColor = name => {
   const hash = strHash(name);
-  console.log(hash);
   const index = hash % labelColors.length;
   return labelColors[index];
 };
