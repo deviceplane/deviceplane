@@ -19,19 +19,14 @@ import {
   Text,
   Label,
 } from '../../components/core';
+import { labelColor } from '../../helpers/labels';
 
 const metricsOptions = config.supportedDeviceMetrics.map(value => ({
   label: getMetricLabel(value),
   value,
 }));
 
-const DeviceMetricsForm = ({
-  params,
-  devices,
-  metrics,
-  labelColorMap,
-  close,
-}) => {
+const DeviceMetricsForm = ({ params, devices, metrics, close }) => {
   const { register, handleSubmit, errors, setValue } = useForm({});
   const navigation = useNavigation();
   const [backendError, setBackendError] = useState();
@@ -50,7 +45,7 @@ const DeviceMetricsForm = ({
           label,
           value: label,
           props: {
-            color: labelColorMap[label],
+            color: labelColor(label),
           },
         }),
         []
@@ -152,7 +147,7 @@ const DeviceMetricsForm = ({
           />
         ))}
 
-        <Button title="Add" type="submit" />
+        <Button marginTop={3} title="Add" type="submit" />
       </Form>
     </Card>
   );

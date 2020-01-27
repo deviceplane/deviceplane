@@ -19,6 +19,7 @@ const Input = styled.input.attrs(props => ({
   transition: ${props => props.theme.transitions[0]};
   width: 100%;
   padding: 12px;
+  font-weight: 300;
   caret-color: ${props => props.theme.colors.primary};
 
   &:focus {
@@ -43,7 +44,7 @@ const Input = styled.input.attrs(props => ({
 `;
 
 Input.defaultProps = {
-  color: 'grays.12',
+  color: 'white',
   bg: 'grays.0',
   borderRadius: 1,
   fontSize: 2,

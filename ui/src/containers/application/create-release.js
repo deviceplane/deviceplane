@@ -66,7 +66,7 @@ const CreateRelease = ({
           setValue={setValue}
           errors={errors.rawConfig}
         />
-        <Button type="submit" title="Create" />
+        <Button marginTop={3} type="submit" title="Create" />
       </Form>
       <Row marginTop={4}>
         <Button

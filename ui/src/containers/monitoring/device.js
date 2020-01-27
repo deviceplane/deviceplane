@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Icon, Tooltip, toaster } from 'evergreen-ui';
 import { useNavigation } from 'react-navi';
 
-import theme, { labelColors } from '../../theme';
+import theme from '../../theme';
 import api from '../../api';
 import Card from '../../components/card';
 import Table from '../../components/table';
@@ -19,18 +19,15 @@ import {
   Checkbox,
   Select,
 } from '../../components/core';
-import { buildLabelColorMap } from '../../helpers/labels';
 import { getMetricLabel } from '../../helpers/metrics';
 import DeviceMetricsForm from './device-metrics-form';
+import { labelColor } from '../../helpers/labels';
 
 const Device = ({
   route: {
     data: { params, devices, metrics },
   },
 }) => {
-  const [labelColorMap] = useState(
-    buildLabelColorMap({}, labelColors, devices)
-  );
   const [metricToDelete, setMetricToDelete] = useState();
   const [showMetricsForm, setShowMetricsForm] = useState();
   const [editRow, setEditRow] = useState();
@@ -50,7 +47,7 @@ const Device = ({
           label,
           value: label,
           props: {
-            color: labelColorMap[label],
+            color: labelColor(label),
           },
         }),
         []
@@ -123,7 +120,7 @@ const Device = ({
               value={editRow.labels.map(label => ({
                 label,
                 value: label,
-                props: { color: labelColorMap[label] },
+                props: { color: labelColor(label) },
               }))}
               options={labelsOptions}
               multiComponent={DeviceLabelMulti}
@@ -155,11 +152,7 @@ const Device = ({
               style={{ cursor: 'pointer' }}
             >
               {value.map(label => (
-                <DeviceLabelKey
-                  key={label}
-                  label={label}
-                  color={labelColorMap[label]}
-                />
+                <DeviceLabelKey key={label} label={label} />
               ))}
             </Row>
           ),
@@ -271,7 +264,6 @@ const Device = ({
             metrics={metrics}
             devices={devices}
             close={hideMetricsForm}
-            labelColorMap={labelColorMap}
           />
         </Popup>
         <Popup show={!!metricToDelete} onClose={() => setMetricToDelete(null)}>

@@ -102,7 +102,7 @@ const PasswordRecovery = ({
             errors={errors.password}
             hint="Password must be at least 8 characters."
           />
-          <Button title="Submit" type="submit" />
+          <Button marginTop={3} title="Submit" type="submit" />
         </Form>
       </Card>
     </Column>

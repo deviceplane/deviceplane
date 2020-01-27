@@ -100,7 +100,12 @@ const DeviceSettings = ({
             ref={register}
             errors={errors.name}
           />
-          <Button type="submit" title="Update" disabled={!formState.dirty} />
+          <Button
+            marginTop={3}
+            type="submit"
+            title="Update"
+            disabled={!formState.dirty}
+          />
         </Form>
       </Card>
       <Popup show={showPopup} onClose={() => setShowPopup(false)}>

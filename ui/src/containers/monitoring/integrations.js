@@ -72,7 +72,12 @@ const Integrations = ({
           ref={register}
           errors={errors.datadogApiKey}
         />
-        <Button type="submit" title="Update" disabled={!formState.dirty} />
+        <Button
+          marginTop={3}
+          type="submit"
+          title="Update"
+          disabled={!formState.dirty}
+        />
       </Form>
     </Card>
   );

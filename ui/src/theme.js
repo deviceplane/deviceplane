@@ -1,5 +1,25 @@
 const breakpoints = ['600px', '800px', '1000px'];
 
+const space = [
+  0,
+  4,
+  8,
+  12,
+  16,
+  24,
+  32,
+  48,
+  64,
+  96,
+  128,
+  256,
+  384,
+  448,
+  512,
+  768,
+  1024,
+];
+
 const colors = {
   primary: '#6fccff',
 
@@ -38,25 +58,9 @@ const colors = {
 export default {
   colors,
 
-  space: [
-    0,
-    4,
-    8,
-    12,
-    16,
-    24,
-    32,
-    40,
-    48,
-    64,
-    128,
-    256,
-    384,
-    448,
-    512,
-    768,
-    1024,
-  ],
+  space,
+
+  sizes: space,
 
   fonts: {
     default: `Rubik,Roboto,sans-serif`,
@@ -69,13 +73,9 @@ export default {
 
   radii: [0, 4, 6, 8, 12, 16, 9999, '100%'],
 
-  sizes: [8, 12, 16, 24, 32, 40, 48, 64, 128, 256, 384, 448, 512, 768, 1024],
-
   breakpoints,
 
   borders: [`1px solid ${colors.primary}`, `3px solid ${colors.primary}`],
-
-  shadows: [`0 2px 4px black`, `0 3px 6px black`],
 
   mediaQueries: {
     small: `@media screen and (min-width: ${breakpoints[0]})`,
@@ -87,13 +87,26 @@ export default {
 };
 
 export const labelColors = [
-  '#A682FF',
-  '#EB8258',
-  '#FFD131',
-  '#BAD4AA',
-  '#9DFFF9',
-  '#F2BEFC',
-  '#FCFF6C',
-  '#BFD7EA',
-  '#D741A7',
+  '#75c800',
+  '#599900',
+  '#c5b500',
+  '#978b00',
+  '#1fcf0f',
+  '#0d9f00',
+  '#e4a679',
+  '#d36d24',
+  '#00c9b8',
+  '#009a8d',
+  '#ec9ea5',
+  '#df5f6a',
+  '#eb9ac9',
+  '#dd57a5',
+  '#7dbae5',
+  '#2d8fd5',
+  '#e498ea',
+  '#d153dd',
+  '#c4a6ed',
+  '#a172e3',
+  '#a9aeee',
+  '#7780e4',
 ];

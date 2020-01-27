@@ -96,7 +96,7 @@ const AddMember = ({
             setValue={setValue}
           />
         ))}
-        <Button type="submit" title="Add Member" />
+        <Button marginTop={3} type="submit" title="Add Member" />
       </Form>
       <Row marginTop={4}>
         <Button

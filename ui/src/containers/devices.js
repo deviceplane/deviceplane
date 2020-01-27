@@ -3,7 +3,7 @@ import { useNavigation } from 'react-navi';
 import { Icon } from 'evergreen-ui';
 
 import api from '../api';
-import theme, { labelColors } from '../theme';
+import theme from '../theme';
 import Layout from '../components/layout';
 import Card from '../components/card';
 import Table from '../components/table';
@@ -15,7 +15,7 @@ import {
 } from '../components/devices-filter';
 import { DevicesFilterButtons } from '../components/devices-filter-buttons';
 import DeviceStatus from '../components/device-status';
-import { buildLabelColorMap, renderLabels } from '../helpers/labels';
+import { renderLabels } from '../helpers/labels';
 
 import storage from '../storage';
 import utils from '../utils';
@@ -35,9 +35,6 @@ const Devices = ({ route }) => {
   );
   const [orderedColumn, setOrderedColumn] = useState();
   const [order, setOrder] = useState();
-  const [labelColorMap, setLabelColorMap] = useState(
-    buildLabelColorMap({}, labelColors, devices)
-  );
   const [filterToEdit, setFilterToEdit] = useState(null);
   const [searchInput, setSearchInput] = useState('');
   const [searchFocused, setSearchFocused] = useState();
@@ -104,7 +101,7 @@ const Devices = ({ route }) => {
         Header: 'Labels',
         accessor: 'labels',
         Cell: ({ cell: { value } }) =>
-          value ? renderLabels(value, labelColorMap, addLabelFilter) : null,
+          value ? renderLabels(value, addLabelFilter) : null,
         style: {
           flex: 2,
           overflow: 'hidden',
@@ -122,7 +119,6 @@ const Devices = ({ route }) => {
         queryString,
       });
       setDevices(data);
-      setLabelColorMap(buildLabelColorMap(labelColorMap, labelColors, data));
     } catch (error) {
       console.log(error);
     }
@@ -144,7 +140,9 @@ const Devices = ({ route }) => {
     const queryString = '?' + query.join('&');
 
     if (query.length) {
-      window.history.replaceState({}, '', queryString);
+      window.history.replaceState(null, null, queryString);
+    } else {
+      window.history.replaceState(null, null, window.location.pathname);
     }
 
     fetchDevices(queryString);

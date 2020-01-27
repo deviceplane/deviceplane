@@ -18,6 +18,7 @@ import {
   Text,
   Checkbox,
 } from '../../components/core';
+import { labelColor } from '../../helpers/labels';
 
 const ServiceMetricsForm = ({
   params,
@@ -27,7 +28,6 @@ const ServiceMetricsForm = ({
   application,
   service,
   close,
-  labelColorMap,
 }) => {
   const { register, handleSubmit, errors, setValue } = useForm({});
   const [backendError, setBackendError] = useState();
@@ -47,7 +47,7 @@ const ServiceMetricsForm = ({
           label,
           value: label,
           props: {
-            color: labelColorMap[label],
+            color: labelColor(label),
           },
         }),
         []
@@ -170,7 +170,7 @@ const ServiceMetricsForm = ({
           />
         ))}
 
-        <Button title="Add" type="submit" />
+        <Button marginTop={3} title="Add" type="submit" />
       </Form>
     </Card>
   );

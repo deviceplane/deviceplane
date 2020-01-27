@@ -14,19 +14,19 @@ const Container = styled(Column)`
   ${variant({
     variants: {
       small: {
-        width: 9,
-      },
-      medium: {
         width: 11,
       },
-      large: {
-        width: 12,
-      },
-      xlarge: {
+      medium: {
         width: 13,
       },
-      xxlarge: {
+      large: {
         width: 14,
+      },
+      xlarge: {
+        width: 15,
+      },
+      xxlarge: {
+        width: 16,
       },
       full: {
         width: 'unset',
@@ -60,20 +60,20 @@ const Card = ({
       color="white"
       variant={size}
       borderRadius={2}
-      padding={6}
+      padding={7}
       border={border ? 1 : undefined}
       borderColor="white"
       disabled={disabled}
       {...props}
     >
       {logo && (
-        <Link href="https://deviceplane.com" marginX="auto" marginBottom={6}>
+        <Link href="https://deviceplane.com" marginX="auto" marginBottom={8}>
           <Logo size={50} />
         </Link>
       )}
       {top}
       {title && (
-        <Column marginBottom={5} borderColor="white">
+        <Column marginBottom={6} borderColor="white">
           <Row alignItems="center" justifyContent="space-between">
             <Row>
               <Text fontSize={5} fontWeight={2}>

@@ -80,7 +80,7 @@ const ServiceMetricsSettings = ({
           ref={register}
           errors={errors.path}
         />
-        <Button title="Update" type="submit" />
+        <Button marginTop={3} title="Update" type="submit" />
       </Form>
     </Card>
   );

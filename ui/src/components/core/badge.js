@@ -6,7 +6,7 @@ const Badge = styled.div`
   text-transform: uppercase;
   border-radius: 6px;
   ${color} ${space} ${typography} ${border};
-  padding: 2px 4px;
+  padding: 4px 6px;
 `;
 
 Badge.defaultProps = {

@@ -59,7 +59,7 @@ const ChangePassword = ({ close }) => {
           errors={errors.password}
           hint="Password must be at least 8 characters."
         />
-        <Button title="Change Password" type="submit" />
+        <Button marginTop={3} title="Change Password" type="submit" />
       </Form>
     </Card>
   );

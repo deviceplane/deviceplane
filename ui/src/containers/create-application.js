@@ -65,7 +65,7 @@ const CreateApplication = ({
             ref={register}
             errors={errors.description}
           />
-          <Button type="submit" title="Create Application" />
+          <Button marginTop={3} type="submit" title="Create Application" />
           <Row marginTop={4}>
             <Button
               title="Cancel"

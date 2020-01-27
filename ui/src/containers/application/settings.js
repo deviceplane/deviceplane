@@ -101,7 +101,12 @@ const ApplicationSettings = ({
             ref={register}
             errors={errors.description}
           />
-          <Button title="Update" type="submit" disabled={!formState.dirty} />
+          <Button
+            marginTop={3}
+            title="Update"
+            type="submit"
+            disabled={!formState.dirty}
+          />
         </Form>
       </Card>
       <Popup show={showDeletePopup} onClose={() => setShowDeletePopup(false)}>

@@ -125,7 +125,7 @@ const Signup = () => {
           />
           <Button title="Sign up" justifyContent="center" />
         </Form>
-        <Text marginTop={5}>
+        <Text marginTop={5} fontSize={1} fontWeight={0}>
           By signing up you agree to the{' '}
           <Link href="https://deviceplane.com/legal/terms">
             Terms of Service
@@ -134,7 +134,6 @@ const Signup = () => {
           <Link href="https://deviceplane.com/legal/privacy">
             Privacy Policy
           </Link>
-          .
         </Text>
       </Card>
     </Column>

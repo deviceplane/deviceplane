@@ -3,8 +3,7 @@ import { useNavigation } from 'react-navi';
 import { toaster, Icon, Tooltip } from 'evergreen-ui';
 
 import api from '../../api';
-import theme, { labelColors } from '../../theme';
-import { buildLabelColorMap } from '../../helpers/labels';
+import theme from '../../theme';
 import Card from '../../components/card';
 import Table from '../../components/table';
 import {
@@ -19,6 +18,7 @@ import {
   Select,
   Button,
 } from '../../components/core';
+import { labelColor } from '../../helpers/labels';
 
 const supportedMetrics = [
   {
@@ -34,9 +34,6 @@ const Project = ({
     data: { params, metrics, devices },
   },
 }) => {
-  const [labelColorMap] = useState(
-    buildLabelColorMap({}, labelColors, devices)
-  );
   const [editRow, setEditRow] = useState();
   const tableData = useMemo(
     () =>
@@ -74,7 +71,7 @@ const Project = ({
           label,
           value: label,
           props: {
-            color: labelColorMap[label],
+            color: labelColor(label),
           },
         }),
         []
@@ -151,7 +148,7 @@ const Project = ({
               value={editRow.labels.map(label => ({
                 label,
                 value: label,
-                props: { color: labelColorMap[label] },
+                props: { color: labelColor(label) },
               }))}
               options={labelsOptions}
               multiComponent={DeviceLabelMulti}
@@ -183,11 +180,7 @@ const Project = ({
               style={{ cursor: 'pointer' }}
             >
               {value.map(label => (
-                <DeviceLabelKey
-                  key={label}
-                  label={label}
-                  color={labelColorMap[label]}
-                />
+                <DeviceLabelKey key={label} label={label} />
               ))}
             </Row>
           ),

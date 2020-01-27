@@ -2,8 +2,7 @@ import React, { useState, useMemo } from 'react';
 import moment from 'moment';
 import { useNavigation } from 'react-navi';
 
-import { labelColors } from '../theme';
-import { buildLabelColorMap, renderLabels } from '../helpers/labels';
+import { renderLabels } from '../helpers/labels';
 import Layout from '../components/layout';
 import Card from '../components/card';
 import Table from '../components/table';
@@ -15,9 +14,6 @@ const Provisioning = ({
   },
 }) => {
   const navigation = useNavigation();
-  const [labelColorMap] = useState(
-    buildLabelColorMap({}, labelColors, registrationTokens)
-  );
   const columns = useMemo(
     () => [
       { Header: 'Name', accessor: 'name' },
@@ -51,7 +47,7 @@ const Provisioning = ({
         Header: 'Labels',
         accessor: 'labels',
         Cell: ({ row: { original } }) =>
-          original.labels ? renderLabels(original.labels, labelColorMap) : null,
+          original.labels ? renderLabels(original.labels) : null,
         style: {
           flex: 2,
         },

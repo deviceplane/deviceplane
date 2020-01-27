@@ -84,7 +84,12 @@ const Profile = ({ close }) => {
           ref={register}
           errors={errors.company}
         />
-        <Button title="Update" type="submit" disabled={!formState.dirty} />
+        <Button
+          marginTop={3}
+          title="Update"
+          type="submit"
+          disabled={!formState.dirty}
+        />
       </Form>
     </Card>
   );

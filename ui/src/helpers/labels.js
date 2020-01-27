@@ -1,37 +1,33 @@
 import React from 'react';
 
+import { labelColors } from '../theme';
 import DeviceLabel from '../components/device-label';
 import { Row } from '../components/core';
 
-export function buildLabelColorMap(oldLabelColorMap, labelColors, items) {
-  var x = [];
-  items.forEach(item => {
-    Object.keys(item.labels).forEach(label => {
-      x.push(label);
-    });
-  });
-  const labelKeys = [...new Set(x)].sort();
+export const renderLabels = (labels, onClick = () => {}) => (
+  <Row flexWrap="wrap" overflow="hidden">
+    {Object.keys(labels).map(key => (
+      <DeviceLabel
+        key={key}
+        label={{ key, value: labels[key] }}
+        color={labelColor(key)}
+        onClick={onClick}
+      />
+    ))}
+  </Row>
+);
 
-  var labelColorMap = Object.assign({}, oldLabelColorMap);
-  labelKeys.forEach((key, i) => {
-    if (!labelColorMap[key]) {
-      labelColorMap[key] = labelColors[i % (labelColors.length - 1)];
-    }
-  });
-  return labelColorMap;
-}
+const strHash = str => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash += str.charCodeAt(i);
+  }
+  return hash;
+};
 
-export function renderLabels(labels, labelColorMap, onClick = () => {}) {
-  return (
-    <Row flexWrap="wrap" overflow="hidden">
-      {Object.keys(labels).map(key => (
-        <DeviceLabel
-          key={key}
-          label={{ key, value: labels[key] }}
-          color={labelColorMap[key]}
-          onClick={onClick}
-        />
-      ))}
-    </Row>
-  );
-}
+export const labelColor = name => {
+  const hash = strHash(name);
+  console.log(hash);
+  const index = hash % labelColors.length;
+  return labelColors[index];
+};

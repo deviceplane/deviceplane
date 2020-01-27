@@ -76,7 +76,7 @@ const CreateRole = ({
           setValue={setValue}
           errors={errors.config}
         />
-        <Button title="Create" type="submit" />
+        <Button marginTop={3} title="Create" type="submit" />
       </Form>
       <Row marginTop={4}>
         <Button

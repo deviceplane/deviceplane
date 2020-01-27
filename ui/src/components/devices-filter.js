@@ -109,6 +109,7 @@ export const DevicesFilter = props => {
   const resetFilter = () => setFilter([utils.deepClone(defaultCondition)]);
 
   const renderCondition = (condition, index) => {
+    console.log(condition);
     if (condition.type === LabelValueCondition) {
       let cond = condition.params;
       const selectClassName = utils.randomClassName();
@@ -133,7 +134,7 @@ export const DevicesFilter = props => {
             />
           </Row>
 
-          <Row marginX={2} flex={1}>
+          <Row marginX={2} flex="0 0 130px">
             <Select
               placeholder="Operator"
               className={selectClassName}
@@ -336,11 +337,11 @@ export const DevicesFilter = props => {
           },
         ]}
       >
-        <Column flex={1} marginBottom={5} overflowY="auto" maxHeight="100%">
+        <Column flex={1} overflowY="auto" maxHeight="100%">
           {filter.map((condition, index) => (
             <Group key={index}>
               <Row justifyContent="space-between" alignItems="center">
-                {conditionOptions.length > 1 ? (
+                {conditionOptions.length > 1 && (
                   <Row marginRight={2} flex="0 0 200px">
                     <Select
                       value={condition.options.type}
@@ -356,25 +357,42 @@ export const DevicesFilter = props => {
                               return condition;
                             }
 
-                            let params;
+                            let params, options;
                             switch (option.value) {
-                              case DevicePropertyCondition:
-                                params = DefaultDevicePropertyConditionParams();
-                                break;
                               case LabelValueCondition:
                                 params = DefaultLabelValueConditionParams();
+                                options = {
+                                  operator: {
+                                    value: OperatorIs,
+                                    label: OperatorIs,
+                                  },
+                                };
                                 break;
                               case LabelExistenceCondition:
                                 params = DefaultLabelExistenceConditionParams();
+                                options = {
+                                  operator: {
+                                    label: OperatorExists,
+                                    value: OperatorExists,
+                                  },
+                                };
                                 break;
+                              case DevicePropertyCondition:
                               default:
-                                option.value = DevicePropertyCondition;
                                 params = DefaultDevicePropertyConditionParams();
+                                options = {
+                                  operator: {
+                                    value: OperatorIs,
+                                    label: OperatorIs,
+                                  },
+                                };
+                                break;
                             }
                             condition = {
                               type: option.value,
                               options: {
                                 type: option,
+                                ...options,
                               },
                               params,
                             };
@@ -385,7 +403,8 @@ export const DevicesFilter = props => {
                       className={selectClassName}
                     />
                   </Row>
-                ) : null}
+                )}
+
                 {renderCondition(condition, index)}
 
                 {index > 0 && (
@@ -414,6 +433,7 @@ export const DevicesFilter = props => {
         </Column>
 
         <Button
+          marginTop={3}
           title={props.filter ? 'Edit Filter' : 'Apply Filter'}
           onClick={() => {
             const validFilter = filter.filter(({ type, params }) => {

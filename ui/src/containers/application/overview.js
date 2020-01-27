@@ -18,7 +18,7 @@ const ApplicationOverview = ({
       <Group>
         <Label>Scheduling Rule</Label>
         {schedulingRule.length ? (
-          <Row bg="grays.0" borderRadius={1} minHeight={7} padding={2}>
+          <Row bg="grays.0" borderRadius={1} minHeight={9} padding={2}>
             <DevicesFilterButtons
               query={schedulingRule}
               canRemoveFilter={false}

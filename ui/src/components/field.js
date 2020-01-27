@@ -8,18 +8,6 @@ import theme from '../theme';
 import utils from '../utils';
 import { Group, Row, Column, Input, Textarea, Label, Text } from './core';
 
-const Container = styled(Group)`
-  margin-bottom: ${props =>
-    props.multi
-      ? props.theme.sizes[2]
-      : props.theme.sizes[Group.defaultProps.marginBottom]}px;
-
-  &:last-of-type {
-    margin-bottom: ${props =>
-      props.theme.sizes[Group.defaultProps.marginBottom]}px !important;
-  }
-`;
-
 const PasswordButton = styled(Row)`
   user-select: none;
   cursor: pointer;
@@ -59,8 +47,9 @@ const Field = forwardRef(
       register,
       onChangeEvent,
       autoComplete = 'off',
-      multi,
       errors = [],
+      multi,
+      marginBottom = Group.defaultProps.marginBottom,
       ...props
     },
     ref
@@ -101,7 +90,7 @@ const Field = forwardRef(
     };
 
     return (
-      <Container multi={multi}>
+      <Column marginBottom={multi ? 4 : marginBottom}>
         {(label || description) && (
           <Column marginBottom={Label.defaultProps.marginBottom}>
             <Row justifyContent="space-between">
@@ -156,7 +145,7 @@ const Field = forwardRef(
             </Text>
           </Row>
         ))}
-      </Container>
+      </Column>
     );
   }
 );

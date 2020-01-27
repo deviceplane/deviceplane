@@ -98,7 +98,7 @@ const Scheduling = ({
       ]}
     >
       <Alert show={backendError} variant="error" description={backendError} />
-      <Row bg="grays.0" borderRadius={1} minHeight={7} padding={2}>
+      <Row bg="grays.0" borderRadius={1} minHeight={9} padding={2}>
         {schedulingRule.length ? (
           <DevicesFilterButtons
             canRemoveFilter

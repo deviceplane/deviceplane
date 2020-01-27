@@ -3,9 +3,8 @@ import { useNavigation } from 'react-navi';
 import { Tooltip, Icon, toaster } from 'evergreen-ui';
 
 import storage from '../../storage';
-import theme, { labelColors } from '../../theme';
+import theme from '../../theme';
 import api from '../../api';
-import { buildLabelColorMap } from '../../helpers/labels';
 import Card from '../../components/card';
 import Table from '../../components/table';
 import Popup from '../../components/popup';
@@ -16,6 +15,7 @@ import {
 import { Button, Row, Text, Select, Checkbox } from '../../components/core';
 import ServiceMetricsForm from './service-metrics-form';
 import ServiceMetricsSettings from './service-metrics-settings';
+import { labelColor } from '../../helpers/labels';
 
 const Service = ({
   route: {
@@ -24,9 +24,6 @@ const Service = ({
 }) => {
   const [selection, setSelection] = useState(
     storage.get('selectedService', params.project)
-  );
-  const [labelColorMap] = useState(
-    buildLabelColorMap({}, labelColors, devices)
   );
   const [showMetricsForm, setShowMetricsForm] = useState();
   const [showSettings, setShowSettings] = useState();
@@ -47,7 +44,7 @@ const Service = ({
           label,
           value: label,
           props: {
-            color: labelColorMap[label],
+            color: labelColor(label),
           },
         }),
         []
@@ -168,7 +165,7 @@ const Service = ({
               value={editRow.labels.map(label => ({
                 label,
                 value: label,
-                props: { color: labelColorMap[label] },
+                props: { color: labelColor(label) },
               }))}
               multiComponent={DeviceLabelMulti}
               onChange={(value, props) => {
@@ -202,7 +199,7 @@ const Service = ({
                 <DeviceLabelKey
                   key={label}
                   label={label}
-                  color={labelColorMap[label]}
+                  color={labelColor(label)}
                 />
               ))}
             </Row>
@@ -307,9 +304,17 @@ const Service = ({
     [applications]
   );
 
+  let metricEndpointConfigs;
+  if (selection && selection.application) {
+    const app = applications.find(({ id }) => id === selection.application.id);
+    if (app) {
+      metricEndpointConfigs = app.metricEndpointConfigs;
+    }
+  }
+
   return (
     <>
-      <Row marginBottom={4} width={9}>
+      <Row marginBottom={4} width={11}>
         <Select
           variant="black"
           onChange={setSelection}
@@ -358,11 +363,7 @@ const Service = ({
             selection && selection.application && selection.application.id
           }
           service={selection && selection.service}
-          metricEndpointConfigs={
-            selection &&
-            applications.find(({ id }) => id === selection.application.id)
-              .metricEndpointConfigs
-          }
+          metricEndpointConfigs={metricEndpointConfigs}
           close={hideSettings}
         />
       </Popup>
@@ -379,7 +380,6 @@ const Service = ({
           application={selection && selection.application}
           service={selection && selection.service}
           close={hideMetricsForm}
-          labelColorMap={labelColorMap}
         />
       </Popup>
       <Popup show={!!metricToDelete} onClose={clearMetricToDelete}>

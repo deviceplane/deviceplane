@@ -1,12 +1,13 @@
 import React from 'react';
 import { Icon } from 'evergreen-ui';
+
+import theme from '../theme';
 import {
   LabelValueCondition,
   LabelExistenceCondition,
   DevicePropertyCondition,
 } from './devices-filter';
-
-import theme from '../theme';
+import { labelColor } from '../helpers/labels';
 import { Row, Text, Button, Badge } from './core';
 
 const ConditionComp = ({ type, params }) => {
@@ -17,13 +18,13 @@ const ConditionComp = ({ type, params }) => {
           <Text
             fontWeight={3}
             marginRight={2}
-            color="primary"
+            color={labelColor(params.key)}
             style={{ textTransform: 'none' }}
           >
             {params.key}
           </Text>
 
-          <Text fontWeight={2} marginRight={2}>
+          <Text fontWeight={1} marginRight={2}>
             {params.operator}
           </Text>
 
@@ -38,15 +39,13 @@ const ConditionComp = ({ type, params }) => {
           <Text
             fontWeight={3}
             marginRight={2}
-            color="primary"
+            color={labelColor(params.key)}
             style={{ textTransform: 'none' }}
           >
             {params.key}
           </Text>
 
-          <Text fontWeight={2} marginRight={2}>
-            {params.operator}
-          </Text>
+          <Text fontWeight={2}>{params.operator}</Text>
         </>
       );
     case DevicePropertyCondition:
@@ -56,7 +55,7 @@ const ConditionComp = ({ type, params }) => {
             {params.property}
           </Text>
 
-          <Text fontWeight={2} marginRight={2}>
+          <Text fontWeight={1} marginRight={2}>
             {params.operator}
           </Text>
 

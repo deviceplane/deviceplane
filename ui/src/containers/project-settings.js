@@ -36,7 +36,7 @@ const ProjectSettings = ({
     validationSchema,
     defaultValues: {
       name: project.name,
-      enableSSHKeys: storage.get('enableSSHKeys', project.name),
+      enableSSHKeys: storage.get('enableSSHKeys', project.name) || false,
     },
   });
   const navigation = useNavigation();
@@ -112,7 +112,12 @@ const ProjectSettings = ({
               register={register}
               setValue={setValue}
             />
-            <Button type="submit" title="Update" disabled={!formState.dirty} />
+            <Button
+              marginTop={3}
+              type="submit"
+              title="Update"
+              disabled={!formState.dirty}
+            />
           </Form>
         </Card>
 
