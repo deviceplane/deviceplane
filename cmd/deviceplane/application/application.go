@@ -42,7 +42,7 @@ func applicationListAction(c *kingpin.ParseContext) error {
 
 	if *applicationOutputFlag == cliutils.FormatTable {
 		table := cliutils.DefaultTable()
-		table.SetHeader([]string{"Name", "Description", "Created At"})
+		table.SetHeader([]string{"Name", "Description", "Created"})
 		for _, app := range applications {
 			table.Append([]string{app.Name, app.Description, cliutils.DurafmtSince(app.CreatedAt).String() + " ago"})
 		}

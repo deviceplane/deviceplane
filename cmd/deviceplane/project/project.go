@@ -16,7 +16,7 @@ func projectListAction(c *kingpin.ParseContext) error {
 
 	if *projectOutputFlag == cliutils.FormatTable {
 		table := cliutils.DefaultTable()
-		table.SetHeader([]string{"Name", "Devices", "Applications", "Created At"})
+		table.SetHeader([]string{"Name", "Devices", "Applications", "Created"})
 		for _, p := range projects {
 			table.Append([]string{
 				p.Name,
