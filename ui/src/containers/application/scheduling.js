@@ -4,8 +4,8 @@ import { useNavigation } from 'react-navi';
 
 import api from '../../api';
 import utils from '../../utils';
-import theme, { labelColors } from '../../theme';
-import { buildLabelColorMap, renderLabels } from '../../helpers/labels';
+import theme from '../../theme';
+import { renderLabels } from '../../helpers/labels';
 import { DevicesFilterButtons } from '../../components/devices-filter-buttons';
 import {
   OperatorIs,
@@ -53,9 +53,6 @@ const Scheduling = ({
   const [searchInput, setSearchInput] = useState('');
   const [searchFocused, setSearchFocused] = useState();
   const [showPreview, setShowPreview] = useState();
-  const [labelColorMap, setLabelColorMap] = useState(
-    buildLabelColorMap({}, labelColors, devices)
-  );
 
   const columns = useMemo(
     () => [
@@ -74,8 +71,7 @@ const Scheduling = ({
       {
         Header: 'Labels',
         accessor: 'labels',
-        Cell: ({ cell: { value } }) =>
-          value ? renderLabels(value, labelColorMap) : null,
+        Cell: ({ cell: { value } }) => (value ? renderLabels(value) : null),
         style: {
           flex: 2,
           overflow: 'hidden',
