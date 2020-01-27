@@ -21,6 +21,7 @@ const (
 	ActionGetLatestRelease             = Action("GetLatestRelease")
 	ActionGetRelease                   = Action("GetRelease")
 	ActionListReleases                 = Action("ListReleases")
+	ActionPreviewApplicationScheduling = Action("PreviewApplicationScheduling")
 	ActionGetDevice                    = Action("GetDevice")
 	ActionListDevices                  = Action("ListDevices")
 	ActionGetImagePullProgress         = Action("GetImagePullProgress")
@@ -86,6 +87,7 @@ var (
 		ActionGetLatestRelease,
 		ActionGetRelease,
 		ActionListReleases,
+		ActionPreviewApplicationScheduling,
 		ActionGetDevice,
 		ActionListDevices,
 		ActionGetImagePullProgress,

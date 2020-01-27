@@ -11,10 +11,11 @@ Container.defaultProps = { borderRadius: 1, borderColor: 'white' };
 
 const Cell = styled(Row)`
   flex: 1 0 0%;
+  box-sizing: content-box;
+  padding: 8px 16px;
 `;
 
 Cell.defaultProps = {
-  padding: 3,
   overflow: 'hidden',
 };
 
@@ -27,7 +28,7 @@ const TableRow = styled(Row)`
   &:hover {
     background-color: ${props =>
       props.selectable
-        ? props.theme.colors.grays[2]
+        ? props.theme.colors.grays[4]
         : props.theme.colors.black};
   }
 `;
@@ -118,7 +119,7 @@ const Table = ({ columns, data, onRowSelect, placeholder, editRow }) => {
         {rows.length === 0 && (
           <Row
             justifyContent="center"
-            padding={3}
+            padding={4}
             borderBottom={0}
             borderColor="grays.1"
           >
@@ -138,14 +139,16 @@ const Table = ({ columns, data, onRowSelect, placeholder, editRow }) => {
               {row.cells.map(cell => (
                 <Cell
                   {...cell.getCellProps()}
-                  style={cell.column.style || {}}
+                  style={{
+                    justifyContent:
+                      isNaN(cell.value) || cell.value === '-'
+                        ? 'flex-start'
+                        : 'flex-end',
+                    ...cell.column.style,
+                  }}
                   overflow={editRow ? 'visible' : 'hidden'}
                 >
-                  {cell.column.Cell ? (
-                    cell.render('Cell')
-                  ) : (
-                    <Text>{cell.value}</Text>
-                  )}
+                  {cell.render('Cell')}
                 </Cell>
               ))}
             </TableRow>

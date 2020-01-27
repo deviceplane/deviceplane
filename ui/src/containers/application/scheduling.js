@@ -1,30 +1,108 @@
-import React, { useState } from 'react';
-import { toaster } from 'evergreen-ui';
+import React, { useState, useEffect, useMemo } from 'react';
+import { toaster, Icon } from 'evergreen-ui';
 import { useNavigation } from 'react-navi';
 
 import api from '../../api';
 import utils from '../../utils';
+import theme, { labelColors } from '../../theme';
+import { buildLabelColorMap, renderLabels } from '../../helpers/labels';
 import { DevicesFilterButtons } from '../../components/devices-filter-buttons';
 import {
+  OperatorIs,
+  OperatorIsNot,
   DevicesFilter,
   LabelValueCondition,
 } from '../../components/devices-filter';
 import Card from '../../components/card';
 import Alert from '../../components/alert';
-import { Button, Row, Text } from '../../components/core';
+import Table from '../../components/table';
+import RadioGroup from '../../components/radio-group';
+import DeviceStatus from '../../components/device-status';
+import Popup from '../../components/popup';
+import {
+  Column,
+  Row,
+  Group,
+  Label,
+  Button,
+  Text,
+  Input,
+  Select,
+  Link,
+} from '../../components/core';
+
+const ScheduleTypeConditional = 'Conditional';
+const ScheduleTypeAll = 'AllDevices';
+const ScheduleTypeNone = 'NoDevices';
 
 const Scheduling = ({
   route: {
-    data: { params, application },
+    data: { params, application, devices, releases },
   },
 }) => {
-  const [schedulingRule, setSchedulingRule] = useState(
-    application.schedulingRule
+  const [conditionalQuery, setConditionalQuery] = useState(
+    application.schedulingRule.conditionalQuery || []
   );
+  const [scheduleType, setScheduleType] = useState(
+    application.schedulingRule.scheduleType || 'NoDevices'
+  );
+  const [scheduledDevices, setScheduledDevices] = useState([]);
   const [backendError, setBackendError] = useState();
-  const [showFilterDialog, setShowFilterDialog] = useState();
-  const [filterToEdit, setFilterToEdit] = useState(null);
+  const [showConditionPopup, setShowConditionPopup] = useState();
+  const [conditionToEdit, setConditionToEdit] = useState(null);
+  const [searchInput, setSearchInput] = useState('');
+  const [searchFocused, setSearchFocused] = useState();
+  const [showPreview, setShowPreview] = useState();
+  const [labelColorMap, setLabelColorMap] = useState(
+    buildLabelColorMap({}, labelColors, devices)
+  );
+
+  const columns = useMemo(
+    () => [
+      {
+        Header: 'Status',
+        accessor: 'status',
+        Cell: ({ cell: { value } }) => <DeviceStatus status={value} />,
+        style: {
+          flex: '0 0 72px',
+        },
+      },
+      {
+        Header: 'Name',
+        accessor: 'name',
+      },
+      {
+        Header: 'Labels',
+        accessor: 'labels',
+        Cell: ({ cell: { value } }) =>
+          value ? renderLabels(value, labelColorMap) : null,
+        style: {
+          flex: 2,
+          overflow: 'hidden',
+        },
+      },
+    ],
+    []
+  );
+  const tableData = useMemo(() => scheduledDevices, [scheduledDevices]);
+
   const navigation = useNavigation();
+
+  let isSubmitDisabled = false;
+
+  if (scheduleType === ScheduleTypeConditional) {
+    if (
+      conditionalQuery.length === 0 ||
+      utils.deepEqual(
+        conditionalQuery,
+        application.schedulingRule.conditionalQuery
+      )
+    ) {
+      isSubmitDisabled = true;
+    }
+  } else if (scheduleType === application.scheduleType) {
+    isSubmitDisabled = true;
+  }
 
   const submit = async () => {
     setBackendError(null);
@@ -36,105 +114,237 @@ const Scheduling = ({
         data: {
           name: application.name,
           description: application.description,
-          schedulingRule,
+          schedulingRule: {
+            ...application.schedulingRule,
+            scheduleType,
+            conditionalQuery,
+          },
         },
       });
 
-      toaster.success('Scheduling rule updated successfully.');
+      toaster.success('Scheduling was successful.');
       navigation.navigate(
         `/${params.project}/applications/${application.name}`
       );
     } catch (error) {
       setBackendError(utils.parseError(error));
-      toaster.danger('Scheduling rule was not updated.');
+      toaster.danger('Scheduling was not successful.');
       console.log(error);
     }
   };
 
-  const filterDevices = () => {
-    // TODO: fetch devices and show them
+  const getScheduledDevices = async () => {
+    if (
+      scheduleType === ScheduleTypeConditional &&
+      conditionalQuery.length === 0
+    ) {
+      setScheduledDevices([]);
+      return;
+    }
+
+    try {
+      const { data: devices } = await api.scheduledDevices({
+        projectId: params.project,
+        applicationId: application.name,
+        schedulingRule: {
+          ...application.schedulingRule,
+          scheduleType,
+          conditionalQuery: conditionalQuery,
+        },
+        search: searchInput,
+      });
+      setScheduledDevices(devices);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const removeFilter = index => {
-    setSchedulingRule(schedulingRule.filter((_, i) => i !== index));
-    filterDevices();
+  const removeCondition = index => {
+    setConditionalQuery(conditionalQuery.filter((_, i) => i !== index));
   };
 
-  const addFilter = filter => {
-    setShowFilterDialog(false);
-    if (filterToEdit !== null) {
-      setSchedulingRule(schedulingRule =>
-        schedulingRule.map((rule, index) =>
-          index === filterToEdit ? filter : rule
+  const addCondition = condition => {
+    setShowConditionPopup(false);
+    if (conditionToEdit !== null) {
+      setConditionalQuery(conditionalQuery =>
+        conditionalQuery.map((rule, index) =>
+          index === conditionToEdit ? condition : rule
         )
       );
     } else {
-      setSchedulingRule(schedulingRule => [...schedulingRule, filter]);
+      setConditionalQuery(conditionalQuery => [...conditionalQuery, condition]);
     }
-    setFilterToEdit(null);
-    filterDevices();
+    setConditionToEdit(null);
   };
 
-  const clearFilters = () => {
-    setSchedulingRule([]);
-    filterDevices();
+  const clearConditions = () => {
+    setConditionalQuery([]);
   };
+
+  useEffect(() => {
+    getScheduledDevices();
+  }, [searchInput]);
 
   return (
-    <Card
-      title="Scheduling"
-      size="xlarge"
-      actions={[
-        {
-          title: 'Clear Filters',
-          onClick: clearFilters,
-          show: !!schedulingRule.length,
-          variant: 'text',
-        },
-        {
-          title: 'Add Filter',
-          onClick: () => setShowFilterDialog(true),
-        },
-      ]}
-    >
-      <Alert show={backendError} variant="error" description={backendError} />
-      <Row bg="grays.0" borderRadius={1} minHeight={9} padding={2}>
-        {schedulingRule.length ? (
-          <DevicesFilterButtons
-            canRemoveFilter
-            query={schedulingRule}
-            removeFilter={removeFilter}
-            onEdit={index => {
-              setShowFilterDialog(true);
-              setFilterToEdit(index);
-            }}
-          />
-        ) : (
-          <Row flex={1} justifyContent="center" alignItems="center">
-            <Text>
-              There are no <strong>Filters</strong>.
-            </Text>
+    <>
+      <Card
+        title="Scheduling"
+        size="xlarge"
+        actions={
+          scheduleType === ScheduleTypeConditional
+            ? [
+                {
+                  title: 'Preview',
+                  variant: 'secondary',
+                  onClick: () => {
+                    getScheduledDevices();
+                    setShowPreview(true);
+                  },
+                },
+              ]
+            : []
+        }
+      >
+        <Row alignSelf="stretch">
+          <Column flex={1}>
+            <Alert
+              show={backendError}
+              variant="error"
+              description={backendError}
+            />
+            <Group>
+              <Label>This application will run on</Label>
+              <RadioGroup
+                onChange={setScheduleType}
+                value={scheduleType}
+                options={[
+                  { label: 'No Devices', value: ScheduleTypeNone },
+                  { label: 'All Devices', value: ScheduleTypeAll },
+                  {
+                    label: 'Some Devices',
+                    value: ScheduleTypeConditional,
+                  },
+                ]}
+              />
+            </Group>
+            {scheduleType === ScheduleTypeConditional && (
+              <Column>
+                <Group>
+                  <Row justifyContent="space-between" alignItems="center">
+                    <Label marginBottom={0}>Conditions</Label>
+                    <Row>
+                      {conditionalQuery.length > 0 && (
+                        <Button
+                          title="Clear"
+                          variant="text"
+                          onClick={clearConditions}
+                          marginRight={4}
+                        />
+                      )}
+                      <Button
+                        title="Add Conditions"
+                        variant="secondary"
+                        onClick={() => setShowConditionPopup(true)}
+                      />
+                    </Row>
+                  </Row>
+                  <Row
+                    bg="grays.0"
+                    borderRadius={1}
+                    minHeight={7}
+                    padding={2}
+                    marginTop={4}
+                  >
+                    {conditionalQuery.length ? (
+                      <DevicesFilterButtons
+                        canRemoveFilter
+                        query={conditionalQuery}
+                        removeFilter={removeCondition}
+                        onEdit={index => {
+                          setShowConditionPopup(true);
+                          setConditionToEdit(index);
+                        }}
+                      />
+                    ) : (
+                      <Row flex={1} justifyContent="center" alignItems="center">
+                        <Text>
+                          Add <strong>Conditions</strong>.
+                        </Text>
+                      </Row>
+                    )}
+                  </Row>
+                </Group>
+              </Column>
+            )}
+            <Button
+              marginTop={6}
+              title="Apply Scheduling"
+              onClick={submit}
+              disabled={isSubmitDisabled}
+            />
+          </Column>
+          {showConditionPopup && (
+            <DevicesFilter
+              title="Conditions"
+              buttonTitle="Set Conditions"
+              filter={
+                conditionToEdit !== null && conditionalQuery[conditionToEdit]
+              }
+              whitelistedConditions={[LabelValueCondition]}
+              onClose={() => {
+                setShowConditionPopup(false);
+                setConditionToEdit(null);
+              }}
+              onSubmit={addCondition}
+            />
+          )}
+        </Row>
+      </Card>
+      <Popup show={showPreview} onClose={() => setShowPreview(false)}>
+        <Card
+          border
+          size="xxlarge"
+          title="Preview"
+          subtitle="This application will run on the devices listed below."
+        >
+          <Row position="relative" alignItems="center" marginBottom={4}>
+            <Icon
+              icon="search"
+              size={16}
+              color={searchFocused ? theme.colors.primary : theme.colors.white}
+              style={{ position: 'absolute', left: 16 }}
+            />
+            <Input
+              bg="black"
+              placeholder="Search devices by name or labels"
+              paddingLeft={8}
+              value={searchInput}
+              width="350px"
+              onChange={e => setSearchInput(e.target.value)}
+              onFocus={e => setSearchFocused(true)}
+              onBlur={e => setSearchFocused(false)}
+            />
           </Row>
-        )}
-      </Row>
-      {showFilterDialog && (
-        <DevicesFilter
-          filter={filterToEdit !== null && schedulingRule[filterToEdit]}
-          whitelistedConditions={[LabelValueCondition]}
-          onClose={() => {
-            setShowFilterDialog(false);
-            setFilterToEdit(null);
-          }}
-          onSubmit={addFilter}
-        />
-      )}
-      <Button
-        title="Set Scheduling Rule"
-        marginTop={6}
-        onClick={submit}
-        disabled={utils.deepEqual(application.schedulingRule, schedulingRule)}
-      />
-    </Card>
+
+          <Table
+            columns={columns}
+            data={tableData}
+            placeholder={
+              conditionalQuery.length > 0 ? (
+                <Text>
+                  There are no <strong>Devices</strong>.
+                </Text>
+              ) : (
+                <Text>
+                  Add <strong>Conditions</strong> to preview{' '}
+                  <strong>Devices</strong>.
+                </Text>
+              )
+            }
+          />
+        </Card>
+      </Popup>
+    </>
   );
 };
 

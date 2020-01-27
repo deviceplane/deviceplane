@@ -9,7 +9,7 @@ const StyledValue = styled.span`
 `;
 
 StyledValue.defaultProps = {
-  color: 'grays.8',
+  color: 'grays.10',
   fontSize: 2,
 };
 

@@ -8,7 +8,7 @@ import (
 	"github.com/apex/log"
 
 	"github.com/deviceplane/deviceplane/pkg/agent/service/client"
-	"github.com/deviceplane/deviceplane/pkg/controller/query"
+	"github.com/deviceplane/deviceplane/pkg/controller/scheduling"
 	"github.com/deviceplane/deviceplane/pkg/metrics/datadog"
 	"github.com/deviceplane/deviceplane/pkg/metrics/datadog/translation"
 	"github.com/deviceplane/deviceplane/pkg/models"
@@ -22,35 +22,37 @@ func (r *Runner) getServiceMetrics(
 	device *models.Device,
 	apps []models.Application,
 	appsByID map[string]*models.Application,
-	latestAppReleaseByAppID map[string]*models.Release,
+	getReleaseByID func(releaseID string, appID string) *models.Release,
 	serviceMetricsConfigs []models.ServiceMetricsConfig,
 ) (metrics datadog.Series) {
-	appIsScheduled := map[string]bool{} // we have denormalized (app, serv), (app, serv2) tuples in metricConfig.Configs
+	scheduledAppReleaseOnDevice := map[string]string{}
 	for _, serviceMetricsConfig := range serviceMetricsConfigs {
 		app, exists := appsByID[serviceMetricsConfig.ApplicationID]
 		if !exists {
 			continue
 		}
 
-		scheduled, exists := appIsScheduled[app.ID]
+		releaseID, exists := scheduledAppReleaseOnDevice[app.ID]
 		if !exists {
 			var err error
-			scheduled, err = query.DeviceMatchesQuery(*device, app.SchedulingRule)
+			scheduled, scheduledDevice, err := scheduling.IsApplicationScheduled(*device, app.SchedulingRule)
 			if err != nil {
 				log.WithField("application", app.ID).
 					WithField("device", device.ID).
 					WithError(err).Error("evaluate application scheduling rule")
-				scheduled = false
+			} else if scheduled {
+				releaseID = scheduledDevice.ReleaseID
 			}
-			appIsScheduled[app.ID] = scheduled
+
+			scheduledAppReleaseOnDevice[app.ID] = releaseID
 		}
-		if !scheduled {
+		if releaseID == "" {
 			continue
 		}
 
-		// Don't hit if there is no latest release
-		release, exists := latestAppReleaseByAppID[app.ID]
-		if !exists {
+		// Don't hit if there is no release
+		release := getReleaseByID(releaseID, app.ID)
+		if release == nil {
 			continue
 		}
 

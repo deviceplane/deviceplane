@@ -71,7 +71,6 @@ const DeviceSettings = ({
       <Card
         title="Device Settings"
         subtitle={<DeviceStatus status={device.status} />}
-        size="large"
         actions={[
           {
             title: 'Remove',
@@ -79,6 +78,7 @@ const DeviceSettings = ({
             variant: 'danger',
           },
         ]}
+        maxWidth="560px"
       >
         <Alert show={backendError} variant="error" description={backendError} />
 

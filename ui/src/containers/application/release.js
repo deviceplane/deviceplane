@@ -71,7 +71,7 @@ const Release = ({
     <>
       <Card size="xlarge">
         <Text fontWeight={2} fontSize={5} marginBottom={6}>
-          {release.id}
+          Release {release.number}
         </Text>
 
         <Alert show={backendError} variant="error" description={backendError} />
@@ -102,7 +102,7 @@ const Release = ({
           <Text>
             This will create a new release to application{' '}
             <strong>{params.application}</strong> using the config from release{' '}
-            <strong>{release.id}</strong>.
+            <strong>{release.number}</strong>.
           </Text>
           <Button marginTop={5} title="Revert" onClick={revertRelease} />
         </Card>

@@ -278,12 +278,11 @@ export default mount({
             '/': route({
               title: 'Applications',
               getData: async request => {
-                const response = await api.applications({
+                const { data: applications } = await api.applications({
                   projectId: request.params.project,
                 });
-
                 return {
-                  applications: response.data,
+                  applications,
                 };
               },
               getView: () => import('./containers/applications'),
@@ -295,12 +294,21 @@ export default mount({
             '/:application': compose(
               withView(() => import('./containers/application')),
               withData(async request => {
-                const response = await api.application({
+                const { data: application } = await api.application({
+                  projectId: request.params.project,
+                  applicationId: request.params.application,
+                });
+                const { data: devices } = await api.devices({
+                  projectId: request.params.project,
+                });
+                const { data: releases } = await api.releases({
                   projectId: request.params.project,
                   applicationId: request.params.application,
                 });
                 return {
-                  application: response.data,
+                  application,
+                  devices,
+                  releases,
                 };
               }),
               mount({
@@ -312,15 +320,6 @@ export default mount({
                 '/releases': mount({
                   '/': route({
                     title: 'Releases - Application',
-                    getData: async request => {
-                      const response = await api.releases({
-                        projectId: request.params.project,
-                        applicationId: request.params.application,
-                      });
-                      return {
-                        releases: response.data,
-                      };
-                    },
                     getView: () => import('./containers/application/releases'),
                   }),
                   '/create': route({
@@ -346,6 +345,11 @@ export default mount({
                 '/scheduling': route({
                   title: 'Scheduling - Application',
                   getView: () => import('./containers/application/scheduling'),
+                }),
+                '/release-pinning': route({
+                  title: 'Release Pinning - Application',
+                  getView: () =>
+                    import('./containers/application/release-pinning'),
                 }),
                 '/settings': route({
                   title: 'Settings - Application',

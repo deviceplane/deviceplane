@@ -65,6 +65,15 @@ const api = {
   devices: ({ projectId, queryString = '' }) =>
     get(`projects/${projectId}/devices${queryString}`),
 
+  scheduledDevices: ({ projectId, applicationId, schedulingRule, search }) =>
+    get(
+      `projects/${projectId}/devices/previewscheduling/${applicationId}?search=${encodeURIComponent(
+        search
+      )}&schedulingRule=${encodeURIComponent(
+        btoa(JSON.stringify(schedulingRule))
+      )}`
+    ),
+
   device: ({ projectId, deviceId }) =>
     get(`projects/${projectId}/devices/${deviceId}?full`),
 

@@ -77,7 +77,7 @@ const Devices = ({ route }) => {
         accessor: 'status',
         Cell: ({ cell: { value } }) => <DeviceStatus status={value} />,
         style: {
-          flex: '0 0 100px',
+          flex: '0 0 72px',
         },
       },
       {
@@ -86,16 +86,14 @@ const Devices = ({ route }) => {
       },
       {
         Header: 'IP Address',
-        accessor: 'info.ipAddress',
-        Cell: ({ cell: { value } }) => <Text>{value || ''}</Text>,
+        accessor: ({ info }) => info.ipAddress || '-',
         style: {
-          flex: '0 0 150px',
+          flex: '0 0 130px',
         },
       },
       {
         Header: 'OS',
-        accessor: 'info.osRelease.prettyName',
-        Cell: ({ cell: { value } }) => <Text>{value || '-'}</Text>,
+        accessor: ({ info }) => info.osRelease.prettyName || '-',
       },
       {
         Header: 'Labels',
@@ -105,6 +103,8 @@ const Devices = ({ route }) => {
         style: {
           flex: 2,
           overflow: 'hidden',
+          marginTop: '-8px',
+          marginBottom: '-8px',
         },
       },
     ],
@@ -229,32 +229,30 @@ const Devices = ({ route }) => {
   };
 
   return (
-    <Layout
-      title="Devices"
-      header={
-        <Row position="relative" alignItems="center">
-          <Icon
-            icon="search"
-            size={16}
-            color={searchFocused ? theme.colors.primary : theme.colors.white}
-            style={{ position: 'absolute', left: 16 }}
-          />
-          <Input
-            bg="black"
-            placeholder="Search devices by name or labels"
-            paddingLeft={8}
-            value={searchInput}
-            width="350px"
-            onChange={e => setSearchInput(e.target.value)}
-            onFocus={e => setSearchFocused(true)}
-            onBlur={e => setSearchFocused(false)}
-          />
-        </Row>
-      }
-    >
+    <Layout title="Devices">
       <Card
         title="Devices"
         size="full"
+        center={
+          <Row position="relative" alignItems="center">
+            <Icon
+              icon="search"
+              size={16}
+              color={searchFocused ? theme.colors.primary : theme.colors.white}
+              style={{ position: 'absolute', left: 16 }}
+            />
+            <Input
+              bg="black"
+              placeholder="Search devices by name or labels"
+              paddingLeft={8}
+              value={searchInput}
+              width="300px"
+              onChange={e => setSearchInput(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+            />
+          </Row>
+        }
         actions={[
           ...(filterQuery.length
             ? [

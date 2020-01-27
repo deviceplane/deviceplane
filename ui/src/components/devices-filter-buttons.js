@@ -16,7 +16,7 @@ const ConditionComp = ({ type, params }) => {
       return (
         <>
           <Text
-            fontWeight={3}
+            fontWeight={2}
             marginRight={2}
             color={labelColor(params.key)}
             style={{ textTransform: 'none' }}
@@ -28,7 +28,7 @@ const ConditionComp = ({ type, params }) => {
             {params.operator}
           </Text>
 
-          <Text fontWeight={3} style={{ textTransform: 'none' }}>
+          <Text fontWeight={2} style={{ textTransform: 'none' }}>
             {params.value}
           </Text>
         </>
@@ -37,7 +37,7 @@ const ConditionComp = ({ type, params }) => {
       return (
         <>
           <Text
-            fontWeight={3}
+            fontWeight={2}
             marginRight={2}
             color={labelColor(params.key)}
             style={{ textTransform: 'none' }}
@@ -45,13 +45,13 @@ const ConditionComp = ({ type, params }) => {
             {params.key}
           </Text>
 
-          <Text fontWeight={2}>{params.operator}</Text>
+          <Text fontWeight={1}>{params.operator}</Text>
         </>
       );
     case DevicePropertyCondition:
       return (
         <>
-          <Text fontWeight={3} marginRight={2} color="primary">
+          <Text fontWeight={2} marginRight={2} color="primary">
             {params.property}
           </Text>
 
@@ -59,7 +59,7 @@ const ConditionComp = ({ type, params }) => {
             {params.operator}
           </Text>
 
-          <Text fontWeight={3}>{params.value}</Text>
+          <Text fontWeight={2}>{params.value}</Text>
         </>
       );
     default:

@@ -189,7 +189,7 @@ type Applications interface {
 	ListApplications(ctx context.Context, projectID string) ([]models.Application, error)
 	UpdateApplicationName(ctx context.Context, id, projectID, name string) (*models.Application, error)
 	UpdateApplicationDescription(ctx context.Context, id, projectID, description string) (*models.Application, error)
-	UpdateApplicationSchedulingRule(ctx context.Context, id, projectID string, schedulingRule models.Query) (*models.Application, error)
+	UpdateApplicationSchedulingRule(ctx context.Context, id, projectID string, schedulingRule models.SchedulingRule) (*models.Application, error)
 	UpdateApplicationMetricEndpointConfigs(ctx context.Context, id, projectID string, metricEndpointConfigs map[string]models.MetricEndpointConfig) (*models.Application, error)
 	DeleteApplication(ctx context.Context, id, projectID string) error
 }

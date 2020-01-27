@@ -24,10 +24,16 @@ const Projects = ({
       {
         Header: 'Devices',
         accessor: 'deviceCounts.allCount',
+        style: {
+          flex: '0 0 75px',
+        },
       },
       {
         Header: 'Applications',
         accessor: 'applicationCounts.allCount',
+        style: {
+          flex: '0 0 120px',
+        },
       },
     ],
     []

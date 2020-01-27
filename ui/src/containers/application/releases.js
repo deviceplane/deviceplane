@@ -14,7 +14,13 @@ const Releases = ({
   const navigation = useNavigation();
   const columns = useMemo(
     () => [
-      { Header: 'Release ID', accessor: 'id', style: { flex: 2 } },
+      {
+        Header: 'Release',
+        accessor: 'number',
+        style: {
+          flex: '0 0 60px',
+        },
+      },
       {
         Header: 'Released by',
         accessor: ({ release }) => {
@@ -36,10 +42,16 @@ const Releases = ({
             original: { createdAt },
           },
         }) => <Text>{moment(createdAt).fromNow()}</Text>,
+        style: {
+          flex: '0 0 150px',
+        },
       },
       {
         Header: 'Device count',
         accessor: 'deviceCounts.allCount',
+        style: {
+          flex: '0 0 102px',
+        },
       },
     ],
     []
@@ -49,7 +61,7 @@ const Releases = ({
   return (
     <Card
       title="Releases"
-      size="full"
+      size="xlarge"
       actions={[
         {
           title: 'Create Release',

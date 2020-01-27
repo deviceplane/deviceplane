@@ -1,9 +1,10 @@
 package middleware
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/pkg/errors"
 )
 
 var ErrPageNotFound = errors.New("requested page not found")
@@ -71,7 +72,7 @@ func paginateAfter(after, paginateOn string, pageSize int, arr []interface{}) (r
 		}
 	}
 	if !foundField {
-		return nil, ErrPageNotFound
+		return nil, errors.Wrapf(ErrPageNotFound, "field %s not found", paginateOn)
 	}
 
 	// Paginate
@@ -91,7 +92,7 @@ func paginateAfter(after, paginateOn string, pageSize int, arr []interface{}) (r
 		}
 	}
 	if !foundStart {
-		return nil, ErrPageNotFound
+		return nil, errors.Wrap(ErrPageNotFound, "start not found")
 	}
 
 	// First page after last element returns empty page
@@ -101,7 +102,7 @@ func paginateAfter(after, paginateOn string, pageSize int, arr []interface{}) (r
 
 	page, exists := simplePaginate(startIndex, pageSize, arr)
 	if !exists {
-		return nil, ErrPageNotFound
+		return nil, errors.Wrap(ErrPageNotFound, "page does not exist")
 	}
 
 	return page, nil

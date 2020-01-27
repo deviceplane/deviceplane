@@ -28,7 +28,7 @@ const UserAccessKeys = () => {
         Header: 'Created At',
         accessor: 'createdAt',
         style: {
-          flex: 2,
+          flex: '0 0 150px',
         },
       },
       {

@@ -35,7 +35,6 @@ const styles = {
   }),
   menuList: provided => ({ ...provided, padding: 0 }),
   control: (_, { selectProps: { variant } }) => ({
-    // none of react-select's styles are passed to <Control />
     display: 'flex',
     flex: 1,
     padding: 0,
@@ -45,7 +44,6 @@ const styles = {
     border: `1px solid ${theme.colors.white}`,
   }),
   input: () => ({
-    padding: '4px',
     fontSize: theme.fontSizes[2],
     color: theme.colors.white,
     fontWeight: theme.fontWeights[1],
@@ -53,7 +51,7 @@ const styles = {
   placeholder: () => ({
     fontSize: theme.fontSizes[2],
     fontWeight: theme.fontWeights[1],
-    color: theme.colors.grays[8],
+    color: theme.colors.grays[9],
   }),
   valueContainer: provided => ({ ...provided, padding: '0 8px' }),
   multiValue: () => ({
@@ -87,8 +85,8 @@ const styles = {
   singleValue: provided => {
     return { ...provided, color: theme.colors.grays[12] };
   },
-  indicatorsContainer: provided => ({
-    ...provided,
+  indicatorsContainer: () => ({
+    padding: 0,
     cursor: 'pointer',
     color: theme.colors.white,
     ':hover': {

@@ -67,7 +67,7 @@ const EditableLabelTable = ({ data, onAdd, onRemove }) => {
         ),
         style: {
           flex: 3,
-          minHeight: '56px',
+          minHeight: '32px',
           alignItems: 'center',
         },
       },
@@ -83,7 +83,7 @@ const EditableLabelTable = ({ data, onAdd, onRemove }) => {
         style: {
           flex: 3,
           alignItems: 'center',
-          minHeight: '56px',
+          minHeight: '32px',
         },
       },
       {
@@ -140,7 +140,7 @@ const EditableLabelTable = ({ data, onAdd, onRemove }) => {
         style: {
           alignItems: 'center',
           justifyContent: 'flex-end',
-          minHeight: '56px',
+          minHeight: '32px',
         },
       },
     ],

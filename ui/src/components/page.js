@@ -20,7 +20,7 @@ const GlobalStyle = createGlobalStyle`
     box-sizing: border-box;
     font-family: ${props => props.theme.fonts.default};
     font-size: 16px;
-    font-weight: 400;
+    font-weight: 300;
     line-height: 1.2;
     background-color: ${props => props.theme.colors.pageBackground};
   }
@@ -36,6 +36,10 @@ const GlobalStyle = createGlobalStyle`
 
   html, body, #root, #root > div, main {
     height: 100%;
+  }
+
+  strong, strong * {
+    font-weight: 500;
   }
 
   .ace_editor {

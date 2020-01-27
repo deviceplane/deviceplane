@@ -47,8 +47,9 @@ const Field = forwardRef(
       register,
       onChangeEvent,
       autoComplete = 'off',
-      errors = [],
       multi,
+      inline,
+      errors = [],
       marginBottom = Group.defaultProps.marginBottom,
       ...props
     },
@@ -90,7 +91,7 @@ const Field = forwardRef(
     };
 
     return (
-      <Column marginBottom={multi ? 4 : marginBottom}>
+      <Column flex={1} marginBottom={inline ? 0 : multi ? 4 : marginBottom}>
         {(label || description) && (
           <Column marginBottom={Label.defaultProps.marginBottom}>
             <Row justifyContent="space-between">

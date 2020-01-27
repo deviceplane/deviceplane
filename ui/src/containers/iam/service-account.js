@@ -212,6 +212,9 @@ const ServiceAccountAccessKeys = ({ projectId, serviceAccount }) => {
       {
         Header: 'Created At',
         accessor: 'createdAt',
+        style: {
+          flex: '0 0 150px',
+        },
       },
       {
         Header: ' ',

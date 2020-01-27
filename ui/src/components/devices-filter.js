@@ -117,7 +117,7 @@ export const DevicesFilter = props => {
         <>
           <Row flex={2}>
             <Input
-              placeholder="Key"
+              placeholder="Label Key"
               padding={2}
               value={cond.key}
               onChange={event => {
@@ -159,7 +159,7 @@ export const DevicesFilter = props => {
 
           <Row flex={2}>
             <Input
-              placeholder="Value"
+              placeholder="Label Value"
               padding={2}
               value={cond.value}
               onChange={event => {
@@ -185,7 +185,7 @@ export const DevicesFilter = props => {
         <>
           <Row flex={1}>
             <Input
-              placeholder="Key"
+              placeholder="Label Key"
               padding={2}
               marginRight={2}
               value={cond.key}
@@ -319,7 +319,7 @@ export const DevicesFilter = props => {
       <Card
         border
         size="xlarge"
-        title="Filter Devices"
+        title={props.title || 'Filter Devices'}
         actions={[
           {
             title: 'Add Condition',
@@ -434,7 +434,9 @@ export const DevicesFilter = props => {
 
         <Button
           marginTop={3}
-          title={props.filter ? 'Edit Filter' : 'Apply Filter'}
+          title={
+            props.buttonTitle || (props.filter ? 'Edit Filter' : 'Apply Filter')
+          }
           onClick={() => {
             const validFilter = filter.filter(({ type, params }) => {
               switch (type) {

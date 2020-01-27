@@ -20,7 +20,7 @@ const TabButton = styled(Btn)`
   color: ${props =>
     props.active ? props.theme.colors.primary : props.theme.colors.white};
   background-color: ${props =>
-    props.active ? props.theme.colors.black : props.theme.colors.grays[3]};
+    props.active ? props.theme.colors.black : props.theme.colors.grays[4]};
 
   &:focus,
   &:hover {
@@ -31,7 +31,7 @@ const TabButton = styled(Btn)`
     background-color: ${props =>
       props.active
         ? props.theme.colors.black
-        : props.theme.colors.grays[0]} !important;
+        : props.theme.colors.grays[1]} !important;
   }
 `;
 

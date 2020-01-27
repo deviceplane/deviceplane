@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/controller/connman"
 	"github.com/deviceplane/deviceplane/pkg/controller/middleware"
 	"github.com/deviceplane/deviceplane/pkg/controller/query"
+	"github.com/deviceplane/deviceplane/pkg/controller/scheduling"
 	"github.com/deviceplane/deviceplane/pkg/controller/spaserver"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/email"
@@ -228,6 +230,7 @@ func NewService(
 
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization(authz.ResourceDevices, authz.ActionGetDevice, s.withDevice(s.getDevice))).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/devices", s.validateAuthorization(authz.ResourceDevices, authz.ActionListDevices, s.listDevices)).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/devices/previewscheduling/{application}", s.validateAuthorization(authz.ResourceDevices, authz.ActionPreviewApplicationScheduling, s.previewScheduledDevices)).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization(authz.ResourceDevices, authz.ActionUpdateDevice, s.withDevice(s.updateDevice))).Methods("PATCH")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.validateAuthorization(authz.ResourceDevices, authz.ActionDeleteDevice, s.withDevice(s.deleteDevice))).Methods("DELETE")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/ssh", s.validateAuthorization(authz.ResourceDevices, authz.ActionSSH, s.withDevice(s.initiateSSH))).Methods("GET")
@@ -2010,9 +2013,9 @@ func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request,
 	applicationID string,
 ) {
 	var updateApplicationRequest struct {
-		Name                  *string                                 `json:"name" validate:"omitempty,name"`
-		Description           *string                                 `json:"description" validate:"omitempty,description"`
-		SchedulingRule        *models.Query                           `json:"schedulingRule"`
+		Name                  *string                                 `json:"name" validate:"name,omitempty"`
+		Description           *string                                 `json:"description" validate:"description,omitempty"`
+		SchedulingRule        *models.SchedulingRule                  `json:"schedulingRule"`
 		MetricEndpointConfigs *map[string]models.MetricEndpointConfig `json:"metricEndpointConfigs"`
 	}
 	if err := read(r, &updateApplicationRequest); err != nil {
@@ -2047,9 +2050,37 @@ func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request,
 		}
 	}
 	if updateApplicationRequest.SchedulingRule != nil {
-		err = query.ValidateQuery(*updateApplicationRequest.SchedulingRule)
+		validationErr, err := scheduling.ValidateSchedulingRule(
+			*updateApplicationRequest.SchedulingRule,
+			func(releaseID string) (bool, error) {
+				var release *models.Release
+				var err error
+				if strings.Contains(releaseID, "_") {
+					release, err = s.releases.GetRelease(r.Context(), releaseID, projectID, application.ID)
+				} else if releaseID == "latest" { // TODO: models.LatestRelease
+					release, err = s.releases.GetLatestRelease(r.Context(), projectID, application.ID)
+				} else {
+					id, parseErr := strconv.ParseUint(releaseID, 10, 32)
+					if parseErr != nil {
+						return false, parseErr
+					}
+					release, err = s.releases.GetReleaseByNumber(r.Context(), uint32(id), projectID, application.ID)
+				}
+				if err == store.ErrReleaseNotFound {
+					return false, nil
+				} else if err != nil {
+					return false, err
+				}
+				return release != nil, nil
+			},
+		)
+		if validationErr != nil {
+			http.Error(w, validationErr.Error(), http.StatusBadRequest)
+			return
+		}
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			log.WithError(err).Error("check application release")
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
@@ -2221,7 +2252,7 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request,
 	}
 
 	if len(filters) != 0 {
-		devices, err = query.FilterDevices(devices, filters)
+		devices, _, err = query.QueryDevices(devices, filters)
 		if err != nil {
 			http.Error(w, errors.Wrap(err, "filter devices").Error(), http.StatusBadRequest)
 			return
@@ -2233,6 +2264,50 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request,
 		ds[i] = devices[i]
 	}
 	middleware.SortAndPaginateAndRespond(*r, w, ds)
+}
+
+func (s *Service) previewScheduledDevices(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID string,
+) {
+	searchQuery := r.URL.Query().Get("search")
+
+	devices, err := s.devices.ListDevices(r.Context(), projectID, searchQuery)
+	if err != nil {
+		log.WithError(err).Error("list devices")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	filters, err := query.FiltersFromQuery(r.URL.Query())
+	if err != nil {
+		http.Error(w, errors.Wrap(err, "get filters from query").Error(), http.StatusBadRequest)
+		return
+	}
+
+	if len(filters) != 0 {
+		devices, _, err = query.QueryDevices(devices, filters)
+		if err != nil {
+			http.Error(w, errors.Wrap(err, "filter devices").Error(), http.StatusBadRequest)
+			return
+		}
+	}
+
+	schedulingRule, err := scheduling.SchedulingRuleFromQuery(r.URL.Query())
+	if schedulingRule == nil && err == nil {
+		err = scheduling.ErrNonexistentSchedulingRule
+	}
+	if err != nil {
+		http.Error(w, errors.Wrap(err, "get scheduling rule from query").Error(), http.StatusBadRequest)
+		return
+	}
+
+	scheduledDevices, err := scheduling.GetScheduledDevices(devices, *schedulingRule)
+	if err != nil {
+		http.Error(w, errors.Wrap(err, "preview scheduling rule").Error(), http.StatusBadRequest)
+		return
+	}
+
+	utils.Respond(w, scheduledDevices)
 }
 
 func (s *Service) getDevice(w http.ResponseWriter, r *http.Request,
@@ -2789,23 +2864,35 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, project mode
 	}
 
 	for i, application := range applications {
-		match, err := query.DeviceMatchesQuery(device, application.SchedulingRule)
+		scheduled, scheduledDevice, err := scheduling.IsApplicationScheduled(device, application.SchedulingRule)
 		if err != nil {
 			log.WithError(err).Error("evaluate application scheduling rule")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		if !match {
+		if !scheduled {
 			continue
 		}
 
-		release, err := s.releases.GetLatestRelease(r.Context(), project.ID, application.ID)
-		if err == store.ErrReleaseNotFound {
-			continue
-		} else if err != nil {
-			log.WithError(err).Error("get latest release")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
+		var release *models.Release
+		if scheduledDevice.ReleaseID == models.LatestRelease {
+			release, err = s.releases.GetLatestRelease(r.Context(), project.ID, application.ID)
+			if err == store.ErrReleaseNotFound {
+				continue
+			} else if err != nil {
+				log.WithError(err).Error("get latest release")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		} else {
+			release, err = s.releases.GetRelease(r.Context(), scheduledDevice.ReleaseID, project.ID, application.ID)
+			if err == store.ErrReleaseNotFound {
+				continue
+			} else if err != nil {
+				log.WithError(err).Error("get scheduled release")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 		}
 
 		bundle.Applications = append(bundle.Applications, models.ApplicationFull2{

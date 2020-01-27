@@ -1855,7 +1855,7 @@ func (s *Store) UpdateApplicationDescription(ctx context.Context, id, projectID,
 	return s.GetApplication(ctx, id, projectID)
 }
 
-func (s *Store) UpdateApplicationSchedulingRule(ctx context.Context, id, projectID string, schedulingRule models.Query) (*models.Application, error) {
+func (s *Store) UpdateApplicationSchedulingRule(ctx context.Context, id, projectID string, schedulingRule models.SchedulingRule) (*models.Application, error) {
 	schedulingRuleBytes, err := json.Marshal(schedulingRule)
 	if err != nil {
 		return nil, err
@@ -1921,7 +1921,12 @@ func (s *Store) scanApplication(scanner scanner) (*models.Application, error) {
 	}
 
 	if schedulingRuleStr == "" {
-		application.SchedulingRule = make([]models.Filter, 0)
+		application.SchedulingRule = models.SchedulingRule{
+			ScheduleType:     models.ScheduleTypeNoDevices,
+			DefaultReleaseID: models.LatestRelease,
+			ConditionalQuery: nil,
+			ReleaseSelectors: []models.ReleaseSelector{},
+		}
 	} else {
 		err := json.Unmarshal([]byte(schedulingRuleStr), &application.SchedulingRule)
 		if err != nil {

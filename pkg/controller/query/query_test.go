@@ -18,12 +18,12 @@ type Scenario struct {
 
 func testScenario(t *testing.T, scenario Scenario) {
 	t.Helper()
-	filteredDevices, err := FilterDevices(scenario.in, scenario.query)
+	selectedDevices, _, err := QueryDevices(scenario.in, scenario.query)
 	require.NoError(t, err, scenario.desc)
-	require.Equal(t, scenario.out, filteredDevices, scenario.desc)
+	require.Equal(t, scenario.out, selectedDevices, scenario.desc)
 }
 
-func TestFilterDevices(t *testing.T) {
+func TestQueryDevices(t *testing.T) {
 	t.Run("device properties", func(t *testing.T) {
 		scenarios := []Scenario{
 			Scenario{
@@ -475,9 +475,9 @@ func TestFilterDevices(t *testing.T) {
 		}
 
 		for _, scenario := range scenarios {
-			filteredDevices, err := FilterDevices(scenario.in, scenario.query)
+			selectedDevices, _, err := QueryDevices(scenario.in, scenario.query)
 			require.Error(t, err, scenario.desc)
-			require.Len(t, filteredDevices, 0, scenario.desc)
+			require.Len(t, selectedDevices, 0, scenario.desc)
 		}
 	})
 }

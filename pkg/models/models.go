@@ -159,7 +159,7 @@ type Application struct {
 	ProjectID             string                          `json:"projectId" yaml:"projectId"`
 	Name                  string                          `json:"name" yaml:"name"`
 	Description           string                          `json:"description" yaml:"description"`
-	SchedulingRule        Query                           `json:"schedulingRule" yaml:"schedulingRule"`
+	SchedulingRule        SchedulingRule                  `json:"schedulingRule" yaml:"schedulingRule"`
 	MetricEndpointConfigs map[string]MetricEndpointConfig `json:"metricEndpointConfigs" yaml:"metricEndpointConfigs"`
 }
 

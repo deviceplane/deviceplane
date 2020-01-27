@@ -25,16 +25,19 @@ const Provisioning = ({
             {original.createdAt ? moment(original.createdAt).fromNow() : '-'}
           </Text>
         ),
+        style: {
+          flex: '0 0 150px',
+        },
       },
       {
         Header: 'Devices Registered',
         accessor: 'deviceCounts.allCount',
-        style: { flex: '0 0 200px' },
+        style: { flex: '0 0 150px' },
       },
       {
         Header: 'Registration Limit',
         accessor: 'maxRegistrations',
-        style: { flex: '0 0 200px' },
+        style: { flex: '0 0 140px' },
         Cell: ({ row: { original } }) => (
           <Text>
             {typeof original.maxRegistrations === 'number'

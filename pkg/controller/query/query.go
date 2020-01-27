@@ -28,18 +28,23 @@ func ValidateQuery(query models.Query) error {
 	return nil
 }
 
-func FilterDevices(devices []models.Device, query models.Query) ([]models.Device, error) {
-	filteredDevices := make([]models.Device, 0)
+func QueryDevices(devices []models.Device, query models.Query) (selectedDevices []models.Device, unselectedDevices []models.Device, err error) {
+	selectedDevices = make([]models.Device, 0)
+	unselectedDevices = make([]models.Device, 0)
+
 	for _, device := range devices {
 		match, err := DeviceMatchesQuery(device, query)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
+
 		if match {
-			filteredDevices = append(filteredDevices, device)
+			selectedDevices = append(selectedDevices, device)
+		} else {
+			unselectedDevices = append(unselectedDevices, device)
 		}
 	}
-	return filteredDevices, nil
+	return selectedDevices, unselectedDevices, nil
 }
 
 func DeviceMatchesQuery(device models.Device, query models.Query) (bool, error) {

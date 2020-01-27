@@ -37,10 +37,16 @@ const Applications = ({
         Cell: ({ cell: { value } }) => (
           <Text>{value ? moment(value).fromNow() : '-'}</Text>
         ),
+        style: {
+          flex: '0 0 150px',
+        },
       },
       {
         Header: 'Device Count',
         accessor: 'deviceCounts.allCount',
+        style: {
+          flex: '0 0 102px',
+        },
       },
     ],
     []

@@ -2,6 +2,8 @@ package datadog
 
 import (
 	"context"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -103,22 +105,32 @@ func (r *Runner) doForProject(ctx context.Context, project models.Project) {
 		return
 	}
 	appsByID := make(map[string]*models.Application, len(apps))
-	latestAppReleaseByAppID := make(map[string]*models.Release, len(apps))
 	if len(serviceMetricsConfigs) != 0 {
 		for i, app := range apps {
 			appsByID[app.ID] = &apps[i]
-
-			release, err := r.releases.GetLatestRelease(ctx, project.ID, app.ID)
-			if err == store.ErrReleaseNotFound {
-				continue
-			} else if err != nil {
-				log.WithField("application", app.ID).
-					WithError(err).Error("get latest release")
-				continue
-			}
-
-			latestAppReleaseByAppID[app.ID] = release
 		}
+	}
+
+	getReleaseByID := func(id string, appID string) (release *models.Release) {
+		var err error
+		if strings.Contains(id, "_") {
+			release, err = r.releases.GetRelease(ctx, id, project.ID, appID)
+		} else if id == "latest" { // TODO: models.LatestRelease
+			release, err = r.releases.GetLatestRelease(ctx, project.ID, appID)
+		} else {
+			id, parseErr := strconv.ParseUint(id, 10, 32)
+			if parseErr != nil {
+				return nil
+			}
+			release, err = r.releases.GetReleaseByNumber(ctx, uint32(id), project.ID, appID)
+		}
+		if err == store.ErrReleaseNotFound {
+			return nil
+		} else if err != nil {
+			log.WithError(err).Error("get release")
+		}
+
+		return release
 	}
 
 	var lock sync.Mutex
@@ -166,7 +178,7 @@ func (r *Runner) doForProject(ctx context.Context, project models.Project) {
 			}
 
 			if len(serviceMetricsConfigs) != 0 {
-				serviceMetrics := r.getServiceMetrics(ctx, deviceConn, &project, &device, apps, appsByID, latestAppReleaseByAppID, serviceMetricsConfigs)
+				serviceMetrics := r.getServiceMetrics(ctx, deviceConn, &project, &device, apps, appsByID, getReleaseByID, serviceMetricsConfigs)
 				if len(serviceMetrics) != 0 {
 					lock.Lock()
 					req.Series = append(req.Series, serviceMetrics...)

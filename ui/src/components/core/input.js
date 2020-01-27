@@ -6,6 +6,7 @@ import {
   layout,
   border,
   shadow,
+  variant,
 } from 'styled-system';
 
 const Input = styled.input.attrs(props => ({
@@ -18,18 +19,20 @@ const Input = styled.input.attrs(props => ({
   margin: 0;
   transition: ${props => props.theme.transitions[0]};
   width: 100%;
-  padding: 12px;
-  font-weight: 300;
+  padding: 8px;
   caret-color: ${props => props.theme.colors.primary};
+  font-weight: 300;
 
   &:focus {
     border-color: ${props => props.theme.colors.primary};
   }
 
+  font-size: 16px;
+
   &::placeholder {
     font-size: 16px;
     font-weight: 400;
-    color: ${props => props.theme.colors.grays[10]};
+    color: ${props => props.theme.colors.grays[9]};
   }
 
   -webkit-autofill,
@@ -40,6 +43,18 @@ const Input = styled.input.attrs(props => ({
         props.theme.colors.grays[1]} inset !important;
   }
 
+  ${variant({
+    variants: {
+      small: {
+        padding: '4px',
+        fontSize: 1,
+        '::placeholder': {
+          fontSize: 1,
+        },
+      },
+    },
+  })}
+
   ${space} ${border} ${layout} ${color} ${typography} ${shadow}
 `;
 
@@ -47,7 +62,6 @@ Input.defaultProps = {
   color: 'white',
   bg: 'grays.0',
   borderRadius: 1,
-  fontSize: 2,
 };
 
 export default Input;

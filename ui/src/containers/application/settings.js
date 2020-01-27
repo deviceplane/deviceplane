@@ -70,7 +70,8 @@ const ApplicationSettings = ({
   return (
     <>
       <Card
-        size="large"
+        width="100%"
+        maxWidth="575px"
         title="Application Settings"
         actions={[
           {

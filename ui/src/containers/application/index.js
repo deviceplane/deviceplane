@@ -18,6 +18,10 @@ const tabs = [
     to: 'scheduling',
   },
   {
+    title: 'Release Pinning',
+    to: 'release-pinning',
+  },
+  {
     title: 'Settings',
     to: 'settings',
   },

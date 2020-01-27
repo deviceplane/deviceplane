@@ -10,6 +10,7 @@ const Container = styled(Column)`
   opacity: ${props => (props.disabled ? 0.2 : 1)};
   overflow: ${props =>
     props.overflow ? `${props.overflow} !important` : 'initial'};
+  transition: all 250ms;
 
   ${variant({
     variants: {
@@ -46,6 +47,8 @@ const Card = ({
   title,
   subtitle,
   top = null,
+  left = null,
+  center = null,
   border = false,
   logo,
   actions = [],
@@ -76,11 +79,13 @@ const Card = ({
         <Column marginBottom={6} borderColor="white">
           <Row alignItems="center" justifyContent="space-between">
             <Row>
-              <Text fontSize={5} fontWeight={2}>
+              <Text fontSize={5} fontWeight={2} marginRight={6}>
                 {title}
               </Text>
+              {left}
             </Row>
-            <Row marginLeft={7}>
+            {center && <Row marginX={6}>{center}</Row>}
+            <Row>
               {actions.map(
                 ({
                   href,
@@ -98,7 +103,7 @@ const Card = ({
                       variant={variant}
                       onClick={onClick}
                       disabled={disabled}
-                      marginLeft={5}
+                      marginLeft={4}
                     />
                   )
               )}
