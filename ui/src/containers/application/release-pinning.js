@@ -130,9 +130,7 @@ const ReleasePinning = ({
         value: 'latest',
         label: 'Latest',
       },
-      ...releases
-        .filter(({ number }) => number !== application.latestRelease.number)
-        .map(({ number }) => ({ value: number, label: number })),
+      ...releases.map(({ number }) => ({ value: number, label: number })),
     ],
     [releases]
   );
@@ -385,7 +383,7 @@ const ReleasePinning = ({
               placeholder="Search devices by name or labels"
               paddingLeft={7}
               value={searchInput}
-              width="350px"
+              width="325px"
               onChange={e => setSearchInput(e.target.value)}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}

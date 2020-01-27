@@ -315,7 +315,7 @@ const Scheduling = ({
               placeholder="Search devices by name or labels"
               paddingLeft={7}
               value={searchInput}
-              width="350px"
+              width="325px"
               onChange={e => setSearchInput(e.target.value)}
               onFocus={e => setSearchFocused(true)}
               onBlur={e => setSearchFocused(false)}
