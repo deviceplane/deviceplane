@@ -51,7 +51,7 @@ func NewSupervisor(
 	}
 }
 
-func (s *Supervisor) SetApplications(applications []models.ApplicationFull2) {
+func (s *Supervisor) SetApplications(applications []models.FullBundledApplication) {
 	applicationIDs := make(map[string]struct{})
 	for _, application := range applications {
 		s.lock.Lock()

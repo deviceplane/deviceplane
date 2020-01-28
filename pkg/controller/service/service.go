@@ -2863,7 +2863,7 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, project mode
 		DesiredAgentVersion: device.DesiredAgentVersion,
 	}
 
-	for i, application := range applications {
+	for _, application := range applications {
 		scheduled, scheduledDevice, err := scheduling.IsApplicationScheduled(device, application.SchedulingRule)
 		if err != nil {
 			log.WithError(err).Error("evaluate application scheduling rule")
@@ -2881,8 +2881,13 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, project mode
 			return
 		}
 
-		bundle.Applications = append(bundle.Applications, models.ApplicationFull2{
-			Application:   applications[i],
+		bundle.Applications = append(bundle.Applications, models.FullBundledApplication{
+			Application: models.BundledApplication{
+				ID:                    application.ID,
+				ProjectID:             application.ProjectID,
+				Name:                  application.Name,
+				MetricEndpointConfigs: application.MetricEndpointConfigs,
+			},
 			LatestRelease: *release,
 		})
 	}

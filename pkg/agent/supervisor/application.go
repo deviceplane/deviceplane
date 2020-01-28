@@ -56,7 +56,7 @@ func NewApplicationSupervisor(
 	}
 }
 
-func (s *ApplicationSupervisor) SetApplication(application models.ApplicationFull2) {
+func (s *ApplicationSupervisor) SetApplication(application models.FullBundledApplication) {
 	s.stopLock.Lock()
 	defer s.stopLock.Unlock()
 

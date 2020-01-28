@@ -251,16 +251,23 @@ type ReleaseFull struct {
 }
 
 type Bundle struct {
-	Applications        []ApplicationFull2        `json:"applications" yaml:"applications"`
+	Applications        []FullBundledApplication  `json:"applications" yaml:"applications"`
 	ApplicationStatuses []DeviceApplicationStatus `json:"applicationStatuses" yaml:"applicationStatuses"`
 	ServiceStatuses     []DeviceServiceStatus     `json:"serviceStatuses" yaml:"serviceStatuses"`
 	DesiredAgentSpec    string                    `json:"desiredAgentSpec" yaml:"desiredAgentSpec"`
 	DesiredAgentVersion string                    `json:"desiredAgentVersion" yaml:"desiredAgentVersion"`
 }
 
-type ApplicationFull2 struct {
-	Application   Application `json:"application" yaml:"application"`
-	LatestRelease Release     `json:"latestRelease" yaml:"latestRelease"`
+type BundledApplication struct {
+	ID                    string                          `json:"id" yaml:"id"`
+	ProjectID             string                          `json:"projectId" yaml:"projectId"`
+	Name                  string                          `json:"name" yaml:"name"`
+	MetricEndpointConfigs map[string]MetricEndpointConfig `json:"metricEndpointConfigs" yaml:"metricEndpointConfigs"`
+}
+
+type FullBundledApplication struct {
+	Application   BundledApplication `json:"application" yaml:"application"`
+	LatestRelease Release            `json:"latestRelease" yaml:"latestRelease"`
 }
 
 type DeviceInfo struct {
