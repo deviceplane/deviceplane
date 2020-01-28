@@ -1,14 +1,18 @@
 package utils
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
+	"github.com/deviceplane/deviceplane/pkg/controller/store"
+	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/pkg/errors"
 )
 
@@ -150,4 +154,21 @@ func GetDomainFromEmail(email string) (string, error) {
 		return "", errInvalidEmail
 	}
 	return parts[1], nil
+}
+
+func GetReleaseByIdentifier(rstore store.Releases, ctx context.Context, projectID, applicationID, releaseID string) (*models.Release, error) {
+	var release *models.Release
+	var err error
+	if strings.Contains(releaseID, "_") {
+		release, err = rstore.GetRelease(ctx, releaseID, projectID, applicationID)
+	} else if releaseID == models.LatestRelease {
+		release, err = rstore.GetLatestRelease(ctx, projectID, applicationID)
+	} else {
+		id, parseErr := strconv.ParseUint(releaseID, 10, 32)
+		if parseErr != nil {
+			return nil, parseErr
+		}
+		release, err = rstore.GetReleaseByNumber(ctx, uint32(id), projectID, applicationID)
+	}
+	return release, err
 }

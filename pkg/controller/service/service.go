@@ -2874,25 +2874,11 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, project mode
 			continue
 		}
 
-		var release *models.Release
-		if scheduledDevice.ReleaseID == models.LatestRelease {
-			release, err = s.releases.GetLatestRelease(r.Context(), project.ID, application.ID)
-			if err == store.ErrReleaseNotFound {
-				continue
-			} else if err != nil {
-				log.WithError(err).Error("get latest release")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-		} else {
-			release, err = s.releases.GetRelease(r.Context(), scheduledDevice.ReleaseID, project.ID, application.ID)
-			if err == store.ErrReleaseNotFound {
-				continue
-			} else if err != nil {
-				log.WithError(err).Error("get scheduled release")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+		release, err := utils.GetReleaseByIdentifier(s.releases, r.Context(), project.ID, application.ID, scheduledDevice.ReleaseID)
+		if err != nil {
+			log.WithError(err).Errorf("get release by ID %s", scheduledDevice.ReleaseID)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 
 		bundle.Applications = append(bundle.Applications, models.ApplicationFull2{

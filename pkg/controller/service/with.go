@@ -2,12 +2,12 @@ package service
 
 import (
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/models"
+	"github.com/deviceplane/deviceplane/pkg/utils"
 	"github.com/gorilla/mux"
 )
 
@@ -126,18 +126,7 @@ func (s *Service) withApplicationAndRelease(handler func(http.ResponseWriter, *h
 		}
 
 		var release *models.Release
-		if strings.Contains(releaseMuxVar, "_") {
-			release, err = s.releases.GetRelease(r.Context(), releaseMuxVar, projectID, application.ID)
-		} else if releaseMuxVar == "latest" { // TODO: models.LatestRelease
-			release, err = s.releases.GetLatestRelease(r.Context(), projectID, application.ID)
-		} else {
-			id, parseErr := strconv.ParseUint(releaseMuxVar, 10, 32)
-			if parseErr != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-			release, err = s.releases.GetReleaseByNumber(r.Context(), uint32(id), projectID, application.ID)
-		}
+		release, err = utils.GetReleaseByIdentifier(s.releases, r.Context(), projectID, application.ID, releaseMuxVar)
 		if err == store.ErrReleaseNotFound {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return

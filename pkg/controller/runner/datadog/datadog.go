@@ -2,8 +2,6 @@ package datadog
 
 import (
 	"context"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -15,6 +13,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/metrics/datadog"
 	"github.com/deviceplane/deviceplane/pkg/metrics/datadog/translation"
 	"github.com/deviceplane/deviceplane/pkg/models"
+	"github.com/deviceplane/deviceplane/pkg/utils"
 )
 
 const (
@@ -112,25 +111,8 @@ func (r *Runner) doForProject(ctx context.Context, project models.Project) {
 	}
 
 	getReleaseByID := func(id string, appID string) (release *models.Release) {
-		var err error
-		if strings.Contains(id, "_") {
-			release, err = r.releases.GetRelease(ctx, id, project.ID, appID)
-		} else if id == "latest" { // TODO: models.LatestRelease
-			release, err = r.releases.GetLatestRelease(ctx, project.ID, appID)
-		} else {
-			id, parseErr := strconv.ParseUint(id, 10, 32)
-			if parseErr != nil {
-				return nil
-			}
-			release, err = r.releases.GetReleaseByNumber(ctx, uint32(id), project.ID, appID)
-		}
-		if err == store.ErrReleaseNotFound {
-			return nil
-		} else if err != nil {
-			log.WithError(err).Error("get release")
-		}
-
-		return release
+		r, _ := utils.GetReleaseByIdentifier(r.releases, ctx, project.ID, appID, id)
+		return r
 	}
 
 	var lock sync.Mutex

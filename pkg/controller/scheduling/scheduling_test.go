@@ -20,13 +20,6 @@ func testScenario(t *testing.T, scenario Scenario) {
 	require.Equal(t, scenario.out, scheduledDevices)
 }
 
-func testFailScenario(t *testing.T, scenario Scenario) {
-	t.Helper()
-	scheduledDevices, err := GetScheduledDevices(scenario.in, scenario.schedulingRule)
-	require.Error(t, err)
-	require.Len(t, scheduledDevices, 0)
-}
-
 func TestScheduleAllDevices(t *testing.T) {
 	testScenario(t, Scenario{
 		in: []models.Device{
@@ -467,4 +460,196 @@ func TestScheduleWithComplexPinnedQuery(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestIndividualDeviceScheduling(t *testing.T) {
+	schedulingRule := models.SchedulingRule{
+		ScheduleType: models.ScheduleTypeConditional,
+		ConditionalQuery: &models.Query{
+			models.Filter{
+				models.Condition{
+					Type: models.LabelValueCondition,
+					Params: map[string]interface{}{
+						"key":      "a",
+						"operator": models.OperatorIs,
+						"value":    "b",
+					},
+				},
+				models.Condition{
+					Type: models.LabelValueCondition,
+					Params: map[string]interface{}{
+						"key":      "a",
+						"operator": models.OperatorIs,
+						"value":    "c",
+					},
+				},
+				models.Condition{
+					Type: models.LabelValueCondition,
+					Params: map[string]interface{}{
+						"key":      "a",
+						"operator": models.OperatorIs,
+						"value":    "d",
+					},
+				},
+			},
+		},
+		ReleaseSelectors: []models.ReleaseSelector{
+			models.ReleaseSelector{
+				Query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type: models.LabelValueCondition,
+							Params: map[string]interface{}{
+								"key":      "a",
+								"operator": models.OperatorIs,
+								"value":    "b",
+							},
+						},
+						models.Condition{
+							Type: models.LabelValueCondition,
+							Params: map[string]interface{}{
+								"key":      "a",
+								"operator": models.OperatorIs,
+								"value":    "f",
+							},
+						},
+					},
+				},
+				ReleaseID: "pinned",
+			},
+			models.ReleaseSelector{
+				Query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type: models.LabelValueCondition,
+							Params: map[string]interface{}{
+								"key":      "a",
+								"operator": models.OperatorIs,
+								"value":    "c",
+							},
+						},
+					},
+				},
+				ReleaseID: "pinned-two",
+			},
+			models.ReleaseSelector{
+				Query: models.Query{
+					models.Filter{
+						models.Condition{
+							Type: models.LabelValueCondition,
+							Params: map[string]interface{}{
+								"key":      "a",
+								"operator": models.OperatorIs,
+								"value":    "test",
+							},
+						},
+					},
+				},
+				ReleaseID: "pinned-three",
+			},
+		},
+		DefaultReleaseID: "1",
+	}
+
+	testIndividualScheduling := func(t *testing.T, d models.Device, sr models.SchedulingRule, is bool, sd *models.ScheduledDevice, err error) {
+		isSched, scheduledDevice, schedErr := IsApplicationScheduled(d, sr)
+		require.Equal(t, is, isSched, "is scheduled")
+		if sd != nil && scheduledDevice != nil {
+			require.Equal(t, *sd, *scheduledDevice, "scheduled device")
+		} else {
+			require.Equal(t, sd, scheduledDevice, "scheduled device")
+		}
+		require.Equal(t, err, schedErr, "error when scheduling")
+	}
+
+	testIndividualScheduling(
+		t,
+		models.Device{
+			ID:     "one",
+			Status: models.DeviceStatusOnline,
+			Labels: map[string]string{
+				"a": "b",
+			},
+		},
+		schedulingRule,
+
+		true,
+		&models.ScheduledDevice{
+			Device: models.Device{
+				ID:     "one",
+				Status: models.DeviceStatusOnline,
+				Labels: map[string]string{
+					"a": "b",
+				},
+			},
+			ReleaseID: "pinned",
+		},
+		nil,
+	)
+
+	testIndividualScheduling(
+		t,
+		models.Device{
+			ID:     "two",
+			Status: models.DeviceStatusOnline,
+			Labels: map[string]string{
+				"a": "c",
+			},
+		},
+		schedulingRule,
+
+		true,
+		&models.ScheduledDevice{
+			Device: models.Device{
+				ID:     "two",
+				Status: models.DeviceStatusOnline,
+				Labels: map[string]string{
+					"a": "c",
+				},
+			},
+			ReleaseID: "pinned-two",
+		},
+		nil,
+	)
+
+	testIndividualScheduling(
+		t,
+		models.Device{
+			ID:     "three",
+			Status: models.DeviceStatusOnline,
+			Labels: map[string]string{
+				"a": "d",
+			},
+		},
+		schedulingRule,
+
+		true,
+		&models.ScheduledDevice{
+			Device: models.Device{
+				ID:     "three",
+				Status: models.DeviceStatusOnline,
+				Labels: map[string]string{
+					"a": "d",
+				},
+			},
+			ReleaseID: "1",
+		},
+		nil,
+	)
+
+	testIndividualScheduling(
+		t,
+		models.Device{
+			ID:     "four",
+			Status: models.DeviceStatusOnline,
+			Labels: map[string]string{
+				"a": "test",
+			},
+		},
+		schedulingRule,
+
+		false,
+		nil,
+		nil,
+	)
 }
