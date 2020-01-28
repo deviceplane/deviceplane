@@ -27,6 +27,7 @@ const Content = styled(Column)`
   max-height: 80vh;
   overflow: ${props => props.overflow};
   & > div {
+    width: 100vw;
     overflow: scroll;
   }
 `;
