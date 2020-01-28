@@ -146,6 +146,7 @@ const Table = ({ columns, data, onRowSelect, placeholder, editRow }) => {
                         ? 'flex-start'
                         : 'flex-end',
                     ...cell.column.style,
+                    ...cell.column.cellStyle,
                   }}
                   overflow={editRow ? 'visible' : 'hidden'}
                 >

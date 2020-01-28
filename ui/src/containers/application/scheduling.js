@@ -76,6 +76,9 @@ const Scheduling = ({
           flex: 2,
           overflow: 'hidden',
         },
+        cellStyle: {
+          marginBottom: '-8px',
+        },
       },
     ],
     []
