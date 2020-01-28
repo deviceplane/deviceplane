@@ -16,6 +16,7 @@ const RegistrationTokenOverview = ({
         size="xlarge"
         title={registrationToken.name}
         subtitle={registrationToken.description}
+        marginBottom={4}
       >
         <Group>
           <Label>ID</Label>
@@ -30,25 +31,23 @@ const RegistrationTokenOverview = ({
           <Value>{registrationToken.maxRegistrations || 'Unlimited'}</Value>
         </Group>
       </Card>
-      <Column marginTop={4}>
-        <EditableLabelTable
-          data={registrationToken.labels}
-          onAdd={label =>
-            api.addRegistrationTokenLabel({
-              projectId: params.project,
-              tokenId: registrationToken.id,
-              data: label,
-            })
-          }
-          onRemove={labelId =>
-            api.removeRegistrationTokenLabel({
-              projectId: params.project,
-              tokenId: registrationToken.id,
-              labelId,
-            })
-          }
-        />
-      </Column>
+      <EditableLabelTable
+        data={registrationToken.labels}
+        onAdd={label =>
+          api.addRegistrationTokenLabel({
+            projectId: params.project,
+            tokenId: registrationToken.id,
+            data: label,
+          })
+        }
+        onRemove={labelId =>
+          api.removeRegistrationTokenLabel({
+            projectId: params.project,
+            tokenId: registrationToken.id,
+            labelId,
+          })
+        }
+      />
     </>
   );
 };

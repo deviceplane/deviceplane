@@ -206,26 +206,24 @@ const DeviceOverview = ({
           </Value>
         </Group>
       </Card>
-      <Column marginBottom={4}>
-        <EditableLabelTable
-          data={device.labels}
-          onAdd={label =>
-            api.addDeviceLabel({
-              projectId: params.project,
-              deviceId: device.id,
-              data: label,
-            })
-          }
-          onRemove={labelId =>
-            api.removeDeviceLabel({
-              projectId: params.project,
-              deviceId: device.id,
-              labelId,
-            })
-          }
-        />
-      </Column>
-      <Card title="Services" size="xlarge">
+      <EditableLabelTable
+        data={device.labels}
+        onAdd={label =>
+          api.addDeviceLabel({
+            projectId: params.project,
+            deviceId: device.id,
+            data: label,
+          })
+        }
+        onRemove={labelId =>
+          api.removeDeviceLabel({
+            projectId: params.project,
+            deviceId: device.id,
+            labelId,
+          })
+        }
+      />
+      <Card title="Services" size="xlarge" marginTop={4}>
         <DeviceServices
           projectId={params.project}
           device={device}
