@@ -37,7 +37,7 @@ const ProjectCreate = () => {
 
   return (
     <Layout alignItems="center">
-      <Card title="Create Project">
+      <Card title="Create Project" size="medium">
         <Alert show={backendError} variant="error" description={backendError} />
         <Form
           onSubmit={e => {
