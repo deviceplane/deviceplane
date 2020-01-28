@@ -35,8 +35,11 @@ const Login = ({
         params.redirectTo ? decodeURIComponent(params.redirectTo) : '/projects'
       );
     } catch (error) {
-      setBackendError('Invalid credentials');
-      console.log(error);
+      if (error.response && error.response.status === 403) {
+        setBackendError('Email confirmation required');
+      } else {
+        setBackendError('Invalid credentials');
+      }
     }
   };
 
