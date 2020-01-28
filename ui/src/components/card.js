@@ -69,7 +69,7 @@ const Card = ({
       {...props}
     >
       {logo && (
-        <Link href="https://deviceplane.com" marginX="auto" marginBottom={8}>
+        <Link href="https://deviceplane.com" marginX="auto" marginBottom={6}>
           <Logo size={50} />
         </Link>
       )}

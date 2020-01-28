@@ -81,7 +81,8 @@ const PasswordRecovery = ({
     <Column
       flex={1}
       alignItems="center"
-      paddingY={9}
+      justifyContent="center"
+      paddingY={[0, 6]}
       height="100%"
       overflow="auto"
     >
