@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -26,9 +25,9 @@ const (
 )
 
 var (
-	ErrInvalidPageSizeParameter = errors.New(fmt.Sprintf("invalid %s parameter", PageSizeParam))
-	ErrInvalidOrderByParameter  = errors.New(fmt.Sprintf("invalid %s parameter", OrderByParam))
-	ErrInvalidOrderParameter    = errors.New(fmt.Sprintf("invalid %s parameter", OrderParam))
+	ErrInvalidPageSizeParameter = fmt.Errorf("invalid %s parameter", PageSizeParam)
+	ErrInvalidOrderByParameter  = fmt.Errorf("invalid %s parameter", OrderByParam)
+	ErrInvalidOrderParameter    = fmt.Errorf("invalid %s parameter", OrderParam)
 )
 
 type orderDirection string

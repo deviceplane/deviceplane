@@ -286,8 +286,8 @@ type OSRelease struct {
 }
 
 const (
-	DefaultMetricPort uint = 2112
-	DefaultMetricPath      = "/metrics"
+	DefaultMetricPort uint   = 2112
+	DefaultMetricPath string = "/metrics"
 )
 
 type MetricEndpointConfig struct {

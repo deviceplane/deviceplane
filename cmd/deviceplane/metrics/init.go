@@ -60,7 +60,7 @@ func Initialize(c *global.Config) {
 		}
 
 		var services []string
-		for k, _ := range latestRelease.Config {
+		for k := range latestRelease.Config {
 			services = append(services, k)
 		}
 		fmt.Println("-") // TODO: find out kingpin won't autocomplete without this

@@ -1429,7 +1429,7 @@ func (s *Store) ListAllDeviceLabelKeys(ctx context.Context, projectID string) ([
 		if err != nil {
 			return nil, err
 		}
-		for k, _ := range deviceLabels {
+		for k := range deviceLabels {
 			allDeviceLabels[k] = true
 		}
 	}
@@ -1440,7 +1440,7 @@ func (s *Store) ListAllDeviceLabelKeys(ctx context.Context, projectID string) ([
 
 	allDeviceLabelKeys := make([]string, len(allDeviceLabels))
 	i := 0
-	for k, _ := range allDeviceLabels {
+	for k := range allDeviceLabels {
 		allDeviceLabelKeys[i] = k
 		i++
 	}

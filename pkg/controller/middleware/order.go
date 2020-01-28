@@ -26,7 +26,6 @@ func (s genericSortableArray) Swap(i, j int) {
 	temp := s.arr[j]
 	s.arr[j] = s.arr[i]
 	s.arr[i] = temp
-	return
 }
 
 func (s genericSortableArray) Less(i, j int) bool {
