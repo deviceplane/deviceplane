@@ -2875,6 +2875,9 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, project mode
 		}
 
 		release, err := utils.GetReleaseByIdentifier(s.releases, r.Context(), project.ID, application.ID, scheduledDevice.ReleaseID)
+		if err == store.ErrReleaseNotFound {
+			continue
+		}
 		if err != nil {
 			log.WithError(err).Errorf("get release by ID %s", scheduledDevice.ReleaseID)
 			w.WriteHeader(http.StatusInternalServerError)
