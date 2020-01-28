@@ -14,14 +14,14 @@ const getInitials = (name, fallback = '?') => {
 
 const Avatar = ({ name }) => (
   <Column
-    width={7}
-    height={7}
+    width="36px"
+    height="36px"
     alignItems="center"
     justifyContent="center"
     bg="primary"
     borderRadius={6}
   >
-    <Text color="black" fontWeight={2} fontSize={1}>
+    <Text color="black" fontWeight={2} fontSize={0}>
       {getInitials(name)}
     </Text>
   </Column>

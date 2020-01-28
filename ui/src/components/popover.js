@@ -12,7 +12,7 @@ const Container = styled(Column)`
 const Content = styled(Column)`
   position: absolute;
 
-  top: 54px;
+  top: 48px;
   right: 0;
   width: 240px;
 `;

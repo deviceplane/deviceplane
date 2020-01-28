@@ -76,6 +76,9 @@ const Scheduling = ({
           flex: 2,
           overflow: 'hidden',
         },
+        cellStyle: {
+          marginBottom: '-8px',
+        },
       },
     ],
     []
@@ -84,20 +87,15 @@ const Scheduling = ({
 
   const navigation = useNavigation();
 
-  let isSubmitDisabled = false;
+  let isSubmitDisabled = scheduleType === application.scheduleType;
 
   if (scheduleType === ScheduleTypeConditional) {
-    if (
+    isSubmitDisabled =
       conditionalQuery.length === 0 ||
       utils.deepEqual(
-        conditionalQuery,
+        conditionalQuery.map(arr => arr.map(({ options, ...rest }) => rest)),
         application.schedulingRule.conditionalQuery
-      )
-    ) {
-      isSubmitDisabled = true;
-    }
-  } else if (scheduleType === application.scheduleType) {
-    isSubmitDisabled = true;
+      );
   }
 
   const submit = async () => {

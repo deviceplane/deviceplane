@@ -32,6 +32,16 @@ const Applications = ({
         style: { flex: 2 },
       },
       {
+        Header: 'Scheduling',
+        accessor: ({ schedulingRule: { scheduleType } }) =>
+          scheduleType === 'AllDevices'
+            ? 'All devices'
+            : scheduleType === 'NoDevices'
+            ? 'No devices'
+            : 'Conditional',
+        style: { flex: '0 0 120px' },
+      },
+      {
         Header: 'Last Release',
         accessor: 'latestRelease.createdAt',
         Cell: ({ cell: { value } }) => (
@@ -56,7 +66,7 @@ const Applications = ({
     <Layout title="Applications" alignItems="center">
       <Card
         title="Applications"
-        size="xlarge"
+        size="xxlarge"
         actions={[{ title: 'Create Application', href: 'create' }]}
         maxHeight="100%"
       >

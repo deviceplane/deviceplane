@@ -42,7 +42,8 @@ const PasswordReset = () => {
     <Column
       flex={1}
       alignItems="center"
-      paddingY={[0, 9]}
+      justifyContent="center"
+      paddingY={[0, 6]}
       height="100%"
       overflow="auto"
       bg={['black', 'pageBackground']}
@@ -74,7 +75,7 @@ const PasswordReset = () => {
           <Button title="Reset Password" />
         </Form>
 
-        <Row marginTop={4}>
+        <Row marginTop={5}>
           <Button href="/login" variant="text" title="Cancel" />
         </Row>
       </Card>

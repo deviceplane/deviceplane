@@ -1174,8 +1174,7 @@ func (s *Service) createProject(w http.ResponseWriter, r *http.Request, authenti
 		r.Context(),
 		project.ID,
 		"default",
-		// This copy can be improved:
-		"This default registration token is used for provisioning new devices from the UI.",
+		"",
 		nil,
 	)
 	if err != nil {

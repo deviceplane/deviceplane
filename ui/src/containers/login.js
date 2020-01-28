@@ -35,8 +35,11 @@ const Login = ({
         params.redirectTo ? decodeURIComponent(params.redirectTo) : '/projects'
       );
     } catch (error) {
-      setBackendError('Invalid credentials');
-      console.log(error);
+      if (error.response && error.response.status === 403) {
+        setBackendError('Email confirmation required');
+      } else {
+        setBackendError('Invalid credentials');
+      }
     }
   };
 
@@ -44,7 +47,8 @@ const Login = ({
     <Column
       flex={1}
       alignItems="center"
-      paddingY={[0, 9]}
+      justifyContent="center"
+      paddingY={[0, 6]}
       height="100%"
       overflow="auto"
       bg={['black', 'pageBackground']}
@@ -84,7 +88,7 @@ const Login = ({
 
           <Button justifyContent="center" title="Log in" />
         </Form>
-        <Row marginTop={6}>
+        <Row marginTop={5}>
           <Button variant="text" href="/forgot" title="Forgot your password?" />
         </Row>
       </Card>

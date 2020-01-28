@@ -9,7 +9,7 @@ const DeviceLabel = ({ label: { key, value }, onClick = () => {} }) => {
     <Row
       overflow="hidden"
       marginRight={2}
-      marginY={2}
+      marginBottom={2}
       onClick={e => {
         e.stopPropagation();
         onClick({ key, value });

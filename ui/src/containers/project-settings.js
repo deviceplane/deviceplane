@@ -78,7 +78,7 @@ const ProjectSettings = ({
       <>
         <Card
           title="Project Settings"
-          width="540px"
+          maxWidth="540px"
           actions={[
             {
               title: 'Delete',

@@ -103,7 +103,8 @@ const Devices = ({ route }) => {
         style: {
           flex: 2,
           overflow: 'hidden',
-          marginTop: '-8px',
+        },
+        cellStyle: {
           marginBottom: '-8px',
         },
       },

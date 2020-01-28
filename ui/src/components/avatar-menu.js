@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { space, layout, color, border, typography } from 'styled-system';
 import { useNavigation, useActive, useCurrentRoute } from 'react-navi';
+import { Icon } from 'evergreen-ui';
 
+import api from '../api';
+import theme from '../theme';
 import { Row, Text } from './core';
 import Popup from './popup';
 import Popover from './popover';
@@ -12,7 +15,6 @@ import ChangePassword from '../containers/change-password';
 import Profile from '../containers/profile';
 import UserAccessKeys from '../containers/user-access-keys';
 import SSHKeys from '../containers/ssh-keys';
-import api from '../api';
 
 const MenuItem = styled.button`
   background: none;
@@ -175,6 +177,12 @@ const AvatarMenu = () => {
       >
         <Row alignItems="center">
           <Avatar name={name} />
+          <Icon
+            icon="caret-down"
+            size={16}
+            color={theme.colors.white}
+            marginLeft={6}
+          />
         </Row>
       </Popover>
     </>

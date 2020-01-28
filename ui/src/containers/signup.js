@@ -13,15 +13,11 @@ import { Column, Button, Form, Text, Link } from '../components/core';
 import validators from '../validators';
 
 const validationSchema = yup.object().shape({
-  firstName: yup
+  fullName: yup
     .string()
     .required()
-    .max(64),
-  lastName: yup
-    .string()
-    .required()
-    .max(64),
-  company: yup.string().max(64),
+    .max(128),
+  company: yup.string().max(128),
   email: validators.email.required(),
   password: validators.password.required(),
 });
@@ -34,6 +30,18 @@ const Signup = () => {
   const [backendError, setBackendError] = useState();
 
   const submit = async data => {
+    const firstSpace = data.fullName.indexOf(' ');
+
+    if (firstSpace === -1) {
+      data.firstName = data.fullName;
+      data.lastName = ' ';
+    } else {
+      data.firstName = data.fullName.substr(0, firstSpace);
+      data.lastName = data.fullName.substr(firstSpace + 1);
+    }
+
+    delete data.fullName;
+
     try {
       const response = await api.signup(data);
       navigation.navigate('/login');
@@ -55,7 +63,7 @@ const Signup = () => {
     <Column
       alignItems="center"
       flex={1}
-      paddingY={[0, 9]}
+      paddingY={[0, 5]}
       height={['initial', '100%']}
       overflow="auto"
       bg={['black', 'pageBackground']}
@@ -78,21 +86,11 @@ const Signup = () => {
             autoFocus
             autoComplete="on"
             autoCapitalize="on"
-            label="First Name"
-            name="firstName"
+            label="Full Name"
+            name="fullName"
             ref={register}
-            errors={errors.firstName}
-            maxLength={64}
-          />
-          <Field
-            required
-            autoComplete="on"
-            autoCapitalize="on"
-            label="Last Name"
-            name="lastName"
-            ref={register}
-            errors={errors.lastName}
-            maxLength={64}
+            errors={errors.fullName}
+            maxLength={128}
           />
           <Field
             autoComplete="on"

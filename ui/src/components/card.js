@@ -69,18 +69,14 @@ const Card = ({
       {...props}
     >
       {logo && (
-        <Link href="https://deviceplane.com" marginX="auto" marginBottom={8}>
+        <Link href="https://deviceplane.com" marginX="auto" marginBottom={6}>
           <Logo size={50} />
         </Link>
       )}
       {top}
       {title && (
         <Column marginBottom={6} borderColor="white">
-          <Row
-            alignItems="center"
-            justifyContent="space-between"
-            flexWrap="wrap"
-          >
+          <Row alignItems="center" justifyContent="space-between">
             <Row>
               <Text fontSize={5} fontWeight={2} marginRight={6}>
                 {title}

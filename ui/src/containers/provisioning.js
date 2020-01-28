@@ -54,6 +54,9 @@ const Provisioning = ({
         style: {
           flex: 2,
         },
+        cellStyle: {
+          marginBottom: '-8px',
+        },
       },
     ],
     []
