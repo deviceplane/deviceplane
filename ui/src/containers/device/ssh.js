@@ -129,13 +129,13 @@ const DeviceSsh = ({
       </Card>
 
       <Popup
-        show={showKeyPopup}
+        show={true || showKeyPopup}
         onClose={() => {
           setShowKeyPopup(false);
           startSSH();
         }}
       >
-        <Card border>
+        <Card border size="medium">
           <Select
             onChange={({ value }) => {
               setShowKeyPopup(false);
