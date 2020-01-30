@@ -129,7 +129,7 @@ const DeviceSsh = ({
       </Card>
 
       <Popup
-        show={true || showKeyPopup}
+        show={showKeyPopup}
         onClose={() => {
           setShowKeyPopup(false);
           startSSH();
