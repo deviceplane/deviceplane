@@ -1,14 +1,12 @@
 import React from 'react';
-import { Icon } from 'evergreen-ui';
 
-import theme from '../theme';
 import {
   LabelValueCondition,
   LabelExistenceCondition,
   DevicePropertyCondition,
 } from './devices-filter';
 import { labelColor } from '../helpers/labels';
-import { Row, Text, Button, Badge } from './core';
+import { Row, Text, Button, Badge, Icon } from './core';
 
 const ConditionComp = ({ type, params }) => {
   switch (type) {
@@ -108,7 +106,7 @@ export const DevicesFilterButtons = ({
             <Button
               marginLeft={2}
               variant="icon"
-              title={<Icon icon="cross" color={theme.colors.red} size={14} />}
+              title={<Icon icon="cross" color="red" size={14} />}
               onClick={() => (removeFilter ? removeFilter(index) : null)}
             />
           )}

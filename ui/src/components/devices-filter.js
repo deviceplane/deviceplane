@@ -1,9 +1,7 @@
 import React, { useRef, useMemo, useState } from 'react';
-import { Icon } from 'evergreen-ui';
 
 import utils from '../utils';
-import theme from '../theme';
-import { Column, Row, Group, Button, Input, Text, Select } from './core';
+import { Column, Row, Group, Button, Input, Text, Select, Icon } from './core';
 import Card from './card';
 import Popup from './popup';
 
@@ -408,9 +406,7 @@ export const DevicesFilter = props => {
 
                 {index > 0 && (
                   <Button
-                    title={
-                      <Icon icon="cross" size={16} color={theme.colors.red} />
-                    }
+                    title={<Icon icon="cross" size={16} color="red" />}
                     marginLeft={2}
                     variant="icon"
                     onClick={() =>

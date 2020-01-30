@@ -10,7 +10,6 @@
     "@bugsnag/plugin-react": "^6.5.0",
     "@types/react": "^16.9.11",
     "axios": "^0.18.0",
-    "evergreen-ui": "^4.12.0",
     "framer-motion": "^1.6.17",
     "moment": "^2.22.2",
     "navi": "^0.13.6",

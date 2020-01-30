@@ -2,14 +2,19 @@ import React, { useState } from 'react';
 import { useNavigation } from 'react-navi';
 import useForm from 'react-hook-form';
 
-import { toaster } from 'evergreen-ui';
-
 import api from '../../api';
 import utils from '../../utils';
 import Card from '../../components/card';
 import Field from '../../components/field';
 import Alert from '../../components/alert';
-import { Label, Row, Form, Button, Checkbox } from '../../components/core';
+import {
+  Label,
+  Row,
+  Form,
+  Button,
+  Checkbox,
+  toaster,
+} from '../../components/core';
 
 const AddMember = ({
   route: {
@@ -54,7 +59,7 @@ const AddMember = ({
       }
 
       if (error) {
-        toaster.warning(
+        toaster.danger(
           'Member was added successfully, but roles for the member were not updated properly. Please check the roles of the member.'
         );
       } else {

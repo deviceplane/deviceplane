@@ -1,12 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
-import { toaster, Icon } from 'evergreen-ui';
 
-import theme from '../theme';
 import Card from './card';
 import Table from './table';
 import Popup from './popup';
-import { Text, Row, Button, Input } from './core';
+import { Text, Row, Button, Input, Icon, toaster } from './core';
 
 const CellInput = styled(Input)`
   width: 100%;
@@ -93,13 +91,7 @@ const EditableLabelTable = ({ data, onAdd, onRemove }) => {
             return (
               <Row>
                 <Button
-                  title={
-                    <Icon
-                      icon="floppy-disk"
-                      size={16}
-                      color={theme.colors.primary}
-                    />
-                  }
+                  title={<Icon icon="floppy-disk" size={16} color="primary" />}
                   disabled={
                     !(original.editedKey && original.editedValue) ||
                     (original.mode === 'new' &&
@@ -109,9 +101,7 @@ const EditableLabelTable = ({ data, onAdd, onRemove }) => {
                   variant="icon"
                 />
                 <Button
-                  title={
-                    <Icon icon="cross" size={16} color={theme.colors.white} />
-                  }
+                  title={<Icon icon="cross" size={16} color="white" />}
                   variant="icon"
                   marginLeft={3}
                   onClick={() => cancelEdit(index, original.mode)}
@@ -122,14 +112,12 @@ const EditableLabelTable = ({ data, onAdd, onRemove }) => {
           return (
             <Row>
               <Button
-                title={
-                  <Icon icon="edit" size={16} color={theme.colors.primary} />
-                }
+                title={<Icon icon="edit" size={16} color="primary" />}
                 variant="icon"
                 onClick={() => setEdit(index)}
               />
               <Button
-                title={<Icon icon="trash" size={16} color={theme.colors.red} />}
+                title={<Icon icon="trash" size={16} color="red" />}
                 variant="icon"
                 marginLeft={3}
                 onClick={() => setLabelToRemove(original)}

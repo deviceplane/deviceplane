@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { Tooltip, Icon } from 'evergreen-ui';
 
 import '../../lib/xterm.css';
-import theme from '../../theme';
 import config from '../../config';
 import storage from '../../storage';
 import Card from '../../components/card';
 import Popup from '../../components/popup';
-import { Row, Column, Select, Link } from '../../components/core';
+import { Column, Select } from '../../components/core';
 
 var process = require('process');
 

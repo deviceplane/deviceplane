@@ -1,10 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
 import { useActive, useCurrentRoute } from 'react-navi';
-import { Icon } from 'evergreen-ui';
-
 import Logo from './icons/logo';
-import { Row, Column, Link, Text } from './core';
+import { Row, Column, Link, Text, Icon } from './core';
 
 const links = [
   {

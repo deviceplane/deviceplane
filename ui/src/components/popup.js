@@ -1,9 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { Icon } from 'evergreen-ui';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { Column } from './core';
+import { Column, Icon } from './core';
 
 const Overlay = styled(Column)`
   position: fixed;

@@ -1,8 +1,6 @@
 import React from 'react';
-import { Icon } from 'evergreen-ui';
 
-import theme from '../theme';
-import { Column, Row, Text } from './core';
+import { Column, Row, Text, Icon } from './core';
 
 const getIcon = variant => {
   switch (variant) {
@@ -19,12 +17,12 @@ const getIcon = variant => {
 const getColor = variant => {
   switch (variant) {
     case 'success':
-      return theme.colors.green;
+      return 'green';
     case 'error':
-      return theme.colors.red;
+      return 'red';
     case 'info':
     default:
-      return theme.colors.primary;
+      return 'primary';
   }
 };
 

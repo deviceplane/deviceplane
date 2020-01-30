@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import useForm from 'react-hook-form';
 import * as yup from 'yup';
-import { toaster } from 'evergreen-ui';
 
 import api from '../api';
 import utils from '../utils';
@@ -9,7 +8,7 @@ import validators from '../validators';
 import Card from '../components/card';
 import Field from '../components/field';
 import Alert from '../components/alert';
-import { Form, Button } from '../components/core';
+import { Form, Button, toaster } from '../components/core';
 
 const validationSchema = yup.object().shape({
   currentPassword: yup.string().required(),

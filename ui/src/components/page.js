@@ -26,7 +26,8 @@ const GlobalStyle = createGlobalStyle`
   }
 
   html, body {
-    text-rendering: optimizeLegibility
+    text-rendering: optimizelegibility;
+    shape-rendering: geometricprecision;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -66,11 +67,6 @@ const GlobalStyle = createGlobalStyle`
 
   svg[data-icon="caret-down"] {
     fill: ${props => props.theme.colors.white} !important;
-  }
-
-  div[data-evergreen-toaster-container] {
-    position: relative;
-    z-index: 99999999999;
   }
 `;
 

@@ -1,13 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { toaster, Icon } from 'evergreen-ui';
 
-import theme from '../theme';
 import api from '../api';
 import utils from '../utils';
 import Card from '../components/card';
 import Table from '../components/table';
 import Alert from '../components/alert';
-import { Label, Button, Text, Code, Row } from '../components/core';
+import {
+  Label,
+  Button,
+  Text,
+  Code,
+  Row,
+  Icon,
+  toaster,
+} from '../components/core';
 
 const UserAccessKeys = () => {
   const [accessKeys, setAccessKeys] = useState([]);
@@ -37,16 +43,12 @@ const UserAccessKeys = () => {
           keyToDelete === row.original.id ? (
             <>
               <Button
-                title={
-                  <Icon icon="tick-circle" size={16} color={theme.colors.red} />
-                }
+                title={<Icon icon="tick-circle" size={16} color="red" />}
                 variant="icon"
                 onClick={() => deleteAccessKey(keyToDelete)}
               />
               <Button
-                title={
-                  <Icon icon="cross" size={16} color={theme.colors.white} />
-                }
+                title={<Icon icon="cross" size={16} color="white" />}
                 variant="icon"
                 onClick={() => setKeyToDelete(null)}
                 marginLeft={3}
@@ -54,7 +56,7 @@ const UserAccessKeys = () => {
             </>
           ) : (
             <Button
-              title={<Icon icon="trash" size={16} color={theme.colors.red} />}
+              title={<Icon icon="trash" size={16} color="red" />}
               variant="icon"
               onClick={() => setKeyToDelete(row.original.id)}
             />

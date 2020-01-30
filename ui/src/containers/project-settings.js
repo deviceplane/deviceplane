@@ -1,7 +1,6 @@
 import React from 'react';
 import useForm from 'react-hook-form';
 import { useNavigation } from 'react-navi';
-import { toaster } from 'evergreen-ui';
 import * as yup from 'yup';
 
 import api from '../api';
@@ -21,6 +20,7 @@ import {
   Label,
   Group,
   Checkbox,
+  toaster,
 } from '../components/core';
 
 const validationSchema = yup.object().shape({

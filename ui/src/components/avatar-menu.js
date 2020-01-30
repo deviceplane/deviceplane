@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { space, layout, color, border, typography } from 'styled-system';
 import { useNavigation, useActive, useCurrentRoute } from 'react-navi';
-import { Icon } from 'evergreen-ui';
 
 import api from '../api';
-import theme from '../theme';
-import { Row, Text } from './core';
+import { Box, Row, Text, Icon } from './core';
 import Popup from './popup';
 import Popover from './popover';
 import Avatar from './avatar';
@@ -16,21 +13,18 @@ import Profile from '../containers/profile';
 import UserAccessKeys from '../containers/user-access-keys';
 import SSHKeys from '../containers/ssh-keys';
 
-const MenuItem = styled.button`
+const MenuItem = styled(Box).attrs({ as: 'button' })`
   background: none;
   appearance: none;
   cursor: pointer;
   border: none;
   text-align: left;
-  margin: 0;
-  padding: 0;
   text-transform: uppercase;
 
   &:hover {
     color: ${props => props.theme.colors.pureWhite};
     background-color: ${props => props.theme.colors.grays[0]};
   }
-  ${space} ${layout} ${color} ${border} ${typography}
 `;
 
 MenuItem.defaultProps = {
@@ -177,12 +171,7 @@ const AvatarMenu = () => {
       >
         <Row alignItems="center">
           <Avatar name={name} />
-          <Icon
-            icon="caret-down"
-            size={16}
-            color={theme.colors.white}
-            marginLeft={6}
-          />
+          <Icon icon="caret-down" size={16} color="white" marginLeft={1} />
         </Row>
       </Popover>
     </>

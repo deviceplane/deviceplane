@@ -1,9 +1,8 @@
 import React from 'react';
 import { useTable, useSortBy } from 'react-table';
 import styled from 'styled-components';
-import { Icon } from 'evergreen-ui';
 
-import { Column, Row, Text } from './core';
+import { Column, Row, Text, Icon } from './core';
 
 const Container = styled(Column)``;
 
@@ -94,19 +93,18 @@ const Table = ({ columns, data, onRowSelect, placeholder, editRow }) => {
                 }}
               >
                 {column.render('Header')}
-                <Row>
+                <Row marginLeft={2}>
                   {column.isSorted ? (
                     <Icon
                       icon={column.isSortedDesc ? 'chevron-down' : 'chevron-up'}
                       size={14}
                       color="white"
-                      marginLeft={8}
                     />
                   ) : column.canSort ? (
                     <Icon
                       size={14}
                       icon="expand-all"
-                      marginLeft={8}
+                      color="white"
                       style={{ display: 'none' }}
                     />
                   ) : null}

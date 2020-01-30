@@ -16,8 +16,8 @@ import {
   Link,
   Label,
   Value,
+  toaster,
 } from '../../components/core';
-import { toaster } from 'evergreen-ui';
 
 const ReleasedBy = ({ project, release }) => {
   if (release) {

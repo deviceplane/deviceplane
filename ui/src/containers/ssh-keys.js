@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { toaster, Icon } from 'evergreen-ui';
 
 import theme from '../theme';
 import storage from '../storage';
@@ -13,6 +12,8 @@ import {
   Input,
   Textarea,
   Link,
+  Icon,
+  toaster,
 } from '../components/core';
 
 const EditableCell = ({
@@ -161,13 +162,7 @@ const SSHKeys = () => {
             return (
               <Row>
                 <Button
-                  title={
-                    <Icon
-                      icon="floppy-disk"
-                      size={16}
-                      color={theme.colors.primary}
-                    />
-                  }
+                  title={<Icon icon="floppy-disk" size={16} color="primary" />}
                   disabled={
                     !(original.editedKey && original.editedName) ||
                     (original.mode === 'new' &&
@@ -177,9 +172,7 @@ const SSHKeys = () => {
                   variant="icon"
                 />
                 <Button
-                  title={
-                    <Icon icon="cross" size={16} color={theme.colors.white} />
-                  }
+                  title={<Icon icon="cross" size={16} color="white" />}
                   variant="icon"
                   marginLeft={3}
                   onClick={() => cancelEdit(index, original.mode)}
@@ -191,20 +184,12 @@ const SSHKeys = () => {
             return (
               <>
                 <Button
-                  title={
-                    <Icon
-                      icon="tick-circle"
-                      size={16}
-                      color={theme.colors.red}
-                    />
-                  }
+                  title={<Icon icon="tick-circle" size={16} color="red" />}
                   variant="icon"
                   onClick={() => deleteSSHKey(index)}
                 />
                 <Button
-                  title={
-                    <Icon icon="cross" size={16} color={theme.colors.white} />
-                  }
+                  title={<Icon icon="cross" size={16} color="white" />}
                   variant="icon"
                   onClick={() => setMode(index, 'default')}
                   marginLeft={3}
@@ -215,14 +200,12 @@ const SSHKeys = () => {
           return (
             <Row>
               <Button
-                title={
-                  <Icon icon="edit" size={16} color={theme.colors.primary} />
-                }
+                title={<Icon icon="edit" size={16} color="primary" />}
                 variant="icon"
                 onClick={() => setMode(index, 'edit')}
               />
               <Button
-                title={<Icon icon="trash" size={16} color={theme.colors.red} />}
+                title={<Icon icon="trash" size={16} color="red" />}
                 variant="icon"
                 marginLeft={3}
                 onClick={() => setMode(index, 'delete')}

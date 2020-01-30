@@ -1,14 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import useForm from 'react-hook-form';
 import { useNavigation } from 'react-navi';
-import { toaster } from 'evergreen-ui';
 
 import utils from '../../utils';
 import api from '../../api';
 import Field from '../../components/field';
 import Card from '../../components/card';
 import Alert from '../../components/alert';
-import { Form, Button } from '../../components/core';
+import { Form, Button, toaster } from '../../components/core';
 
 const ServiceMetricsSettings = ({
   projectId,

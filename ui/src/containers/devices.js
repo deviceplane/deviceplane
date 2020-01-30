@@ -1,13 +1,11 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigation } from 'react-navi';
-import { Icon } from 'evergreen-ui';
 
 import api from '../api';
-import theme from '../theme';
 import Layout from '../components/layout';
 import Card from '../components/card';
 import Table from '../components/table';
-import { Row, Text, Input } from '../components/core';
+import { Row, Text, Input, Icon, toaster } from '../components/core';
 import {
   DevicesFilter,
   OperatorIs,
@@ -239,7 +237,7 @@ const Devices = ({ route }) => {
             <Icon
               icon="search"
               size={16}
-              color={searchFocused ? theme.colors.primary : theme.colors.white}
+              color={searchFocused ? 'primary' : 'white'}
               style={{ position: 'absolute', left: 16 }}
             />
             <Input

@@ -1,22 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { toaster, Icon } from 'evergreen-ui';
 import useForm from 'react-hook-form';
 
 import api from '../../api';
 import utils from '../../utils';
-import theme from '../../theme';
 import { renderLabels } from '../../helpers/labels';
-import { DevicesFilterButtons } from '../../components/devices-filter-buttons';
 import {
   OperatorIs,
   OperatorIsNot,
-  DevicesFilter,
   LabelValueCondition,
 } from '../../components/devices-filter';
 import Card from '../../components/card';
-import Alert from '../../components/alert';
 import Table from '../../components/table';
-import RadioGroup from '../../components/radio-group';
 import DeviceStatus from '../../components/device-status';
 import Popup from '../../components/popup';
 import Field from '../../components/field';
@@ -29,8 +23,9 @@ import {
   Text,
   Input,
   Select,
-  Link,
   Form,
+  Icon,
+  toaster,
 } from '../../components/core';
 
 const initialReleaseSelectors = [
@@ -120,7 +115,7 @@ const ReleasePinning = ({
         },
         cellStyle: {
           marginBottom: '-8px',
-      },
+        },
       },
     ],
     []
@@ -378,7 +373,7 @@ const ReleasePinning = ({
             <Icon
               icon="search"
               size={16}
-              color={searchFocused ? theme.colors.primary : theme.colors.white}
+              color={searchFocused ? 'primary' : 'white'}
               style={{ position: 'absolute', left: 16 }}
             />
             <Input

@@ -2,9 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import useForm from 'react-hook-form';
 import { useNavigation } from 'react-navi';
 import * as yup from 'yup';
-import { toaster, Icon } from 'evergreen-ui';
 
-import theme from '../../theme';
 import api from '../../api';
 import utils from '../../utils';
 import validators from '../../validators';
@@ -21,6 +19,8 @@ import {
   Label,
   Checkbox,
   Code,
+  Icon,
+  toaster,
 } from '../../components/core';
 
 const validationSchema = yup.object().shape({
@@ -222,28 +222,20 @@ const ServiceAccountAccessKeys = ({ projectId, serviceAccount }) => {
           keyToDelete === row.original.id ? (
             <>
               <Button
-                title={
-                  <Icon
-                    icon="tick-circle"
-                    size={16}
-                    color={theme.colors.primary}
-                  />
-                }
+                title={<Icon icon="tick-circle" size={16} color="primary" />}
                 variant="icon"
                 marginRight={4}
                 onClick={() => deleteAccessKey(keyToDelete)}
               />
               <Button
-                title={
-                  <Icon icon="cross" size={16} color={theme.colors.white} />
-                }
+                title={<Icon icon="cross" size={16} color="white" />}
                 variant="icon"
                 onClick={() => setKeyToDelete(null)}
               />
             </>
           ) : (
             <Button
-              title={<Icon icon="trash" size={16} color={theme.colors.red} />}
+              title={<Icon icon="trash" size={16} color="red" />}
               variant="icon"
               onClick={() => setKeyToDelete(row.original.id)}
             />

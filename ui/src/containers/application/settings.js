@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import useForm from 'react-hook-form';
 import { useNavigation } from 'react-navi';
 import * as yup from 'yup';
-import { toaster } from 'evergreen-ui';
 
 import api from '../../api';
 import utils from '../../utils';
@@ -11,7 +10,7 @@ import Card from '../../components/card';
 import Popup from '../../components/popup';
 import Field from '../../components/field';
 import Alert from '../../components/alert';
-import { Button, Text, Form } from '../../components/core';
+import { Button, Text, Form, toaster } from '../../components/core';
 
 const validationSchema = yup.object().shape({
   name: validators.name.required(),

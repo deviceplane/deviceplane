@@ -11,6 +11,7 @@ import api from './api';
 import theme from './theme';
 import Page from './components/page';
 import Spinner from './components/spinner';
+import { ToastManager } from './components/core';
 import { LoadIntercom, bootIntercom } from './lib/intercom';
 import { LoadSegment } from './lib/segment';
 
@@ -45,6 +46,7 @@ const App = () => {
             <Suspense fallback={<Spinner />}>
               <View />
             </Suspense>
+            <ToastManager />
           </Page>
         </ThemeProvider>
       </Router>

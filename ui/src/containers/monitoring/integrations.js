@@ -3,13 +3,12 @@ import useForm from 'react-hook-form';
 import * as yup from 'yup';
 import { useNavigation } from 'react-navi';
 
-import { Form, Button } from '../../components/core';
+import api from '../../api';
+import utils from '../../utils';
+import { Form, Button, toaster } from '../../components/core';
 import Card from '../../components/card';
 import Alert from '../../components/alert';
 import Field from '../../components/field';
-import api from '../../api';
-import { toaster } from 'evergreen-ui';
-import utils from '../../utils';
 
 const validationSchema = yup.object().shape({
   datadogApiKey: yup.string(),

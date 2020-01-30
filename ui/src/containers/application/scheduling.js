@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { toaster, Icon } from 'evergreen-ui';
 import { useNavigation } from 'react-navi';
 
 import api from '../../api';
 import utils from '../../utils';
-import theme from '../../theme';
 import { renderLabels } from '../../helpers/labels';
 import { DevicesFilterButtons } from '../../components/devices-filter-buttons';
 import {
@@ -29,6 +27,8 @@ import {
   Input,
   Select,
   Link,
+  Icon,
+  toaster,
 } from '../../components/core';
 
 const ScheduleTypeConditional = 'Conditional';
@@ -305,7 +305,7 @@ const Scheduling = ({
             <Icon
               icon="search"
               size={16}
-              color={searchFocused ? theme.colors.primary : theme.colors.white}
+              color={searchFocused ? 'primary' : 'white'}
               style={{ position: 'absolute', left: 16 }}
             />
             <Input

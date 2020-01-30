@@ -1,8 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Icon, toaster } from 'evergreen-ui';
 
 import api from '../../api';
-import theme from '../../theme';
 import {
   Group,
   Column,
@@ -11,6 +9,8 @@ import {
   Link,
   Label,
   Text,
+  Icon,
+  toaster,
 } from '../../components/core';
 import Card from '../../components/card';
 import Table from '../../components/table';
@@ -51,7 +51,7 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
         Cell: ({ row: { original } }) => (
           <Button
             disabled={device.status === 'offline'}
-            title={<Icon icon="pulse" size={18} color={theme.colors.white} />}
+            title={<Icon icon="pulse" size={18} color="white" />}
             variant="icon"
             onClick={async () => {
               try {
@@ -143,7 +143,7 @@ const DeviceOverview = ({
         marginBottom={4}
         actions={[
           {
-            title: <Icon icon="pulse" size={18} color={theme.colors.white} />,
+            title: <Icon icon="pulse" size={18} color="white" />,
             variant: 'icon',
             onClick: async () => {
               try {

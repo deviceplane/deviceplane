@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import useForm from 'react-hook-form';
 import { useNavigation } from 'react-navi';
-import { toaster } from 'evergreen-ui';
 
 import utils from '../../utils';
 import api from '../../api';
@@ -17,6 +16,7 @@ import {
   Select,
   Text,
   Checkbox,
+  toaster,
 } from '../../components/core';
 import { labelColor } from '../../helpers/labels';
 

@@ -1,8 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Icon, Tooltip, toaster } from 'evergreen-ui';
 import { useNavigation } from 'react-navi';
 
-import theme from '../../theme';
 import api from '../../api';
 import Card from '../../components/card';
 import Table from '../../components/table';
@@ -18,6 +16,8 @@ import {
   Text,
   Checkbox,
   Select,
+  Icon,
+  toaster,
 } from '../../components/core';
 import { getMetricLabel } from '../../helpers/metrics';
 import DeviceMetricsForm from './device-metrics-form';
@@ -161,10 +161,10 @@ const Device = ({
         id: 'device',
         accessor: ({ properties }) => properties.includes('device'),
         Header: (
-          <Row alignItems="center">
-            <Tooltip content="When enabled, a Datadog tag with the device name is included.">
-              <Icon icon="info-sign" size={10} color={theme.colors.primary} />
-            </Tooltip>
+          <Row
+            alignItems="center"
+            title="When enabled, a Datadog tag with the device name is included."
+          >
             <Text marginLeft={1}>Device</Text>
           </Row>
         ),
@@ -187,20 +187,12 @@ const Device = ({
           editRow && editRow.name === original.name ? (
             <Row>
               <Button
-                title={
-                  <Icon
-                    icon="floppy-disk"
-                    size={16}
-                    color={theme.colors.primary}
-                  />
-                }
+                title={<Icon icon="floppy-disk" size={16} color="primary" />}
                 variant="icon"
                 onClick={saveEdit}
               />
               <Button
-                title={
-                  <Icon icon="cross" size={16} color={theme.colors.white} />
-                }
+                title={<Icon icon="cross" size={16} color="white" />}
                 variant="icon"
                 onClick={() => setEditRow(null)}
                 marginLeft={3}
@@ -209,14 +201,12 @@ const Device = ({
           ) : (
             <Row>
               <Button
-                title={
-                  <Icon icon="edit" size={16} color={theme.colors.primary} />
-                }
+                title={<Icon icon="edit" size={16} color="primary" />}
                 variant="icon"
                 onClick={() => setEditRow(original)}
               />
               <Button
-                title={<Icon icon="trash" size={16} color={theme.colors.red} />}
+                title={<Icon icon="trash" size={16} color="red" />}
                 variant="icon"
                 marginLeft={3}
                 onClick={() => setMetricToDelete(original)}
