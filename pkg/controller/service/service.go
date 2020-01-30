@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/pprof"
 	"net/url"
 	"strconv"
 	"strings"
@@ -239,6 +240,7 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/metrics/host", s.validateAuthorization(authz.ResourceDevices, authz.ActionGetMetrics, s.withDevice(s.hostMetrics))).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/metrics/agent", s.validateAuthorization(authz.ResourceDevices, authz.ActionGetMetrics, s.withDevice(s.agentMetrics))).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/metrics", s.validateAuthorization(authz.ResourceDevices, authz.ActionGetServiceMetrics, s.withApplicationAndDevice(s.serviceMetrics))).Methods("GET")
+	apiRouter.PathPrefix("/projects/{project}/devices/{device}/debug/").HandlerFunc(s.validateAuthorization(authz.ResourceDevices, authz.ActionGetMetrics, s.withDevice(s.deviceDebug)))
 
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels", s.validateAuthorization(authz.ResourceDeviceLabels, authz.ActionSetDeviceLabel, s.withDevice(s.setDeviceLabel))).Methods("PUT")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.validateAuthorization(authz.ResourceDeviceLabels, authz.ActionDeleteDeviceLabel, s.withDevice(s.deleteDeviceLabel))).Methods("DELETE")
@@ -268,8 +270,15 @@ func NewService(
 
 	apiRouter.Handle("/revdial", revdial.ConnHandler(s.upgrader)).Methods("GET")
 
+	debugRouter := apiRouter.PathPrefix("/debug/").Subrouter()
+	debugRouter.HandleFunc("/pprof/cmdline", s.withSuperUserAuth(pprof.Cmdline))
+	debugRouter.HandleFunc("/pprof/profile", s.withSuperUserAuth(pprof.Profile))
+	debugRouter.HandleFunc("/pprof/symbol", s.withSuperUserAuth(pprof.Symbol))
+	debugRouter.HandleFunc("/pprof/trace", s.withSuperUserAuth(pprof.Trace))
+	debugRouter.PathPrefix("/pprof/").Handler(http.StripPrefix("/api", http.HandlerFunc(s.withSuperUserAuth(pprof.Index))))
+
 	apiRouter.HandleFunc("/health", s.health).Methods("GET")
-	apiRouter.HandleFunc("/500", s.withUserOrServiceAccountAuth(s.intentional500)).Methods("GET")
+	apiRouter.HandleFunc("/500", s.withSuperUserAuth(s.intentional500)).Methods("GET")
 
 	s.router.PathPrefix("/api").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
@@ -288,25 +297,8 @@ func (s *Service) health(w http.ResponseWriter, r *http.Request) {
 	s.st.Incr("health", nil, 1)
 }
 
-func (s *Service) intentional500(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
-	// TODO
-	if authenticatedUserID == "" {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	user, err := s.users.GetUser(r.Context(), authenticatedUserID)
-	if err != nil {
-		log.WithError(err).Error("get user")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	if user.SuperAdmin {
-		w.WriteHeader(http.StatusInternalServerError)
-	} else {
-		w.WriteHeader(http.StatusForbidden)
-	}
+func (s *Service) intentional500(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusInternalServerError)
 }
 
 func (s *Service) withUserOrServiceAccountAuth(handler func(http.ResponseWriter, *http.Request, string, string)) func(http.ResponseWriter, *http.Request) {
@@ -401,6 +393,31 @@ func (s *Service) withUserOrServiceAccountAuth(handler func(http.ResponseWriter,
 			return
 		}
 	}
+}
+
+func (s *Service) withSuperUserAuth(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return s.withUserOrServiceAccountAuth(
+		func(w http.ResponseWriter, r *http.Request, authenticatedUserID, authenticatedServiceAccountID string) {
+			if authenticatedUserID == "" {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			user, err := s.users.GetUser(r.Context(), authenticatedUserID)
+			if err != nil {
+				log.WithError(err).Error("get user")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			if !user.SuperAdmin {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
+
+			handler(w, r)
+		},
+	)
 }
 
 func (s *Service) validateAuthorization(requestedResource authz.Resource, requestedAction authz.Action, handler func(http.ResponseWriter, *http.Request, string, string, string)) func(http.ResponseWriter, *http.Request) {

@@ -19,6 +19,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	gossh "golang.org/x/crypto/ssh"
+
+	"net/http/pprof"
 )
 
 type Service struct {
@@ -54,6 +56,12 @@ func NewService(
 	s.router.HandleFunc("/applications/{application}/services/{service}/metrics", s.metrics).Methods("GET")
 	s.router.Handle("/metrics/host", newHostMetricsHandler())
 	s.router.Handle("/metrics/agent", promhttp.Handler())
+
+	s.router.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	s.router.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	s.router.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	s.router.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	s.router.PathPrefix("/debug/pprof/").HandlerFunc(pprof.Index)
 
 	return s
 }
