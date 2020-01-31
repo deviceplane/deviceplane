@@ -3,7 +3,6 @@ package service
 import (
 	"bufio"
 	"io"
-	"net"
 	"net/http"
 	"strings"
 	"sync/atomic"
@@ -12,13 +11,12 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/codes"
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/deviceplane/deviceplane/pkg/utils"
-	"github.com/function61/holepunch-server/pkg/wsconnadapter"
 	"github.com/gorilla/mux"
 )
 
-func (s *Service) initiateDeviceConnection(w http.ResponseWriter, r *http.Request, project models.Project, device models.Device) {
-	s.withHijackedWebSocketConnection(w, r, func(conn net.Conn) {
-		s.connman.Set(project.ID+device.ID, conn)
+func (s *Service) initiateDeviceConnection(with *FetchObject) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.connman.Set(with.Project.ID+with.Device.ID, with.ClientConn)
 	})
 }
 
@@ -26,37 +24,29 @@ var currentSSHCount int64
 
 const currentSSHCountName = "internal.current_ssh_connection_count"
 
-func (s *Service) initiateSSH(w http.ResponseWriter, r *http.Request,
-	projectID, authenticatedUserID, authenticatedServiceAccountID,
-	deviceID string,
-) {
-	s.withHijackedWebSocketConnection(w, r, func(conn net.Conn) {
-		s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-			err := client.InitiateSSH(r.Context(), deviceConn)
-			if err != nil {
-				http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
-				return
-			}
+func (s *Service) initiateSSH(with *FetchObject) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := client.InitiateSSH(r.Context(), with.ClientConn)
+		if err != nil {
+			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
+			return
+		}
 
-			sshCount := atomic.AddInt64(&currentSSHCount, 1)
-			s.st.Gauge(currentSSHCountName, float64(sshCount), utils.InternalTags(projectID), 1)
-			defer func() {
-				sshCount := atomic.AddInt64(&currentSSHCount, -1)
-				s.st.Gauge(currentSSHCountName, float64(sshCount), utils.InternalTags(projectID), 1)
-			}()
+		sshCount := atomic.AddInt64(&currentSSHCount, 1)
+		s.st.Gauge(currentSSHCountName, float64(sshCount), utils.InternalTags(with.Project.ID), 1)
+		defer func() {
+			sshCount := atomic.AddInt64(&currentSSHCount, -1)
+			s.st.Gauge(currentSSHCountName, float64(sshCount), utils.InternalTags(with.Project.ID), 1)
+		}()
 
-			go io.Copy(deviceConn, conn)
-			io.Copy(conn, deviceConn)
-		})
+		go io.Copy(with.DeviceConn, with.ClientConn)
+		io.Copy(with.ClientConn, with.DeviceConn)
 	})
 }
 
-func (s *Service) initiateReboot(w http.ResponseWriter, r *http.Request,
-	projectID, authenticatedUserID, authenticatedServiceAccountID,
-	deviceID string,
-) {
-	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-		resp, err := client.InitiateReboot(r.Context(), deviceConn)
+func (s *Service) initiateReboot(with *FetchObject) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp, err := client.InitiateReboot(r.Context(), with.DeviceConn)
 		if err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return
@@ -66,19 +56,16 @@ func (s *Service) initiateReboot(w http.ResponseWriter, r *http.Request,
 	})
 }
 
-func (s *Service) deviceDebug(w http.ResponseWriter, r *http.Request,
-	projectID, authenticatedUserID, authenticatedServiceAccountID,
-	deviceID string,
-) {
-	path := r.URL.EscapedPath()
-	dIndex := strings.Index(path, "/debug/")
-	if dIndex == -1 {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	debugPath := path[dIndex:]
+func (s *Service) deviceDebug(with *FetchObject) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.EscapedPath()
+		dIndex := strings.Index(path, "/debug/")
+		if dIndex == -1 {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		debugPath := path[dIndex:]
 
-	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
 		req, err := http.NewRequestWithContext(
 			r.Context(),
 			r.Method,
@@ -90,12 +77,12 @@ func (s *Service) deviceDebug(w http.ResponseWriter, r *http.Request,
 			return
 		}
 
-		if err := req.Write(deviceConn); err != nil {
+		if err := req.Write(with.DeviceConn); err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return
 		}
 
-		resp, err := http.ReadResponse(bufio.NewReader(deviceConn), req)
+		resp, err := http.ReadResponse(bufio.NewReader(with.DeviceConn), req)
 		if err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return
@@ -105,16 +92,13 @@ func (s *Service) deviceDebug(w http.ResponseWriter, r *http.Request,
 	})
 }
 
-func (s *Service) imagePullProgress(w http.ResponseWriter, r *http.Request,
-	projectID, authenticatedUserID, authenticatedServiceAccountID,
-	deviceID string,
-) {
-	vars := mux.Vars(r)
-	applicationID := vars["application"]
-	service := vars["service"]
+func (s *Service) imagePullProgress(with *FetchObject) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		applicationID := vars["application"]
+		service := vars["service"]
 
-	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-		resp, err := client.GetImagePullProgress(r.Context(), deviceConn, applicationID, service)
+		resp, err := client.GetImagePullProgress(r.Context(), with.DeviceConn, applicationID, service)
 		if err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return
@@ -124,12 +108,9 @@ func (s *Service) imagePullProgress(w http.ResponseWriter, r *http.Request,
 	})
 }
 
-func (s *Service) hostMetrics(w http.ResponseWriter, r *http.Request,
-	projectID, authenticatedUserID, authenticatedServiceAccountID,
-	deviceID string,
-) {
-	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-		resp, err := client.GetDeviceMetrics(r.Context(), deviceConn)
+func (s *Service) hostMetrics(with *FetchObject) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp, err := client.GetDeviceMetrics(r.Context(), with.DeviceConn)
 		if err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return
@@ -139,12 +120,9 @@ func (s *Service) hostMetrics(w http.ResponseWriter, r *http.Request,
 	})
 }
 
-func (s *Service) agentMetrics(w http.ResponseWriter, r *http.Request,
-	projectID, authenticatedUserID, authenticatedServiceAccountID,
-	deviceID string,
-) {
-	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
-		resp, err := client.GetAgentMetrics(r.Context(), deviceConn)
+func (s *Service) agentMetrics(with *FetchObject) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp, err := client.GetAgentMetrics(r.Context(), with.DeviceConn)
 		if err != nil {
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return
@@ -154,27 +132,19 @@ func (s *Service) agentMetrics(w http.ResponseWriter, r *http.Request,
 	})
 }
 
-func (s *Service) serviceMetrics(w http.ResponseWriter, r *http.Request,
-	projectID, authenticatedUserID, authenticatedServiceAccountID,
-	applicationID, deviceID string,
-) {
-	vars := mux.Vars(r)
-	service := vars["service"]
+func (s *Service) serviceMetrics(with *FetchObject) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		service := vars["service"]
 
-	app, err := s.applications.GetApplication(r.Context(), applicationID, projectID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	serviceMetricEndpointConfig, exists := app.MetricEndpointConfigs[service]
-	if !exists {
-		serviceMetricEndpointConfig.Port = models.DefaultMetricPort
-		serviceMetricEndpointConfig.Path = models.DefaultMetricPath
-	}
+		serviceMetricEndpointConfig, exists := with.Application.MetricEndpointConfigs[service]
+		if !exists {
+			serviceMetricEndpointConfig.Port = models.DefaultMetricPort
+			serviceMetricEndpointConfig.Path = models.DefaultMetricPath
+		}
 
-	s.withDeviceConnection(w, r, projectID, deviceID, func(deviceConn net.Conn) {
 		resp, err := client.GetServiceMetrics(
-			r.Context(), deviceConn, applicationID, service,
+			r.Context(), with.DeviceConn, with.Application.ID, service,
 			serviceMetricEndpointConfig.Path, serviceMetricEndpointConfig.Port,
 		)
 		if err != nil {
@@ -184,27 +154,4 @@ func (s *Service) serviceMetrics(w http.ResponseWriter, r *http.Request,
 
 		utils.ProxyResponseFromDevice(w, resp)
 	})
-}
-
-func (s *Service) withHijackedWebSocketConnection(w http.ResponseWriter, r *http.Request, f func(net.Conn)) {
-	conn, err := s.upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// We should set conn.CloseHandler() here
-
-	f(wsconnadapter.New(conn))
-}
-
-func (s *Service) withDeviceConnection(w http.ResponseWriter, r *http.Request, projectID, deviceID string, f func(net.Conn)) {
-	deviceConn, err := s.connman.Dial(r.Context(), projectID+deviceID)
-	if err != nil {
-		http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
-		return
-	}
-	defer deviceConn.Close()
-
-	f(deviceConn)
 }
