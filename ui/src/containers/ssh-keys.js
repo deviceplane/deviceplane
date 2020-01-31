@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 
-import theme from '../theme';
 import storage from '../storage';
 import Card from '../components/card';
 import Table from '../components/table';
+import Field from '../components/field';
 import {
   Row,
   Column,
@@ -16,23 +16,28 @@ import {
   toaster,
 } from '../components/core';
 
+const PrivateKeyRegexp = /^-----BEGIN RSA PRIVATE KEY-----(?:\r\n|\n)((?:[^:]+:\s*[\S].*(?:\r\n|\n))*)([\s\S]+)(?:\r\n|\n)-----END RSA PRIVATE KEY-----$/;
+
 const EditableCell = ({
   mode,
   value,
   autoFocus,
   onChange,
-  textArea,
+  type,
   hideKey,
+  error,
 }) => {
   if (mode === 'edit' || mode === 'new') {
-    const Component = textArea ? Textarea : Input;
     return (
-      <Component
+      <Field
+        type={type}
         autoFocus={autoFocus}
         value={value}
         onChange={onChange}
+        errors={error}
+        rows={16}
         padding={1}
-        rows={20}
+        marginBottom={0}
       />
     );
   }
@@ -48,10 +53,6 @@ const SSHKeys = () => {
       mode: 'default',
     }))
   );
-
-  useEffect(() => {
-    storage.set('sshKeys', sshKeys);
-  }, [sshKeys]);
 
   const addSSHKey = () =>
     setSSHKeys(keys => [
@@ -83,6 +84,7 @@ const SSHKeys = () => {
   };
 
   const editSSHKey = (index, property, value) => {
+    console.log(index, property, value);
     setSSHKeys(keys =>
       keys.map((sshKey, i) =>
         i === index ? { ...sshKey, [property]: value } : sshKey
@@ -91,9 +93,10 @@ const SSHKeys = () => {
   };
 
   const saveSSHKey = index => {
-    try {
-      setSSHKeys(sshKeys =>
-        sshKeys.map((sshKey, i) =>
+    setSSHKeys(sshKeys => {
+      const validKey = PrivateKeyRegexp.test(sshKeys[index].editedKey);
+      if (validKey) {
+        const newSSHKeys = sshKeys.map((sshKey, i) =>
           i === index
             ? {
                 ...sshKey,
@@ -102,13 +105,21 @@ const SSHKeys = () => {
                 mode: 'default',
               }
             : sshKey
-        )
-      );
-      toaster.success('SSH key was saved to the browser successfully.');
-    } catch (error) {
-      toaster.danger('SSH key was not saved.');
-      console.log(error);
-    }
+        );
+        storage.set('sshKeys', newSSHKeys);
+        toaster.success('SSH key was saved to the browser successfully.');
+        return newSSHKeys;
+      } else {
+        return sshKeys.map((sshKey, i) =>
+          i === index
+            ? {
+                ...sshKey,
+                error: { message: 'Invalid SSH Key, must be in RSA format.' },
+              }
+            : sshKey
+        );
+      }
+    });
   };
 
   const deleteSSHKey = index => {
@@ -145,9 +156,10 @@ const SSHKeys = () => {
         Cell: ({ row: { original, index } }) => (
           <EditableCell
             hideKey
-            textArea
+            type="textarea"
             mode={original.mode}
             value={original.editedKey}
+            error={original.error}
             onChange={e => editSSHKey(index, 'editedKey', e.target.value)}
           />
         ),
@@ -237,7 +249,7 @@ const SSHKeys = () => {
             </Text>
             <Text>
               Keys must be in RSA format.{' '}
-              <Link href="https://deviceplane.com/docs/device-variables/#authorized-ssh-keys">
+              <Link href="https://deviceplane.com/docs/variables/#authorized-ssh-keys">
                 Learn more
               </Link>{' '}
               about configuring SSH keys.

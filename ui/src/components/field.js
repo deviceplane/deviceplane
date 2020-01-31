@@ -56,6 +56,7 @@ const Field = forwardRef(
     const [type, setType] = useState(props.type);
 
     errors = Array.isArray(errors) ? errors : [errors];
+
     const getComponent = () => {
       if (as) {
         return (
@@ -139,7 +140,7 @@ const Field = forwardRef(
               color="red"
               size={16}
               flexShrink={0}
-              marginTop={2}
+              marginTop="1px"
             />
             <Text color="red" marginLeft={2}>
               {utils.capitalize(message)}

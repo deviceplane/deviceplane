@@ -119,7 +119,13 @@ export const ToastManager = () => {
   }, []);
 
   return (
-    <Column position="absolute" top={4} alignItems="center" width="100%">
+    <Column
+      position="absolute"
+      top={4}
+      alignItems="center"
+      width="100%"
+      zIndex={999}
+    >
       {toasts.map(({ id, ...toast }, index) => (
         <Toast key={id} {...toast} close={removeToast(index)} />
       ))}
