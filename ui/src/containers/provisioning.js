@@ -64,7 +64,7 @@ const Provisioning = ({
   const tableData = useMemo(() => registrationTokens, [registrationTokens]);
 
   return (
-    <Layout title="Provisioning">
+    <Layout>
       <Card
         title="Registration Tokens"
         size="full"

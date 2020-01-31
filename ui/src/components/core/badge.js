@@ -10,8 +10,11 @@ const Badge = styled.div`
 
 Badge.defaultProps = {
   fontSize: 0,
-  fontWeight: 2,
+  fontWeight: 1,
   borderRadius: 1,
+  border: 0,
+  borderColor: 'white',
+  color: 'white',
 };
 
 export default Badge;

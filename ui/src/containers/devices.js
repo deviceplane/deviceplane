@@ -5,7 +5,7 @@ import api from '../api';
 import Layout from '../components/layout';
 import Card from '../components/card';
 import Table from '../components/table';
-import { Row, Text, Input, Icon, toaster } from '../components/core';
+import { Row, Text, Input, Icon, Badge } from '../components/core';
 import {
   DevicesFilter,
   OperatorIs,
@@ -28,6 +28,7 @@ const Devices = ({ route }) => {
   const navigation = useNavigation();
   const [showFilterDialog, setShowFilterDialog] = useState();
   const [devices, setDevices] = useState(route.data.devices);
+  const [deviceTotal, setDeviceTotal] = useState();
   const [filterQuery, setFilterQuery] = useState(
     storage.get('devicesFilter', route.data.params.project) || []
   );
@@ -113,10 +114,11 @@ const Devices = ({ route }) => {
 
   const fetchDevices = async queryString => {
     try {
-      const { data } = await api.devices({
+      const { data, headers } = await api.devices({
         projectId: route.data.params.project,
         queryString,
       });
+      setDeviceTotal(headers['total-device-count']);
       setDevices(data);
     } catch (error) {
       console.log(error);
@@ -228,10 +230,19 @@ const Devices = ({ route }) => {
   };
 
   return (
-    <Layout title="Devices">
+    <Layout>
       <Card
         title="Devices"
         size="full"
+        left={
+          deviceTotal && (
+            <Badge>
+              {filterQuery.length
+                ? `${devices.length} / ${deviceTotal}`
+                : deviceTotal}
+            </Badge>
+          )
+        }
         center={
           <Row position="relative" alignItems="center">
             <Icon

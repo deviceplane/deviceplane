@@ -2261,6 +2261,8 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
+	w.Header().Set("Total-Device-Count", strconv.Itoa(len(devices)))
+
 	filters, err := query.FiltersFromQuery(r.URL.Query())
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "get filters from query").Error(), http.StatusBadRequest)
@@ -2279,6 +2281,7 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request,
 	for i := range devices {
 		ds[i] = devices[i]
 	}
+
 	middleware.SortAndPaginateAndRespond(*r, w, ds)
 }
 

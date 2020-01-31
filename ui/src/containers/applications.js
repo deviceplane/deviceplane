@@ -63,7 +63,7 @@ const Applications = ({
   );
   const tableData = useMemo(() => applications, [applications]);
   return (
-    <Layout title="Applications" alignItems="center">
+    <Layout alignItems="center">
       <Card
         title="Applications"
         size="xxlarge"

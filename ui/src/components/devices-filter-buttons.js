@@ -14,19 +14,19 @@ const ConditionComp = ({ type, params }) => {
       return (
         <>
           <Text
+            fontSize={0}
             fontWeight={2}
             marginRight={2}
             color={labelColor(params.key)}
-            style={{ textTransform: 'none' }}
           >
             {params.key}
           </Text>
 
-          <Text fontWeight={1} marginRight={2}>
+          <Text fontSize={0} fontWeight={1} marginRight={2}>
             {params.operator}
           </Text>
 
-          <Text fontWeight={2} style={{ textTransform: 'none' }}>
+          <Text fontWeight={2} fontSize={0}>
             {params.value}
           </Text>
         </>
@@ -38,26 +38,40 @@ const ConditionComp = ({ type, params }) => {
             fontWeight={2}
             marginRight={2}
             color={labelColor(params.key)}
-            style={{ textTransform: 'none' }}
+            fontSize={0}
           >
             {params.key}
           </Text>
 
-          <Text fontWeight={1}>{params.operator}</Text>
+          <Text fontSize={0} fontWeight={1}>
+            {params.operator}
+          </Text>
         </>
       );
     case DevicePropertyCondition:
       return (
         <>
-          <Text fontWeight={2} marginRight={2} color="primary">
+          <Text
+            fontWeight={2}
+            marginRight={2}
+            fontSize={0}
+            color="primary"
+            style={{ textTransform: 'uppercase' }}
+          >
             {params.property}
           </Text>
 
-          <Text fontWeight={1} marginRight={2}>
+          <Text fontSize={0} fontWeight={1} marginRight={2}>
             {params.operator}
           </Text>
 
-          <Text fontWeight={2}>{params.value}</Text>
+          <Text
+            fontWeight={2}
+            fontSize={0}
+            style={{ textTransform: 'uppercase' }}
+          >
+            {params.value}
+          </Text>
         </>
       );
     default:
@@ -78,7 +92,7 @@ export const DevicesFilterButtons = ({
   return (
     <Row flexWrap="wrap">
       {query.map((filter, index) => (
-        <Row alignItems="center" key={index} margin={2} marginLeft={0}>
+        <Row alignItems="center" key={index} marginY={2} marginRight={3}>
           <Row
             border={0}
             borderRadius={1}
@@ -90,12 +104,10 @@ export const DevicesFilterButtons = ({
           >
             {filter.map((condition, i) => (
               <React.Fragment key={i}>
-                <Badge bg="grays.3">
-                  <ConditionComp {...condition} />
-                </Badge>
+                <ConditionComp {...condition} />
 
                 {i < filter.length - 1 && (
-                  <Text fontSize={0} fontWeight={3} marginX={4}>
+                  <Text fontSize={0} fontWeight={3} marginX={4} color="white">
                     OR
                   </Text>
                 )}
