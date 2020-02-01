@@ -236,11 +236,15 @@ const Devices = ({ route }) => {
         size="full"
         left={
           deviceTotal && (
-            <Badge>
-              {filterQuery.length
-                ? `${devices.length} / ${deviceTotal}`
-                : deviceTotal}
-            </Badge>
+            <Text color="grays.8" fontWeight={2} fontSize={2} marginTop={1}>
+              (
+              <Text color="white" fontWeight={1} fontSize={1} paddingX={1}>
+                {filterQuery.length
+                  ? `${devices.length} / ${deviceTotal}`
+                  : deviceTotal}
+              </Text>
+              )
+            </Text>
           )
         }
         center={

@@ -78,7 +78,7 @@ const Card = ({
         <Column marginBottom={6} borderColor="white">
           <Row alignItems="center" justifyContent="space-between">
             <Row alignItems="center">
-              <Text fontSize={5} fontWeight={2} marginRight={6}>
+              <Text fontSize={5} fontWeight={2} marginRight={4}>
                 {title}
               </Text>
               {left}
