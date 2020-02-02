@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"net/http"
 	"sync"
 
@@ -78,11 +80,26 @@ func (s *Service) getSigner() (ssh.Signer, error) {
 		return s.signer, nil
 	}
 
-	// Generate
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return nil, err
+	hostSignerKey := s.variables.GetHostSignerKey()
+
+	var key *rsa.PrivateKey
+	var err error
+	if hostSignerKey == "" {
+		key, err = rsa.GenerateKey(rand.Reader, 2048)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		block, _ := pem.Decode([]byte(hostSignerKey))
+		if block == nil {
+			return nil, err
+		}
+		key, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	signer, err := gossh.NewSignerFromKey(key)
 	if err != nil {
 		return nil, err
