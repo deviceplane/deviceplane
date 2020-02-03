@@ -68,6 +68,11 @@ export const LoadSegment = () => {
 
 export default {
   identify: (...args) => window.analytics && window.analytics.identify(...args),
-  track: (...args) => window.analytics && window.analytics.track(...args),
+  track: message => {
+    if (window.analytics) {
+      const user = window.analytics.user().properties();
+      window.analytics.track(message, user);
+    }
+  },
   page: (...args) => window.analytics && window.analytics.page(...args),
 };

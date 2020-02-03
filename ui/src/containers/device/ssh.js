@@ -65,7 +65,7 @@ const DeviceSsh = ({
 
     conn
       .on('ready', function() {
-        segment.track('Device SSH Started');
+        segment.track('Device SSH');
         conn.shell(wndopts, function(err, stream) {
           if (err) throw err;
           stream
