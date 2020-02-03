@@ -363,12 +363,7 @@ const ReleasePinning = ({
       </Card>
 
       <Popup show={showPreview} onClose={() => setShowPreview(false)}>
-        <Card
-          border
-          size="xxlarge"
-          title="Preview"
-          subtitle="This application will run on the devices listed below."
-        >
+        <Card border size="xxlarge" title="Preview">
           <Row position="relative" alignItems="center" marginBottom={4}>
             <Icon
               icon="search"
