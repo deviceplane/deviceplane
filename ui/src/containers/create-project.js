@@ -27,6 +27,7 @@ const ProjectCreate = () => {
     try {
       await api.createProject(data);
       navigation.navigate(`/${data.name}`);
+      toaster.success('Project was created.');
     } catch (error) {
       setBackendError(utils.parseError(error));
       toaster.danger('Project was not created.');
