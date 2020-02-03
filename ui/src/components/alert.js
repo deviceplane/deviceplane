@@ -7,7 +7,7 @@ const getIcon = variant => {
     case 'success':
       return 'endorsed';
     case 'error':
-      return 'error';
+      return 'warning-sign';
     case 'info':
     default:
       return 'info-sign';

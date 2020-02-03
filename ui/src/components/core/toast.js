@@ -30,7 +30,7 @@ const getIcon = type => {
     case ToastTypes.DANGER:
       return 'warning-sign';
     case ToastTypes.SUCCESS:
-      return 'tick-circle';
+      return 'endorsed';
     case ToastTypes.INFO:
     default:
       return 'info-sign';
@@ -85,7 +85,7 @@ export const Toast = ({ content, type = ToastTypes.INFO, close }) => {
     <Container borderRadius={1} bg={color} minWidth="200px" marginBottom={3}>
       <Row padding={2} alignItems="center" justifyContent="space-between">
         <Row>
-          <Icon marginRight={2} icon={getIcon(type)} size={16} color="black" />
+          <Icon marginRight={2} icon={getIcon(type)} size={14} color="black" />
           <Text color="black" fontSize={1} fontWeight={1}>
             {content}
           </Text>
@@ -121,9 +121,10 @@ export const ToastManager = () => {
   return (
     <Column
       position="absolute"
+      right={0}
       top={4}
       alignItems="center"
-      width="100%"
+      width="calc(100% - 136px)"
       zIndex={999}
     >
       {toasts.map(({ id, ...toast }, index) => (

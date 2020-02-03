@@ -136,7 +136,7 @@ const Field = forwardRef(
         {errors.map(({ message }) => (
           <Row marginTop={2} alignItems="flex-start">
             <Icon
-              icon="error"
+              icon="warning-sign"
               color="red"
               size={16}
               flexShrink={0}
