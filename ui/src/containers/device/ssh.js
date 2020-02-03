@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import '../../lib/xterm.css';
 import config from '../../config';
 import storage from '../../storage';
+import segment from '../../lib/segment';
 import Card from '../../components/card';
 import Popup from '../../components/popup';
 import { Column, Select } from '../../components/core';
@@ -64,6 +65,7 @@ const DeviceSsh = ({
 
     conn
       .on('ready', function() {
+        segment.track('Device SSH Started');
         conn.shell(wndopts, function(err, stream) {
           if (err) throw err;
           stream

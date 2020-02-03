@@ -13,7 +13,7 @@ import Page from './components/page';
 import Spinner from './components/spinner';
 import { ToastManager } from './components/core';
 import { LoadIntercom, bootIntercom } from './lib/intercom';
-import { LoadSegment } from './lib/segment';
+import segment, { LoadSegment } from './lib/segment';
 
 const App = () => {
   const [loaded, setLoaded] = useState();
@@ -22,6 +22,11 @@ const App = () => {
   const load = async () => {
     try {
       const { data: user } = await api.user();
+      segment.identify(user.id, {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      });
       setCurrentUser(user);
       bootIntercom(user);
     } catch (error) {

@@ -87,7 +87,12 @@ const api = {
     post(`projects/${projectId}/devices/${deviceId}/reboot`, {}),
 
   addDeviceLabel: ({ projectId, deviceId, data }) =>
-    put(`projects/${projectId}/devices/${deviceId}/labels`, data),
+    put(`projects/${projectId}/devices/${deviceId}/labels`, data).then(
+      response => {
+        segment.track('Device Label Added');
+        return response;
+      }
+    ),
 
   removeDeviceLabel: ({ projectId, deviceId, labelId }) =>
     del(`projects/${projectId}/devices/${deviceId}/labels/${labelId}`),
@@ -109,6 +114,10 @@ const api = {
       name,
       description,
       maxRegistrations: Number.parseInt(maxRegistrations),
+    }).then(response => {
+      segment.track('Registration Token Created');
+
+      return response;
     }),
 
   updateRegistrationToken: ({
