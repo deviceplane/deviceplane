@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
+import parsePrometheusTextFormat from 'parse-prometheus-text-format';
 
 import api from '../../api';
 import {
   Group,
-  Column,
   Button,
   Value,
   Link,
@@ -18,6 +18,7 @@ import Popup from '../../components/popup';
 import Editor from '../../components/editor';
 import EditableLabelTable from '../../components/editable-label-table';
 import DeviceStatus from '../../components/device-status';
+import { getMetricLabel } from '../../helpers/metrics';
 
 const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
   const [serviceMetrics, setServiceMetrics] = useState({});
@@ -128,6 +129,22 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
   );
 };
 
+const parseMetrics = data =>
+  JSON.stringify(
+    parsePrometheusTextFormat(data).reduce(
+      (obj, { name, help, metrics }) => ({
+        ...obj,
+        [getMetricLabel(name)]: {
+          description: help,
+          metrics,
+        },
+      }),
+      {}
+    ),
+    null,
+    '\t'
+  );
+
 const DeviceOverview = ({
   route: {
     data: { params, device },
@@ -147,11 +164,11 @@ const DeviceOverview = ({
             variant: 'icon',
             onClick: async () => {
               try {
-                const response = await api.hostMetrics({
+                const { data } = await api.hostMetrics({
                   projectId: params.project,
                   deviceId: device.id,
                 });
-                setHostMetrics(response.data);
+                setHostMetrics(parseMetrics(data));
               } catch (error) {
                 toaster.danger('Current device metrics are unavailable.');
                 console.log(error);
