@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 export const LoadSegment = () => {
   useEffect(() => {
@@ -66,8 +66,8 @@ export const LoadSegment = () => {
   return null;
 };
 
-export default window.analytics || {
-  identify: () => {},
-  track: () => {},
-  page: () => {},
+export default {
+  identify: (...args) => window.analytics && window.analytics.identify(...args),
+  track: (...args) => window.analytics && window.analytics.track(...args),
+  page: (...args) => window.analytics && window.analytics.page(...args),
 };
