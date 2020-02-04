@@ -48,9 +48,23 @@ func (m *MetricsPusher) begin() {
 	defer ticker.Stop()
 
 	for {
-		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-		go m.PushDeviceMetrics(ctx)
-		go m.PushServiceMetrics(ctx)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
+		var wg sync.WaitGroup
+		wg.Add(2)
+
+		go func() {
+			m.PushDeviceMetrics(ctx)
+			wg.Done()
+		}()
+		go func() {
+			m.PushServiceMetrics(ctx)
+			wg.Done()
+		}()
+
+		wg.Wait()
+		cancel()
+
 		<-ticker.C
 	}
 }
