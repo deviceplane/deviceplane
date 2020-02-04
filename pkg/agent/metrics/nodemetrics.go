@@ -7,7 +7,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/log"
+	clog "github.com/prometheus/common/log"
 	"github.com/prometheus/node_exporter/collector"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2" // This one specifically...
@@ -66,7 +66,7 @@ func HostMetricsHandler(ncConfig *NodeCollectorConfig) (*http.Handler, error) {
 		promhttp.HandlerFor(
 			prometheus.Gatherers{metricsRegistry, r},
 			promhttp.HandlerOpts{
-				ErrorLog:            log.NewErrorLogger(),
+				ErrorLog:            clog.NewErrorLogger(),
 				ErrorHandling:       promhttp.ContinueOnError,
 				MaxRequestsInFlight: MaxRequestsInFlight,
 				Registry:            metricsRegistry,

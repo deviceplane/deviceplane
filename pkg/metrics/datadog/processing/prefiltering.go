@@ -1,4 +1,4 @@
-package filtering
+package processing
 
 import (
 	"regexp"
@@ -8,7 +8,7 @@ import (
 
 var nodePrefixRegex = regexp.MustCompile(`(?m)(^|^# HELP |^# TYPE )(node_)`)
 
-func FilterNodePrefix(rawHostMetrics string) string {
+func PrefilterNodePrefix(rawHostMetrics string) string {
 	return utils.ReplaceAllStringSubmatchFunc(nodePrefixRegex, rawHostMetrics, func(s []string) string {
 		return s[1]
 	})

@@ -4,19 +4,20 @@ import (
 	"io"
 
 	"github.com/deviceplane/deviceplane/pkg/metrics/datadog"
+	"github.com/deviceplane/deviceplane/pkg/models"
 
 	prometheus "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 )
 
-func ConvertOpenMetricsToDataDog(in io.Reader, statsCache *StatsCache, statsPrefix string) ([]datadog.Metric, error) {
+func ConvertOpenMetricsToDataDog(in io.Reader, statsCache *StatsCache, statsPrefix string) ([]models.DatadogMetric, error) {
 	parser := expfmt.TextParser{}
 	promMetrics, err := parser.TextToMetricFamilies(in)
 	if err != nil {
 		return nil, err
 	}
 
-	ddMetrics := make([]datadog.Metric, 0)
+	ddMetrics := make([]models.DatadogMetric, 0)
 	for _, promMetric := range promMetrics {
 		if promMetric.Type == nil {
 			continue
@@ -49,7 +50,7 @@ func ConvertOpenMetricsToDataDog(in io.Reader, statsCache *StatsCache, statsPref
 				}
 
 				points = append(points, datadog.NewPoint(float32(gauge.GetValue())))
-				m := datadog.Metric{
+				m := models.DatadogMetric{
 					Metric: promMetric.GetName(),
 					Points: points,
 					Type:   "gauge",
@@ -69,7 +70,7 @@ func ConvertOpenMetricsToDataDog(in io.Reader, statsCache *StatsCache, statsPref
 				}
 
 				points = append(points, datadog.NewPoint(float32(delta)))
-				m := datadog.Metric{
+				m := models.DatadogMetric{
 					Metric: promMetric.GetName(),
 					Points: points,
 					Type:   "count",

@@ -13,6 +13,8 @@ import (
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/agent/client"
 	"github.com/deviceplane/deviceplane/pkg/agent/info"
+	"github.com/deviceplane/deviceplane/pkg/agent/metrics"
+	"github.com/deviceplane/deviceplane/pkg/agent/netns"
 	"github.com/deviceplane/deviceplane/pkg/agent/server/local"
 	"github.com/deviceplane/deviceplane/pkg/agent/server/remote"
 	"github.com/deviceplane/deviceplane/pkg/agent/service"
@@ -50,6 +52,7 @@ type Agent struct {
 	serverPort             int
 	supervisor             *supervisor.Supervisor
 	statusGarbageCollector *status.GarbageCollector
+	metricsPusher          *metrics.MetricsPusher
 	infoReporter           *info.Reporter
 	localServer            *local.Server
 	remoteServer           *remote.Server
@@ -92,7 +95,20 @@ func NewAgent(
 		},
 	)
 
-	service := service.NewService(variables, supervisor, engine, confDir)
+	netnsManager := netns.NewManager(engine)
+	netnsManager.Start()
+
+	serviceMetricsFetcher := metrics.NewServiceMetricsFetcher(
+		supervisor,
+		netnsManager,
+	)
+
+	service := service.NewService(variables, supervisor, engine, confDir, serviceMetricsFetcher)
+
+	metricsPusher := metrics.NewMetricsPusher(
+		client,
+		serviceMetricsFetcher,
+	)
 
 	return &Agent{
 		client:                 client,
@@ -103,6 +119,7 @@ func NewAgent(
 		stateDir:               stateDir,
 		serverPort:             serverPort,
 		supervisor:             supervisor,
+		metricsPusher:          metricsPusher,
 		statusGarbageCollector: status.NewGarbageCollector(client.DeleteDeviceApplicationStatus, client.DeleteDeviceServiceStatus),
 		infoReporter:           info.NewReporter(client, version),
 		localServer:            local.NewServer(service),
@@ -188,6 +205,7 @@ func (a *Agent) Run() {
 	go a.runInfoReporter()
 	go a.runRemoteServer()
 	go a.runLocalServer()
+	go a.runMetricsForwarding()
 	select {}
 }
 
@@ -209,6 +227,23 @@ func (a *Agent) runBundleApplier() {
 		select {
 		case <-ticker.C:
 			continue
+		}
+	}
+}
+
+func (a *Agent) runMetricsForwarding() {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+
+	for {
+		if bundle := a.loadSavedBundle(); bundle != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			a.metricsPusher.PushDeviceMetrics(ctx, bundle)
+			a.metricsPusher.PushServiceMetrics(ctx, bundle)
+
+			<-ticker.C
 		}
 	}
 }

@@ -266,6 +266,8 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/deviceapplicationstatuses", s.withDeviceAuth(s.deleteDeviceApplicationStatus)).Methods("DELETE")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.withDeviceAuth(s.setDeviceServiceStatus)).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.withDeviceAuth(s.deleteDeviceServiceStatus)).Methods("DELETE")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/forwardmetrics/service", s.withDeviceAuth(s.forwardServiceMetrics)).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/forwardmetrics/device", s.withDeviceAuth(s.forwardDeviceMetrics)).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/connection", s.withDeviceAuth(s.initiateDeviceConnection)).Methods("GET")
 
 	apiRouter.Handle("/revdial", revdial.ConnHandler(s.upgrader)).Methods("GET")

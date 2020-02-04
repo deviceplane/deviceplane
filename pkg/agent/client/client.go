@@ -99,6 +99,14 @@ func (c *Client) SetDeviceInfo(ctx context.Context, req models.SetDeviceInfoRequ
 	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "info")
 }
 
+func (c *Client) SendDeviceMetrics(ctx context.Context, req models.DatadogPostMetricsRequest) error {
+	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "forwardmetrics", "device")
+}
+
+func (c *Client) SendServiceMetrics(ctx context.Context, req models.IntermediateServiceMetricsRequest) error {
+	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "forwardmetrics", "service")
+}
+
 func (c *Client) SetDeviceApplicationStatus(ctx context.Context, applicationID string, req models.SetDeviceApplicationStatusRequest) error {
 	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "applications", applicationID, "deviceapplicationstatuses")
 }
