@@ -28,7 +28,7 @@ Run `make db-reset` to setup the database. This command will reset the database 
 
 Run the controller with `go run cmd/controller/main.go --allowed-origin "http://localhost:3000"`. By default it runs on port 8080.
 
-Run the UI with `npm start` in the `ui/` folder. The login is `email@example.com` / `password`.
+Run the UI with `npm start` in the `ui/` folder. If it's your first time doing this, or if dependencies change, you'll need to run `npm install`. The login is `email@example.com` / `password`.
 
 To run the agent navigate to the "Add Device" button in the UI. A command to run the agent locally will be generated and printed to the console.
 
