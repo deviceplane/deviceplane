@@ -165,7 +165,7 @@ const Service = ({
         accessor: 'labels',
         Cell: ({ cell: { value }, row: { original } }) =>
           editRow && editRow.name === original.name ? (
-            <Select
+            <MultiSelect
               multi
               options={labelsOptions}
               value={editRow.labels.map(label => ({
@@ -317,7 +317,7 @@ const Service = ({
           value={selection}
           options={selectOptions}
           placeholder="Select a Service"
-          noOptionsMessage={() => (
+          none={() => (
             <Text>
               There are no <strong>Services</strong>.
             </Text>

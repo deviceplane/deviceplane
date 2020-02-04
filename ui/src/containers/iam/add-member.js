@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigation } from 'react-navi';
-import useForm from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 
 import api from '../../api';
 import utils from '../../utils';

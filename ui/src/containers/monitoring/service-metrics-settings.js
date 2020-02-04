@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import useForm from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useNavigation } from 'react-navi';
 
 import utils from '../../utils';

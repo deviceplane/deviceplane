@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import useForm from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useNavigation } from 'react-navi';
 
 import utils from '../../utils';
@@ -14,7 +14,7 @@ import {
   Form,
   Button,
   Checkbox,
-  Select,
+  MultiSelect,
   Text,
   Label,
   toaster,
@@ -103,7 +103,7 @@ const DeviceMetricsForm = ({ params, devices, metrics, close }) => {
           label="Metrics"
           name="metrics"
           as={
-            <Select
+            <MultiSelect
               multi
               options={metricsOptions}
               placeholder="Select metrics"
@@ -119,7 +119,7 @@ const DeviceMetricsForm = ({ params, devices, metrics, close }) => {
           setValue={setValue}
           register={register}
           as={
-            <Select
+            <MultiSelect
               multi
               options={labelsOptions}
               multiComponent={DeviceLabelMulti}

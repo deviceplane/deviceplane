@@ -40,8 +40,12 @@ const Header = styled(Row)`
   text-transform: uppercase;
   align-items: center;
 
+  & ${Cell} svg {
+    transition: fill 200ms;
+  }
+
   & ${Cell}:hover svg {
-    display: block !important;
+    fill: ${props => props.theme.colors.white} !important;
   }
 `;
 
@@ -86,14 +90,16 @@ const Table = ({ columns, data, onRowSelect, placeholder, editRow }) => {
             {headerGroup.headers.map(column => (
               <Cell
                 {...column.getHeaderProps(column.getSortByToggleProps())}
+                title=""
                 style={{
                   ...column.style,
                   cursor: column.canSort ? 'pointer' : 'default',
                   alignSelf: 'center',
+                  justifyContent: 'space-between',
                 }}
               >
                 {column.render('Header')}
-                <Row marginLeft={2}>
+                <Row marginLeft={2} alignItems="center">
                   {column.isSorted ? (
                     <Icon
                       icon={column.isSortedDesc ? 'chevron-down' : 'chevron-up'}
@@ -101,12 +107,7 @@ const Table = ({ columns, data, onRowSelect, placeholder, editRow }) => {
                       color="white"
                     />
                   ) : column.canSort ? (
-                    <Icon
-                      size={14}
-                      icon="expand-all"
-                      color="white"
-                      style={{ display: 'none' }}
-                    />
+                    <Icon size={12} icon="expand-all" color="grays.5" />
                   ) : null}
                 </Row>
               </Cell>

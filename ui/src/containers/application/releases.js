@@ -18,7 +18,7 @@ const Releases = ({
         Header: 'Release',
         accessor: 'number',
         style: {
-          flex: '0 0 60px',
+          flex: '0 0 75px',
         },
       },
       {
@@ -47,10 +47,10 @@ const Releases = ({
         },
       },
       {
-        Header: 'Device count',
+        Header: 'Devices',
         accessor: 'deviceCounts.allCount',
         style: {
-          flex: '0 0 102px',
+          flex: '0 0 76px',
         },
       },
     ],

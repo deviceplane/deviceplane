@@ -1,10 +1,19 @@
 import React, { forwardRef, useState } from 'react';
-import { RHFInput } from 'react-hook-form-input';
 import styled from 'styled-components';
 import { space, color, typography } from 'styled-system';
 
 import utils from '../utils';
-import { Group, Row, Column, Input, Textarea, Label, Text, Icon } from './core';
+import {
+  Group,
+  Row,
+  Column,
+  Input,
+  Textarea,
+  Label,
+  Text,
+  Icon,
+  Select,
+} from './core';
 
 const PasswordButton = styled(Row)`
   user-select: none;
@@ -58,23 +67,11 @@ const Field = forwardRef(
     errors = Array.isArray(errors) ? errors : [errors];
 
     const getComponent = () => {
-      if (as) {
-        return (
-          <RHFInput
-            as={as}
-            id={name}
-            name={name}
-            register={register}
-            setValue={setValue}
-            onChangeEvent={data => ({ value: data[0] })}
-            {...props}
-          />
-        );
-      }
-
       switch (type) {
         case 'textarea':
           return <Textarea name={name} id={name} ref={ref} {...props} />;
+        case 'select':
+          return <Select name={name} id={name} ref={ref} {...props} />;
         default:
           return (
             <Input

@@ -32,12 +32,12 @@ const Provisioning = ({
       {
         Header: 'Devices Registered',
         accessor: 'deviceCounts.allCount',
-        style: { flex: '0 0 150px' },
+        style: { flex: '0 0 169px' },
       },
       {
         Header: 'Registration Limit',
         accessor: 'maxRegistrations',
-        style: { flex: '0 0 140px' },
+        style: { flex: '0 0 160px' },
         Cell: ({ row: { original } }) => (
           <Text>
             {typeof original.maxRegistrations === 'number'

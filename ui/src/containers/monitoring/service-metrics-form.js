@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import useForm from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useNavigation } from 'react-navi';
 
 import utils from '../../utils';
@@ -13,7 +13,7 @@ import {
   Label,
   Form,
   Button,
-  Select,
+  MultiSelect,
   Text,
   Checkbox,
   toaster,
@@ -115,7 +115,7 @@ const ServiceMetricsForm = ({
           label="Metrics"
           name="metrics"
           as={
-            <Select
+            <MultiSelect
               multi
               creatable
               options={[]}
@@ -142,7 +142,7 @@ const ServiceMetricsForm = ({
           setValue={setValue}
           register={register}
           as={
-            <Select
+            <MultiSelect
               multi
               options={labelsOptions}
               multiComponent={DeviceLabelMulti}

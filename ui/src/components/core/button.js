@@ -58,16 +58,15 @@ const variants = {
       },
     },
     text: {
-      color: 'white',
+      color: 'grays.8',
       border: 'none',
       bg: 'transparent',
-      opacity: 0.8,
       padding: 0,
       '&:not(:disabled):hover': {
-        opacity: 1,
+        color: 'white',
       },
       '&:not(:disabled):focus': {
-        opacity: 1,
+        color: 'white',
       },
     },
     icon: {

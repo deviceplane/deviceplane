@@ -137,12 +137,13 @@ const DeviceSsh = ({
       >
         <Card border size="medium">
           <Select
-            onChange={({ value }) => {
+            onChange={e => {
               setShowKeyPopup(false);
-              startSSH(value);
+              startSSH(e.target.value);
             }}
             options={selectOptions}
-            placeholder="Select a SSH Key"
+            placeholder="Select a SSH key"
+            none="There are no SSH keys"
           />
         </Card>
       </Popup>

@@ -13,7 +13,7 @@ import {
   Row,
   Text,
   Checkbox,
-  Select,
+  MultiSelect,
   Button,
   Icon,
   toaster,
@@ -143,7 +143,7 @@ const Project = ({
         accessor: 'labels',
         Cell: ({ row: { original }, cell: { value } }) =>
           editRow && editRow.name === original.name ? (
-            <Select
+            <MultiSelect
               multi
               value={editRow.labels.map(label => ({
                 label,

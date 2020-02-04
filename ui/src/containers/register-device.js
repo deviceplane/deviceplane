@@ -41,20 +41,11 @@ const AddDevice = ({
     []
   );
   const [selection, setSelection] = useState(() => {
-    const defaultToken = registrationTokens.find(
-      ({ name }) => name === 'default'
-    );
-    if (defaultToken) {
-      return {
-        label: 'default',
-        value: defaultToken,
-      };
-    }
-    return null;
+    return registrationTokens.find(({ name }) => name === 'default') || null;
   });
 
   useEffect(() => {
-    console.log(getLocalCommand(selection.value));
+    console.log(getLocalCommand(selection));
   }, [selection]);
 
   return (
@@ -73,7 +64,7 @@ const AddDevice = ({
             <Text marginBottom={2} fontWeight={1}>
               Run the following command on the device you want to register:
             </Text>
-            <Code>{getCommand(selection.value)}</Code>
+            <Code>{getCommand(selection)}</Code>
           </>
         ) : (
           <>

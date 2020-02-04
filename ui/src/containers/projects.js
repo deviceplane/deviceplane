@@ -25,7 +25,7 @@ const Projects = ({
         Header: 'Devices',
         accessor: 'deviceCounts.allCount',
         style: {
-          flex: '0 0 75px',
+          flex: '0 0 76px',
         },
       },
       {
