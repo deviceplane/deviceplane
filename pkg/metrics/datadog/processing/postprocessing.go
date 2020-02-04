@@ -66,7 +66,7 @@ func metricProcessorFunc(
 			}
 
 			// Prefix metric name
-			if !controllerSide {
+			if controllerSide {
 				m.Metric = fmt.Sprintf("%s.%s", metricPrefix, m.Metric)
 			}
 
