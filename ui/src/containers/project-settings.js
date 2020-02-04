@@ -32,7 +32,14 @@ const ProjectSettings = ({
     data: { params, project },
   },
 }) => {
-  const { register, handleSubmit, errors, formState, setValue } = useForm({
+  const {
+    control,
+    register,
+    handleSubmit,
+    errors,
+    formState,
+    setValue,
+  } = useForm({
     validationSchema,
     defaultValues: {
       name: project.name,
@@ -107,10 +114,10 @@ const ProjectSettings = ({
             />
 
             <Field
+              type="checkbox"
+              label="Enable SSH Keys"
               name="enableSSHKeys"
-              as={<Checkbox label="Enable SSH Keys" />}
-              register={register}
-              setValue={setValue}
+              control={control}
             />
             <Button
               marginTop={3}

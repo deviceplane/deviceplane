@@ -1,6 +1,7 @@
 import React, { forwardRef, useState } from 'react';
 import styled from 'styled-components';
 import { space, color, typography } from 'styled-system';
+import { Controller } from 'react-hook-form';
 
 import utils from '../utils';
 import {
@@ -13,6 +14,8 @@ import {
   Text,
   Icon,
   Select,
+  MultiSelect,
+  Checkbox,
 } from './core';
 
 const PasswordButton = styled(Row)`
@@ -49,9 +52,8 @@ const Field = forwardRef(
       hint,
       description,
       name,
-      as,
-      setValue,
       register,
+      control,
       onChangeEvent,
       autoComplete = 'off',
       multi,
@@ -72,6 +74,24 @@ const Field = forwardRef(
           return <Textarea name={name} id={name} ref={ref} {...props} />;
         case 'select':
           return <Select name={name} id={name} ref={ref} {...props} />;
+        case 'multiselect':
+          return (
+            <Controller
+              name={name}
+              id={name}
+              as={<MultiSelect />}
+              control={control}
+            />
+          );
+        case 'checkbox':
+          return (
+            <Controller
+              name={name}
+              id={name}
+              as={<Checkbox />}
+              control={control}
+            />
+          );
         default:
           return (
             <Input

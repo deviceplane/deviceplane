@@ -20,7 +20,7 @@ const GlobalStyle = createGlobalStyle`
     box-sizing: border-box;
     font-family: ${props => props.theme.fonts.default};
     font-size: 16px;
-    font-weight: 300;
+    font-weight: 400;
     line-height: 1.2;
     background-color: ${props => props.theme.colors.pageBackground};
   }

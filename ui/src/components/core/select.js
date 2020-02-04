@@ -95,7 +95,7 @@ const Select = forwardRef(
           size={16}
           position="absolute"
           right={2}
-          top="20%"
+          top="25%"
           pointerEvents="none"
         />
       </Row>
