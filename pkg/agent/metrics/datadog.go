@@ -36,19 +36,23 @@ func NewMetricsPusher(
 }
 
 func (m *MetricsPusher) SetBundle(bundle models.Bundle) {
-	ticker := time.NewTicker(time.Minute)
-	defer ticker.Stop()
-
 	m.lock.Lock()
 	m.bundle = bundle
 	m.lock.Unlock()
 
-	m.once.Do(func() {
+	m.once.Do(m.begin)
+}
+
+func (m *MetricsPusher) begin() {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+
+	for {
 		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 		go m.PushDeviceMetrics(ctx)
 		go m.PushServiceMetrics(ctx)
 		<-ticker.C
-	})
+	}
 }
 
 func (m *MetricsPusher) PushDeviceMetrics(ctx context.Context) {
