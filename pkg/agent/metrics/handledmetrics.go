@@ -22,7 +22,8 @@ func GetFilteredHostMetrics(ctx context.Context) (*bytes.Buffer, error) {
 
 	var buf bytes.Buffer
 	rwHttp := utils.ResponseWriter{
-		Writer: &buf,
+		Writer:  &buf,
+		Headers: make(http.Header),
 	}
 
 	r, err := http.NewRequestWithContext(ctx, "GET", "/", nil)
