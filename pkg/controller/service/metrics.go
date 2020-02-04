@@ -1,7 +1,7 @@
 package service
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
 
 	"github.com/apex/log"
@@ -15,7 +15,7 @@ func (s *Service) forwardServiceMetrics(w http.ResponseWriter, r *http.Request, 
 	pass := func() bool {
 		var metricsRequest models.IntermediateServiceMetricsRequest
 
-		if err := read(r, &metricsRequest); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&metricsRequest); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return false
 		}
@@ -36,11 +36,14 @@ func (s *Service) forwardServiceMetrics(w http.ResponseWriter, r *http.Request, 
 
 		for appID, v := range metricsRequest {
 			for service, series := range v {
-				config := configsByID[appID+service]
+				config, exists := configsByID[appID+service]
+				if !exists {
+					continue
+				}
 
 				filteredServiceMetrics := processing.ProcessServiceMetrics(
 					"",
-					service,
+					"",
 				)(
 					true,
 					series,
@@ -48,9 +51,7 @@ func (s *Service) forwardServiceMetrics(w http.ResponseWriter, r *http.Request, 
 					&project,
 					&device,
 				)
-				if len(filteredServiceMetrics) == 0 {
-					forwardedMetricsRequest.Series = filteredServiceMetrics
-				}
+				forwardedMetricsRequest.Series = append(forwardedMetricsRequest.Series, filteredServiceMetrics...)
 			}
 		}
 
@@ -70,8 +71,6 @@ func (s *Service) forwardServiceMetrics(w http.ResponseWriter, r *http.Request, 
 		status = "status:failure"
 	}
 	s.st.Incr("service_metrics_push", append([]string{status}, utils.InternalTags(project.Name)...), 1)
-
-	fmt.Println("SERVICE METRICS PASS", pass)
 }
 
 func (s *Service) forwardDeviceMetrics(w http.ResponseWriter, r *http.Request, project models.Project, device models.Device) {
@@ -92,20 +91,15 @@ func (s *Service) forwardDeviceMetrics(w http.ResponseWriter, r *http.Request, p
 		}
 
 		var forwardedMetricsRequest models.DatadogPostMetricsRequest
-		filteredDeviceMetrics := processing.ProcessDeviceMetrics(
+		forwardedMetricsRequest.Series = processing.ProcessDeviceMetrics(
 			true,
 			metricsRequest.Series,
 			deviceMetricsConfig.ExposedMetrics,
 			&project,
 			&device,
 		)
-		if len(filteredDeviceMetrics) == 0 {
-			forwardedMetricsRequest.Series = filteredDeviceMetrics
-		}
 
 		client := datadog.NewClient(*project.DatadogAPIKey)
-		fmt.Println(metricsRequest)
-		fmt.Println(forwardedMetricsRequest)
 		if err := client.PostMetrics(r.Context(), forwardedMetricsRequest); err != nil {
 			log.WithError(err).Error("post device metrics")
 			w.WriteHeader(http.StatusInternalServerError)
@@ -121,6 +115,4 @@ func (s *Service) forwardDeviceMetrics(w http.ResponseWriter, r *http.Request, p
 		status = "status:failure"
 	}
 	s.st.Incr("device_metrics_push", append([]string{status}, utils.InternalTags(project.Name)...), 1)
-
-	fmt.Println("DEVICE METRICS PASS", pass)
 }

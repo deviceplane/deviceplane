@@ -18,10 +18,10 @@ func mapMetrics(exposedMetrics []models.ExposedMetric) map[string]*models.Expose
 
 func addNoTags(func(tag, value string)) {}
 
-var ProcessProjectMetrics = metricProcessorFunc("deviceplane.device", addNoTags)
+var ProcessProjectMetrics = metricProcessorFunc("deviceplane", addNoTags)
 var ProcessDeviceMetrics = metricProcessorFunc("deviceplane.device", addNoTags)
 var ProcessServiceMetrics = func(applicationName, serviceName string) metricProcessor {
-	return metricProcessorFunc("deviceplane.device",
+	return metricProcessorFunc("deviceplane.service",
 		func(addTag func(tag, value string)) {
 			if applicationName != "" {
 				addTag("deviceplane.application", applicationName)
