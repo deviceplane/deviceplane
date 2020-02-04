@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/apex/log"
@@ -68,6 +69,8 @@ func (s *Service) forwardServiceMetrics(w http.ResponseWriter, r *http.Request, 
 		status = "status:failure"
 	}
 	s.st.Incr("service_metrics_push", append([]string{status}, utils.InternalTags(project.Name)...), 1)
+
+	fmt.Println("SERVICE METRICS PASS", pass)
 }
 
 func (s *Service) forwardDeviceMetrics(w http.ResponseWriter, r *http.Request, project models.Project, device models.Device) {
@@ -114,4 +117,6 @@ func (s *Service) forwardDeviceMetrics(w http.ResponseWriter, r *http.Request, p
 		status = "status:failure"
 	}
 	s.st.Incr("device_metrics_push", append([]string{status}, utils.InternalTags(project.Name)...), 1)
+
+	fmt.Println("DEVICE METRICS PASS", pass)
 }

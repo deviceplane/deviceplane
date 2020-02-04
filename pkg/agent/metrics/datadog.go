@@ -70,6 +70,10 @@ func (m *MetricsPusher) begin() {
 }
 
 func (m *MetricsPusher) PushDeviceMetrics(ctx context.Context) {
+	if m.bundle.DeviceMetricsConfig == nil {
+		return
+	}
+
 	if len(m.bundle.DeviceMetricsConfig.ExposedMetrics) == 0 {
 		return
 	}

@@ -257,7 +257,7 @@ type Bundle struct {
 	DesiredAgentVersion string `json:"desiredAgentVersion" yaml:"desiredAgentVersion"`
 
 	ServiceMetricsConfigs []ServiceMetricsConfig `json:"serviceMetricsConfig" yaml:"serviceMetricsConfig"`
-	DeviceMetricsConfig   DeviceMetricsConfig    `json:"deviceMetricsConfig" yaml:"deviceMetricsConfig"`
+	DeviceMetricsConfig   *DeviceMetricsConfig   `json:"deviceMetricsConfig" yaml:"deviceMetricsConfig"`
 }
 
 type BundledApplication struct {
