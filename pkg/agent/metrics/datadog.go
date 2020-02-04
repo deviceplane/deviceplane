@@ -89,6 +89,7 @@ func (m *MetricsPusher) PushDeviceMetrics(ctx context.Context) {
 		"device-metrics",
 	)
 	processedMetrics := processing.ProcessDeviceMetrics(
+		false,
 		convertedMetrics,
 		m.bundle.DeviceMetricsConfig.ExposedMetrics,
 		nil,
@@ -168,6 +169,7 @@ func (m *MetricsPusher) PushServiceMetrics(ctx context.Context) {
 		)
 
 		processedMetrics := processing.ProcessServiceMetrics(app.Application.Name, service.Service)(
+			false,
 			convertedMetrics,
 			serviceConfig.ExposedMetrics,
 			nil,

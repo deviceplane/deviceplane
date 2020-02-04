@@ -88,7 +88,7 @@ func (r *Runner) doForProject(ctx context.Context, project models.Project) {
 	var req models.DatadogPostMetricsRequest
 	for _, device := range devices {
 		projectMetrics := r.getProjectMetrics(&project, &device)
-		filteredProjectMetrics := processing.ProcessProjectMetrics(projectMetrics, projectMetricsConfig.ExposedMetrics, &project, &device)
+		filteredProjectMetrics := processing.ProcessProjectMetrics(false, projectMetrics, projectMetricsConfig.ExposedMetrics, &project, &device)
 		if len(filteredProjectMetrics) != 0 {
 			req.Series = append(req.Series, filteredProjectMetrics...)
 		}

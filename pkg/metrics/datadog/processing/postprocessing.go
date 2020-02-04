@@ -34,6 +34,7 @@ var ProcessServiceMetrics = func(applicationName, serviceName string) metricProc
 }
 
 type metricProcessor func(
+	controllerSide bool,
 	metrics []models.DatadogMetric,
 	exposedMetrics []models.ExposedMetric,
 	project *models.Project,
@@ -45,6 +46,7 @@ func metricProcessorFunc(
 	addTags func(func(tag, value string)),
 ) metricProcessor {
 	return func(
+		controllerSide bool,
 		metrics []models.DatadogMetric,
 		exposedMetrics []models.ExposedMetric,
 		project *models.Project,
@@ -64,7 +66,9 @@ func metricProcessorFunc(
 			}
 
 			// Prefix metric name
-			m.Metric = fmt.Sprintf("%s.%s", metricPrefix, m.Metric)
+			if !controllerSide {
+				m.Metric = fmt.Sprintf("%s.%s", metricPrefix, m.Metric)
+			}
 
 			// Helper
 			addTag := func(tag, value string) {

@@ -42,6 +42,7 @@ func (s *Service) forwardServiceMetrics(w http.ResponseWriter, r *http.Request, 
 					"",
 					service,
 				)(
+					true,
 					series,
 					config.ExposedMetrics,
 					&project,
@@ -92,6 +93,7 @@ func (s *Service) forwardDeviceMetrics(w http.ResponseWriter, r *http.Request, p
 
 		var forwardedMetricsRequest models.DatadogPostMetricsRequest
 		filteredDeviceMetrics := processing.ProcessDeviceMetrics(
+			true,
 			metricsRequest.Series,
 			deviceMetricsConfig.ExposedMetrics,
 			&project,
@@ -102,7 +104,9 @@ func (s *Service) forwardDeviceMetrics(w http.ResponseWriter, r *http.Request, p
 		}
 
 		client := datadog.NewClient(*project.DatadogAPIKey)
-		if err := client.PostMetrics(r.Context(), metricsRequest); err != nil {
+		fmt.Println(metricsRequest)
+		fmt.Println(forwardedMetricsRequest)
+		if err := client.PostMetrics(r.Context(), forwardedMetricsRequest); err != nil {
 			log.WithError(err).Error("post device metrics")
 			w.WriteHeader(http.StatusInternalServerError)
 			return false
