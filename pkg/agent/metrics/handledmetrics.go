@@ -12,13 +12,12 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/metrics/datadog/processing"
 	"github.com/deviceplane/deviceplane/pkg/utils"
 	"github.com/pkg/errors"
-	// This one specifically...
 )
 
 var once sync.Once
 var hostMetricsHandler http.Handler
 
-func GetFilteredHostMetrics() *bytes.Buffer {
+func GetFilteredHostMetrics(ctx context.Context) (*bytes.Buffer, error) {
 	h := FilteredHostMetricsHandler()
 
 	var buf bytes.Buffer
@@ -26,10 +25,13 @@ func GetFilteredHostMetrics() *bytes.Buffer {
 		Writer: &buf,
 	}
 
-	r, _ := http.NewRequest("GET", "/", nil)
+	r, err := http.NewRequestWithContext(ctx, "GET", "/", nil)
+	if err != nil {
+		return nil, err
+	}
 	(h).ServeHTTP(&rwHttp, r)
 
-	return &buf
+	return &buf, nil
 }
 
 func FilteredHostMetricsHandler() http.Handler {

@@ -6,18 +6,6 @@ type DatadogPostMetricsRequest struct {
 
 type IntermediateServiceMetricsRequest map[string](map[string]DatadogSeries)
 
-func (i IntermediateServiceMetricsRequest) flatten() []DatadogMetric {
-	var series []DatadogMetric
-
-	for _, v := range i {
-		for _, v2 := range v {
-			series = append(series, v2...)
-		}
-	}
-
-	return series
-}
-
 type DatadogSeries []DatadogMetric
 
 type DatadogMetric struct {

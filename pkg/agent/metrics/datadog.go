@@ -2,6 +2,8 @@ package metrics
 
 import (
 	"context"
+	"sync"
+	"time"
 
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/agent/client"
@@ -10,16 +12,15 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
-// func (a *Agent) beginMetricsCollection(elem ...string) string {
-// 	// load bundle
-// 	// // get metrics
-// 	// wait a minute
-// }
-
 type MetricsPusher struct {
 	client                *client.Client
 	statsCache            *translation.StatsCache
 	serviceMetricsFetcher *ServiceMetricsFetcher
+
+	lock sync.Mutex
+	once sync.Once
+
+	bundle models.Bundle
 }
 
 func NewMetricsPusher(
@@ -34,20 +35,40 @@ func NewMetricsPusher(
 	}
 }
 
-func (m *MetricsPusher) PushDeviceMetrics(ctx context.Context, bundle *models.Bundle) {
-	if len(bundle.DeviceMetricsConfig.ExposedMetrics) == 0 {
+func (m *MetricsPusher) SetBundle(bundle models.Bundle) {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+
+	m.lock.Lock()
+	m.bundle = bundle
+	m.lock.Unlock()
+
+	m.once.Do(func() {
+		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+		go m.PushDeviceMetrics(ctx)
+		go m.PushServiceMetrics(ctx)
+		<-ticker.C
+	})
+}
+
+func (m *MetricsPusher) PushDeviceMetrics(ctx context.Context) {
+	if len(m.bundle.DeviceMetricsConfig.ExposedMetrics) == 0 {
 		return
 	}
 
-	deviceMetrics := GetFilteredHostMetrics()
+	deviceMetrics, err := GetFilteredHostMetrics(ctx)
+	if err != nil {
+		log.WithError(err).Error("could not get filtered host metrics")
+		return
+	}
 	convertedMetrics, err := translation.ConvertOpenMetricsToDataDog(
 		deviceMetrics,
 		m.statsCache,
-		"service-metrics",
+		"device-metrics",
 	)
 	processedMetrics := processing.ProcessDeviceMetrics(
 		convertedMetrics,
-		bundle.DeviceMetricsConfig.ExposedMetrics,
+		m.bundle.DeviceMetricsConfig.ExposedMetrics,
 		nil,
 		nil,
 	)
@@ -64,37 +85,37 @@ func (m *MetricsPusher) PushDeviceMetrics(ctx context.Context, bundle *models.Bu
 	}
 }
 
-func (m *MetricsPusher) PushServiceMetrics(ctx context.Context, bundle *models.Bundle) {
-	if len(bundle.ServiceMetricsConfigs) == 0 {
+func (m *MetricsPusher) PushServiceMetrics(ctx context.Context) {
+	if len(m.bundle.ServiceMetricsConfigs) == 0 {
 		return
 	}
 
 	var datadogMetrics = make(models.IntermediateServiceMetricsRequest)
 
 	// Faster accessing
-	appsByID := make(map[string]*models.FullBundledApplication, len(bundle.Applications))
-	for i, app := range bundle.Applications {
-		appsByID[app.Application.ID] = &bundle.Applications[i]
+	appsByID := make(map[string]*models.FullBundledApplication, len(m.bundle.Applications))
+	for i, app := range m.bundle.Applications {
+		appsByID[app.Application.ID] = &m.bundle.Applications[i]
 	}
 
 	// Faster accessing
-	serviceConfigsByID := make(map[string]*models.ServiceMetricsConfig, len(bundle.ServiceMetricsConfigs))
-	for i, config := range bundle.ServiceMetricsConfigs {
-		serviceConfigsByID[config.ApplicationID] = &bundle.ServiceMetricsConfigs[i]
+	serviceConfigsByID := make(map[string]*models.ServiceMetricsConfig, len(m.bundle.ServiceMetricsConfigs))
+	for i, config := range m.bundle.ServiceMetricsConfigs {
+		serviceConfigsByID[config.ApplicationID] = &m.bundle.ServiceMetricsConfigs[i]
 	}
 
-	for _, service := range bundle.ServiceStatuses {
+	for _, service := range m.bundle.ServiceStatuses {
 		app, exists := appsByID[service.ApplicationID]
 		if !exists {
 			log.WithField("application_id", service.ApplicationID).
-				WithField("service", service.Service).Error("could not get application for metrics")
+				WithField("service", service.Service).Info("could not get application for metrics")
 			continue
 		}
 
 		serviceConfig, exists := serviceConfigsByID[app.Application.ID]
 		if !exists {
 			log.WithField("application_id", service.ApplicationID).
-				WithField("service", service.Service).Error("could not get service metrics config for metrics")
+				WithField("service", service.Service).Info("could not get service metrics config for metrics")
 			continue
 		}
 
@@ -114,6 +135,7 @@ func (m *MetricsPusher) PushServiceMetrics(ctx context.Context, bundle *models.B
 		if err != nil {
 			log.WithField("application_id", service.ApplicationID).
 				WithField("service", service.Service).Error("could not fetch service metrics")
+			continue
 		}
 		defer metricResponse.Body.Close()
 

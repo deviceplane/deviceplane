@@ -23,6 +23,7 @@ func (s *Service) forwardServiceMetrics(w http.ResponseWriter, r *http.Request, 
 		if err != nil {
 			log.WithField("project_id", project.ID).
 				WithError(err).Error("getting Service metrics config")
+			w.WriteHeader(http.StatusInternalServerError)
 			return false
 		}
 		configsByID := make(map[string]*models.ServiceMetricsConfig, len(serviceMetricsConfigs))
@@ -54,15 +55,19 @@ func (s *Service) forwardServiceMetrics(w http.ResponseWriter, r *http.Request, 
 		client := datadog.NewClient(*project.DatadogAPIKey)
 		if err := client.PostMetrics(r.Context(), forwardedMetricsRequest); err != nil {
 			log.WithError(err).Error("post service metrics")
+			w.WriteHeader(http.StatusInternalServerError)
 			return false
 		}
 		return true
 	}()
+
+	var status string
 	if pass {
-		s.st.Incr("runner.datadog.service_metrics_push", append([]string{"status:success"}, utils.InternalTags(project.Name)...), 1)
+		status = "status:success"
 	} else {
-		s.st.Incr("runner.datadog.service_metrics_push", append([]string{"status:failure"}, utils.InternalTags(project.Name)...), 1)
+		status = "status:failure"
 	}
+	s.st.Incr("service_metrics_push", append([]string{status}, utils.InternalTags(project.Name)...), 1)
 }
 
 func (s *Service) forwardDeviceMetrics(w http.ResponseWriter, r *http.Request, project models.Project, device models.Device) {
@@ -78,6 +83,7 @@ func (s *Service) forwardDeviceMetrics(w http.ResponseWriter, r *http.Request, p
 		if err != nil {
 			log.WithField("project_id", project.ID).
 				WithError(err).Error("getting device metrics config")
+			w.WriteHeader(http.StatusInternalServerError)
 			return false
 		}
 
@@ -95,13 +101,17 @@ func (s *Service) forwardDeviceMetrics(w http.ResponseWriter, r *http.Request, p
 		client := datadog.NewClient(*project.DatadogAPIKey)
 		if err := client.PostMetrics(r.Context(), metricsRequest); err != nil {
 			log.WithError(err).Error("post device metrics")
+			w.WriteHeader(http.StatusInternalServerError)
 			return false
 		}
 		return true
 	}()
+
+	var status string
 	if pass {
-		s.st.Incr("runner.datadog.device_metrics_push", append([]string{"status:success"}, utils.InternalTags(project.Name)...), 1)
+		status = "status:success"
 	} else {
-		s.st.Incr("runner.datadog.device_metrics_push", append([]string{"status:failure"}, utils.InternalTags(project.Name)...), 1)
+		status = "status:failure"
 	}
+	s.st.Incr("device_metrics_push", append([]string{status}, utils.InternalTags(project.Name)...), 1)
 }

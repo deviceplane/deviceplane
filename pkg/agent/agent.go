@@ -105,11 +105,6 @@ func NewAgent(
 
 	service := service.NewService(variables, supervisor, engine, confDir, serviceMetricsFetcher)
 
-	metricsPusher := metrics.NewMetricsPusher(
-		client,
-		serviceMetricsFetcher,
-	)
-
 	return &Agent{
 		client:                 client,
 		variables:              variables,
@@ -119,8 +114,8 @@ func NewAgent(
 		stateDir:               stateDir,
 		serverPort:             serverPort,
 		supervisor:             supervisor,
-		metricsPusher:          metricsPusher,
 		statusGarbageCollector: status.NewGarbageCollector(client.DeleteDeviceApplicationStatus, client.DeleteDeviceServiceStatus),
+		metricsPusher:          metrics.NewMetricsPusher(client, serviceMetricsFetcher),
 		infoReporter:           info.NewReporter(client, version),
 		localServer:            local.NewServer(service),
 		remoteServer:           remote.NewServer(client, service),
@@ -205,7 +200,6 @@ func (a *Agent) Run() {
 	go a.runInfoReporter()
 	go a.runRemoteServer()
 	go a.runLocalServer()
-	go a.runMetricsForwarding()
 	select {}
 }
 
@@ -222,28 +216,12 @@ func (a *Agent) runBundleApplier() {
 			a.supervisor.SetApplications(bundle.Applications)
 			a.statusGarbageCollector.SetBundle(*bundle)
 			a.updater.SetDesiredVersion(bundle.DesiredAgentVersion)
+			a.metricsPusher.SetBundle(*bundle)
 		}
 
 		select {
 		case <-ticker.C:
 			continue
-		}
-	}
-}
-
-func (a *Agent) runMetricsForwarding() {
-	ticker := time.NewTicker(time.Minute)
-	defer ticker.Stop()
-
-	for {
-		if bundle := a.loadSavedBundle(); bundle != nil {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-
-			a.metricsPusher.PushDeviceMetrics(ctx, bundle)
-			a.metricsPusher.PushServiceMetrics(ctx, bundle)
-
-			<-ticker.C
 		}
 	}
 }
