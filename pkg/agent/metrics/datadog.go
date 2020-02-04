@@ -40,7 +40,7 @@ func (m *MetricsPusher) SetBundle(bundle models.Bundle) {
 	m.bundle = bundle
 	m.lock.Unlock()
 
-	m.once.Do(m.begin)
+	go m.once.Do(m.begin)
 }
 
 func (m *MetricsPusher) begin() {
