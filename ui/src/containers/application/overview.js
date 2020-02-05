@@ -22,7 +22,7 @@ const getSchedulingRule = schedulingRule => {
   } else {
     return (
       <Value>
-        This application is running on{' '}
+        This application is scheduled to run on{' '}
         <strong style={{ color: theme.colors.white }}>
           {schedulingRule.scheduleType === 'AllDevices'
             ? 'all devices'
