@@ -82,7 +82,14 @@ export const Toast = ({ content, type = ToastTypes.INFO, close }) => {
   }, []);
 
   return (
-    <Container borderRadius={1} bg={color} minWidth="200px" marginBottom={3}>
+    <Container
+      borderRadius={1}
+      bg={color}
+      minWidth="200px"
+      marginBottom={3}
+      zIndex={999}
+      style={{ pointerEvents: 'all' }}
+    >
       <Row
         paddingX={4}
         paddingY={2}
@@ -130,7 +137,7 @@ export const ToastManager = () => {
       top={4}
       alignItems="center"
       width="calc(100% - 136px)"
-      zIndex={999}
+      style={{ pointerEvents: 'none' }}
     >
       {toasts.map(({ id, ...toast }, index) => (
         <Toast key={id} {...toast} close={removeToast(index)} />
