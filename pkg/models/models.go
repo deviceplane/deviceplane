@@ -117,7 +117,6 @@ type Device struct {
 	ProjectID           string            `json:"projectId" yaml:"projectId"`
 	Name                string            `json:"name" yaml:"name"`
 	RegistrationTokenID *string           `json:"registrationTokenId" yaml:"registrationTokenId"`
-	DesiredAgentSpec    string            `json:"desiredAgentSpec" yaml:"desiredAgentSpec"`
 	DesiredAgentVersion string            `json:"desiredAgentVersion" yaml:"desiredAgentVersion"`
 	Info                DeviceInfo        `json:"info" yaml:"info"`
 	LastSeenAt          time.Time         `json:"lastSeenAt" yaml:"lastSeenAt"`
@@ -254,7 +253,6 @@ type Bundle struct {
 	Applications        []FullBundledApplication  `json:"applications" yaml:"applications"`
 	ApplicationStatuses []DeviceApplicationStatus `json:"applicationStatuses" yaml:"applicationStatuses"`
 	ServiceStatuses     []DeviceServiceStatus     `json:"serviceStatuses" yaml:"serviceStatuses"`
-	DesiredAgentSpec    string                    `json:"desiredAgentSpec" yaml:"desiredAgentSpec"`
 	DesiredAgentVersion string                    `json:"desiredAgentVersion" yaml:"desiredAgentVersion"`
 }
 
