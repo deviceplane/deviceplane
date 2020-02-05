@@ -290,6 +290,7 @@ const ReleasePinning = ({
                             <Field
                               inline
                               required
+                              flex={1}
                               variant="small"
                               name={`releaseSelectors[${i}].releaseQuery[${j}][${k}].params.value`}
                               placeholder="Label Value"
