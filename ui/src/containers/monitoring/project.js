@@ -197,7 +197,7 @@ const Project = ({
           const editing = editRow && editRow.name === original.name;
           return (
             <Checkbox
-              value={editing ? editRow.properties.includes('device') : value}
+              checked={editing ? editRow.properties.includes('device') : value}
               onChange={v =>
                 updateMetricProperty('device', v, editing ? editRow : original)
               }
@@ -213,7 +213,7 @@ const Project = ({
           const editing = editRow && editRow.name === original.name;
           return (
             <Checkbox
-              value={editing ? editRow.enabled : value}
+              checked={editing ? editRow.enabled : value}
               onChange={enabled =>
                 setEditRow({
                   ...(editing ? editRow : original),

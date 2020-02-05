@@ -172,7 +172,7 @@ const Device = ({
           const editing = editRow && editRow.name === original.name;
           return (
             <Checkbox
-              value={editing ? editRow.properties.includes('device') : value}
+              checked={editing ? editRow.properties.includes('device') : value}
               onChange={v =>
                 updateMetricProperty('device', v, editing ? editRow : original)
               }
