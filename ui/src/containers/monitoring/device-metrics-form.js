@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import useForm from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useNavigation } from 'react-navi';
 
 import utils from '../../utils';
@@ -10,15 +10,7 @@ import Card from '../../components/card';
 import Alert from '../../components/alert';
 import { DeviceLabelMulti } from '../../components/device-label';
 import { getMetricLabel } from '../../helpers/metrics';
-import {
-  Form,
-  Button,
-  Checkbox,
-  Select,
-  Text,
-  Label,
-  toaster,
-} from '../../components/core';
+import { Form, Button, Text, Label, toaster } from '../../components/core';
 import { labelColor } from '../../helpers/labels';
 
 const metricsOptions = config.supportedDeviceMetrics.map(value => ({
@@ -27,7 +19,7 @@ const metricsOptions = config.supportedDeviceMetrics.map(value => ({
 }));
 
 const DeviceMetricsForm = ({ params, devices, metrics, close }) => {
-  const { register, handleSubmit, errors, setValue } = useForm({});
+  const { control, handleSubmit, errors } = useForm({});
   const navigation = useNavigation();
   const [backendError, setBackendError] = useState();
 
@@ -100,37 +92,27 @@ const DeviceMetricsForm = ({ params, devices, metrics, close }) => {
         <Field
           required
           autoFocus
+          type="multiselect"
           label="Metrics"
           name="metrics"
-          as={
-            <Select
-              multi
-              options={metricsOptions}
-              placeholder="Select metrics"
-            />
-          }
-          setValue={setValue}
-          register={register}
+          options={metricsOptions}
+          placeholder="Select metrics"
+          control={control}
           errors={errors.metrics}
         />
         <Field
+          type="multiselect"
           label="Labels"
           name="labels"
-          setValue={setValue}
-          register={register}
-          as={
-            <Select
-              multi
-              options={labelsOptions}
-              multiComponent={DeviceLabelMulti}
-              placeholder="Select labels"
-              noOptionsMessage={() => (
-                <Text>
-                  There are no <strong>Labels</strong>.
-                </Text>
-              )}
-            />
-          }
+          control={control}
+          options={labelsOptions}
+          multiComponent={DeviceLabelMulti}
+          placeholder="Select labels"
+          noOptionsMessage={() => (
+            <Text>
+              There are no <strong>Labels</strong>.
+            </Text>
+          )}
           errors={errors.description}
         />
 
@@ -138,11 +120,11 @@ const DeviceMetricsForm = ({ params, devices, metrics, close }) => {
         {config.supportedDeviceMetricProperties.map(property => (
           <Field
             multi
+            type="checkbox"
             key={property.id}
+            label={property.label}
             name={`properties[${property.id}]`}
-            as={<Checkbox label={property.label} />}
-            register={register}
-            setValue={setValue}
+            control={control}
             hint={property.description}
           />
         ))}

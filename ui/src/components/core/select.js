@@ -1,155 +1,105 @@
-import React from 'react';
-import ReactSelect, { components } from 'react-select';
-import CreatableSelect from 'react-select/creatable';
+import styled from 'styled-components';
+import { variant } from 'styled-system';
+import React, { forwardRef } from 'react';
 
-import theme from '../../theme';
+import { Row, Box } from './box';
+import Icon from './icon';
 
-const styles = {
-  container: () => ({
-    display: 'flex',
-    flex: 1,
-    position: 'relative',
-  }),
-  option: (_, { isFocused, isSelected, selectProps: { variant } }) => ({
-    transition: 'background-color 200ms ease',
-    backgroundColor: isSelected
-      ? theme.colors.white
-      : isFocused
-      ? theme.colors.grays[3]
-      : variant === 'black'
-      ? theme.colors.black
-      : theme.colors.grays[0],
-    color: isSelected ? theme.colors.black : theme.colors.white,
-    padding: '8px',
-    cursor: 'pointer',
-    margin: 0,
-  }),
-  menu: (provided, { selectProps: { variant } }) => ({
-    ...provided,
-    marginTop: '4px',
-    backgroundColor:
-      variant === 'black' ? theme.colors.black : theme.colors.grays[0],
-    borderRadius: `${theme.radii[1]}px`,
-    border: `1px solid ${theme.colors.white}`,
-    boxShadow: 'none',
-  }),
-  menuList: provided => ({ ...provided, padding: 0 }),
-  control: (_, { selectProps: { variant } }) => ({
-    display: 'flex',
-    flex: 1,
-    padding: 0,
-    backgroundColor:
-      variant === 'black' ? theme.colors.black : theme.colors.grays[0],
-    borderRadius: `${theme.radii[1]}px`,
-    border: `1px solid ${theme.colors.white}`,
-  }),
-  input: () => ({
-    fontSize: theme.fontSizes[2],
-    color: theme.colors.white,
-    fontWeight: theme.fontWeights[1],
-  }),
-  placeholder: () => ({
-    fontSize: theme.fontSizes[2],
-    fontWeight: theme.fontWeights[1],
-    color: theme.colors.grays[9],
-  }),
-  valueContainer: provided => ({ ...provided, padding: '0 8px' }),
-  multiValue: () => ({
-    display: 'flex',
-    margin: '8px 8px 8px 0',
-  }),
-  multiValueLabel: () => ({
-    padding: '4px 6px',
-    backgroundColor: theme.colors.white,
-    borderTopLeftRadius: '3px',
-    borderBottomLeftRadius: '3px',
-    color: theme.colors.black,
-    fontSize: theme.fontSizes[1],
-    fontWeight: theme.fontWeights[1],
-  }),
-  multiValueRemove: () => ({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    backgroundColor: theme.colors.black,
-    color: theme.colors.red,
-    borderTopRightRadius: '3px',
-    borderBottomRightRadius: '3px',
-    padding: '4px',
-    fontSize: '18px',
-    ':hover': {
-      color: theme.colors.pureWhite,
-    },
-  }),
-  singleValue: provided => {
-    return { ...provided, color: theme.colors.grays[12] };
-  },
-  indicatorsContainer: () => ({
-    padding: 0,
-    cursor: 'pointer',
-    color: theme.colors.white,
-    ':hover': {
-      color: theme.colors.black,
-      backgroundColor: theme.colors.white,
-    },
-  }),
-  clearIndicator: provided => ({
-    ...provided,
-    cursor: 'pointer',
-    color: theme.colors.red,
-    ':hover': {
-      color: theme.colors.white,
-    },
-  }),
-  indicatorSeparator: () => ({}),
-};
+const StyledSelect = styled(Box).attrs({ as: 'select' })`
+  background: ${props => props.theme.colors.grays[0]};
+  color: ${props => props.theme.colors.white};
+  border-radius: ${props => props.theme.radii[1]}px;
+  appearance: none;
+  padding: 8px;
+  font-size: 16px;
+  font-weight: ${props => (props.value ? 300 : 400)};
+  display: flex;
+  flex: 1;
+  border: 1px solid ${props => props.theme.colors.white};
+  outline: none;
 
-const Option = props => {
-  if (props.selectProps.optionComponent) {
+  transition: ${props => props.theme.transition};
+
+  &:focus {
+    border-color: ${props => props.theme.colors.primary};
+  }
+
+  &:invalid {
+    color: ${props => props.theme.colors.grays[9]};
+  }
+
+  ${variant({
+    variants: {
+      small: {
+        padding: '4px 6px',
+        fontSize: 1,
+      },
+    },
+  })}
+`;
+
+const Select = forwardRef(
+  (
+    {
+      name,
+      id,
+      options,
+      disabled,
+      autoFocus,
+      value,
+      required,
+      placeholder,
+      none = 'There are no options',
+      onChange,
+      variant,
+      ...props
+    },
+    ref
+  ) => {
     return (
-      <components.Option {...props}>
-        <props.selectProps.optionComponent {...props} {...props.data.props} />
-      </components.Option>
+      <Row
+        flex={1}
+        position="relative"
+        style={{ cursor: 'pointer' }}
+        {...props}
+      >
+        <StyledSelect
+          name={name}
+          id={id}
+          variant={variant}
+          disabled={disabled}
+          autoFocus={autoFocus}
+          required={required}
+          value={value}
+          onChange={onChange}
+          ref={ref}
+        >
+          {options.length === 0 && (
+            <option value="" disabled selected hidden>
+              {none}
+            </option>
+          )}
+          {options.length > 0 && placeholder && (
+            <option value="" disabled selected hidden>
+              {placeholder}
+            </option>
+          )}
+          {options.map(({ label, value }) => (
+            <option value={value}>{label}</option>
+          ))}
+        </StyledSelect>
+        <Icon
+          icon="caret-down"
+          color="white"
+          size={16}
+          position="absolute"
+          right={2}
+          top="25%"
+          pointerEvents="none"
+        />
+      </Row>
     );
   }
-  return <components.Option {...props} />;
-};
-
-const SingleValue = props => {
-  if (props.selectProps.singleComponent) {
-    return (
-      <props.selectProps.singleComponent {...props} {...props.data.props} />
-    );
-  }
-  return <components.SingleValue {...props} />;
-};
-
-const MultiValueLabel = props => {
-  if (props.selectProps.multiComponent) {
-    return (
-      <props.selectProps.multiComponent {...props} {...props.data.props} />
-    );
-  }
-  return <components.MultiValueLabel {...props} />;
-};
-
-const Select = ({ searchable, multi, disabled, creatable, ...props }) => {
-  const SelectComponent = creatable ? CreatableSelect : ReactSelect;
-
-  return (
-    <SelectComponent
-      styles={styles}
-      isSearchable={searchable}
-      isDisabled={disabled}
-      isMulti={multi}
-      components={{ Option, MultiValueLabel, SingleValue }}
-      closeMenuOnSelect={multi ? false : true}
-      menuPosition="fixed"
-      {...props}
-      isClearable={false}
-    />
-  );
-};
+);
 
 export default Select;

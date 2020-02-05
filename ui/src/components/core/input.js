@@ -46,7 +46,7 @@ const Input = styled.input.attrs(props => ({
   ${variant({
     variants: {
       small: {
-        padding: '4px',
+        padding: '4px 6px',
         fontSize: 1,
         '::placeholder': {
           fontSize: 1,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import useForm from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useNavigation } from 'react-navi';
 import * as yup from 'yup';
 
@@ -7,14 +7,7 @@ import api from '../../api';
 import Card from '../../components/card';
 import Popup from '../../components/popup';
 import Field from '../../components/field';
-import {
-  Text,
-  Button,
-  Checkbox,
-  Form,
-  Label,
-  toaster,
-} from '../../components/core';
+import { Text, Button, Form, Label, toaster } from '../../components/core';
 
 const validationSchema = yup.object().shape({
   roles: yup.object(),
@@ -25,7 +18,7 @@ const Member = ({
     data: { params, member, roles },
   },
 }) => {
-  const { register, handleSubmit, setValue, formState, errors } = useForm({
+  const { control, handleSubmit, formState, errors } = useForm({
     validationSchema,
     defaultValues: {
       roles: roles.reduce(
@@ -116,11 +109,11 @@ const Member = ({
           {roles.map(role => (
             <Field
               multi
+              type="checkbox"
               key={role.id}
               name={`roles[${role.name}]`}
-              as={<Checkbox label={role.name} />}
-              register={register}
-              setValue={setValue}
+              label={role.name}
+              control={control}
               errors={errors.roles && errors.roles[role.name]}
             />
           ))}

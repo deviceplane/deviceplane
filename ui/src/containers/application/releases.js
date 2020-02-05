@@ -18,7 +18,7 @@ const Releases = ({
         Header: 'Release',
         accessor: 'number',
         style: {
-          flex: '0 0 60px',
+          flex: '0 0 75px',
         },
       },
       {
@@ -35,22 +35,18 @@ const Releases = ({
         },
       },
       {
-        Header: 'Started',
-        accessor: 'createdAt',
-        Cell: ({
-          row: {
-            original: { createdAt },
-          },
-        }) => <Text>{moment(createdAt).fromNow()}</Text>,
+        Header: 'Started At',
+        accessor: ({ createdAt }) =>
+          createdAt ? moment(createdAt).fromNow() : '-',
         style: {
           flex: '0 0 150px',
         },
       },
       {
-        Header: 'Device count',
+        Header: 'Devices',
         accessor: 'deviceCounts.allCount',
         style: {
-          flex: '0 0 102px',
+          flex: '0 0 76px',
         },
       },
     ],

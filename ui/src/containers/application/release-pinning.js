@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import useForm from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 
 import api from '../../api';
 import utils from '../../utils';
@@ -7,6 +7,7 @@ import { renderLabels } from '../../helpers/labels';
 import {
   OperatorIs,
   OperatorIsNot,
+  OperatorIsOptions,
   LabelValueCondition,
 } from '../../components/devices-filter';
 import Card from '../../components/card';
@@ -22,59 +23,42 @@ import {
   Button,
   Text,
   Input,
-  Select,
   Form,
   Icon,
   toaster,
 } from '../../components/core';
 
-const initialReleaseSelectors = [
+const InitialFilter = [
   {
-    releaseQuery: [
-      [
-        {
-          params: {
-            key: '',
-            value: '',
-            operator: { label: OperatorIs, value: OperatorIs },
-          },
-        },
-      ],
-    ],
-    releaseId: '',
+    params: {
+      key: '',
+      value: '',
+      operator: OperatorIs,
+    },
   },
 ];
 
+const InitialReleaseSelector = {
+  releaseQuery: [InitialFilter],
+  releaseId: '',
+};
+
+const LatestReleaseId = 'latest';
+
 const ReleasePinning = ({
   route: {
-    data: { params, application, releases, devices },
+    data: { params, application, releases },
   },
 }) => {
   const [releaseSelectors, setReleaseSelectors] = useState(
     application.schedulingRule.releaseSelectors.length > 0
       ? application.schedulingRule.releaseSelectors
-      : initialReleaseSelectors
+      : []
   );
-  const {
-    register,
-    handleSubmit,
-    formState,
-    errors,
-    setValue,
-    getValues,
-  } = useForm({
+  const { register, handleSubmit, getValues } = useForm({
     defaultValues: {
-      defaultReleaseId: application.schedulingRule.defaultReleaseId
-        ? {
-            value: application.schedulingRule.defaultReleaseId,
-            label: isNaN(application.schedulingRule.defaultReleaseId)
-              ? 'Latest'
-              : application.schedulingRule.defaultReleaseId,
-          }
-        : {
-            value: 'latest',
-            label: 'Latest',
-          },
+      defaultReleaseId:
+        application.schedulingRule.defaultReleaseId || LatestReleaseId,
       releaseSelectors,
     },
   });
@@ -133,48 +117,40 @@ const ReleasePinning = ({
     [releases]
   );
 
+  const getSchedulingRuleFromFormData = data => ({
+    ...application.schedulingRule,
+    releaseSelectors: data.releaseSelectors.map(
+      ({ releaseId, releaseQuery }) => ({
+        releaseId: `${releaseId}`,
+        releaseQuery: releaseQuery.map(filter =>
+          filter.map(({ params }) => ({
+            type: LabelValueCondition,
+            params: {
+              key: params.key,
+              operator: params.operator,
+              value: params.value,
+            },
+          }))
+        ),
+      })
+    ),
+    defaultReleaseId: `${data.defaultReleaseId}`,
+  });
+
   const getScheduledDevices = async () => {
-    const formValues = getValues(); // use form submit for this instead?
+    const formData = getValues({ nest: true }); // use form submit for this instead?
     try {
-      const { data: devices } = await api.scheduledDevices({
+      const { data } = await api.scheduledDevices({
         projectId: params.project,
         applicationId: application.name,
-        schedulingRule: {
-          ...application.schedulingRule,
-          releaseSelectors: releaseSelectors.map((_, index) => ({
-            releaseId: `${
-              formValues[`releaseSelectors[${index}].releaseId`].value
-            }`,
-            releaseQuery: [
-              [
-                {
-                  type: LabelValueCondition,
-                  params: {
-                    key:
-                      formValues[
-                        `releaseSelectors[${index}].releaseQuery[0].params.key`
-                      ],
-                    value:
-                      formValues[
-                        `releaseSelectors[${index}].releaseQuery[0].params.value`
-                      ],
-                    operator:
-                      formValues[
-                        `releaseSelectors[${index}].releaseQuery[0].params.operator`
-                      ].value,
-                  },
-                },
-              ],
-            ],
-          })),
-          defaultReleaseId: `${formValues.defaultReleaseId.value}`,
-        },
+        schedulingRule: getSchedulingRuleFromFormData(formData),
         search: searchInput,
       });
-      setScheduledDevices(devices);
+      setScheduledDevices(data);
     } catch (error) {
+      setBackendError(utils.parseError(error));
+      toaster.danger('Preview was not successful.');
       console.log(error);
-      toaster.danger('Fetching device preview was unsuccessful.');
     }
   };
 
@@ -186,25 +162,7 @@ const ReleasePinning = ({
         data: {
           name: application.name,
           description: application.description,
-          schedulingRule: {
-            ...application.schedulingRule,
-            releaseSelectors: data.releaseSelectors.map(
-              ({ releaseId, releaseQuery }) => ({
-                releaseId: `${releaseId.value}`,
-                releaseQuery: [
-                  releaseQuery.map(({ params }) => ({
-                    type: LabelValueCondition,
-                    params: {
-                      key: params.key,
-                      operator: params.operator.value,
-                      value: params.value,
-                    },
-                  })),
-                ],
-              })
-            ),
-            defaultReleaseId: `${data.defaultReleaseId.value}`,
-          },
+          schedulingRule: getSchedulingRuleFromFormData(data),
         },
       });
 
@@ -250,109 +208,226 @@ const ReleasePinning = ({
         >
           <Group>
             <Row justifyContent="space-between" alignItems="center">
-              <Label>Conditions</Label>
+              <Label>Pinned Releases</Label>
               <Row>
                 {releaseSelectors.length > 1 && (
                   <Button
                     title="Clear"
                     type="button"
                     variant="text"
-                    onClick={() => setReleaseSelectors(initialReleaseSelectors)}
+                    onClick={() => setReleaseSelectors(InitialReleaseSelectors)}
                     marginRight={4}
                   />
                 )}
                 <Button
-                  title="Add Condition"
+                  title="Add Release"
                   type="button"
                   variant="secondary"
                   onClick={() =>
-                    setReleaseSelectors(rs => [
-                      { query: [], releaseId: '' },
-                      ...rs,
-                    ])
+                    setReleaseSelectors(rs => [...rs, InitialReleaseSelector])
                   }
                 />
               </Row>
             </Row>
           </Group>
-          {releaseSelectors.map((_, index) => (
+          {releaseSelectors.length === 0 && (
+            <Row
+              bg="grays.0"
+              alignItems="center"
+              justifyContent="center"
+              padding={4}
+              borderRadius={1}
+              marginBottom={5}
+            >
+              <Text fontWeight={1}>No pinned releases</Text>
+            </Row>
+          )}
+          {releaseSelectors.map(({ releaseQuery }, i) => (
             <Column
               marginBottom={6}
               paddingBottom={6}
               borderBottom={0}
-              borderColor="white"
+              borderColor="grays.5"
             >
-              <Row alignItems="center" marginBottom={4}>
-                <Text>If devices match</Text>
-                <Row marginLeft={4} alignItems="center" flex={1}>
-                  <Row flex={1}>
-                    <Field
-                      inline
-                      name={`releaseSelectors[${index}].releaseQuery[0].params.key`}
-                      placeholder="Label Key"
-                      ref={register}
-                    />
+              {releaseQuery.map((filter, j) => (
+                <Column flex={1}>
+                  <Row marginBottom={4}>
+                    <Text width="165px" paddingTop={1}>
+                      {j === 0 ? 'If devices match' : 'and devices match'}
+                    </Text>
+                    <Column flex={1}>
+                      {filter.map((_, k) => (
+                        <Column alignItems="flex-start" flex={1}>
+                          {k > 0 && (
+                            <Text marginY={2} fontSize={0} fontWeight={2}>
+                              OR
+                            </Text>
+                          )}
+                          <Row alignItems="center" alignSelf="stretch">
+                            <Field
+                              inline
+                              required
+                              flex={1}
+                              variant="small"
+                              name={`releaseSelectors[${i}].releaseQuery[${j}][${k}].params.key`}
+                              placeholder="Label Key"
+                              ref={register}
+                            />
+
+                            <Field
+                              inline
+                              required
+                              width="100px"
+                              marginX={4}
+                              type="select"
+                              variant="small"
+                              name={`releaseSelectors[${i}].releaseQuery[${j}][${k}].params.operator`}
+                              placeholder="Operator"
+                              options={OperatorIsOptions}
+                              ref={register}
+                            />
+
+                            <Field
+                              inline
+                              required
+                              variant="small"
+                              name={`releaseSelectors[${i}].releaseQuery[${j}][${k}].params.value`}
+                              placeholder="Label Value"
+                              ref={register}
+                            />
+
+                            <Button
+                              type="button"
+                              marginLeft={2}
+                              variant="icon"
+                              title={
+                                <Icon icon="cross" size={14} color="red" />
+                              }
+                              onClick={() =>
+                                setReleaseSelectors(releaseSelectors =>
+                                  releaseSelectors
+                                    .map((selector, selectorIndex) =>
+                                      selectorIndex === i
+                                        ? {
+                                            ...selector,
+                                            releaseQuery: selector.releaseQuery.map(
+                                              (query, queryIndex) =>
+                                                queryIndex === j
+                                                  ? query.filter(
+                                                      (_, filterIndex) =>
+                                                        filterIndex !== k
+                                                    )
+                                                  : query
+                                            ),
+                                          }
+                                        : selector
+                                    )
+                                    .map(selector => ({
+                                      ...selector,
+                                      releaseQuery: selector.releaseQuery.filter(
+                                        arr => arr.length
+                                      ),
+                                    }))
+                                    .filter(
+                                      selector => selector.releaseQuery.length
+                                    )
+                                )
+                              }
+                            />
+                          </Row>
+                          {k === filter.length - 1 && (
+                            <Button
+                              marginTop={2}
+                              type="button"
+                              title="+ OR"
+                              color="primary"
+                              opacity={1}
+                              variant="text"
+                              onClick={() =>
+                                setReleaseSelectors(releaseSelectors =>
+                                  releaseSelectors.map(
+                                    (selector, selectorIndex) =>
+                                      selectorIndex === i
+                                        ? {
+                                            ...selector,
+                                            releaseQuery: selector.releaseQuery.map(
+                                              (query, queryIndex) =>
+                                                queryIndex === j
+                                                  ? [...query, ...InitialFilter]
+                                                  : query
+                                            ),
+                                          }
+                                        : selector
+                                  )
+                                )
+                              }
+                            />
+                          )}
+                        </Column>
+                      ))}
+                    </Column>
                   </Row>
 
-                  <Row width="125px" marginX={4}>
-                    <Field
-                      inline
-                      name={`releaseSelectors[${index}].releaseQuery[0].params.operator`}
-                      as={
-                        <Select
-                          placeholder="Operator"
-                          options={[
-                            { label: OperatorIs, value: OperatorIs },
-                            { label: OperatorIsNot, value: OperatorIsNot },
-                          ]}
-                        />
-                      }
-                      setValue={setValue}
-                      register={register}
-                    />
-                  </Row>
-
-                  <Row flex={1}>
-                    <Field
-                      inline
-                      name={`releaseSelectors[${index}].releaseQuery[0].params.value`}
-                      placeholder="Label Value"
-                      ref={register}
-                    />
-                  </Row>
-                </Row>
-              </Row>
-
+                  {j === releaseQuery.length - 1 && (
+                    <Row marginBottom={2}>
+                      <Button
+                        type="button"
+                        title="+ AND"
+                        color="primary"
+                        opacity={1}
+                        variant="text"
+                        onClick={() =>
+                          setReleaseSelectors(releaseSelectors =>
+                            releaseSelectors.map((selector, index) =>
+                              index === i
+                                ? {
+                                    ...selector,
+                                    releaseQuery: [
+                                      ...selector.releaseQuery,
+                                      InitialFilter,
+                                    ],
+                                  }
+                                : selector
+                            )
+                          )
+                        }
+                      />
+                    </Row>
+                  )}
+                </Column>
+              ))}
               <Row alignItems="center" alignSelf="flex-start">
-                <Text marginRight="34px">Pin devices to</Text>
-                <Row width="120px">
-                  <Field
-                    inline
-                    name={`releaseSelectors[${index}].releaseId`}
-                    as={
-                      <Select options={releaseOptions} placeholder="Release" />
-                    }
-                    setValue={setValue}
-                    register={register}
-                  />
-                </Row>
+                <Text marginRight={4}>Pin devices to</Text>
+                <Field
+                  inline
+                  required
+                  width="120px"
+                  type="select"
+                  variant="small"
+                  name={`releaseSelectors[${i}].releaseId`}
+                  options={releaseOptions}
+                  placeholder="Release"
+                  ref={register}
+                />
               </Row>
             </Column>
           ))}
-          {releaseSelectors.length > 0 && (
-            <Row alignItems="center" alignSelf="flex-start">
-              <Text marginRight={4}>Pin remaining devices to</Text>
-              <Row width="125px">
-                <Field
-                  inline
-                  name="defaultReleaseId"
-                  as={<Select options={releaseOptions} placeholder="Release" />}
-                  setValue={setValue}
-                  register={register}
-                />
-              </Row>
-            </Row>
-          )}
+          <Row alignItems="center" alignSelf="flex-start">
+            <Text marginRight={4}>
+              Pin {releaseSelectors.length > 0 ? 'remaining' : 'all'} devices to
+            </Text>
+            <Field
+              inline
+              required
+              width="120px"
+              type="select"
+              variant="small"
+              name="defaultReleaseId"
+              options={releaseOptions}
+              placeholder="Release"
+              ref={register}
+            />
+          </Row>
           <Button
             type="submit"
             marginTop={6}

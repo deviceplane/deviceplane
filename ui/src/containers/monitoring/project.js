@@ -13,7 +13,7 @@ import {
   Row,
   Text,
   Checkbox,
-  Select,
+  MultiSelect,
   Button,
   Icon,
   toaster,
@@ -143,7 +143,7 @@ const Project = ({
         accessor: 'labels',
         Cell: ({ row: { original }, cell: { value } }) =>
           editRow && editRow.name === original.name ? (
-            <Select
+            <MultiSelect
               multi
               value={editRow.labels.map(label => ({
                 label,
@@ -204,7 +204,7 @@ const Project = ({
             />
           );
         },
-        style: { flex: '0 0 125px', justifyContent: 'center' },
+        style: { flex: '0 0 80px', justifyContent: 'center' },
       },
       {
         Header: 'Enabled',
@@ -224,7 +224,7 @@ const Project = ({
           );
         },
         style: {
-          flex: '0 0 125px',
+          flex: '0 0 80px',
           justifyContent: 'center',
         },
       },
@@ -255,7 +255,7 @@ const Project = ({
             </Row>
           ),
         style: {
-          flex: '0 0 75px',
+          flex: '0 0 50px',
           justifyContent: 'flex-end',
         },
       },

@@ -1,9 +1,9 @@
 import React, { useRef, useMemo, useState } from 'react';
 
 import utils from '../utils';
-import { Column, Row, Group, Button, Input, Text, Select, Icon } from './core';
 import Card from './card';
 import Popup from './popup';
+import { Column, Row, Group, Button, Input, Text, Select, Icon } from './core';
 
 export const DevicePropertyCondition = 'DevicePropertyCondition';
 export const LabelValueCondition = 'LabelValueCondition';
@@ -37,7 +37,42 @@ const DefaultLabelExistenceConditionParams = () => {
   };
 };
 
-export const DevicesFilter = props => {
+const OperatorExistenceOptions = [
+  [
+    { label: OperatorExists, value: OperatorExists },
+    {
+      label: OperatorNotExists,
+      value: OperatorNotExists,
+    },
+  ],
+];
+
+export const OperatorIsOptions = [
+  { label: OperatorIs, value: OperatorIs },
+  { label: OperatorIsNot, value: OperatorIsNot },
+];
+
+const DevicePropertyOptions = [{ label: 'Status', value: 'status' }];
+
+const DeviceValueOptions = [
+  {
+    label: 'Online',
+    value: 'online',
+  },
+  {
+    label: 'Offline',
+    value: 'offline',
+  },
+];
+
+export const DevicesFilter = ({
+  title = 'Filter Devices',
+  onClose,
+  onSubmit,
+  buttonTitle,
+  whitelistedConditions,
+  ...props
+}) => {
   const filterListEndRef = useRef();
 
   const conditionOptions = useMemo(
@@ -56,12 +91,12 @@ export const DevicesFilter = props => {
           label: 'Label Existence',
         },
       ].filter(c => {
-        if (!props.whitelistedConditions) {
+        if (!whitelistedConditions) {
           return true;
         }
-        return props.whitelistedConditions.includes(c.value);
+        return whitelistedConditions.includes(c.value);
       }),
-    [props.whitelistedConditions]
+    [whitelistedConditions]
   );
 
   const defaultCondition = useMemo(
@@ -70,30 +105,22 @@ export const DevicesFilter = props => {
         {
           type: DevicePropertyCondition,
           params: DefaultDevicePropertyConditionParams(),
-          options: {
-            type: conditionOptions[0],
-            property: { value: 'status', label: 'Status' },
-            operator: { value: OperatorIs, label: OperatorIs },
-            value: { value: 'online', label: 'Online' },
-          },
         },
         {
           type: LabelValueCondition,
           params: DefaultLabelValueConditionParams(),
-          options: {},
         },
         {
           type: LabelExistenceCondition,
           params: DefaultLabelExistenceConditionParams(),
-          options: {},
         },
       ].filter(c => {
-        if (!props.whitelistedConditions) {
+        if (!whitelistedConditions) {
           return true;
         }
-        return props.whitelistedConditions.includes(c.type);
+        return whitelistedConditions.includes(c.type);
       })[0],
-    [props.whitelistedConditions]
+    [whitelistedConditions]
   );
 
   if (!defaultCondition) {
@@ -108,15 +135,13 @@ export const DevicesFilter = props => {
 
   const renderCondition = (condition, index) => {
     if (condition.type === LabelValueCondition) {
-      let cond = condition.params;
-      const selectClassName = utils.randomClassName();
       return (
         <>
           <Row flex={2}>
             <Input
               placeholder="Label Key"
               padding={2}
-              value={cond.key}
+              value={condition.params.key}
               onChange={event => {
                 const { value: key } = event.target;
                 setFilter(
@@ -131,34 +156,30 @@ export const DevicesFilter = props => {
             />
           </Row>
 
-          <Row marginX={2} flex="0 0 130px">
-            <Select
-              placeholder="Operator"
-              className={selectClassName}
-              options={[
-                { label: OperatorIs, value: OperatorIs },
-                { label: OperatorIsNot, value: OperatorIsNot },
-              ]}
-              value={condition.options.operator}
-              onChange={option => {
-                setFilter(
-                  filter.map((condition, i) => {
-                    if (i === index) {
-                      condition.options.operator = option;
-                      condition.params.operator = option.value;
-                    }
-                    return condition;
-                  })
-                );
-              }}
-            />
-          </Row>
+          <Select
+            multi
+            marginX={2}
+            flex="0 0 130px"
+            placeholder="Operator"
+            options={OperatorIsOptions}
+            value={condition.params.operator}
+            onChange={e => {
+              setFilter(
+                filter.map((condition, i) => {
+                  if (i === index) {
+                    condition.params.operator = e.target.value;
+                  }
+                  return condition;
+                })
+              );
+            }}
+          />
 
           <Row flex={2}>
             <Input
               placeholder="Label Value"
               padding={2}
-              value={cond.value}
+              value={condition.params.value}
               onChange={event => {
                 const { value: value } = event.target;
                 setFilter(
@@ -177,53 +198,42 @@ export const DevicesFilter = props => {
     }
 
     if (condition.type === LabelExistenceCondition) {
-      let cond = condition.params;
       return (
         <>
-          <Row flex={1}>
-            <Input
-              placeholder="Label Key"
-              padding={2}
-              marginRight={2}
-              value={cond.key}
-              onChange={event => {
-                const { value: key } = event.target;
-                setFilter(
-                  filter.map((condition, i) => {
-                    if (i === index) {
-                      condition.params.key = key;
-                    }
-                    return condition;
-                  })
-                );
-              }}
-            />
-          </Row>
+          <Input
+            placeholder="Label Key"
+            padding={2}
+            marginRight={2}
+            value={condition.params.key}
+            onChange={event => {
+              const { value: key } = event.target;
+              setFilter(
+                filter.map((condition, i) => {
+                  if (i === index) {
+                    condition.params.key = key;
+                  }
+                  return condition;
+                })
+              );
+            }}
+          />
 
-          <Row flex="0 0 150px">
-            <Select
-              value={condition.options.operator}
-              placeholder="Operator"
-              options={[
-                { label: OperatorExists, value: OperatorExists },
-                {
-                  label: OperatorNotExists,
-                  value: OperatorNotExists,
-                },
-              ]}
-              onChange={option => {
-                setFilter(
-                  filter.map((condition, i) => {
-                    if (i === index) {
-                      condition.options.operator = option;
-                      condition.params.operator = option.value;
-                    }
-                    return condition;
-                  })
-                );
-              }}
-            />
-          </Row>
+          <Select
+            flex="0 0 150px"
+            value={condition.params.operator}
+            placeholder="Operator"
+            options={OperatorExistenceOptions}
+            onChange={e => {
+              setFilter(
+                filter.map((condition, i) => {
+                  if (i === index) {
+                    condition.params.operator = e.target.value;
+                  }
+                  return condition;
+                })
+              );
+            }}
+          />
         </>
       );
     }
@@ -231,66 +241,48 @@ export const DevicesFilter = props => {
     if (condition.type === DevicePropertyCondition) {
       return (
         <>
-          <Row marginRight={2} flex={1}>
-            <Select
-              value={condition.options.property}
-              placeholder="Property"
-              options={[{ label: 'Status', value: 'status' }]}
-              onChange={option => {
-                setFilter(
-                  filter.map((condition, i) => {
-                    if (i === index) {
-                      condition.options.property = option;
-                      condition.params.property = option.value;
-                    }
-                    return condition;
-                  })
-                );
-              }}
-            />
-          </Row>
-
-          <Row marginRight={2} flex={1}>
-            <Select
-              value={condition.options.operator}
-              placeholder="Operator"
-              options={[
-                { label: OperatorIs, value: OperatorIs },
-                { label: OperatorIsNot, value: OperatorIsNot },
-              ]}
-              onChange={option => {
-                setFilter(
-                  filter.map((condition, i) => {
-                    if (i === index) {
-                      condition.options.operator = option;
-                      condition.params.operator = option.value;
-                    }
-                    return condition;
-                  })
-                );
-              }}
-            />
-          </Row>
-
           <Select
-            value={condition.options.value}
-            placeholder="Value"
-            options={[
-              {
-                label: 'Online',
-                value: 'online',
-              },
-              {
-                label: 'Offline',
-                value: 'offline',
-              },
-            ]}
-            onChange={option => {
+            value={condition.params.property}
+            placeholder="Property"
+            options={DevicePropertyOptions}
+            onChange={e => {
               setFilter(
                 filter.map((condition, i) => {
                   if (i === index) {
-                    condition.options.value = option;
-                    condition.params.value = option.value;
+                    condition.params.property = e.target.value;
+                  }
+                  return condition;
+                })
+              );
+            }}
+          />
+
+          <Select
+            marginX={2}
+            value={condition.params.operator}
+            placeholder="Operator"
+            options={OperatorIsOptions}
+            onChange={e => {
+              setFilter(
+                filter.map((condition, i) => {
+                  if (i === index) {
+                    condition.params.operator = e.target.value;
+                  }
+                  return condition;
+                })
+              );
+            }}
+          />
+
+          <Select
+            value={condition.params.value}
+            placeholder="Value"
+            options={DeviceValueOptions}
+            onChange={e => {
+              setFilter(
+                filter.map((condition, i) => {
+                  if (i === index) {
+                    condition.params.value = e.target.value;
                   }
                   return condition;
                 })
@@ -301,9 +293,6 @@ export const DevicesFilter = props => {
       );
     }
   };
-
-  const { onClose, onSubmit } = props;
-  const selectClassName = utils.randomClassName();
 
   return (
     <Popup
@@ -316,7 +305,7 @@ export const DevicesFilter = props => {
       <Card
         border
         size="xlarge"
-        title={props.title || 'Filter Devices'}
+        title={title}
         actions={[
           {
             title: 'Add Condition',
@@ -339,67 +328,45 @@ export const DevicesFilter = props => {
             <Group key={index}>
               <Row justifyContent="space-between" alignItems="center">
                 {conditionOptions.length > 1 && (
-                  <Row marginRight={2} flex="0 0 200px">
-                    <Select
-                      value={condition.options.type}
-                      placeholder="Type"
-                      options={conditionOptions}
-                      onChange={option => {
-                        setFilter(
-                          filter.map((condition, i) => {
-                            if (i !== index) {
-                              return condition;
-                            }
-                            if (condition.type === option.value) {
-                              return condition;
-                            }
-
-                            let params, options;
-                            switch (option.value) {
-                              case LabelValueCondition:
-                                params = DefaultLabelValueConditionParams();
-                                options = {
-                                  operator: {
-                                    value: OperatorIs,
-                                    label: OperatorIs,
-                                  },
-                                };
-                                break;
-                              case LabelExistenceCondition:
-                                params = DefaultLabelExistenceConditionParams();
-                                options = {
-                                  operator: {
-                                    label: OperatorExists,
-                                    value: OperatorExists,
-                                  },
-                                };
-                                break;
-                              case DevicePropertyCondition:
-                              default:
-                                params = DefaultDevicePropertyConditionParams();
-                                options = {
-                                  operator: {
-                                    value: OperatorIs,
-                                    label: OperatorIs,
-                                  },
-                                };
-                                break;
-                            }
-                            condition = {
-                              type: option.value,
-                              options: {
-                                type: option,
-                                ...options,
-                              },
-                              params,
-                            };
+                  <Select
+                    marginRight={2}
+                    flex="0 0 200px"
+                    value={condition.type}
+                    placeholder="Type"
+                    options={conditionOptions}
+                    onChange={e => {
+                      const type = e.target.value;
+                      setFilter(
+                        filter.map((condition, i) => {
+                          if (i !== index) {
                             return condition;
-                          })
-                        );
-                      }}
-                      className={selectClassName}
-                    />
-                  </Row>
+                          }
+                          if (condition.type === type) {
+                            return condition;
+                          }
+
+                          let params;
+                          switch (type) {
+                            case LabelValueCondition:
+                              params = DefaultLabelValueConditionParams();
+                              break;
+                            case LabelExistenceCondition:
+                              params = DefaultLabelExistenceConditionParams();
+                              break;
+                            case DevicePropertyCondition:
+                            default:
+                              params = DefaultDevicePropertyConditionParams();
+                              break;
+                          }
+                          condition = {
+                            type,
+                            params,
+                          };
+                          return condition;
+                        })
+                      );
+                    }}
+                  />
                 )}
 
                 {renderCondition(condition, index)}
@@ -429,9 +396,7 @@ export const DevicesFilter = props => {
 
         <Button
           marginTop={3}
-          title={
-            props.buttonTitle || (props.filter ? 'Edit Filter' : 'Apply Filter')
-          }
+          title={buttonTitle || (props.filter ? 'Edit Filter' : 'Apply Filter')}
           onClick={() => {
             const validFilter = filter.filter(({ type, params }) => {
               switch (type) {

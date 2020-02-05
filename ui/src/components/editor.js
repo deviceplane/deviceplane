@@ -4,7 +4,6 @@ import 'brace/mode/yaml';
 import 'brace/theme/pastel_on_dark';
 
 import { Column } from './core';
-import theme from '../theme';
 
 const Editor = ({
   readOnly,

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import moment from 'moment';
 
 import api from '../api';
 import utils from '../utils';
@@ -32,7 +33,8 @@ const UserAccessKeys = () => {
       },
       {
         Header: 'Created At',
-        accessor: 'createdAt',
+        accessor: ({ createdAt }) =>
+          createdAt ? moment(createdAt).fromNow() : '-',
         style: {
           flex: '0 0 150px',
         },

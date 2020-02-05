@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import moment from 'moment';
 import { useNavigation } from 'react-navi';
 
@@ -19,12 +19,8 @@ const Provisioning = ({
       { Header: 'Name', accessor: 'name' },
       {
         Header: 'Created At',
-        accessor: 'createdAt',
-        Cell: ({ row: { original } }) => (
-          <Text>
-            {original.createdAt ? moment(original.createdAt).fromNow() : '-'}
-          </Text>
-        ),
+        accessor: ({ createdAt }) =>
+          createdAt ? moment(createdAt).fromNow() : '-',
         style: {
           flex: '0 0 150px',
         },
@@ -32,12 +28,12 @@ const Provisioning = ({
       {
         Header: 'Devices Registered',
         accessor: 'deviceCounts.allCount',
-        style: { flex: '0 0 150px' },
+        style: { flex: '0 0 169px' },
       },
       {
         Header: 'Registration Limit',
         accessor: 'maxRegistrations',
-        style: { flex: '0 0 140px' },
+        style: { flex: '0 0 160px' },
         Cell: ({ row: { original } }) => (
           <Text>
             {typeof original.maxRegistrations === 'number'

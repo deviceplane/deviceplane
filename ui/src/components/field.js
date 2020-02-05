@@ -1,10 +1,23 @@
 import React, { forwardRef, useState } from 'react';
-import { RHFInput } from 'react-hook-form-input';
 import styled from 'styled-components';
 import { space, color, typography } from 'styled-system';
+import { Controller } from 'react-hook-form';
 
 import utils from '../utils';
-import { Group, Row, Column, Input, Textarea, Label, Text, Icon } from './core';
+import Editor from './editor';
+import {
+  Group,
+  Row,
+  Column,
+  Input,
+  Textarea,
+  Label,
+  Text,
+  Icon,
+  Select,
+  MultiSelect,
+  Checkbox,
+} from './core';
 
 const PasswordButton = styled(Row)`
   user-select: none;
@@ -40,13 +53,12 @@ const Field = forwardRef(
       hint,
       description,
       name,
-      as,
-      setValue,
       register,
-      onChangeEvent,
+      control,
       autoComplete = 'off',
       multi,
       inline,
+      flex,
       errors = [],
       marginBottom = Group.defaultProps.marginBottom,
       ...props
@@ -55,26 +67,45 @@ const Field = forwardRef(
   ) => {
     const [type, setType] = useState(props.type);
 
-    errors = Array.isArray(errors) ? errors : [errors];
-
     const getComponent = () => {
-      if (as) {
-        return (
-          <RHFInput
-            as={as}
-            id={name}
-            name={name}
-            register={register}
-            setValue={setValue}
-            onChangeEvent={data => ({ value: data[0] })}
-            {...props}
-          />
-        );
-      }
-
       switch (type) {
+        case 'editor':
+          return (
+            <Controller
+              name={name}
+              id={name}
+              control={control}
+              as={<Editor />}
+              {...props}
+            />
+          );
+        case 'multiselect':
+          return (
+            <Controller
+              multi
+              name={name}
+              id={name}
+              control={control}
+              onChange={([selected]) => ({ value: selected })}
+              as={<MultiSelect />}
+              {...props}
+            />
+          );
+        case 'checkbox':
+          return (
+            <Controller
+              name={name}
+              id={name}
+              control={control}
+              label={label}
+              as={<Checkbox />}
+              {...props}
+            />
+          );
         case 'textarea':
           return <Textarea name={name} id={name} ref={ref} {...props} />;
+        case 'select':
+          return <Select name={name} id={name} ref={ref} {...props} />;
         default:
           return (
             <Input
@@ -89,8 +120,17 @@ const Field = forwardRef(
       }
     };
 
+    errors = Array.isArray(errors) ? errors : [errors];
+
+    const component = getComponent();
+
+    if (type === 'checkbox') {
+      // allows checkbox to render its own label
+      label = null;
+    }
+
     return (
-      <Column flex={1} marginBottom={inline ? 0 : multi ? 4 : marginBottom}>
+      <Column flex={flex} marginBottom={inline ? 0 : multi ? 4 : marginBottom}>
         {(label || description) && (
           <Column marginBottom={Label.defaultProps.marginBottom}>
             <Row justifyContent="space-between">
@@ -127,7 +167,7 @@ const Field = forwardRef(
             )}
           </Column>
         )}
-        <Row>{getComponent()}</Row>
+        {component}
         {hint && (
           <Text marginTop={2} fontSize={0} fontWeight={1} color="grays.8">
             {hint}

@@ -31,7 +31,7 @@ const TabButton = styled(Btn)`
     background-color: ${props =>
       props.active
         ? props.theme.colors.black
-        : props.theme.colors.grays[1]} !important;
+        : props.theme.colors.grays[3]} !important;
   }
 `;
 

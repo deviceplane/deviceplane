@@ -1,5 +1,5 @@
 import React from 'react';
-import useForm from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useNavigation } from 'react-navi';
 import * as yup from 'yup';
 
@@ -19,7 +19,6 @@ import {
   Input,
   Label,
   Group,
-  Checkbox,
   toaster,
 } from '../components/core';
 
@@ -32,7 +31,7 @@ const ProjectSettings = ({
     data: { params, project },
   },
 }) => {
-  const { register, handleSubmit, errors, formState, setValue } = useForm({
+  const { control, register, handleSubmit, errors, formState } = useForm({
     validationSchema,
     defaultValues: {
       name: project.name,
@@ -107,10 +106,10 @@ const ProjectSettings = ({
             />
 
             <Field
+              type="checkbox"
+              label="Enable SSH Keys"
               name="enableSSHKeys"
-              as={<Checkbox label="Enable SSH Keys" />}
-              register={register}
-              setValue={setValue}
+              control={control}
             />
             <Button
               marginTop={3}
@@ -126,7 +125,7 @@ const ProjectSettings = ({
             <Text marginBottom={4}>
               This action <strong>cannot</strong> be undone. This will
               permanently delete the <strong>{params.project}</strong> project.
-              <p></p>Please type in the name of the project to confirm.
+              <p></p>Please enter the project name to confirm.
             </Text>
             <Form onSubmit={submitDelete}>
               <Group>

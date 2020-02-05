@@ -52,10 +52,10 @@ const Applications = ({
         },
       },
       {
-        Header: 'Device Count',
+        Header: 'Devices',
         accessor: 'deviceCounts.allCount',
         style: {
-          flex: '0 0 102px',
+          flex: '0 0 76px',
         },
       },
     ],

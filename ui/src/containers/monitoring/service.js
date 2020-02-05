@@ -28,9 +28,14 @@ const Service = ({
     data: { params, applications, metrics, devices },
   },
 }) => {
-  const [selection, setSelection] = useState(
-    storage.get('selectedService', params.project)
-  );
+  const [selectValue, setSelectValue] = useState(() => {
+    const storedValue = storage.get('selectedService', params.project);
+    if (storedValue) {
+      return JSON.stringify(storedValue);
+    } else {
+      return null;
+    }
+  });
   const [showMetricsForm, setShowMetricsForm] = useState();
   const [showSettings, setShowSettings] = useState();
   const [metricToDelete, setMetricToDelete] = useState();
@@ -64,9 +69,11 @@ const Service = ({
   const hideSettings = () => setShowSettings(false);
   const clearMetricToDelete = () => setMetricToDelete(null);
 
+  const selection = selectValue && JSON.parse(selectValue);
+
   let selectedMetrics = [];
 
-  if (selection) {
+  if (selection && selection.application && selection.service) {
     const serviceMetrics = metrics.find(
       ({ applicationId, service }) =>
         applicationId === selection.application.id &&
@@ -165,7 +172,7 @@ const Service = ({
         accessor: 'labels',
         Cell: ({ cell: { value }, row: { original } }) =>
           editRow && editRow.name === original.name ? (
-            <Select
+            <MultiSelect
               multi
               options={labelsOptions}
               value={editRow.labels.map(label => ({
@@ -234,7 +241,7 @@ const Service = ({
             />
           );
         },
-        style: { flex: '0 0 125px', justifyContent: 'center' },
+        style: { flex: '0 0 80px', justifyContent: 'center' },
       },
       {
         Header: ' ',
@@ -269,7 +276,7 @@ const Service = ({
             </Row>
           ),
         style: {
-          flex: '0 0 100px',
+          flex: '0 0 50px',
           justifyContent: 'flex-end',
         },
       },
@@ -293,9 +300,7 @@ const Service = ({
         }, [])
         .map(({ application, service }) => ({
           label: `${application.name}/${service}`,
-          value: `${application.name}/${service}`,
-          application,
-          service,
+          value: JSON.stringify({ application, service }),
         })),
     [applications]
   );
@@ -308,20 +313,17 @@ const Service = ({
     }
   }
 
+  console.log(selection);
+
   return (
     <>
       <Row marginBottom={4} width={11}>
         <Select
-          variant="black"
-          onChange={setSelection}
-          value={selection}
+          onChange={e => setSelectValue(e.target.value)}
+          value={selectValue}
           options={selectOptions}
           placeholder="Select a Service"
-          noOptionsMessage={() => (
-            <Text>
-              There are no <strong>Services</strong>.
-            </Text>
-          )}
+          none="No services"
         />
       </Row>
       <Card

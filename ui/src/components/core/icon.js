@@ -13,12 +13,17 @@ flex-shrink: 0;
 const Icon = ({ color, icon, alt, size = 16, ...props }) => {
   const paths = IconSvgPaths20;
 
-  color = theme.colors[color];
+  let fillColor = theme.colors[color];
+
+  if (color.indexOf('.') !== -1) {
+    const [a, b] = color.split('.');
+    fillColor = theme.colors[a][b];
+  }
 
   return (
     <Svg
       alt={alt}
-      fill={color}
+      fill={fillColor}
       width={`${size}px`}
       height={`${size}px`}
       viewBox="0 0 20 20"
