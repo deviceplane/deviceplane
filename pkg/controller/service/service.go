@@ -2878,7 +2878,6 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, project mode
 	}
 
 	bundle := models.Bundle{
-		DesiredAgentSpec:    device.DesiredAgentSpec,
 		DesiredAgentVersion: device.DesiredAgentVersion,
 	}
 
