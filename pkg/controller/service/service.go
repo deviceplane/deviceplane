@@ -44,6 +44,7 @@ var (
 	errTokenExpired          = errors.New("token expired")
 )
 
+//Service struct
 type Service struct {
 	users                      store.Users
 	passwordRecoveryTokens     store.PasswordRecoveryTokens
@@ -82,6 +83,7 @@ type Service struct {
 	upgrader websocket.Upgrader
 }
 
+//NewService function
 func NewService(
 	users store.Users,
 	registrationTokens store.RegistrationTokens,
@@ -1233,7 +1235,7 @@ func (s *Service) updateProject(w http.ResponseWriter, r *http.Request,
 ) {
 	var updateProjectRequest struct {
 		Name          string `json:"name" validate:"name"`
-		DatadogApiKey string `json:"datadogApiKey"`
+		DatadogAPIKey string `json:"datadogApiKey"`
 	}
 	if err := read(r, &updateProjectRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -1250,7 +1252,7 @@ func (s *Service) updateProject(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	project, err := s.projects.UpdateProject(r.Context(), projectID, updateProjectRequest.Name, updateProjectRequest.DatadogApiKey)
+	project, err := s.projects.UpdateProject(r.Context(), projectID, updateProjectRequest.Name, updateProjectRequest.DatadogAPIKey)
 	if err != nil {
 		log.WithError(err).Error("update project")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -2890,8 +2892,8 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, project mode
 	}
 
 	bundle := models.Bundle{
-		DesiredAgentSpec:    device.DesiredAgentSpec,
-		DesiredAgentVersion: device.DesiredAgentVersion,
+		DesiredAgentSpec:    device.DesiredAgentSpec.String,
+		DesiredAgentVersion: device.DesiredAgentVersion.String,
 	}
 
 	for _, application := range applications {

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -117,8 +118,8 @@ type Device struct {
 	ProjectID           string            `json:"projectId" yaml:"projectId"`
 	Name                string            `json:"name" yaml:"name"`
 	RegistrationTokenID *string           `json:"registrationTokenId" yaml:"registrationTokenId"`
-	DesiredAgentSpec    string            `json:"desiredAgentSpec" yaml:"desiredAgentSpec"`
-	DesiredAgentVersion string            `json:"desiredAgentVersion" yaml:"desiredAgentVersion"`
+	DesiredAgentSpec    sql.NullString    `json:"desiredAgentSpec" yaml:"desiredAgentSpec"`
+	DesiredAgentVersion sql.NullString    `json:"desiredAgentVersion" yaml:"desiredAgentVersion"`
 	Info                DeviceInfo        `json:"info" yaml:"info"`
 	LastSeenAt          time.Time         `json:"lastSeenAt" yaml:"lastSeenAt"`
 	Status              DeviceStatus      `json:"status" yaml:"status"`
