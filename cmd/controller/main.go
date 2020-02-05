@@ -29,43 +29,55 @@ var (
 	addr = kingpin.
 		Flag("addr", "").
 		Default(":8080").
+		OverrideDefaultFromEnvar("ADDR").
 		String()
 	mysql = kingpin.
 		Flag("mysql", "").
 		Default("deviceplane:deviceplane@tcp(localhost:3306)/deviceplane?parseTime=true").
+		OverrideDefaultFromEnvar("MYSQL_CONNECTION_STRING").
 		String()
 	statsdAddress = kingpin.
 			Flag("statsd", "").
 			Default("127.0.0.1:8125").
+			OverrideDefaultFromEnvar("STATS_ADDRESS").
 			String()
 	allowedOrigins = kingpin.
 			Flag("allowed-origin", "").
+			OverrideDefaultFromEnvar("ALLOWED_ORIGINS").
 			Strings()
 	emailProvider = kingpin.
 			Flag("email-provider", "").
 			Default("none").
+			OverrideDefaultFromEnvar("EMAIL_PROVIDER").
 			String()
 	emailFromName = kingpin.
 			Flag("email-from-name", "").
 			Default("Deviceplane").
+			OverrideDefaultFromEnvar("EMAIL_FROM_NAME").
 			String()
 	emailFromAddress = kingpin.
 				Flag("email-from-address", "").
+				OverrideDefaultFromEnvar("EMAIL_FROM_ADDRESS").
 				String()
 	allowedEmailDomains = kingpin.
 				Flag("allowed-email-domain", "").
+				OverrideDefaultFromEnvar("ALLOWED_EMAIL_DOMAINS").
 				Strings()
 	smtpServer = kingpin.
 			Flag("smtp-server", "").
+			OverrideDefaultFromEnvar("SMTP_SERVER").
 			String()
 	smtpPort = kingpin.
 			Flag("smtp-port", "").
+			OverrideDefaultFromEnvar("SMTP_PORT").
 			Int()
 	smtpUsername = kingpin.
 			Flag("smtp-username", "").
+			OverrideDefaultFromEnvar("SMTP_USERNAME").
 			String()
 	smtpPassword = kingpin.
 			Flag("smtp-password", "").
+			OverrideDefaultFromEnvar("SMTP_PASSWORD").
 			String()
 )
 
