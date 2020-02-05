@@ -78,7 +78,7 @@ export const Toast = ({ content, type = ToastTypes.INFO, close }) => {
   const color = getColor(type);
 
   useEffect(() => {
-    setTimeout(close, 6000);
+    setTimeout(close, 4000);
   }, []);
 
   return (
