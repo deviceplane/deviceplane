@@ -38,6 +38,7 @@ const (
 )
 
 var (
+	errSignUpDisable         = errors.New("registration is not avaliable - please contact administrator")
 	errEmailDomainNotAllowed = errors.New("email domain not allowed")
 	errEmailAlreadyTaken     = errors.New("email already taken")
 	errTokenExpired          = errors.New("token expired")
@@ -69,6 +70,7 @@ type Service struct {
 	deviceApplicationStatuses  store.DeviceApplicationStatuses
 	deviceServiceStatuses      store.DeviceServiceStatuses
 	metricConfigs              store.MetricConfigs
+	enableSignUp               bool
 	email                      email.Interface
 	emailFromName              string
 	emailFromAddress           string
@@ -106,6 +108,7 @@ func NewService(
 	deviceApplicationStatuses store.DeviceApplicationStatuses,
 	deviceServiceStatuses store.DeviceServiceStatuses,
 	metricConfigs store.MetricConfigs,
+	enableSignUp bool,
 	email email.Interface,
 	emailFromName string,
 	emailFromAddress string,
@@ -141,6 +144,7 @@ func NewService(
 		deviceApplicationStatuses:  deviceApplicationStatuses,
 		deviceServiceStatuses:      deviceServiceStatuses,
 		metricConfigs:              metricConfigs,
+		enableSignUp:               enableSignUp,
 		email:                      email,
 		emailFromName:              emailFromName,
 		emailFromAddress:           emailFromAddress,
@@ -152,7 +156,8 @@ func NewService(
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
-			Subprotocols:    []string{"binary"},
+
+			Subprotocols: []string{"binary"},
 			CheckOrigin: func(r *http.Request) bool {
 				return utils.CheckSameOrAllowedOrigin(r, allowedOrigins)
 			},
@@ -160,7 +165,6 @@ func NewService(
 	}
 
 	apiRouter := s.router.PathPrefix("/api").Subrouter()
-
 	apiRouter.HandleFunc("/register", s.register).Methods("POST")
 	apiRouter.HandleFunc("/completeregistration", s.confirmRegistration).Methods("POST")
 
@@ -547,6 +551,14 @@ func (s *Service) validateAuthorization(requestedResource authz.Resource, reques
 }
 
 func (s *Service) register(w http.ResponseWriter, r *http.Request) {
+
+	if !s.enableSignUp {
+		log.Error("User not created - Sign Up Disabled")
+		http.Error(w, errSignUpDisable.Error(), http.StatusBadRequest)
+		utils.Respond(w, "")
+		return
+	}
+
 	utils.WithReferrer(w, r, func(referrer *url.URL) {
 		var registerRequest struct {
 			Email     string `json:"email" validate:"email"`
@@ -555,6 +567,7 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 			LastName  string `json:"lastName" validate:"required,min=1,max=100"`
 			Company   string `json:"company" validate:"max=100"`
 		}
+
 		if err := read(r, &registerRequest); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -636,7 +649,6 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-
 		utils.Respond(w, user)
 	})
 }

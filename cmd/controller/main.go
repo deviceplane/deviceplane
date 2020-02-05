@@ -36,6 +36,10 @@ var (
 		Default("deviceplane:deviceplane@tcp(localhost:3306)/deviceplane?parseTime=true").
 		OverrideDefaultFromEnvar("MYSQL_CONNECTION_STRING").
 		String()
+	enableSignUp = kingpin.
+			Flag("enableSignUp", "").
+			OverrideDefaultFromEnvar("ENABLE_SING_UP").
+			Bool()
 	statsdAddress = kingpin.
 			Flag("statsd", "").
 			Default("127.0.0.1:8125").
@@ -122,7 +126,7 @@ func main() {
 	runnerManager.Start()
 
 	svc := service.NewService(sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
-		sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
+		sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, *enableSignUp,
 		emailProvider, *emailFromName, *emailFromAddress, *allowedEmailDomains, statikFS, st, connman, allowedOriginURLs)
 
 	server := &http.Server{
