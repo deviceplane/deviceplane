@@ -6,8 +6,6 @@ import utils from '../../utils';
 import { renderLabels } from '../../helpers/labels';
 import { DevicesFilterButtons } from '../../components/devices-filter-buttons';
 import {
-  OperatorIs,
-  OperatorIsNot,
   DevicesFilter,
   LabelValueCondition,
 } from '../../components/devices-filter';
@@ -25,8 +23,6 @@ import {
   Button,
   Text,
   Input,
-  Select,
-  Link,
   Icon,
   toaster,
 } from '../../components/core';
@@ -37,7 +33,7 @@ const ScheduleTypeNone = 'NoDevices';
 
 const Scheduling = ({
   route: {
-    data: { params, application, devices, releases },
+    data: { params, application },
   },
 }) => {
   const [conditionalQuery, setConditionalQuery] = useState(
@@ -87,7 +83,8 @@ const Scheduling = ({
 
   const navigation = useNavigation();
 
-  let isSubmitDisabled = scheduleType === application.scheduleType;
+  let isSubmitDisabled =
+    scheduleType === application.schedulingRule.scheduleType;
 
   if (scheduleType === ScheduleTypeConditional) {
     isSubmitDisabled =
