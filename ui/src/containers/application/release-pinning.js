@@ -82,7 +82,7 @@ const ReleasePinning = ({
         Header: 'Release',
         accessor: ({ releaseId }) => (isNaN(releaseId) ? 'Latest' : releaseId),
         style: {
-          flex: '0 0 60px',
+          flex: '0 0 75px',
         },
       },
       {
@@ -119,21 +119,21 @@ const ReleasePinning = ({
 
   const getSchedulingRuleFromFormData = data => ({
     ...application.schedulingRule,
-    releaseSelectors: data.releaseSelectors.map(
-      ({ releaseId, releaseQuery }) => ({
-        releaseId: `${releaseId}`,
-        releaseQuery: releaseQuery.map(filter =>
-          filter.map(({ params }) => ({
-            type: LabelValueCondition,
-            params: {
-              key: params.key,
-              operator: params.operator,
-              value: params.value,
-            },
-          }))
-        ),
-      })
-    ),
+    releaseSelectors: data.releaseSelectors
+      ? data.releaseSelectors.map(({ releaseId, releaseQuery }) => ({
+          releaseId: `${releaseId}`,
+          releaseQuery: releaseQuery.map(filter =>
+            filter.map(({ params }) => ({
+              type: LabelValueCondition,
+              params: {
+                key: params.key,
+                operator: params.operator,
+                value: params.value,
+              },
+            }))
+          ),
+        }))
+      : [],
     defaultReleaseId: `${data.defaultReleaseId}`,
   });
 
