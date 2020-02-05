@@ -15,6 +15,7 @@ import {
   Row,
   Text,
   Select,
+  MultiSelect,
   Checkbox,
   Icon,
   toaster,
