@@ -28,9 +28,14 @@ const Service = ({
     data: { params, applications, metrics, devices },
   },
 }) => {
-  const [selection, setSelection] = useState(
-    storage.get('selectedService', params.project)
-  );
+  const [selectValue, setSelectValue] = useState(() => {
+    const storedValue = storage.get('selectedService', params.project);
+    if (storedValue) {
+      return JSON.stringify(storedValue);
+    } else {
+      return null;
+    }
+  });
   const [showMetricsForm, setShowMetricsForm] = useState();
   const [showSettings, setShowSettings] = useState();
   const [metricToDelete, setMetricToDelete] = useState();
@@ -64,9 +69,11 @@ const Service = ({
   const hideSettings = () => setShowSettings(false);
   const clearMetricToDelete = () => setMetricToDelete(null);
 
+  const selection = selectValue && JSON.parse(selectValue);
+
   let selectedMetrics = [];
 
-  if (selection) {
+  if (selection && selection.application && selection.service) {
     const serviceMetrics = metrics.find(
       ({ applicationId, service }) =>
         applicationId === selection.application.id &&
@@ -293,9 +300,7 @@ const Service = ({
         }, [])
         .map(({ application, service }) => ({
           label: `${application.name}/${service}`,
-          value: `${application.name}/${service}`,
-          application,
-          service,
+          value: JSON.stringify({ application, service }),
         })),
     [applications]
   );
@@ -308,12 +313,14 @@ const Service = ({
     }
   }
 
+  console.log(selection);
+
   return (
     <>
       <Row marginBottom={4} width={11}>
         <Select
-          onChange={e => setSelection(e.target.value)}
-          value={selection}
+          onChange={e => setSelectValue(e.target.value)}
+          value={selectValue}
           options={selectOptions}
           placeholder="Select a Service"
           none="No services"

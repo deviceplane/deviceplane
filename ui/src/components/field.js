@@ -82,9 +82,11 @@ const Field = forwardRef(
         case 'multiselect':
           return (
             <Controller
+              multi
               name={name}
               id={name}
               control={control}
+              onChange={([selected]) => ({ value: selected })}
               as={<MultiSelect />}
               {...props}
             />

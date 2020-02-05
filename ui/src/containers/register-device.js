@@ -36,13 +36,17 @@ const AddDevice = ({
     () =>
       registrationTokens.map(token => ({
         label: token.name,
-        value: token,
+        value: JSON.stringify(token),
       })),
     []
   );
-  const [selection, setSelection] = useState(() => {
-    return registrationTokens.find(({ name }) => name === 'default') || null;
+  const [selectValue, setSelectValue] = useState(() => {
+    const defaultToken = registrationTokens.find(
+      ({ name }) => name === 'default'
+    );
+    return defaultToken ? JSON.stringify(defaultToken) : null;
   });
+  const selection = selectValue && JSON.parse(selectValue);
 
   useEffect(() => {
     console.log(getLocalCommand(selection));
@@ -57,8 +61,8 @@ const AddDevice = ({
               <Label>Registration Token</Label>
               <Select
                 options={selectOptions}
-                value={selection}
-                onChange={setSelection}
+                value={selectValue}
+                onChange={e => setSelectValue(e.target.value)}
               />
             </Group>
             <Text marginBottom={2} fontWeight={1}>
