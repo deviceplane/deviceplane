@@ -23,13 +23,11 @@ const Releases = ({
       },
       {
         Header: 'Released by',
-        accessor: ({ release }) => {
-          if (release) {
-            if (release.createdByUser) {
-              return `${release.createdByUser.firstName} ${release.createdByUser.lastName}`;
-            } else if (release.createdByServiceAccount) {
-              return release.createdByServiceAccount.name;
-            }
+        accessor: ({ createdByUser, createdByServiceAccount }) => {
+          if (createdByUser) {
+            return `${createdByUser.firstName} ${createdByUser.lastName}`;
+          } else if (createdByServiceAccount) {
+            return createdByServiceAccount.name;
           }
           return '-';
         },
