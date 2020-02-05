@@ -9,15 +9,7 @@ import Field from '../../components/field';
 import Card from '../../components/card';
 import Alert from '../../components/alert';
 import { DeviceLabelMulti } from '../../components/device-label';
-import {
-  Label,
-  Form,
-  Button,
-  MultiSelect,
-  Text,
-  Checkbox,
-  toaster,
-} from '../../components/core';
+import { Label, Form, Button, Text, toaster } from '../../components/core';
 import { labelColor } from '../../helpers/labels';
 
 const ServiceMetricsForm = ({
@@ -29,7 +21,7 @@ const ServiceMetricsForm = ({
   service,
   close,
 }) => {
-  const { register, handleSubmit, errors, setValue } = useForm({});
+  const { control, handleSubmit, errors } = useForm({});
   const [backendError, setBackendError] = useState();
   const navigation = useNavigation();
 
@@ -112,48 +104,38 @@ const ServiceMetricsForm = ({
         <Field
           required
           autoFocus
+          creatable
+          type="multiselect"
           label="Metrics"
           name="metrics"
-          as={
-            <MultiSelect
-              multi
-              creatable
-              options={[]}
-              placeholder={'Add metrics'}
-              noOptionsMessage={() => (
-                <Text>
-                  Start typing to add a <strong>Metric</strong>.
-                </Text>
-              )}
-              formatCreateLabel={value => (
-                <Text>
-                  Add <strong>{value}</strong> Metric
-                </Text>
-              )}
-            />
-          }
-          setValue={setValue}
-          register={register}
+          options={[]}
+          placeholder="Add metrics"
+          noOptionsMessage={() => (
+            <Text>
+              Start typing to add a <strong>Metric</strong>.
+            </Text>
+          )}
+          formatCreateLabel={value => (
+            <Text>
+              Add <strong>{value}</strong> Metric
+            </Text>
+          )}
+          control={control}
           errors={errors.metrics}
         />
         <Field
+          type="multiselect"
           label="Labels"
           name="labels"
-          setValue={setValue}
-          register={register}
-          as={
-            <MultiSelect
-              multi
-              options={labelsOptions}
-              multiComponent={DeviceLabelMulti}
-              placeholder="Select labels"
-              noOptionsMessage={() => (
-                <Text>
-                  There are no <strong>Labels</strong>.
-                </Text>
-              )}
-            />
-          }
+          control={control}
+          options={labelsOptions}
+          multiComponent={DeviceLabelMulti}
+          placeholder="Select labels"
+          noOptionsMessage={() => (
+            <Text>
+              There are no <strong>Labels</strong>.
+            </Text>
+          )}
           errors={errors.description}
         />
 
@@ -161,11 +143,11 @@ const ServiceMetricsForm = ({
         {config.supportedServiceMetricProperties.map(property => (
           <Field
             multi
+            type="checkbox"
             key={property.id}
+            label={property.label}
             name={`properties[${property.id}]`}
-            as={<Checkbox label={property.label} />}
-            register={register}
-            setValue={setValue}
+            control={control}
             hint={property.description}
           />
         ))}

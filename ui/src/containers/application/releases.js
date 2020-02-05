@@ -35,13 +35,9 @@ const Releases = ({
         },
       },
       {
-        Header: 'Started',
-        accessor: 'createdAt',
-        Cell: ({
-          row: {
-            original: { createdAt },
-          },
-        }) => <Text>{moment(createdAt).fromNow()}</Text>,
+        Header: 'Started At',
+        accessor: ({ createdAt }) =>
+          createdAt ? moment(createdAt).fromNow() : '-',
         style: {
           flex: '0 0 150px',
         },

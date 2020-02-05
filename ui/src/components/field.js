@@ -4,6 +4,7 @@ import { space, color, typography } from 'styled-system';
 import { Controller } from 'react-hook-form';
 
 import utils from '../utils';
+import Editor from './editor';
 import {
   Group,
   Row,
@@ -54,10 +55,10 @@ const Field = forwardRef(
       name,
       register,
       control,
-      onChangeEvent,
       autoComplete = 'off',
       multi,
       inline,
+      flex,
       errors = [],
       marginBottom = Group.defaultProps.marginBottom,
       ...props
@@ -66,21 +67,26 @@ const Field = forwardRef(
   ) => {
     const [type, setType] = useState(props.type);
 
-    errors = Array.isArray(errors) ? errors : [errors];
-
     const getComponent = () => {
       switch (type) {
-        case 'textarea':
-          return <Textarea name={name} id={name} ref={ref} {...props} />;
-        case 'select':
-          return <Select name={name} id={name} ref={ref} {...props} />;
+        case 'editor':
+          return (
+            <Controller
+              name={name}
+              id={name}
+              control={control}
+              as={<Editor />}
+              {...props}
+            />
+          );
         case 'multiselect':
           return (
             <Controller
               name={name}
               id={name}
-              as={<MultiSelect />}
               control={control}
+              as={<MultiSelect />}
+              {...props}
             />
           );
         case 'checkbox':
@@ -88,10 +94,16 @@ const Field = forwardRef(
             <Controller
               name={name}
               id={name}
-              as={<Checkbox />}
               control={control}
+              label={label}
+              as={<Checkbox />}
+              {...props}
             />
           );
+        case 'textarea':
+          return <Textarea name={name} id={name} ref={ref} {...props} />;
+        case 'select':
+          return <Select name={name} id={name} ref={ref} {...props} />;
         default:
           return (
             <Input
@@ -106,8 +118,17 @@ const Field = forwardRef(
       }
     };
 
+    errors = Array.isArray(errors) ? errors : [errors];
+
+    const component = getComponent();
+
+    if (type === 'checkbox') {
+      // allows checkbox to render its own label
+      label = null;
+    }
+
     return (
-      <Column flex={1} marginBottom={inline ? 0 : multi ? 4 : marginBottom}>
+      <Column flex={flex} marginBottom={inline ? 0 : multi ? 4 : marginBottom}>
         {(label || description) && (
           <Column marginBottom={Label.defaultProps.marginBottom}>
             <Row justifyContent="space-between">
@@ -144,7 +165,7 @@ const Field = forwardRef(
             )}
           </Column>
         )}
-        <Row>{getComponent()}</Row>
+        {component}
         {hint && (
           <Text marginTop={2} fontSize={0} fontWeight={1} color="grays.8">
             {hint}

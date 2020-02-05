@@ -6,7 +6,6 @@ import { useNavigation } from 'react-navi';
 import api from '../../api';
 import utils from '../../utils';
 import validators from '../../validators';
-import Editor from '../../components/editor';
 import Card from '../../components/card';
 import Field from '../../components/field';
 import Popup from '../../components/popup';
@@ -24,7 +23,7 @@ const Role = ({
     data: { params, role },
   },
 }) => {
-  const { register, handleSubmit, errors, formState, setValue } = useForm({
+  const { register, handleSubmit, errors, formState, control } = useForm({
     validationSchema,
     defaultValues: {
       name: role.name,
@@ -101,11 +100,11 @@ const Role = ({
             errors={errors.description}
           />
           <Field
-            as={<Editor width="100%" />}
+            type="editor"
             label="Config"
             name="config"
-            register={register}
-            setValue={setValue}
+            width="100%"
+            control={control}
             errors={errors.config}
           />
           <Button

@@ -94,7 +94,7 @@ text-renderering: geometricPercision;
 
 &:disabled {
   cursor: not-allowed;
-  opacity: .3;
+  opacity: .4;
 }
 
 &:focus {

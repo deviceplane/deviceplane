@@ -51,11 +51,11 @@ const Text = styled.label`
   ${space}
 `;
 
-const Checkbox = ({ value, label, onChange, ...props }) => {
+const Checkbox = ({ checked, label, onChange, ...props }) => {
   return (
-    <Container onClick={() => onChange(!value)}>
-      <HiddenCheckbox checked={value} id={label} {...props} readOnly />
-      <StyledCheckbox checked={value}>
+    <Container onClick={() => onChange(!checked)}>
+      <HiddenCheckbox id={label} {...props} readOnly />
+      <StyledCheckbox checked={checked}>
         <Icon viewBox="0 0 24 24">
           <polyline points="20 6 9 17 4 12" />
         </Icon>

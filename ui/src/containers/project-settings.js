@@ -19,7 +19,6 @@ import {
   Input,
   Label,
   Group,
-  Checkbox,
   toaster,
 } from '../components/core';
 
@@ -32,14 +31,7 @@ const ProjectSettings = ({
     data: { params, project },
   },
 }) => {
-  const {
-    control,
-    register,
-    handleSubmit,
-    errors,
-    formState,
-    setValue,
-  } = useForm({
+  const { control, register, handleSubmit, errors, formState } = useForm({
     validationSchema,
     defaultValues: {
       name: project.name,
@@ -133,7 +125,7 @@ const ProjectSettings = ({
             <Text marginBottom={4}>
               This action <strong>cannot</strong> be undone. This will
               permanently delete the <strong>{params.project}</strong> project.
-              <p></p>Please type in the name of the project to confirm.
+              <p></p>Please enter the project name to confirm.
             </Text>
             <Form onSubmit={submitDelete}>
               <Group>

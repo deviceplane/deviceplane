@@ -17,7 +17,7 @@ const ServiceMetricsSettings = ({
   close,
 }) => {
   const endpointConfig = metricEndpointConfigs[service] || {};
-  const { register, handleSubmit, errors, setValue } = useForm({
+  const { register, handleSubmit, errors } = useForm({
     defaultValues: {
       port: endpointConfig.port || 2112,
       path: endpointConfig.path || '/metrics',
@@ -53,9 +53,9 @@ const ServiceMetricsSettings = ({
 
   return (
     <Card
+      border
       title="Service Metrics Settings"
       size="xlarge"
-      border
       overflow="visible"
     >
       <Alert show={backendError} variant="error" description={backendError} />

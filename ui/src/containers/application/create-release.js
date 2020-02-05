@@ -6,7 +6,6 @@ import * as yup from 'yup';
 import api from '../../api';
 import utils from '../../utils';
 import Card from '../../components/card';
-import Editor from '../../components/editor';
 import Field from '../../components/field';
 import Alert from '../../components/alert';
 import { Form, Row, Button, toaster } from '../../components/core';
@@ -20,7 +19,7 @@ const CreateRelease = ({
     data: { params, application },
   },
 }) => {
-  const { register, handleSubmit, setValue, errors } = useForm({
+  const { control, handleSubmit, errors } = useForm({
     validationSchema,
     defaultValues: {
       rawConfig: application.latestRelease
@@ -58,11 +57,11 @@ const CreateRelease = ({
         }}
       >
         <Field
-          as={<Editor width="100%" />}
+          type="editor"
           label="Config"
+          width="100%"
           name="rawConfig"
-          register={register}
-          setValue={setValue}
+          control={control}
           errors={errors.rawConfig}
         />
         <Button marginTop={3} type="submit" title="Create" />

@@ -52,7 +52,6 @@ const Select = forwardRef(
       none = 'There are no options',
       onChange,
       variant,
-      forwardedRef,
       ...props
     },
     ref

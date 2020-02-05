@@ -7,14 +7,7 @@ import utils from '../../utils';
 import Card from '../../components/card';
 import Field from '../../components/field';
 import Alert from '../../components/alert';
-import {
-  Label,
-  Row,
-  Form,
-  Button,
-  Checkbox,
-  toaster,
-} from '../../components/core';
+import { Label, Row, Form, Button, toaster } from '../../components/core';
 
 const AddMember = ({
   route: {
@@ -22,7 +15,7 @@ const AddMember = ({
   },
 }) => {
   const navigation = useNavigation();
-  const { register, handleSubmit, setValue } = useForm({
+  const { register, handleSubmit, control } = useForm({
     defaultValues: {
       roles: roles.reduce((obj, role) => ({ ...obj, [role.name]: false }), {}),
     },
@@ -94,11 +87,11 @@ const AddMember = ({
         {roles.map(role => (
           <Field
             multi
+            type="checkbox"
             key={role.id}
+            label={role.name}
             name={`roles[${role.name}]`}
-            as={<Checkbox label={role.name} />}
-            register={register}
-            setValue={setValue}
+            control={control}
           />
         ))}
         <Button marginTop={3} type="submit" title="Add Member" />

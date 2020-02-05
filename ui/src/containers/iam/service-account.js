@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigation } from 'react-navi';
 import * as yup from 'yup';
+import moment from 'moment';
 
 import api from '../../api';
 import utils from '../../utils';
@@ -17,7 +18,6 @@ import {
   Button,
   Form,
   Label,
-  Checkbox,
   Code,
   Icon,
   toaster,
@@ -34,7 +34,7 @@ const ServiceAccount = ({
     data: { params, serviceAccount, roles },
   },
 }) => {
-  const { register, handleSubmit, errors, formState, setValue } = useForm({
+  const { register, handleSubmit, errors, formState, control } = useForm({
     validationSchema,
     defaultValues: {
       name: serviceAccount.name,
@@ -158,11 +158,11 @@ const ServiceAccount = ({
           {roles.map(role => (
             <Field
               multi
+              type="checkbox"
               key={role.id}
+              label={role.name}
               name={`roles[${role.name}]`}
-              as={<Checkbox label={role.name} />}
-              register={register}
-              setValue={setValue}
+              control={control}
               errors={errors.roles && errors.roles[role.name]}
             />
           ))}
@@ -211,7 +211,8 @@ const ServiceAccountAccessKeys = ({ projectId, serviceAccount }) => {
       { Header: 'Access Key ID', accessor: 'id', style: { flex: 2 } },
       {
         Header: 'Created At',
-        accessor: 'createdAt',
+        accessor: ({ createdAt }) =>
+          createdAt ? moment(createdAt).fromNow() : '-',
         style: {
           flex: '0 0 150px',
         },

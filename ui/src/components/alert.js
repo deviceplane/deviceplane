@@ -5,7 +5,7 @@ import { Column, Row, Text, Icon } from './core';
 const getIcon = variant => {
   switch (variant) {
     case 'success':
-      return 'endorsed';
+      return 'tick-circle';
     case 'error':
       return 'warning-sign';
     case 'info':

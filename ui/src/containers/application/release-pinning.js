@@ -7,6 +7,7 @@ import { renderLabels } from '../../helpers/labels';
 import {
   OperatorIs,
   OperatorIsNot,
+  OperatorIsOptions,
   LabelValueCondition,
 } from '../../components/devices-filter';
 import Card from '../../components/card';
@@ -32,7 +33,7 @@ const InitialFilter = [
     params: {
       key: '',
       value: '',
-      operator: { label: OperatorIs, value: OperatorIs },
+      operator: OperatorIs,
     },
   },
 ];
@@ -46,7 +47,7 @@ const LatestReleaseId = 'latest';
 
 const ReleasePinning = ({
   route: {
-    data: { params, application, releases, devices },
+    data: { params, application, releases },
   },
 }) => {
   const [releaseSelectors, setReleaseSelectors] = useState(
@@ -54,7 +55,7 @@ const ReleasePinning = ({
       ? application.schedulingRule.releaseSelectors
       : []
   );
-  const { register, handleSubmit, setValue, getValues } = useForm({
+  const { register, handleSubmit, getValues } = useForm({
     defaultValues: {
       defaultReleaseId:
         application.schedulingRule.defaultReleaseId || LatestReleaseId,
@@ -116,50 +117,41 @@ const ReleasePinning = ({
     [releases]
   );
 
+  const getSchedulingRuleFromFormData = data => ({
+    ...application.schedulingRule,
+    releaseSelectors: data.releaseSelectors.map(
+      ({ releaseId, releaseQuery }) => ({
+        releaseId: `${releaseId}`,
+        releaseQuery: releaseQuery.map(filter =>
+          filter.map(({ params }) => ({
+            type: LabelValueCondition,
+            params: {
+              key: params.key,
+              operator: params.operator,
+              value: params.value,
+            },
+          }))
+        ),
+      })
+    ),
+    defaultReleaseId: `${data.defaultReleaseId}`,
+  });
+
   const getScheduledDevices = async () => {
-    const formValues = getValues({ nest: true }); // use form submit for this instead?
-    console.log(formValues);
-    // try {
-    //   const { data: devices } = await api.scheduledDevices({
-    //     projectId: params.project,
-    //     applicationId: application.name,
-    //     schedulingRule: {
-    //       ...application.schedulingRule,
-    //       releaseSelectors: releaseSelectors.map((_, index) => ({
-    //         releaseId: `${
-    //           formValues[`releaseSelectors[${index}].releaseId`].value
-    //         }`,
-    //         releaseQuery: [
-    //           [
-    //             {
-    //               type: LabelValueCondition,
-    //               params: {
-    //                 key:
-    //                   formValues[
-    //                     `releaseSelectors[${index}].releaseQuery[0].params.key`
-    //                   ],
-    //                 value:
-    //                   formValues[
-    //                     `releaseSelectors[${index}].releaseQuery[0].params.value`
-    //                   ],
-    //                 operator:
-    //                   formValues[
-    //                     `releaseSelectors[${index}].releaseQuery[0].params.operator`
-    //                   ].value,
-    //               },
-    //             },
-    //           ],
-    //         ],
-    //       })),
-    //       defaultReleaseId: `${formValues.defaultReleaseId.value}`,
-    //     },
-    //     search: searchInput,
-    //   });
-    //   setScheduledDevices(devices);
-    // } catch (error) {
-    //   console.log(error);
-    //   toaster.danger('Fetching device preview was unsuccessful.');
-    // }
+    const formData = getValues({ nest: true }); // use form submit for this instead?
+    try {
+      const { data } = await api.scheduledDevices({
+        projectId: params.project,
+        applicationId: application.name,
+        schedulingRule: getSchedulingRuleFromFormData(formData),
+        search: searchInput,
+      });
+      setScheduledDevices(data);
+    } catch (error) {
+      setBackendError(utils.parseError(error));
+      toaster.danger('Preview was not successful.');
+      console.log(error);
+    }
   };
 
   const submit = async data => {
@@ -170,27 +162,10 @@ const ReleasePinning = ({
         data: {
           name: application.name,
           description: application.description,
-          schedulingRule: {
-            ...application.schedulingRule,
-            releaseSelectors: data.releaseSelectors.map(
-              ({ releaseId, releaseQuery }) => ({
-                releaseId: `${releaseId.value}`,
-                releaseQuery: [
-                  releaseQuery.map(({ params }) => ({
-                    type: LabelValueCondition,
-                    params: {
-                      key: params.key,
-                      operator: params.operator.value,
-                      value: params.value,
-                    },
-                  })),
-                ],
-              })
-            ),
-            defaultReleaseId: `${data.defaultReleaseId.value}`,
-          },
+          schedulingRule: getSchedulingRuleFromFormData(data),
         },
       });
+
       toaster.success('Release pinning successful.');
     } catch (error) {
       setBackendError(utils.parseError(error));
@@ -233,7 +208,7 @@ const ReleasePinning = ({
         >
           <Group>
             <Row justifyContent="space-between" alignItems="center">
-              <Label>Release Pins</Label>
+              <Label>Pinned Releases</Label>
               <Row>
                 {releaseSelectors.length > 1 && (
                   <Button
@@ -245,11 +220,11 @@ const ReleasePinning = ({
                   />
                 )}
                 <Button
-                  title="Add Release Pin"
+                  title="Add Release"
                   type="button"
                   variant="secondary"
                   onClick={() =>
-                    setReleaseSelectors(rs => [InitialReleaseSelector, ...rs])
+                    setReleaseSelectors(rs => [...rs, InitialReleaseSelector])
                   }
                 />
               </Row>
@@ -264,7 +239,7 @@ const ReleasePinning = ({
               borderRadius={1}
               marginBottom={5}
             >
-              <Text fontWeight={1}>No releases pinned</Text>
+              <Text fontWeight={1}>No pinned releases</Text>
             </Row>
           )}
           {releaseSelectors.map(({ releaseQuery }, i) => (
@@ -276,7 +251,7 @@ const ReleasePinning = ({
             >
               {releaseQuery.map((filter, j) => (
                 <Column flex={1}>
-                  <Row marginBottom={5} flex={1}>
+                  <Row marginBottom={4}>
                     <Text width="165px" paddingTop={1}>
                       {j === 0 ? 'If devices match' : 'and devices match'}
                     </Text>
@@ -288,7 +263,7 @@ const ReleasePinning = ({
                               OR
                             </Text>
                           )}
-                          <Row alignItems="center" flex={1} alignSelf="stretch">
+                          <Row alignItems="center" alignSelf="stretch">
                             <Field
                               inline
                               required
@@ -302,26 +277,19 @@ const ReleasePinning = ({
                             <Field
                               inline
                               required
-                              width="80px"
+                              width="100px"
                               marginX={4}
                               type="select"
                               variant="small"
                               name={`releaseSelectors[${i}].releaseQuery[${j}][${k}].params.operator`}
                               placeholder="Operator"
-                              options={[
-                                { label: OperatorIs, value: OperatorIs },
-                                {
-                                  label: OperatorIsNot,
-                                  value: OperatorIsNot,
-                                },
-                              ]}
+                              options={OperatorIsOptions}
                               ref={register}
                             />
 
                             <Field
                               inline
                               required
-                              flex={1}
                               variant="small"
                               name={`releaseSelectors[${i}].releaseQuery[${j}][${k}].params.value`}
                               placeholder="Label Value"
@@ -329,10 +297,41 @@ const ReleasePinning = ({
                             />
 
                             <Button
-                              marginLeft={4}
+                              type="button"
+                              marginLeft={2}
                               variant="icon"
                               title={
                                 <Icon icon="cross" size={14} color="red" />
+                              }
+                              onClick={() =>
+                                setReleaseSelectors(releaseSelectors =>
+                                  releaseSelectors
+                                    .map((selector, selectorIndex) =>
+                                      selectorIndex === i
+                                        ? {
+                                            ...selector,
+                                            releaseQuery: selector.releaseQuery.map(
+                                              (query, queryIndex) =>
+                                                queryIndex === j
+                                                  ? query.filter(
+                                                      (_, filterIndex) =>
+                                                        filterIndex !== k
+                                                    )
+                                                  : query
+                                            ),
+                                          }
+                                        : selector
+                                    )
+                                    .map(selector => ({
+                                      ...selector,
+                                      releaseQuery: selector.releaseQuery.filter(
+                                        arr => arr.length
+                                      ),
+                                    }))
+                                    .filter(
+                                      selector => selector.releaseQuery.length
+                                    )
+                                )
                               }
                             />
                           </Row>
@@ -420,7 +419,7 @@ const ReleasePinning = ({
             <Field
               inline
               required
-              width="125px"
+              width="120px"
               type="select"
               variant="small"
               name="defaultReleaseId"

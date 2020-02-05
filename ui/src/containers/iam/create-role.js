@@ -7,7 +7,6 @@ import api from '../../api';
 import utils from '../../utils';
 import validators from '../../validators';
 import Card from '../../components/card';
-import Editor from '../../components/editor';
 import Field from '../../components/field';
 import Alert from '../../components/alert';
 import { Row, Button, Form, toaster } from '../../components/core';
@@ -23,7 +22,7 @@ const CreateRole = ({
     data: { params },
   },
 }) => {
-  const { handleSubmit, register, setValue, errors } = useForm({
+  const { handleSubmit, register, control, errors } = useForm({
     validationSchema,
   });
   const navigation = useNavigation();
@@ -68,11 +67,11 @@ const CreateRole = ({
         />
 
         <Field
-          as={<Editor width="100%" />}
+          type="editor"
           label="Config"
           name="config"
-          register={register}
-          setValue={setValue}
+          width="100%"
+          control={control}
           errors={errors.config}
         />
         <Button marginTop={3} title="Create" type="submit" />
