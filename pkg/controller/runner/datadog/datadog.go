@@ -75,7 +75,8 @@ func (r *Runner) doForProject(ctx context.Context, project models.Project) {
 			WithError(err).Error("getting project metrics config")
 		return
 	}
-	if len(projectMetricsConfig.ExposedMetrics) != 0 {
+
+	if len(projectMetricsConfig.ExposedMetrics) == 0 {
 		return
 	}
 
