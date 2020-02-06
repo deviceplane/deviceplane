@@ -11,10 +11,6 @@ const Container = styled(Column)`
 
 const Content = styled(Column)`
   position: absolute;
-
-  top: 48px;
-  right: 0;
-  width: 240px;
 `;
 
 const Button = styled.button`
@@ -28,7 +24,7 @@ const Button = styled.button`
   cursor: pointer;
 `;
 
-const Popover = ({ children, content = null }) => {
+const Popover = ({ children, content = null, width, top, right }) => {
   const node = useRef();
   const [show, setShow] = useState();
 
@@ -69,7 +65,16 @@ const Popover = ({ children, content = null }) => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
           >
-            <Content bg="black" borderRadius={1} border={0} borderColor="white">
+            <Content
+              bg="black"
+              borderRadius={1}
+              border={0}
+              borderColor="white"
+              padding={1}
+              width={width}
+              top={top}
+              right={right}
+            >
               {typeof content === 'function'
                 ? content({ close: () => setShow(false) })
                 : content}

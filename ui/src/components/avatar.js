@@ -14,8 +14,8 @@ const getInitials = (name, fallback = '?') => {
 
 const Avatar = ({ name }) => (
   <Column
-    width="36px"
-    height="36px"
+    width="32px"
+    height="32px"
     alignItems="center"
     justifyContent="center"
     bg="primary"
