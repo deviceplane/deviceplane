@@ -13,6 +13,8 @@ import (
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/agent/client"
 	"github.com/deviceplane/deviceplane/pkg/agent/info"
+	"github.com/deviceplane/deviceplane/pkg/agent/metrics"
+	"github.com/deviceplane/deviceplane/pkg/agent/netns"
 	"github.com/deviceplane/deviceplane/pkg/agent/server/local"
 	"github.com/deviceplane/deviceplane/pkg/agent/server/remote"
 	"github.com/deviceplane/deviceplane/pkg/agent/service"
@@ -50,6 +52,7 @@ type Agent struct {
 	serverPort             int
 	supervisor             *supervisor.Supervisor
 	statusGarbageCollector *status.GarbageCollector
+	metricsPusher          *metrics.MetricsPusher
 	infoReporter           *info.Reporter
 	localServer            *local.Server
 	remoteServer           *remote.Server
@@ -92,7 +95,15 @@ func NewAgent(
 		},
 	)
 
-	service := service.NewService(variables, supervisor, engine, confDir)
+	netnsManager := netns.NewManager(engine)
+	netnsManager.Start()
+
+	serviceMetricsFetcher := metrics.NewServiceMetricsFetcher(
+		supervisor,
+		netnsManager,
+	)
+
+	service := service.NewService(variables, supervisor, engine, confDir, serviceMetricsFetcher)
 
 	return &Agent{
 		client:                 client,
@@ -104,6 +115,7 @@ func NewAgent(
 		serverPort:             serverPort,
 		supervisor:             supervisor,
 		statusGarbageCollector: status.NewGarbageCollector(client.DeleteDeviceApplicationStatus, client.DeleteDeviceServiceStatus),
+		metricsPusher:          metrics.NewMetricsPusher(client, serviceMetricsFetcher),
 		infoReporter:           info.NewReporter(client, version),
 		localServer:            local.NewServer(service),
 		remoteServer:           remote.NewServer(client, service),
@@ -204,6 +216,7 @@ func (a *Agent) runBundleApplier() {
 			a.supervisor.SetApplications(bundle.Applications)
 			a.statusGarbageCollector.SetBundle(*bundle)
 			a.updater.SetDesiredVersion(bundle.DesiredAgentVersion)
+			a.metricsPusher.SetBundle(*bundle)
 		}
 
 		select {

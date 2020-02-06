@@ -31,14 +31,12 @@ func (s *Service) metrics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	containerID, ok := s.supervisorLookup.GetContainerID(applicationID, service)
-	if !ok {
-		w.WriteHeader(codes.StatusMetricsNotAvailable)
-		return
-	}
-
-	resp, err := s.netnsManager.ProcessRequest(
-		r.Context(), containerID, port, string(path),
+	resp, err := s.serviceMetricsFetcher.ContainerServiceMetrics(
+		r.Context(),
+		applicationID,
+		service,
+		port,
+		string(path),
 	)
 	if err != nil {
 		http.Error(w, err.Error(), codes.StatusMetricsNotAvailable)

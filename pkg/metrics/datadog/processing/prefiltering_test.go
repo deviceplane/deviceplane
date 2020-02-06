@@ -1,4 +1,4 @@
-package filtering
+package processing
 
 import (
 	"strings"
@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSimpleFiltering(t *testing.T) {
+func TestSimplePrefiltering(t *testing.T) {
 	var expectedFilteredMetrics = `# HELP cpu_guest_seconds_total Seconds the cpus spent in guests (VMs) for each mode.
 # TYPE cpu_guest_seconds_total counter
 cpu_guest_seconds_total{cpu="0",mode="nice"} 0
@@ -32,7 +32,7 @@ cpu_seconds_total{cpu="1",mode="idle"} 543968.72
 cpu_seconds_total{cpu="1",mode="iowait"} 160.87`
 	efmArr := strings.Split(expectedFilteredMetrics, "\n")
 
-	fm := FilterNodePrefix(rawUnfilteredHostMetrics)
+	fm := PrefilterNodePrefix(rawUnfilteredHostMetrics)
 	fmArr := strings.Split(fm, "\n")
 
 	assert.Equal(
@@ -41,7 +41,7 @@ cpu_seconds_total{cpu="1",mode="iowait"} 160.87`
 		strings.Join(efmArr, "\n"),
 	)
 }
-func TestEdgeCaseFiltering(t *testing.T) {
+func TestEdgeCasePrefiltering(t *testing.T) {
 	var expectedFilteredMetrics = `# HELP cpu_guest_seconds_total Seconds the cpus spent node_cpu_stuff for each mode node node_ _node node_node.
 # TYPE cpu_guest_seconds_total counter
 cpu_guest_seconds_total{cpu="0",mode="node_nice_node"} 0
@@ -91,7 +91,7 @@ node_cpu_seconds_total{cpu="1",mode="iowait"} 160.87`
 	assert.Equal(
 		t,
 		expectedFilteredMetrics,
-		FilterNodePrefix(exampleUnfilteredMetrics),
+		PrefilterNodePrefix(exampleUnfilteredMetrics),
 	)
 }
 

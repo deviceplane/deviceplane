@@ -266,6 +266,8 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/deviceapplicationstatuses", s.withDeviceAuth(s.deleteDeviceApplicationStatus)).Methods("DELETE")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.withDeviceAuth(s.setDeviceServiceStatus)).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.withDeviceAuth(s.deleteDeviceServiceStatus)).Methods("DELETE")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/forwardmetrics/service", s.withDeviceAuth(s.forwardServiceMetrics)).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/forwardmetrics/device", s.withDeviceAuth(s.forwardDeviceMetrics)).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/connection", s.withDeviceAuth(s.initiateDeviceConnection)).Methods("GET")
 
 	apiRouter.Handle("/revdial", revdial.ConnHandler(s.upgrader)).Methods("GET")
@@ -2877,8 +2879,25 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, project mode
 		return
 	}
 
+	deviceMetricsConfig, err := s.metricConfigs.GetDeviceMetricsConfig(r.Context(), project.ID)
+	if err != nil {
+		log.WithError(err).Error("get device metrics config")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	serviceMetricsConfigs, err := s.metricConfigs.GetServiceMetricsConfigs(r.Context(), project.ID)
+	if err != nil {
+		log.WithError(err).Error("get device metrics config")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	bundle := models.Bundle{
 		DesiredAgentVersion: device.DesiredAgentVersion,
+
+		DeviceMetricsConfig:   deviceMetricsConfig,
+		ServiceMetricsConfigs: serviceMetricsConfigs,
 	}
 
 	for _, application := range applications {

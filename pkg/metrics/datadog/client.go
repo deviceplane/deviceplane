@@ -7,22 +7,9 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/deviceplane/deviceplane/pkg/models"
 )
-
-type PostMetricsRequest struct {
-	Series Series `json:"series"`
-}
-
-type Series []Metric
-
-type Metric struct {
-	Metric   string           `json:"metric"`
-	Points   [][2]interface{} `json:"points"`
-	Type     string           `json:"type"`
-	Interval *int64           `json:"interval,omitempty"`
-	Host     string           `json:"host,omitempty"`
-	Tags     []string         `json:"tags"`
-}
 
 func NewPoint(value float32) [2]interface{} {
 	return [2]interface{}{
@@ -41,7 +28,7 @@ func NewClient(apiKey string) *Client {
 	}
 }
 
-func (c *Client) PostMetrics(ctx context.Context, req PostMetricsRequest) error {
+func (c *Client) PostMetrics(ctx context.Context, req models.DatadogPostMetricsRequest) error {
 	reqBytes, err := json.Marshal(req)
 	if err != nil {
 		return err

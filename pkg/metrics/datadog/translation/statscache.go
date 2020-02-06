@@ -2,8 +2,6 @@ package translation
 
 import (
 	"strings"
-
-	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
 type StatsCache struct {
@@ -21,10 +19,6 @@ func squish(prefix, metric string, tags []string) string {
 		append([]string{prefix, metric}, tags...),
 		"/",
 	)
-}
-
-func GetMetricsPrefix(project *models.Project, device *models.Device, endpoint string) string {
-	return strings.Join([]string{project.Name, device.Name, endpoint}, "/")
 }
 
 func (s *StatsCache) UpdateCount(prefix, metric string, tags []string, newCount float64) (delta float64, ok bool) {
