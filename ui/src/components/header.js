@@ -12,8 +12,8 @@ const Header = ({ children }) => {
       justifyContent="space-between"
       alignSelf="stretch"
       padding={5}
-      paddingTop={4}
-      paddingBottom={3}
+      paddingTop={5}
+      paddingBottom={2}
     >
       <Row flex={1} alignItems="center">
         <ProjectSelector />

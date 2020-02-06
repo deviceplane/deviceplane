@@ -52,21 +52,21 @@ const ProjectSelector = ({}) => {
           </MenuItem>
         ))
       }
-      top="32px"
+      top="40px"
       width="180px"
     >
-      <Row alignItems="center">
-        <Text
-          fontSize={2}
-          fontWeight={2}
-          color="primary"
-          bg="black"
-          padding={2}
-          borderRadius={1}
-        >
+      <Row
+        alignItems="center"
+        padding={2}
+        borderRadius={1}
+        bg="black"
+        border={0}
+        borderColor="white"
+      >
+        <Text fontSize={2} fontWeight={2} color="white">
           {data.params.project}
         </Text>
-        <Icon icon="caret-down" size={16} color="white" marginLeft={2} />
+        <Icon icon="caret-down" size={16} color="white" marginLeft={4} />
       </Row>
     </Popover>
   );

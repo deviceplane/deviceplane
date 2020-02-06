@@ -61,9 +61,8 @@ const Popover = ({ children, content = null, width, top, right }) => {
         {show && (
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
+            animate={{ opacity: 1, duration: 0.1 }}
+            exit={{ opacity: 0, duration: 0 }}
           >
             <Content
               bg="black"
