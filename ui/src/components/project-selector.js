@@ -57,7 +57,8 @@ const ProjectSelector = ({}) => {
     >
       <Row
         alignItems="center"
-        padding={2}
+        paddingX={2}
+        paddingY="6px"
         borderRadius={1}
         bg="black"
         border={0}

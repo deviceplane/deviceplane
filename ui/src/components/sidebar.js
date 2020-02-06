@@ -94,7 +94,7 @@ const Sidebar = () => {
       flexShrink={0}
     >
       <Row paddingY={5}>
-        <Link href="/">
+        <Link href="/projects">
           <Logo />
         </Link>
       </Row>

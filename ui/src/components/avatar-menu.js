@@ -29,6 +29,7 @@ const AvatarMenu = () => {
   const [showChangePassword, setShowChangePassword] = useState();
   const [showSSHKeys, setShowSSHKeys] = useState();
   const navigation = useNavigation();
+  const isProjectsRoute = useActive('/projects');
   const name = `${context.currentUser.firstName} ${context.currentUser.lastName}`;
 
   return (
@@ -61,13 +62,13 @@ const AvatarMenu = () => {
         />
       </Popup>
       <Popover
-        top="48px"
+        top="45px"
         right={0}
         width="240px"
         content={({ close }) => (
           <>
             <Text
-              fontSize={4}
+              fontSize={3}
               fontWeight={2}
               paddingX={3}
               marginX={1}
@@ -76,7 +77,7 @@ const AvatarMenu = () => {
               {name}
             </Text>
             <Text
-              fontSize={2}
+              fontSize={1}
               marginBottom={1}
               paddingX={3}
               marginX={1}
@@ -84,6 +85,12 @@ const AvatarMenu = () => {
             >
               {context.currentUser.email}
             </Text>
+            <Divider />
+            {!isProjectsRoute && (
+              <MenuItem onClick={() => navigation.navigate('/projects')}>
+                Projects
+              </MenuItem>
+            )}
             <Divider />
             <MenuItem
               onClick={() => {
