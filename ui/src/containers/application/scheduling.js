@@ -154,8 +154,10 @@ const Scheduling = ({
     getScheduledDevices();
   }, [searchInput]);
 
-  let isSubmitDisabled =
-    watchScheduleType === application.schedulingRule.scheduleType;
+  const isSubmitDisabled =
+    watchScheduleType === ScheduleTypeConditional
+      ? false
+      : watchScheduleType === application.schedulingRule.scheduleType;
 
   return (
     <>
