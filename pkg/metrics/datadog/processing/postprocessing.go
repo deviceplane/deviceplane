@@ -2,6 +2,7 @@ package processing
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
@@ -18,10 +19,10 @@ func mapMetrics(exposedMetrics []models.ExposedMetric) map[string]*models.Expose
 
 func addNoTags(func(tag, value string)) {}
 
-var ProcessProjectMetrics = metricProcessorFunc("deviceplane", addNoTags)
-var ProcessDeviceMetrics = metricProcessorFunc("deviceplane.device", addNoTags)
+var ProcessProjectMetrics = metricProcessorFunc("deviceplane.", addNoTags)
+var ProcessDeviceMetrics = metricProcessorFunc("deviceplane.device.", addNoTags)
 var ProcessServiceMetrics = func(applicationName, serviceName string) metricProcessor {
-	return metricProcessorFunc("deviceplane.service",
+	return metricProcessorFunc("deviceplane.service.",
 		func(addTag func(tag, value string)) {
 			if applicationName != "" {
 				addTag("deviceplane.application", applicationName)
@@ -34,7 +35,6 @@ var ProcessServiceMetrics = func(applicationName, serviceName string) metricProc
 }
 
 type metricProcessor func(
-	controllerSide bool,
 	metrics []models.DatadogMetric,
 	exposedMetrics []models.ExposedMetric,
 	project *models.Project,
@@ -46,7 +46,6 @@ func metricProcessorFunc(
 	addTags func(func(tag, value string)),
 ) metricProcessor {
 	return func(
-		controllerSide bool,
 		metrics []models.DatadogMetric,
 		exposedMetrics []models.ExposedMetric,
 		project *models.Project,
@@ -56,18 +55,22 @@ func metricProcessorFunc(
 		exposedMetricsKV := mapMetrics(exposedMetrics)
 
 		for _, m := range metrics {
-			// Get exposed metric settings
-			exposedMetric := exposedMetricsKV[m.Metric]
+			// Prefix metric name
+			if !strings.HasPrefix(m.Metric, metricPrefix) {
+				m.Metric = metricPrefix + m.Metric
+			}
+
+			// Get unprefixed metric name
+			start := strings.Index(m.Metric, metricPrefix) + len(metricPrefix)
+			unprefixedMetricName := m.Metric[start:]
+
+			// Get exposed metric settings, or wildcard settings
+			exposedMetric := exposedMetricsKV[unprefixedMetricName]
 			if exposedMetric == nil {
 				exposedMetric = exposedMetricsKV[WildcardMetric]
 				if exposedMetric == nil {
 					continue
 				}
-			}
-
-			// Prefix metric name
-			if controllerSide {
-				m.Metric = fmt.Sprintf("%s.%s", metricPrefix, m.Metric)
 			}
 
 			// Helper
@@ -106,6 +109,7 @@ func metricProcessorFunc(
 			// Func-defined tags
 			addTags(addTag)
 
+			// Add modified metric
 			filteredMetrics = append(filteredMetrics, m)
 		}
 

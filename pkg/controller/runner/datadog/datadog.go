@@ -68,12 +68,6 @@ func (r *Runner) Do(ctx context.Context) {
 }
 
 func (r *Runner) doForProject(ctx context.Context, project models.Project) {
-	devices, err := r.devices.ListDevices(ctx, project.ID, "")
-	if err != nil {
-		log.WithError(err).Error("list devices")
-		return
-	}
-
 	// Get metric configs
 	projectMetricsConfig, err := r.metricConfigs.GetProjectMetricsConfig(ctx, project.ID)
 	if err != nil {
@@ -86,12 +80,16 @@ func (r *Runner) doForProject(ctx context.Context, project models.Project) {
 	}
 
 	var req models.DatadogPostMetricsRequest
+
+	devices, err := r.devices.ListDevices(ctx, project.ID, "")
+	if err != nil {
+		log.WithError(err).Error("list devices")
+		return
+	}
 	for _, device := range devices {
 		projectMetrics := r.getProjectMetrics(&project, &device)
-		filteredProjectMetrics := processing.ProcessProjectMetrics(false, projectMetrics, projectMetricsConfig.ExposedMetrics, &project, &device)
-		if len(filteredProjectMetrics) != 0 {
-			req.Series = append(req.Series, filteredProjectMetrics...)
-		}
+		filteredProjectMetrics := processing.ProcessProjectMetrics(projectMetrics, projectMetricsConfig.ExposedMetrics, &project, &device)
+		req.Series = append(req.Series, filteredProjectMetrics...)
 	}
 
 	if len(req.Series) == 0 {

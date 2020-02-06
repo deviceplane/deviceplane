@@ -45,7 +45,6 @@ func (s *Service) forwardServiceMetrics(w http.ResponseWriter, r *http.Request, 
 					"",
 					"",
 				)(
-					true,
 					series,
 					config.ExposedMetrics,
 					&project,
@@ -92,7 +91,6 @@ func (s *Service) forwardDeviceMetrics(w http.ResponseWriter, r *http.Request, p
 
 		var forwardedMetricsRequest models.DatadogPostMetricsRequest
 		forwardedMetricsRequest.Series = processing.ProcessDeviceMetrics(
-			true,
 			metricsRequest.Series,
 			deviceMetricsConfig.ExposedMetrics,
 			&project,
