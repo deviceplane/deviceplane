@@ -42,7 +42,7 @@ const CreateRegistrationToken = ({
       navigation.navigate(`/${params.project}/provisioning`);
     } catch (error) {
       setBackendError(
-        utils.parseError(error, 'Registration Token creation failed.')
+        utils.parseError(error, 'Registration token creation failed.')
       );
       console.error(error);
     }

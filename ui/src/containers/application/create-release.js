@@ -41,7 +41,7 @@ const CreateRelease = ({
         `/${params.project}/applications/${application.name}`
       );
     } catch (error) {
-      setBackendError(utils.parseError(error, 'Release was not created.'));
+      setBackendError(utils.parseError(error, 'Release creation failed.'));
       console.error(error);
     }
   };
