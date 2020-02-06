@@ -37,14 +37,12 @@ const Integrations = ({
       if (!project.datadogApiKey) {
         navigation.navigate(`/${params.project}/monitoring/project`);
       } else {
-        toaster.success('Integrations successfully updated.');
+        toaster.success('Integrations updated.');
       }
       navigation.refresh();
     } catch (error) {
-      const message = utils.parseError(error);
-      setBackendError(message);
-      toaster.danger('Integrations not successfully updated.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Integrations update failed.'));
+      console.error(error);
     }
   };
 

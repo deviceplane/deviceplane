@@ -48,12 +48,11 @@ const ProjectSettings = ({
     try {
       storage.set('enableSSHKeys', data.enableSSHKeys, project.name);
       await api.updateProject({ projectId: project.name, data });
-      toaster.success('Project updated successfully.');
+      toaster.success('Project updated.');
       navigation.navigate(`/${data.name}`);
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Project was not updated.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Project update failed.'));
+      console.error(error);
     }
   };
 
@@ -62,12 +61,11 @@ const ProjectSettings = ({
     setBackendError(null);
     try {
       await api.deleteProject({ projectId: project.name });
-      toaster.success('Project deleted successfully.');
+      toaster.success('Project deleted.');
       navigation.navigate(`/projects`);
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Project was not deleted.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Project deletion failed.'));
+      console.error(error);
     }
     setShowDeletePopup(false);
   };

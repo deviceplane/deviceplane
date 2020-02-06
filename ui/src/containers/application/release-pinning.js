@@ -15,6 +15,7 @@ import Table from '../../components/table';
 import DeviceStatus from '../../components/device-status';
 import Popup from '../../components/popup';
 import Field from '../../components/field';
+import Alert from '../../components/alert';
 import {
   Column,
   Row,
@@ -148,9 +149,8 @@ const ReleasePinning = ({
       });
       setScheduledDevices(data);
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Preview was not successful.');
-      console.log(error);
+      toaster.danger('Preview failed to load.');
+      console.error(error);
     }
   };
 
@@ -166,11 +166,10 @@ const ReleasePinning = ({
         },
       });
 
-      toaster.success('Release pinning successful.');
+      toaster.success('Releases pinned.');
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Release pinning was not successful.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Release pinning failed.'));
+      console.error(error);
     }
   };
 
@@ -200,6 +199,7 @@ const ReleasePinning = ({
           },
         ]}
       >
+        <Alert show={backendError} variant="error" description={backendError} />
         <Form
           onSubmit={e => {
             setBackendError(null);

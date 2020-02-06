@@ -29,11 +29,13 @@ const PasswordReset = () => {
         'Password recovery email sent. Please check your email to reset your password.'
       );
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger(
-        'There was an error with your e-mail. Please contact us at info@deviceplane.com.'
+      setBackendError(
+        utils.parseError(
+          error,
+          'There was an error with your e-mail. Please contact us at support@deviceplane.com.'
+        )
       );
-      console.log(error);
+      console.error(error);
     }
   };
 

@@ -27,11 +27,10 @@ const ProjectCreate = () => {
     try {
       await api.createProject(data);
       navigation.navigate(`/${data.name}`);
-      toaster.success('Project was created.');
+      toaster.success('Project created.');
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Project was not created.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Project creation failed.'));
+      console.error(error);
     }
   };
 

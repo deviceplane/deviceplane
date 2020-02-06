@@ -41,13 +41,14 @@ const ServiceMetricsSettings = ({
           },
         },
       });
-      toaster.success('Service metrics settings updated successfully.');
+      toaster.success('Service metrics settings updated.');
       close();
       navigation.refresh();
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Service metrics settings were not updated.');
-      console.log(error);
+      setBackendError(
+        utils.parseError(error, 'Service metrics settings update failed.')
+      );
+      console.error(error);
     }
   };
 

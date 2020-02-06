@@ -100,11 +100,11 @@ const Project = ({
         })),
       });
       setEditRow(null);
-      toaster.success('Metric successfully updated.');
+      toaster.success('Metric updated.');
       navigation.refresh();
     } catch (error) {
-      toaster.danger('Metric was not updated.');
-      console.log(error);
+      toaster.danger('Metric update failed.');
+      console.error(error);
     }
   };
 

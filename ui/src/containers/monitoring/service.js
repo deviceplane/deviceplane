@@ -107,12 +107,12 @@ const Service = ({
           return m;
         }),
       });
-      toaster.success('Metric successfully updated.');
+      toaster.success('Metric updated.');
       setEditRow(null);
       navigation.refresh();
     } catch (error) {
-      toaster.danger('Metric was not updated.');
-      console.log(error);
+      toaster.danger('Metric update failed.');
+      console.error(error);
     }
   };
 
@@ -145,11 +145,11 @@ const Service = ({
           return m;
         }),
       });
-      toaster.success('Metric successfully deleted.');
+      toaster.success('Metric deleted.');
       navigation.refresh();
-    } catch (e) {
-      console.log(e);
-      toaster.danger('Metric was not deleted.');
+    } catch (error) {
+      toaster.danger('Metric deletion failed.');
+      console.error(error);
     }
   };
 
@@ -313,8 +313,6 @@ const Service = ({
       metricEndpointConfigs = app.metricEndpointConfigs;
     }
   }
-
-  console.log(selection);
 
   return (
     <>

@@ -41,12 +41,11 @@ const Profile = ({ close }) => {
     try {
       await api.updateUser(data);
       setCurrentUser({ ...currentUser, ...data });
-      toaster.success('Profile updated successfully.');
+      toaster.success('Profile updated.');
       close();
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Profile was not updated.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Profile update failed.'));
+      console.error(error);
     }
   };
 

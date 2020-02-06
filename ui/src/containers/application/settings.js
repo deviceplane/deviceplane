@@ -40,12 +40,11 @@ const ApplicationSettings = ({
         applicationId: application.id,
         data,
       });
-      toaster.success('Application updated successfully.');
+      toaster.success('Application updated.');
       navigation.navigate(`/${params.project}/applications/${data.name}`);
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Application was not updated.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Application update failed.'));
+      console.error(error);
     }
   };
 
@@ -56,12 +55,11 @@ const ApplicationSettings = ({
         projectId: params.project,
         applicationId: application.name,
       });
-      toaster.success('Successfully deleted application.');
+      toaster.success('Application deleted.');
       navigation.navigate(`/${params.project}/applications`);
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Application was not deleted.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Application deletion failed.'));
+      console.error(error);
     }
     setShowDeletePopup(false);
   };

@@ -2,22 +2,20 @@ const uuidv4 = require('uuid/v4');
 
 const capitalize = message => message.replace(/^\w/, c => c.toUpperCase());
 
-const randomClassName = () => {
-  return (
-    'rcn_' +
-    uuidv4()
-      .replace(/-/g, '')
-      .substring(0, 10)
-  );
-};
+const randomClassName = () =>
+  'rcn_' +
+  uuidv4()
+    .replace(/-/g, '')
+    .substring(0, 10);
 
-const deepClone = object => {
-  return JSON.parse(JSON.stringify(object));
-};
+const deepClone = object => JSON.parse(JSON.stringify(object));
 
 const deepEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
-const parseError = error => {
+const parseError = (
+  error,
+  placeholder = 'Something went wrong. Please contact us at support@deviceplane.com.'
+) => {
   if (
     error &&
     typeof error === 'object' &&
@@ -28,8 +26,7 @@ const parseError = error => {
   ) {
     return capitalize(error.response.data);
   }
-
-  return null;
+  return placeholder;
 };
 
 export default {

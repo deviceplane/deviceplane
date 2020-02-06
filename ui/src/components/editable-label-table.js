@@ -191,7 +191,7 @@ const EditableLabelTable = ({ data, onAdd, onRemove }) => {
       );
     } catch (error) {
       toaster.danger('Label was not saved.');
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -203,7 +203,7 @@ const EditableLabelTable = ({ data, onAdd, onRemove }) => {
       );
     } catch (error) {
       toaster.danger('Label was not removed.');
-      console.log(error);
+      console.error(error);
     }
     setLabelToRemove(null);
   };

@@ -49,11 +49,12 @@ const RegistrationTokenSettings = ({
         },
       });
       navigation.navigate(`/${params.project}/provisioning`);
-      toaster.success('Registration Token updated successfully.');
+      toaster.success('Registration token updated.');
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Registration Token was not updated.');
-      console.log(error);
+      setBackendError(
+        utils.parseError(error, 'Registration token update failed.')
+      );
+      console.error(error);
     }
   };
 
@@ -64,12 +65,13 @@ const RegistrationTokenSettings = ({
         projectId: params.project,
         tokenId: registrationToken.id,
       });
-      toaster.success('Registration Token deleted successfully.');
+      toaster.success('Registration token deleted.');
       navigation.navigate(`/${params.project}/provisioning`);
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Registration Token was not deleted.');
-      console.log(error);
+      setBackendError(
+        utils.parseError(error, 'Registration token deletion failed.')
+      );
+      console.error(error);
     }
     setShowDeletePopup(false);
   };
