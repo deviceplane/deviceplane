@@ -26,7 +26,7 @@ const RegistrationToken = ({ route }) => {
         <Tabs
           content={tabs.map(({ to, title }) => ({
             title,
-            href: `/${route.data.params.project}/provisioning/registration-tokens/${route.data.registrationToken.name}/${to}`,
+            href: `/${route.data.params.project}/provisioning/registration-tokens/${route.data.params.token}/${to}`,
           }))}
         />
       }

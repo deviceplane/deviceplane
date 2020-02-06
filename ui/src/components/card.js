@@ -13,6 +13,7 @@ const Container = styled(Column)`
   transition: all 250ms;
   width: 100%;
   flex-shrink: 0;
+  max-height: 100%;
 
   ${variant({
     variants: {
@@ -64,7 +65,12 @@ const Card = ({
       {...props}
     >
       {title && (
-        <Column marginBottom={6} borderColor="white" flexShrink={0}>
+        <Column
+          marginBottom={6}
+          borderColor="white"
+          flexShrink={0}
+          marginTop={-4}
+        >
           {logo && (
             <Link
               href="https://deviceplane.com"

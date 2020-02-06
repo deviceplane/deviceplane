@@ -194,7 +194,6 @@ const Service = ({
           },
         ]}
         disabled={!(selection && selection.service)}
-        maxHeight="100%"
       >
         <Row marginBottom={3}>
           <Button

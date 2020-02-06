@@ -1,15 +1,22 @@
 import React, { useMemo } from 'react';
 import { useTable, useSortBy } from 'react-table';
 
+import { useRequest, endpoints } from '../../api';
 import Card from '../../components/card';
 import Table from '../../components/table';
 import { Text } from '../../components/core';
 
 const Members = ({
   route: {
-    data: { params, members },
+    data: { params },
   },
 }) => {
+  const { data: members } = useRequest(
+    endpoints.memberships({
+      projectId: params.project,
+    })
+  );
+  const tableData = useMemo(() => members, [members]);
   const columns = useMemo(
     () => [
       { Header: 'Email', accessor: 'user.email' },
@@ -28,7 +35,6 @@ const Members = ({
     ],
     []
   );
-  const tableData = useMemo(() => members, [members]);
 
   const tableProps = useTable(
     {
@@ -43,7 +49,6 @@ const Members = ({
       title="Members"
       size="xlarge"
       actions={[{ href: 'add', title: 'Add member' }]}
-      maxHeight="100%"
     >
       <Table
         {...tableProps}

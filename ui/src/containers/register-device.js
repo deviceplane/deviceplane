@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 
+import { useRequest, endpoints } from '../api';
 import config from '../config';
 import Layout from '../components/layout';
 import Card from '../components/card';
@@ -29,17 +30,23 @@ const getCommand = ({ id, projectId }) =>
 
 const AddDevice = ({
   route: {
-    data: { params, registrationTokens },
+    data: { params },
   },
 }) => {
-  const selectOptions = useMemo(
-    () =>
-      registrationTokens.map(token => ({
-        label: token.name,
-        value: JSON.stringify(token),
-      })),
-    []
+  const { data: registrationTokens } = useRequest(
+    endpoints.registrationTokens({
+      projectId: params.project,
+    }),
+    {
+      suspense: true,
+    }
   );
+
+  const selectOptions = registrationTokens.map(token => ({
+    label: token.name,
+    value: JSON.stringify(token),
+  }));
+
   const [selectValue, setSelectValue] = useState(() => {
     const defaultToken = registrationTokens.find(
       ({ name }) => name === 'default'
@@ -55,7 +62,7 @@ const AddDevice = ({
   return (
     <Layout alignItems="center">
       <Card title="Register Device" size="large">
-        {registrationTokens && registrationTokens.length > 0 ? (
+        {registrationTokens.length > 0 ? (
           <>
             <Group>
               <Label>Registration Token</Label>

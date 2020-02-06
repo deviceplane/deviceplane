@@ -3,12 +3,12 @@ import { useForm } from 'react-hook-form';
 import { useNavigation } from 'react-navi';
 import * as yup from 'yup';
 
-import api from '../../api';
+import api, { useRequest, endpoints } from '../../api';
 import utils from '../../utils';
 import Card from '../../components/card';
 import Field from '../../components/field';
 import Alert from '../../components/alert';
-import { Form, Row, Button, toaster } from '../../components/core';
+import { Form, Row, Button } from '../../components/core';
 
 const validationSchema = yup.object().shape({
   rawConfig: yup.string().required(),
@@ -16,9 +16,18 @@ const validationSchema = yup.object().shape({
 
 const CreateRelease = ({
   route: {
-    data: { params, application },
+    data: { params },
   },
 }) => {
+  const { data: application } = useRequest(
+    endpoints.application({
+      projectId: params.project,
+      applicationId: params.application,
+    }),
+    {
+      suspense: true,
+    }
+  );
   const { control, handleSubmit, errors } = useForm({
     validationSchema,
     defaultValues: {

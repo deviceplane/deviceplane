@@ -38,7 +38,7 @@ const Application = ({ route }) => {
         <Tabs
           content={tabs.map(({ to, title }) => ({
             title,
-            href: `/${route.data.params.project}/applications/${route.data.application.name}/${to}`,
+            href: `/${route.data.params.project}/applications/${route.data.params.application}/${to}`,
           }))}
         />
       }

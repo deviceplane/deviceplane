@@ -1,15 +1,25 @@
 import React from 'react';
 
-import api from '../../api';
-import { Column, Label, Group, Value } from '../../components/core';
+import api, { useRequest, endpoints } from '../../api';
+import { Label, Group, Value } from '../../components/core';
 import Card from '../../components/card';
 import EditableLabelTable from '../../components/editable-label-table';
 
 const RegistrationTokenOverview = ({
   route: {
-    data: { params, registrationToken },
+    data: { params },
   },
 }) => {
+  const { data: registrationToken } = useRequest(
+    endpoints.registrationToken({
+      projectId: params.project,
+      tokenId: params.token,
+    }),
+    {
+      suspense: true,
+    }
+  );
+
   return (
     <>
       <Card

@@ -1,15 +1,20 @@
 import React, { useMemo } from 'react';
 import { useTable, useSortBy } from 'react-table';
 
+import { useRequest, endpoints } from '../../api';
 import Card from '../../components/card';
 import Table from '../../components/table';
 import { Text } from '../../components/core';
 
 const ServiceAccounts = ({
   route: {
-    data: { params, serviceAccounts },
+    data: { params },
   },
 }) => {
+  const { data: serviceAccounts } = useRequest(
+    endpoints.serviceAccounts({ projectId: params.project })
+  );
+  const tableData = useMemo(() => serviceAccounts, [serviceAccounts]);
   const columns = useMemo(
     () => [
       { Header: 'Name', accessor: 'name' },
@@ -24,7 +29,6 @@ const ServiceAccounts = ({
     ],
     []
   );
-  const tableData = useMemo(() => serviceAccounts, [serviceAccounts]);
 
   const tableProps = useTable(
     {
@@ -38,7 +42,6 @@ const ServiceAccounts = ({
     <Card
       title="Service Accounts"
       size="xlarge"
-      maxHeight="100%"
       actions={[
         {
           href: `create`,

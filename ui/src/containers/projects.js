@@ -1,16 +1,20 @@
 import React, { useMemo } from 'react';
 import { useTable, useSortBy } from 'react-table';
 
+import { useRequest, endpoints } from '../api';
 import Layout from '../components/layout';
 import Card from '../components/card';
 import Table from '../components/table';
 import { Text } from '../components/core';
 
-const Projects = ({
-  route: {
-    data: { projects },
-  },
-}) => {
+const Projects = () => {
+  const { data } = useRequest(endpoints.projects());
+
+  const tableData = useMemo(
+    () => (data ? data.map(({ project }) => project) : data),
+    [data]
+  );
+
   const columns = useMemo(
     () => [
       {
@@ -32,7 +36,6 @@ const Projects = ({
     ],
     []
   );
-  const tableData = useMemo(() => projects, [projects]);
 
   const tableProps = useTable(
     {
@@ -47,7 +50,6 @@ const Projects = ({
       <Card
         title="Projects"
         size="xlarge"
-        maxHeight="100%"
         actions={[
           {
             href: '/projects/create',

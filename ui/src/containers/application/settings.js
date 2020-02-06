@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigation } from 'react-navi';
 import * as yup from 'yup';
 
-import api from '../../api';
+import api, { useRequest, endpoints } from '../../api';
 import utils from '../../utils';
 import validators from '../../validators';
 import Card from '../../components/card';
@@ -19,9 +19,18 @@ const validationSchema = yup.object().shape({
 
 const ApplicationSettings = ({
   route: {
-    data: { params, application },
+    data: { params },
   },
 }) => {
+  const { data: application } = useRequest(
+    endpoints.application({
+      projectId: params.project,
+      applicationId: params.application,
+    }),
+    {
+      suspense: true,
+    }
+  );
   const { register, handleSubmit, errors, formState } = useForm({
     validationSchema,
     defaultValues: {

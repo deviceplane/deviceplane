@@ -1,16 +1,14 @@
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import React from 'react';
 import { useNavigation } from 'react-navi';
 import * as yup from 'yup';
 
-import api from '../api';
-import utils from '../utils';
+import { endpoints } from '../api';
+import segment from '../lib/segment';
 import validators from '../validators';
 import Layout from '../components/layout';
 import Card from '../components/card';
 import Field from '../components/field';
-import Alert from '../components/alert';
-import { Row, Button, Form, toaster } from '../components/core';
+import { Form, toaster } from '../components/core';
 
 const validationSchema = yup.object().shape({
   name: validators.name.required(),
@@ -26,72 +24,38 @@ const CreateRegistrationToken = ({
     data: { params },
   },
 }) => {
-  const { register, handleSubmit, errors } = useForm({
-    validationSchema,
-  });
   const navigation = useNavigation();
-  const [backendError, setBackendError] = useState();
-
-  const submit = async data => {
-    try {
-      await api.createRegistrationToken({
-        projectId: params.project,
-        data,
-      });
-      toaster.success('Registration token created.');
-      navigation.navigate(`/${params.project}/provisioning`);
-    } catch (error) {
-      setBackendError(
-        utils.parseError(error, 'Registration token creation failed.')
-      );
-      console.error(error);
-    }
-  };
-
   return (
     <Layout alignItems="center">
       <Card title="Create Registration Token" size="large">
-        <Alert show={backendError} variant="error" description={backendError} />
         <Form
-          onSubmit={e => {
-            setBackendError(null);
-            handleSubmit(submit)(e);
+          endpoint={endpoints.createRegistrationToken({
+            projectId: params.project,
+          })}
+          onData={data => ({
+            ...data,
+            maxRegistrations: Number.parseInt(data.maxRegistrations),
+          })}
+          onSuccess={() => {
+            navigation.navigate(`/${params.project}/provisioning`);
+            toaster.success('Registration token created.');
+            segment.track('Registration Token Created');
           }}
+          onCancel={`/${params.project}/provisioning`}
+          errorMessages={{ default: 'Registration token creation failed.' }}
+          submitLabel="Create"
+          validationSchema={validationSchema}
         >
-          <Field
-            required
-            autoFocus
-            label="Name"
-            name="name"
-            ref={register}
-            errors={errors.name}
-          />
-          <Field
-            label="Description"
-            type="textarea"
-            name="description"
-            ref={register}
-            errors={errors.description}
-          />
+          <Field required autoFocus label="Name" name="name" />
+          <Field label="Description" type="textarea" name="description" />
           <Field
             type="number"
             label="Maximum Device Registrations"
             name="maxRegistrations"
             description="Limits the number of devices that can be registered using this token."
             hint="Leave empty to allow unlimited registrations."
-            errors={errors.maxRegistrations}
-            ref={register}
           />
-          <Button marginTop={3} title="Create" type="submit" />
         </Form>
-
-        <Row marginTop={4}>
-          <Button
-            title="Cancel"
-            variant="text"
-            href={`/${params.project}/provisioning`}
-          />
-        </Row>
       </Card>
     </Layout>
   );

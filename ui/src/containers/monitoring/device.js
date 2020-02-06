@@ -113,7 +113,6 @@ const Device = ({
             onClick: () => setShowMetricsForm(true),
           },
         ]}
-        maxHeight="100%"
       >
         <Row marginBottom={3}>
           <Button

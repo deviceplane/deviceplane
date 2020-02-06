@@ -33,12 +33,12 @@ const ProjectSelector = ({}) => {
   const [projects, setProjects] = useState([]);
 
   const loadProjects = async () => {
-    try {
-      const data = await api.projects();
-      setProjects(data);
-    } catch (error) {
-      console.error(error);
-    }
+    // try {
+    //   const data = await api.projects();
+    //   setProjects(data);
+    // } catch (error) {
+    //   console.error(error);
+    // }
   };
 
   useEffect(() => {

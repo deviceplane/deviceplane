@@ -1,7 +1,12 @@
+import { useState } from 'react';
 import axios from 'axios';
+import fetch from 'unfetch';
+import useSWR, { trigger } from 'swr';
 
 import segment from './lib/segment';
 import config from './config';
+import utils from './utils';
+import { toaster } from './components/core/toast';
 
 axios.defaults.withCredentials = true;
 
@@ -12,13 +17,136 @@ const del = (path, ...rest) => axios.delete(url(path), ...rest);
 const put = (path, ...rest) => axios.put(url(path), ...rest);
 const patch = (path, ...rest) => axios.patch(url(path), ...rest);
 
-const api = {
-  login: ({ email, password }) => post('login', { email, password }),
+const responseHandler = async response => {
+  let json, text;
 
-  logout: () =>
-    post('logout').then(() => {
-      segment.reset();
-    }),
+  try {
+    json = await response.json();
+  } catch {}
+
+  if (!json) {
+    try {
+      text = await response.text();
+    } catch {}
+  }
+
+  if (response.status >= 400) {
+    if (response.status >= 500) {
+      toaster.danger('This service is currently down, please try again later.');
+    }
+    return {
+      error: json || utils.capitalize(text) || 'Default error',
+    };
+  }
+
+  return {
+    data: json || text,
+    success: true,
+    headers: response.headers,
+  };
+};
+
+export const useRequest = (endpoint, config = {}) => {
+  const { data: response, error } = useSWR(
+    endpoint,
+    async () => {
+      const res = await fetch(endpoint);
+      const resp = await responseHandler(res);
+      return resp;
+    },
+    config
+  );
+
+  return {
+    data: response && response.data,
+    headers: response && response.headers,
+    error,
+  };
+};
+
+export const useMutation = (endpoint, config = {}) => {
+  const [result, setResult] = useState({});
+
+  const mutate = async (body = {}) => {
+    const res = await fetch(endpoint, {
+      method: 'POST' || config.method,
+      headers:
+        {
+          'Content-Type': 'application/json',
+        } || config.headers,
+      body: JSON.stringify(body),
+    });
+    console.log('response', res);
+    const result = await responseHandler(res);
+    setResult(result);
+    if (config.triggers) {
+      config.triggers.forEach(key => trigger(key));
+    }
+  };
+
+  console.log(result);
+
+  return [mutate, result];
+};
+
+export const endpoints = {
+  login: () => url('login'),
+
+  user: () => url('me'),
+
+  projects: () => url(`memberships?full`),
+
+  project: ({ projectId }) => url(`projects/${projectId}`),
+
+  createProject: () => url(`projects`),
+
+  applications: ({ projectId }) =>
+    url(`projects/${projectId}/applications?full`),
+
+  application: ({ projectId, applicationId }) =>
+    url(`projects/${projectId}/applications/${applicationId}?full`),
+
+  releases: ({ projectId, applicationId }) =>
+    url(`projects/${projectId}/applications/${applicationId}/releases?full`),
+
+  release: ({ projectId, applicationId, releaseId }) =>
+    url(
+      `projects/${projectId}/applications/${applicationId}/releases/${releaseId}?full`
+    ),
+
+  memberships: ({ projectId }) => url(`projects/${projectId}/memberships?full`),
+
+  membership: ({ projectId, userId }) =>
+    url(`projects/${projectId}/memberships/${userId}?full`),
+
+  roles: ({ projectId }) => url(`projects/${projectId}/roles`),
+
+  role: ({ projectId, roleId }) => url(`projects/${projectId}/roles/${roleId}`),
+
+  serviceAccounts: ({ projectId }) =>
+    url(`projects/${projectId}/serviceaccounts?full`),
+
+  serviceAccount: ({ projectId, serviceId }) =>
+    url(`projects/${projectId}/serviceaccounts/${serviceId}?full`),
+
+  devices: ({ projectId, queryString }) =>
+    url(`projects/${projectId}/devices${queryString}`),
+
+  device: ({ projectId, deviceId }) =>
+    url(`projects/${projectId}/devices/${deviceId}?full`),
+
+  registrationTokens: ({ projectId }) =>
+    url(`projects/${projectId}/deviceregistrationtokens?full`),
+
+  registrationToken: ({ projectId, tokenId }) =>
+    url(`projects/${projectId}/deviceregistrationtokens/${tokenId}?full`),
+
+  createRegistrationToken: ({ projectId }) =>
+    url(`projects/${projectId}/deviceregistrationtokens`),
+};
+
+const api = {
+  logout: () => post('logout'),
 
   signup: ({ email, password, firstName, lastName }) =>
     post(`register`, {
@@ -48,18 +176,6 @@ const api = {
 
   project: ({ projectId }) => get(`projects/${projectId}`),
 
-  projects: () =>
-    get(`memberships?full`).then(({ data }) =>
-      data.map(({ project }) => project)
-    ),
-
-  createProject: data =>
-    post(`projects`, data).then(response => {
-      segment.track('Project Created');
-
-      return response;
-    }),
-
   updateProject: ({ projectId, data }) => put(`projects/${projectId}`, data),
 
   deleteProject: ({ projectId }) => del(`projects/${projectId}`),
@@ -75,9 +191,6 @@ const api = {
         btoa(JSON.stringify(schedulingRule))
       )}`
     ),
-
-  device: ({ projectId, deviceId }) =>
-    get(`projects/${projectId}/devices/${deviceId}?full`),
 
   updateDevice: ({ projectId, deviceId, data: { name } }) =>
     patch(`projects/${projectId}/devices/${deviceId}`, { name }),
@@ -115,26 +228,6 @@ const api = {
 
   defaultRegistrationToken: ({ projectId }) =>
     get(`projects/${projectId}/deviceregistrationtokens/default`),
-
-  registrationToken: ({ projectId, tokenId }) =>
-    get(`projects/${projectId}/deviceregistrationtokens/${tokenId}?full`),
-
-  registrationTokens: ({ projectId }) =>
-    get(`projects/${projectId}/deviceregistrationtokens?full`),
-
-  createRegistrationToken: ({
-    projectId,
-    data: { name, description, maxRegistrations },
-  }) =>
-    post(`projects/${projectId}/deviceregistrationtokens`, {
-      name,
-      description,
-      maxRegistrations: Number.parseInt(maxRegistrations),
-    }).then(response => {
-      segment.track('Registration Token Created');
-
-      return response;
-    }),
 
   updateRegistrationToken: ({
     projectId,
@@ -196,10 +289,6 @@ const api = {
   deleteApplication: ({ projectId, applicationId }) =>
     del(`projects/${projectId}/applications/${applicationId}`),
 
-  roles: ({ projectId }) => get(`projects/${projectId}/roles`),
-
-  role: ({ projectId, roleId }) => get(`projects/${projectId}/roles/${roleId}`),
-
   createRole: ({ projectId, data: { name, description, config } }) =>
     post(`projects/${projectId}/roles`, { name, description, config }).then(
       response => {
@@ -214,11 +303,6 @@ const api = {
 
   deleteRole: ({ projectId, roleId }) =>
     del(`projects/${projectId}/roles/${roleId}`),
-
-  memberships: ({ projectId }) => get(`projects/${projectId}/memberships?full`),
-
-  membership: ({ projectId, userId }) =>
-    get(`projects/${projectId}/memberships/${userId}?full`),
 
   addMember: ({ projectId, data: { email } }) =>
     post(`projects/${projectId}/memberships`, { email }).then(response => {
@@ -239,12 +323,6 @@ const api = {
     del(
       `projects/${projectId}/memberships/${userId}/roles/${roleId}/membershiprolebindings`
     ),
-
-  serviceAccounts: ({ projectId }) =>
-    get(`projects/${projectId}/serviceaccounts?full`),
-
-  serviceAccount: ({ projectId, serviceId }) =>
-    get(`projects/${projectId}/serviceaccounts/${serviceId}?full`),
 
   createServiceAccount: ({ projectId, data }) =>
     post(`projects/${projectId}/serviceaccounts`, data).then(response => {
@@ -290,14 +368,6 @@ const api = {
   deleteServiceAccountAccessKey: ({ projectId, serviceId, accessKeyId }) =>
     del(
       `projects/${projectId}/serviceaccounts/${serviceId}/serviceaccountaccesskeys/${accessKeyId}`
-    ),
-
-  releases: ({ projectId, applicationId }) =>
-    get(`projects/${projectId}/applications/${applicationId}/releases?full`),
-
-  release: ({ projectId, applicationId, releaseId }) =>
-    get(
-      `projects/${projectId}/applications/${applicationId}/releases/${releaseId}?full`
     ),
 
   createRelease: ({ projectId, applicationId, data: { rawConfig } }) =>

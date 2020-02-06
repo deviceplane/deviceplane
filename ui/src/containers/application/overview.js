@@ -1,9 +1,10 @@
 import React from 'react';
 
+import { useRequest, endpoints } from '../../api';
 import theme from '../../theme';
 import Editor from '../../components/editor';
 import Card from '../../components/card';
-import { Row, Group, Link, Label, Value, Text } from '../../components/core';
+import { Row, Group, Link, Label, Value } from '../../components/core';
 import { DevicesFilterButtons } from '../../components/devices-filter-buttons';
 
 const getSchedulingRule = schedulingRule => {
@@ -36,12 +37,20 @@ const getSchedulingRule = schedulingRule => {
 
 const ApplicationOverview = ({
   route: {
-    data: {
-      params,
-      application: { description, latestRelease, name, schedulingRule },
-    },
+    data: { params },
   },
 }) => {
+  const { data: application } = useRequest(
+    endpoints.application({
+      projectId: params.project,
+      applicationId: params.application,
+    }),
+    {
+      suspense: true,
+    }
+  );
+  const { description, latestRelease, name, schedulingRule } = application;
+
   return (
     <Card title={name} subtitle={description} size="xlarge">
       <Group>

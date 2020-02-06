@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 
 import { Row, Column } from './core';
 import Header from './header';
 import Sidebar from './sidebar';
+import Spinner from './spinner';
 
 const Layout = ({ children, header, ...rest }) => (
   <Row
@@ -22,7 +23,7 @@ const Layout = ({ children, header, ...rest }) => (
         padding={5}
         {...rest}
       >
-        {children}
+        <Suspense fallback={<Spinner />}>{children}</Suspense>
       </Column>
     </Column>
   </Row>

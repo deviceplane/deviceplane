@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import styled from 'styled-components';
 import { variant } from 'styled-system';
 import { useLinkProps } from 'react-navi';
@@ -186,7 +186,7 @@ export const LinkButton = styled(Btn).attrs({
   text-decoration: none;
 `;
 
-const Button = ({ href, title, onClick, newTab, ...rest }) => {
+const Button = forwardRef(({ href, title, onClick, ...rest }, ref) => {
   if (href) {
     return (
       <LinkButton
@@ -201,11 +201,11 @@ const Button = ({ href, title, onClick, newTab, ...rest }) => {
   }
 
   return (
-    <Btn onClick={onClick} {...rest}>
+    <Btn onClick={onClick} ref={ref} {...rest}>
       {title}
     </Btn>
   );
-};
+});
 
 Button.defaultProps = {
   href: null,

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigation } from 'react-navi';
 import * as yup from 'yup';
 
-import api from '../../api';
+import api, { useRequest, endpoints } from '../../api';
 import utils from '../../utils';
 import validators from '../../validators';
 import Card from '../../components/card';
@@ -27,15 +27,26 @@ const validationSchema = yup.object().shape({
 
 const DeviceSettings = ({
   route: {
-    data: { params, device },
+    data: { params },
   },
 }) => {
+  const { data: device } = useRequest(
+    endpoints.device({
+      projectId: params.project,
+      deviceId: params.device,
+    }),
+    {
+      suspense: true,
+    }
+  );
+
   const { register, handleSubmit, formState, errors } = useForm({
     validationSchema,
     defaultValues: {
       name: device.name,
     },
   });
+
   const navigation = useNavigation();
   const [backendError, setBackendError] = useState();
   const [showPopup, setShowPopup] = useState();
@@ -43,12 +54,12 @@ const DeviceSettings = ({
   const submit = async data => {
     try {
       await api.updateDevice({
-        projectId: params.project,
+        projectId,
         deviceId: device.id,
         data,
       });
       toaster.success('Device updated.');
-      navigation.navigate(`/${params.project}/devices/${data.name}`);
+      navigation.navigate(`/${projectId}/devices/${data.name}`);
     } catch (error) {
       setBackendError(utils.parseError(error, 'Device update failed.'));
       console.error(error);
@@ -59,11 +70,11 @@ const DeviceSettings = ({
     setBackendError(null);
     try {
       await api.deleteDevice({
-        projectId: params.project,
+        projectId,
         deviceId: device.id,
       });
       toaster.success('Device removed.');
-      navigation.navigate(`/${params.project}/devices`);
+      navigation.navigate(`/${projectId}/devices`);
     } catch (error) {
       setBackendError(utils.parseError(error, 'Device removal failed.'));
       console.error(error);

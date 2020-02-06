@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigation } from 'react-navi';
 import { useForm } from 'react-hook-form';
 
-import api from '../../api';
+import api, { useRequest, endpoints } from '../../api';
 import utils from '../../utils';
 import Card from '../../components/card';
 import Field from '../../components/field';
@@ -11,9 +11,13 @@ import { Label, Row, Form, Button, toaster } from '../../components/core';
 
 const AddMember = ({
   route: {
-    data: { params, roles },
+    data: { params },
   },
 }) => {
+  const { data: roles } = useRequest(
+    endpoints.roles({ projectId: params.project }),
+    { suspense: true }
+  );
   const navigation = useNavigation();
   const { register, handleSubmit, control } = useForm({
     defaultValues: {

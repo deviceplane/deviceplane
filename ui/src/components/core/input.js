@@ -10,7 +10,7 @@ import {
 } from 'styled-system';
 
 const Input = styled.input.attrs(props => ({
-  spellCheck: props.spellCheck || 'off',
+  spellCheck: props.spellCheck || 'false',
   autoCorrect: props.autoCorrect || 'off',
   autoComplete: props.autoComplete || 'off',
 }))`

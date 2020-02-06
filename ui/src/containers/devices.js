@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTable, useSortBy, useRowSelect } from 'react-table';
 import { useNavigation } from 'react-navi';
 
-import api from '../api';
+import { useRequest, endpoints } from '../api';
 import Layout from '../components/layout';
 import Card from '../components/card';
 import Table, { SelectColumn } from '../components/table';
@@ -27,8 +27,7 @@ const Params = {
 
 const Devices = ({ route }) => {
   const [showFilterDialog, setShowFilterDialog] = useState();
-  const [devices, setDevices] = useState(route.data.devices);
-  const [deviceTotal, setDeviceTotal] = useState();
+  const [queryString, setQueryString] = useState();
   const [filterQuery, setFilterQuery] = useState(
     storage.get('devicesFilter', route.data.params.project) || []
   );
@@ -39,12 +38,23 @@ const Devices = ({ route }) => {
   const [searchFocused, setSearchFocused] = useState();
   const navigation = useNavigation();
 
+  const { data: devices, headers } = useRequest(
+    endpoints.devices({
+      projectId: route.data.params.project,
+      queryString,
+    }),
+    {
+      refreshInterval: 3000,
+    }
+  );
+  const deviceTotal = headers && headers.get('total-device-count');
+
   useEffect(() => {
     parseQueryString();
   }, []);
 
   useEffect(() => {
-    queryDevices();
+    updateQueryString();
   }, [filterQuery, searchInput]);
 
   useEffect(() => {
@@ -134,7 +144,7 @@ const Devices = ({ route }) => {
     }
   };
 
-  const queryDevices = () => {
+  const updateQueryString = () => {
     const query = [];
 
     if (orderedColumn) {
@@ -155,7 +165,7 @@ const Devices = ({ route }) => {
       window.history.replaceState(null, null, window.location.pathname);
     }
 
-    fetchDevices(queryString);
+    setQueryString(queryString);
   };
 
   const removeFilter = index => {
@@ -296,7 +306,6 @@ const Devices = ({ route }) => {
             href: `/${route.data.params.project}/devices/register`,
           },
         ]}
-        maxHeight="100%"
       >
         {filterQuery.length > 0 && (
           <Row marginBottom={4}>

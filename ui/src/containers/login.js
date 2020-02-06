@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigation } from 'react-navi';
-import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 
-import api from '../api';
+import { endpoints, useRequest, useMutation } from '../api';
 import validators from '../validators';
 import Card from '../components/card';
 import Field from '../components/field';
-import Alert from '../components/alert';
 import { Column, Row, Form, Button } from '../components/core';
 
 const validationSchema = yup.object().shape({
@@ -20,28 +18,23 @@ const Login = ({
     data: { params, context },
   },
 }) => {
-  const { register, handleSubmit, errors } = useForm({
-    validationSchema,
+  const [login, { data: loggedIn, error }] = useMutation(endpoints.login(), {
+    errors: {
+      403: 'Email confirmation required',
+      default: 'Invalid credentials',
+    },
   });
+  const { data: user } = useRequest(loggedIn ? endpoints.user() : null);
   const navigation = useNavigation();
-  const [backendError, setBackendError] = useState();
 
-  const submit = async data => {
-    try {
-      await api.login(data);
-      const response = await api.user();
-      context.setCurrentUser(response.data);
+  useEffect(() => {
+    if (user) {
+      context.setCurrentUser(user);
       navigation.navigate(
         params.redirectTo ? decodeURIComponent(params.redirectTo) : '/projects'
       );
-    } catch (error) {
-      if (error.response && error.response.status === 403) {
-        setBackendError('Email confirmation required');
-      } else {
-        setBackendError('Invalid credentials');
-      }
     }
-  };
+  }, [user]);
 
   return (
     <Column
@@ -59,34 +52,21 @@ const Login = ({
         size="medium"
         actions={[{ href: '/signup', title: 'Sign up', variant: 'tertiary' }]}
       >
-        <Alert show={backendError} variant="error" description={backendError} />
         <Form
-          onSubmit={e => {
-            setBackendError(null);
-            handleSubmit(submit)(e);
-          }}
+          onSubmit={login}
+          validationSchema={validationSchema}
+          alert={error}
+          submitLabel="Login"
         >
           <Field
             required
             autoFocus
             autoComplete="on"
-            ref={register}
             name="email"
             type="email"
             label="Email address"
-            errors={errors.email}
           />
-
-          <Field
-            required
-            ref={register}
-            name="password"
-            type="password"
-            label="Password"
-            errors={errors.password}
-          />
-
-          <Button justifyContent="center" title="Log in" />
+          <Field required name="password" type="password" label="Password" />
         </Form>
         <Row marginTop={5}>
           <Button variant="text" href="/forgot" title="Forgot your password?" />

@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import styled from 'styled-components';
 import { useLinkProps } from 'react-navi';
 
 import { labelColor } from '../helpers/labels';
 import { DeviceLabelKey } from './device-label';
 import { Checkbox, Button, Row, Grid, Icon, Link } from './core';
+import Spinner from './spinner';
 
 export const SelectColumn = {
   id: 'select',
@@ -133,6 +134,7 @@ const Table = ({
   getTableProps,
   onRowClick,
   rowHref,
+  loading,
 }) => {
   const clickable = onRowClick || rowHref;
 
@@ -218,7 +220,8 @@ const Table = ({
           })}
         </TableBody>
       </StyledTable>
-      {rows.length === 0 && (
+      {loading && <Spinner />}
+      {!loading && rows.length === 0 && (
         <Row
           flex={1}
           justifyContent="center"

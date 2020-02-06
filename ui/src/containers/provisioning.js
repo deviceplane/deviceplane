@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import moment from 'moment';
 import { useTable, useSortBy } from 'react-table';
 
+import { useRequest, endpoints } from '../api';
 import { renderLabels } from '../helpers/labels';
 import Layout from '../components/layout';
 import Card from '../components/card';
@@ -10,9 +11,15 @@ import { Row, Text } from '../components/core';
 
 const Provisioning = ({
   route: {
-    data: { params, registrationTokens },
+    data: { params },
   },
 }) => {
+  const { data: registrationTokens } = useRequest(
+    endpoints.registrationTokens({ projectId: params.project })
+  );
+
+  const tableData = useMemo(() => registrationTokens, [registrationTokens]);
+
   const columns = useMemo(
     () => [
       { Header: 'Name', accessor: 'name', minWidth: '150px' },
@@ -54,7 +61,6 @@ const Provisioning = ({
     ],
     []
   );
-  const tableData = useMemo(() => registrationTokens, [registrationTokens]);
 
   const tableProps = useTable(
     {
@@ -69,7 +75,6 @@ const Provisioning = ({
       <Card
         title="Registration Tokens"
         size="full"
-        maxHeight="100%"
         actions={[
           {
             href: 'registration-tokens/create',

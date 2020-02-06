@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import moment from 'moment';
 import { useTable, useSortBy } from 'react-table';
 
+import { useRequest, endpoints } from '../api';
 import Layout from '../components/layout';
 import Card from '../components/card';
 import Table from '../components/table';
@@ -9,9 +10,13 @@ import { Column, Text } from '../components/core';
 
 const Applications = ({
   route: {
-    data: { params, applications },
+    data: { params },
   },
 }) => {
+  const { data: applications } = useRequest(
+    endpoints.applications({ projectId: params.project })
+  );
+
   const columns = useMemo(
     () => [
       { Header: 'Name', accessor: 'name' },
@@ -70,7 +75,6 @@ const Applications = ({
         title="Applications"
         size="xxlarge"
         actions={[{ title: 'Create Application', href: 'create' }]}
-        maxHeight="100%"
       >
         <Table
           {...tableProps}

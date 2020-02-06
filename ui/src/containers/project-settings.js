@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigation } from 'react-navi';
 import * as yup from 'yup';
 
-import api from '../api';
+import api, { useRequest, endpoints } from '../api';
 import utils from '../utils';
 import storage from '../storage';
 import validators from '../validators';
@@ -28,9 +28,16 @@ const validationSchema = yup.object().shape({
 
 const ProjectSettings = ({
   route: {
-    data: { params, project },
+    data: { params },
   },
 }) => {
+  const { data: project } = useRequest(
+    endpoints.project({ projectId: params.project }),
+    {
+      suspense: true,
+    }
+  );
+
   const { control, register, handleSubmit, errors, formState } = useForm({
     validationSchema,
     defaultValues: {
@@ -122,7 +129,7 @@ const ProjectSettings = ({
           <Card title="Delete Project" border size="large">
             <Text marginBottom={4}>
               This action <strong>cannot</strong> be undone. This will
-              permanently delete the <strong>{params.project}</strong> project.
+              permanently delete the <strong>{project.name}</strong> project.
               <p></p>Please enter the project name to confirm.
             </Text>
             <Form onSubmit={submitDelete}>

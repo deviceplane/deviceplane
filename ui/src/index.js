@@ -11,7 +11,7 @@ import api from './api';
 import theme from './theme';
 import Page from './components/page';
 import Spinner from './components/spinner';
-import { ToastManager } from './components/core';
+import { ToastManager, toaster } from './components/core';
 import { LoadIntercom, bootIntercom } from './lib/intercom';
 import segment, { LoadSegment } from './lib/segment';
 

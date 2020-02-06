@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import moment from 'moment';
 import { useNavigation } from 'react-navi';
 
-import api from '../../api';
+import api, { useRequest, endpoints } from '../../api';
 import utils from '../../utils';
 import Editor from '../../components/editor';
 import Card from '../../components/card';
@@ -42,9 +42,27 @@ const ReleasedBy = ({ project, release }) => {
 
 const Release = ({
   route: {
-    data: { params, release, application },
+    data: { params },
   },
 }) => {
+  const { data: application } = useRequest(
+    endpoints.application({
+      projectId: params.project,
+      applicationId: params.application,
+    }),
+    { suspense: true }
+  );
+  const { data: release } = useRequest(
+    endpoints.release({
+      projectId: params.project,
+      applicationId: params.application,
+      releaseId: params.release,
+    }),
+    {
+      suspense: true,
+    }
+  );
+
   const [backendError, setBackendError] = useState();
   const [showConfirmPopup, setShowConfirmPopup] = useState();
   const navigation = useNavigation();

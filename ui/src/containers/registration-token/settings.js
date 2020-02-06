@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigation } from 'react-navi';
 import * as yup from 'yup';
 
-import api from '../../api';
+import api, { useRequest, endpoints } from '../../api';
 import utils from '../../utils';
 import validators from '../../validators';
 import Card from '../../components/card';
@@ -23,9 +23,19 @@ const validationSchema = yup.object().shape({
 
 const RegistrationTokenSettings = ({
   route: {
-    data: { params, registrationToken },
+    data: { params },
   },
 }) => {
+  const { data: registrationToken } = useRequest(
+    endpoints.registrationToken({
+      projectId: params.project,
+      tokenId: params.token,
+    }),
+    {
+      suspense: true,
+    }
+  );
+
   const navigation = useNavigation();
   const { register, handleSubmit, formState, errors } = useForm({
     validationSchema,

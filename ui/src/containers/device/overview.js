@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useTable, useSortBy } from 'react-table';
 import parsePrometheusTextFormat from 'parse-prometheus-text-format';
 
-import api from '../../api';
+import api, { useRequest, endpoints } from '../../api';
 import {
   Column,
   Row,
@@ -321,9 +321,18 @@ const parseMetrics = data =>
 
 const DeviceOverview = ({
   route: {
-    data: { params, device },
+    data: { params },
   },
 }) => {
+  const { data: device } = useRequest(
+    endpoints.device({
+      projectId: params.project,
+      deviceId: params.device,
+    }),
+    {
+      suspense: true,
+    }
+  );
   const [hostMetrics, setHostMetrics] = useState();
 
   return (
