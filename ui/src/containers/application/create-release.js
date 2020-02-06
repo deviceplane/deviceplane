@@ -41,9 +41,8 @@ const CreateRelease = ({
         `/${params.project}/applications/${application.name}`
       );
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Release was not created.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Release was not created.'));
+      console.error(error);
     }
   };
 

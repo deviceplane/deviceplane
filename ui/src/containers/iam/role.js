@@ -42,12 +42,11 @@ const Role = ({
         roleId: role.id,
         data,
       });
-      toaster.success('Role was updated successfully.');
+      toaster.success('Role updated.');
       navigation.navigate(`/${params.project}/iam/roles`);
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Role was not updated.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Role update failed.'));
+      console.error(error);
     }
   };
 
@@ -55,12 +54,11 @@ const Role = ({
     setBackendError(null);
     try {
       await api.deleteRole({ projectId: params.project, roleId: role.id });
-      toaster.success('Successfully deleted role.');
+      toaster.success('Role deleted.');
       navigation.navigate(`/${params.project}/iam/roles`);
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Role was not deleted.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Role deletion failed.'));
+      console.error(error);
     }
     setShowDeletePopup(false);
   };

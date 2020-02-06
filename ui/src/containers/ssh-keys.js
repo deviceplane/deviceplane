@@ -84,7 +84,6 @@ const SSHKeys = () => {
   };
 
   const editSSHKey = (index, property, value) => {
-    console.log(index, property, value);
     setSSHKeys(keys =>
       keys.map((sshKey, i) =>
         i === index ? { ...sshKey, [property]: value } : sshKey
@@ -107,7 +106,7 @@ const SSHKeys = () => {
             : sshKey
         );
         storage.set('sshKeys', newSSHKeys);
-        toaster.success('SSH key was saved to the browser successfully.');
+        toaster.success('SSH key saved to the browser.');
         return newSSHKeys;
       } else {
         return sshKeys.map((sshKey, i) =>
@@ -125,10 +124,10 @@ const SSHKeys = () => {
   const deleteSSHKey = index => {
     try {
       setSSHKeys(sshKeys => sshKeys.filter((_, i) => i !== index));
-      toaster.success('SSH key was successfully deleted.');
+      toaster.success('SSH key deleted.');
     } catch (error) {
-      toaster.danger('SSH key was not deleted.');
-      console.log(error);
+      toaster.danger('SSH key deletion failed.');
+      console.error(error);
     }
   };
 

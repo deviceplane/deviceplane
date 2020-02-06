@@ -121,7 +121,7 @@ const Devices = ({ route }) => {
       setDeviceTotal(headers['total-device-count']);
       setDevices(data);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -203,7 +203,7 @@ const Devices = ({ route }) => {
 
               builtQuery.push(filter);
             } catch (e) {
-              console.log('Error parsing filters:', e);
+              console.error('Error parsing filters:', e);
             }
           }
           break;

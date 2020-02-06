@@ -39,11 +39,11 @@ const Member = ({
         projectId: params.project,
         userId: member.userId,
       });
-      toaster.success('Successfully removed member.');
+      toaster.success('Member removed.');
       navigation.navigate(`/${params.project}/iam/members`);
     } catch (error) {
       toaster.danger('Member was not removed.');
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -64,7 +64,7 @@ const Member = ({
           });
         } catch (e) {
           error = true;
-          console.log(e);
+          console.error(e);
         }
       } else if (!choseRole && hasRole) {
         try {
@@ -75,7 +75,7 @@ const Member = ({
           });
         } catch (e) {
           error = true;
-          console.log(e);
+          console.error(e);
         }
       }
     }
@@ -86,7 +86,7 @@ const Member = ({
       );
     } else {
       navigation.navigate(`/${params.project}/iam/members`);
-      toaster.success('Member updated successfully.');
+      toaster.success('Member updated.');
     }
   };
 

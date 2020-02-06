@@ -30,7 +30,7 @@ const App = () => {
       setCurrentUser(user);
       bootIntercom(user);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
     setLoaded(true);
   };

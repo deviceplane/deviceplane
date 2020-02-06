@@ -33,9 +33,8 @@ const CreateApplication = ({
       await api.createApplication({ projectId: params.project, data });
       navigation.navigate(`/${params.project}/applications/${data.name}`);
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Application was not created.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Application creation failed.'));
+      console.error(error);
     }
   };
 

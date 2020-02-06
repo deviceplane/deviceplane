@@ -15,7 +15,7 @@ const Confirm = ({
     api
       .completeRegistration({ registrationTokenValue: params.token })
       .then(() => navigation.navigate('/login'))
-      .catch(console.log);
+      .catch(console.error);
   }, []);
 
   return (

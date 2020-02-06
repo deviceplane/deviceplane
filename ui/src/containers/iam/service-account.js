@@ -65,7 +65,7 @@ const ServiceAccount = ({
       });
     } catch (e) {
       error = true;
-      console.log(e);
+      console.error(e);
     }
 
     const roleArray = Object.keys(data.roles);
@@ -83,7 +83,7 @@ const ServiceAccount = ({
           });
         } catch (e) {
           error = true;
-          console.log(e);
+          console.error(e);
         }
       } else if (!choseRole & hasRole) {
         try {
@@ -94,15 +94,15 @@ const ServiceAccount = ({
           });
         } catch (e) {
           error = true;
-          console.log(e);
+          console.error(e);
         }
       }
     }
 
     if (error) {
-      toaster.danger('Service account was not updated.');
+      toaster.danger('Service account update failed.');
     } else {
-      toaster.success('Service account updated successfully.');
+      toaster.success('Service account updated.');
       navigation.navigate(`/${params.project}/iam/service-accounts`);
     }
   };
@@ -114,12 +114,13 @@ const ServiceAccount = ({
         projectId: params.project,
         serviceId: serviceAccount.id,
       });
-      toaster.success('Successfully deleted service account.');
+      toaster.success('Service account deleted.');
       navigation.navigate(`/${params.project}/iam/service-accounts`);
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Service account was not deleted.');
-      console.log(error);
+      setBackendError(
+        utils.parseError(error, 'Service account deletion failed.')
+      );
+      console.error(error);
     }
     setShowDeletePopup(false);
   };
@@ -259,7 +260,7 @@ const ServiceAccountAccessKeys = ({ projectId, serviceAccount }) => {
       });
       setAccessKeys(response.data);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -276,11 +277,10 @@ const ServiceAccountAccessKeys = ({ projectId, serviceAccount }) => {
       });
       setAccessKeys([response.data, ...accessKeys]);
       setNewAccessKey(response.data.value);
-      toaster.success('Access key created successfully.');
+      toaster.success('Access key created.');
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Access key was not created.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Access key creation failed.'));
+      console.error(error);
     }
   };
 
@@ -292,13 +292,12 @@ const ServiceAccountAccessKeys = ({ projectId, serviceAccount }) => {
         serviceId: serviceAccount.id,
         accessKeyId: id,
       });
-      toaster.success('Access key deleted successfully.');
+      toaster.success('Access key deleted.');
       await fetchAccessKeys();
       setKeyToDelete(null);
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Access key was not deleted.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Access key deletion failed.'));
+      console.error(error);
       setKeyToDelete(null);
     }
   };

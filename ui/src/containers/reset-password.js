@@ -43,21 +43,23 @@ const PasswordRecovery = ({
       })
       .catch(error => {
         setInvalidToken(true);
-        console.log(error);
+        console.error(error);
       });
   }, []);
 
   const submit = async ({ password }) => {
     try {
       await api.updatePassword({ password, token });
-      toaster.success('Password changed successfully.');
+      toaster.success('Password changed.');
       navigation.navigate(`/login`);
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger(
-        'Something went wrong with changing your password. Please contact us at support@deviceplane.com.'
+      setBackendError(
+        utils.parseError(
+          error,
+          'Password change failed. Please contact us at support@deviceplane.com.'
+        )
       );
-      console.log(error);
+      console.error(error);
     }
   };
 

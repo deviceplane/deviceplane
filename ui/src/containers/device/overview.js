@@ -67,8 +67,8 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
                   metrics: response.data,
                 });
               } catch (error) {
-                console.log(error);
                 toaster.danger('Service Metrics are currently unavailable.');
+                console.error(error);
               }
             }}
           />
@@ -171,7 +171,7 @@ const DeviceOverview = ({
                 setHostMetrics(parseMetrics(data));
               } catch (error) {
                 toaster.danger('Current device metrics are unavailable.');
-                console.log(error);
+                console.error(error);
               }
             },
             disabled: device.status === 'offline',
@@ -186,10 +186,10 @@ const DeviceOverview = ({
                   projectId: params.project,
                   deviceId: device.id,
                 });
-                toaster.success('Reboot was initiated successfully.');
+                toaster.success('Reboot was initiated.');
               } catch (error) {
-                toaster.danger('Reboot was not successful.');
-                console.log(error);
+                toaster.danger('Reboot failed.');
+                console.error(error);
               }
             },
           },

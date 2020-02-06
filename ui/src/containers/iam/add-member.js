@@ -46,23 +46,22 @@ const AddMember = ({
             });
           } catch (e) {
             error = true;
-            console.log(e);
+            console.error(e);
           }
         }
       }
 
       if (error) {
-        toaster.danger(
-          'Member was added successfully, but roles for the member were not updated properly. Please check the roles of the member.'
+        setBackendError(
+          'Member added, but roles for the member were not updated. Please verify the roles are valid.'
         );
       } else {
         navigation.navigate(`/${params.project}/iam/members`);
-        toaster.success('Member was added successfully.');
+        toaster.success('Member added.');
       }
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Member was not added.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Adding member failed.'));
+      console.error(error);
     }
   };
 

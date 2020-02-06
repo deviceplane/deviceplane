@@ -31,7 +31,7 @@ const ProjectSelector = ({}) => {
       const data = await api.projects();
       setProjects(data);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 

@@ -58,11 +58,10 @@ const Release = ({
         data: { rawConfig: release.rawConfig },
       });
       navigation.navigate(`/${params.project}/applications/${application.id}`);
-      toaster.success('Release was reverted successfully.');
+      toaster.success('Release reverted.');
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Release was not reverted.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Release reversion failed.'));
+      console.error(error);
     }
     setShowConfirmPopup(false);
   };

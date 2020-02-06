@@ -120,14 +120,13 @@ const Scheduling = ({
         },
       });
 
-      toaster.success('Scheduling was successful.');
+      toaster.success('Scheduling applied.');
       navigation.navigate(
         `/${params.project}/applications/${application.name}`
       );
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Scheduling was not successful.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Scheduling failed.'));
+      console.error(error);
     }
   };
 
@@ -146,7 +145,7 @@ const Scheduling = ({
       });
       setScheduledDevices(devices);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 

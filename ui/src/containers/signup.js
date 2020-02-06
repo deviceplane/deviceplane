@@ -45,16 +45,16 @@ const Signup = () => {
       const response = await api.signup(data);
       navigation.navigate('/login');
       if (!response.data.registrationCompleted) {
-        toaster.success(
-          'Please check your email to confirm your registration.'
-        );
+        toaster.success('Check your email to confirm your registration.');
       }
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger(
-        'Something went wrong with your registration. Please contact us at support@deviceplane.com.'
+      setBackendError(
+        utils.parseError(
+          error,
+          'Registration failed. Please contact us at support@deviceplane.com.'
+        )
       );
-      console.log(error);
+      console.error(error);
     }
   };
 

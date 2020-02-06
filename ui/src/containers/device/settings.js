@@ -47,12 +47,11 @@ const DeviceSettings = ({
         deviceId: device.id,
         data,
       });
-      toaster.success('Device updated successfully.');
+      toaster.success('Device updated.');
       navigation.navigate(`/${params.project}/devices/${data.name}`);
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Device was not updated.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Device update failed.'));
+      console.error(error);
     }
   };
 
@@ -63,12 +62,11 @@ const DeviceSettings = ({
         projectId: params.project,
         deviceId: device.id,
       });
-      toaster.success('Successfully deleted device.');
+      toaster.success('Device removed.');
       navigation.navigate(`/${params.project}/devices`);
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Device was not removed.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Device removal failed.'));
+      console.error(error);
     }
     setShowPopup(false);
   };

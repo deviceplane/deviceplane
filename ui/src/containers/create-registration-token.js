@@ -38,12 +38,13 @@ const CreateRegistrationToken = ({
         projectId: params.project,
         data,
       });
-      toaster.success('Registration Token created successfully.');
+      toaster.success('Registration token created.');
       navigation.navigate(`/${params.project}/provisioning`);
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Registration Token was not updated.');
-      console.log(error);
+      setBackendError(
+        utils.parseError(error, 'Registration Token creation failed.')
+      );
+      console.error(error);
     }
   };
 

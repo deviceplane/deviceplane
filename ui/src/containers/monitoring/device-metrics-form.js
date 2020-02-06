@@ -62,21 +62,12 @@ const DeviceMetricsForm = ({ params, devices, metrics, close }) => {
           ),
         ],
       });
-      toaster.success('Metrics added successfully.');
+      toaster.success('Metrics added.');
       close();
       navigation.refresh();
     } catch (error) {
-      console.log(error);
-
-      const errorMessage = utils.parseError(error);
-
-      toaster.danger('Metrics were not added.');
-
-      if (errorMessage) {
-        setBackendError(errorMessage);
-      } else {
-        close();
-      }
+      setBackendError(utils.parseError(error, 'Adding metrics failed.'));
+      console.error(error);
     }
   };
 

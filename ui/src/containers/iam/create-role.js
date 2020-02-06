@@ -31,12 +31,11 @@ const CreateRole = ({
   const submit = async data => {
     try {
       await api.createRole({ projectId: params.project, data });
-      toaster.success('Role created successfully.');
+      toaster.success('Role created.');
       navigation.navigate(`/${params.project}/iam/roles`);
     } catch (error) {
-      setBackendError(utils.parseError(error));
-      toaster.danger('Role was not created.');
-      console.log(error);
+      setBackendError(utils.parseError(error, 'Role creation failed.'));
+      console.error(error);
     }
   };
 
