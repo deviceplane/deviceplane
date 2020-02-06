@@ -305,8 +305,8 @@ const Devices = ({ route }) => {
         <Table
           columns={columns}
           data={tableData}
-          onRowSelect={({ name }) =>
-            navigation.navigate(`/${route.data.params.project}/devices/${name}`)
+          rowHref={({ name }) =>
+            `/${route.data.params.project}/devices/${name}`
           }
           placeholder={
             <Text>

@@ -1,8 +1,9 @@
 import React from 'react';
 import { useTable, useSortBy } from 'react-table';
 import styled from 'styled-components';
+import { useLinkProps } from 'react-navi';
 
-import { Column, Row, Text, Icon } from './core';
+import { Column, Row, Icon } from './core';
 
 const Container = styled(Column)``;
 
@@ -33,6 +34,20 @@ const TableRow = styled(Row)`
   }
 `;
 
+const A = styled.a`
+  text-decoration: none;
+  color: unset;
+`;
+
+const LinkRow = ({ children, href, ...rest }) => {
+  const linkProps = useLinkProps({ href });
+  return (
+    <A {...linkProps} {...rest}>
+      {children}
+    </A>
+  );
+};
+
 const Header = styled(Row)`
   min-height: 50px;
   border-top-left-radius: 3px;
@@ -56,8 +71,15 @@ Header.defaultProps = {
   bg: 'grays.0',
 };
 
-const Table = ({ columns, data, onRowSelect, placeholder, editRow }) => {
-  const selectable = !!onRowSelect;
+const Table = ({
+  columns,
+  data,
+  onRowSelect,
+  placeholder,
+  editRow,
+  rowHref,
+}) => {
+  const selectable = onRowSelect || rowHref;
   onRowSelect = onRowSelect || function() {};
 
   const {
@@ -128,7 +150,23 @@ const Table = ({ columns, data, onRowSelect, placeholder, editRow }) => {
         )}
         {rows.map((row, i) => {
           prepareRow(row);
-          return (
+          const cells = row.cells.map(cell => (
+            <Cell
+              {...cell.getCellProps()}
+              style={{
+                justifyContent:
+                  isNaN(cell.value) || cell.value === '-'
+                    ? 'flex-start'
+                    : 'flex-end',
+                ...cell.column.style,
+                ...cell.column.cellStyle,
+              }}
+              overflow={editRow ? 'visible' : 'hidden'}
+            >
+              {cell.render('Cell')}
+            </Cell>
+          ));
+          const tableRow = (
             <TableRow
               {...row.getRowProps()}
               selectable={selectable}
@@ -136,24 +174,13 @@ const Table = ({ columns, data, onRowSelect, placeholder, editRow }) => {
               position="relative"
               style={{ transform: 'translate2d(0,0)' }}
             >
-              {row.cells.map(cell => (
-                <Cell
-                  {...cell.getCellProps()}
-                  style={{
-                    justifyContent:
-                      isNaN(cell.value) || cell.value === '-'
-                        ? 'flex-start'
-                        : 'flex-end',
-                    ...cell.column.style,
-                    ...cell.column.cellStyle,
-                  }}
-                  overflow={editRow ? 'visible' : 'hidden'}
-                >
-                  {cell.render('Cell')}
-                </Cell>
-              ))}
+              {cells}
             </TableRow>
           );
+          if (rowHref) {
+            return <LinkRow href={rowHref(row.original)}>{tableRow}</LinkRow>;
+          }
+          return tableRow;
         })}
       </Column>
     </Container>

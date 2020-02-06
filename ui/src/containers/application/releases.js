@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import moment from 'moment';
-import { useNavigation } from 'react-navi';
 
 import Card from '../../components/card';
 import Table from '../../components/table';
@@ -11,7 +10,6 @@ const Releases = ({
     data: { params, application, releases },
   },
 }) => {
-  const navigation = useNavigation();
   const columns = useMemo(
     () => [
       {
@@ -67,10 +65,8 @@ const Releases = ({
       <Table
         columns={columns}
         data={tableData}
-        onRowSelect={({ id }) =>
-          navigation.navigate(
-            `/${params.project}/applications/${application.name}/releases/${id}`
-          )
+        rowHref={({ id }) =>
+          `/${params.project}/applications/${application.name}/releases/${id}`
         }
         placeholder={
           <Text>

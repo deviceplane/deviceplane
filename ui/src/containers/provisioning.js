@@ -75,10 +75,8 @@ const Provisioning = ({
         <Table
           data={tableData}
           columns={columns}
-          onRowSelect={({ name }) =>
-            navigation.navigate(
-              `/${params.project}/provisioning/registration-tokens/${name}`
-            )
+          rowHref={({ name }) =>
+            `/${params.project}/provisioning/registration-tokens/${name}`
           }
           placeholder={
             <Text>

@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { useNavigation } from 'react-navi';
 
 import Card from '../../components/card';
 import Table from '../../components/table';
@@ -10,7 +9,6 @@ const Roles = ({
     data: { params, roles },
   },
 }) => {
-  const navigation = useNavigation();
   const columns = useMemo(
     () => [
       { Header: 'Name', accessor: 'name' },
@@ -35,9 +33,7 @@ const Roles = ({
       <Table
         columns={columns}
         data={tableData}
-        onRowSelect={({ name }) =>
-          navigation.navigate(`/${params.project}/iam/roles/${name}`)
-        }
+        rowHref={({ name }) => `/${params.project}/iam/roles/${name}`}
         placeholder={
           <Text>
             There are no <strong>Roles</strong>.
