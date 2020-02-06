@@ -52,31 +52,31 @@ func (e *Email) Send(request email.Request) error {
 		},
 	)
 	if err != nil {
-		return errors.Wrap(err, "creating TLS connection")
+		return errors.WithMessage(err, "creating TLS connection")
 	}
 
 	c, err := smtp.NewClient(conn, e.Server)
 	if err != nil {
-		errors.Wrap(err, "creating a client")
+		errors.WithMessage(err, "creating a client")
 	}
 
 	if err = c.Auth(smtp.PlainAuth(
 		"", e.Username, e.Password, e.Server,
 	)); err != nil {
-		errors.Wrap(err, "setting auth")
+		errors.WithMessage(err, "setting auth")
 	}
 
 	if err = c.Mail(from.Address); err != nil {
-		return err
+		return errors.WithMessage(err, "setting from address")
 	}
 
 	if err = c.Rcpt(to.Address); err != nil {
-		return err
+		return errors.WithMessage(err, "setting to address")
 	}
 
 	w, err := c.Data()
 	if err != nil {
-		return err
+		return errors.WithMessage(err, "DATA command")
 	}
 
 	if _, err = w.Write([]byte(
@@ -89,16 +89,16 @@ func (e *Email) Send(request email.Request) error {
 			request.Body,
 		}, "\r\n\r\n"),
 	)); err != nil {
-		return err
+		return errors.WithMessage(err, "writing data")
 	}
 
 	if err = w.Close(); err != nil {
-		return err
+		return errors.WithMessage(err, "closing data writer")
 	}
 
 	err = c.Quit()
 	if err != nil {
-		return errors.Wrap(err, "closing connection")
+		return errors.WithMessage(err, "closing connection")
 	}
 	return nil
 }
