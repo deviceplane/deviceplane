@@ -12,7 +12,7 @@ const getSchedulingRule = schedulingRule => {
     schedulingRule.conditionalQuery
   ) {
     return (
-      <Row bg="grays.0" borderRadius={1} minHeight={7} padding={2}>
+      <Row bg="grays.0" borderRadius={1} minHeight={7} padding={2} paddingX={4}>
         <DevicesFilterButtons
           query={schedulingRule.conditionalQuery}
           canRemoveFilter={false}

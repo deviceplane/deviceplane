@@ -22,7 +22,7 @@ const GlobalStyle = createGlobalStyle`
     font-size: 16px;
     font-weight: 400;
     line-height: 1.2;
-    background-color: ${props => props.theme.colors.pageBackground};
+    background-color: ${props => props.theme.colors.black};
   }
 
   html, body {

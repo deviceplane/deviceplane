@@ -71,7 +71,7 @@ export default {
 
   fontWeights: [300, 400, 500, 700],
 
-  radii: [0, 4, 6, 8, 12, 16, 9999, '100%'],
+  radii: [0, 3, 6, 8, 12, 16, 9999, '100%'],
 
   breakpoints,
 

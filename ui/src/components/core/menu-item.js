@@ -12,7 +12,7 @@ const MenuItem = styled(Box).attrs({ as: 'button' })`
 
   &:hover {
     color: ${props => props.theme.colors.pureWhite};
-    background-color: ${props => props.theme.colors.grays[0]};
+    background-color: ${props => props.theme.colors.grays[3]};
   }
 `;
 
@@ -22,8 +22,6 @@ MenuItem.defaultProps = {
   fontSize: 1,
   fontWeight: 2,
   paddingX: 3,
-  marginX: 1,
-  borderRadius: 1,
 };
 
 export default MenuItem;

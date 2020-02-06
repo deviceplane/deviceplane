@@ -9,7 +9,14 @@ const Layout = ({ children, header, ...rest }) => (
     <Sidebar />
     <Column flex={1} overflow="auto">
       <Header>{header}</Header>
-      <Column flex={1} {...rest} padding={5} overflow="auto">
+      <Column
+        flex={1}
+        {...rest}
+        padding={5}
+        overflow="auto"
+        bg="pageBackground"
+        borderRadius={1}
+      >
         {children}
       </Column>
     </Column>

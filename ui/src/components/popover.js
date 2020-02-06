@@ -24,7 +24,7 @@ const Button = styled.button`
   cursor: pointer;
 `;
 
-const Popover = ({ children, content = null, width, top, right }) => {
+const Popover = ({ button, content = null, width, top, right }) => {
   const node = useRef();
   const [show, setShow] = useState();
 
@@ -55,7 +55,7 @@ const Popover = ({ children, content = null, width, top, right }) => {
           setShow(!show);
         }}
       >
-        {children}
+        {button({ show })}
       </Button>
       <AnimatePresence>
         {show && (
