@@ -12,7 +12,7 @@ const getInitials = (name, fallback = '?') => {
     .join('');
 };
 
-const Avatar = ({ name, borderColor = 'white' }) => (
+const Avatar = ({ name, color = 'white', borderColor = 'white' }) => (
   <Column
     width="32px"
     height="32px"
@@ -23,7 +23,7 @@ const Avatar = ({ name, borderColor = 'white' }) => (
     border={0}
     borderColor={borderColor}
   >
-    <Text color="white" fontWeight={2} fontSize={0}>
+    <Text color={color} fontWeight={2} fontSize={0}>
       {getInitials(name)}
     </Text>
   </Column>

@@ -66,10 +66,11 @@ const AvatarMenu = () => {
         right={0}
         width="240px"
         button={({ show }) => (
-          <Row alignItems="center">
-            <Avatar name={name} borderColor={show ? 'primary' : 'white'} />
-            <Icon icon="caret-down" size={16} color="white" marginLeft={1} />
-          </Row>
+          <Avatar
+            name={name}
+            color={show ? 'primary' : 'white'}
+            borderColor={show ? 'primary' : 'white'}
+          />
         )}
         content={({ close }) => (
           <>
