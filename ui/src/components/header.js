@@ -1,7 +1,9 @@
 import React from 'react';
+import styled from 'styled-components';
 
-import { Row } from './core';
 import AvatarMenu from './avatar-menu';
+import ProjectSelector from './project-selector';
+import { Row, MenuItem } from './core';
 
 const Header = ({ children }) => {
   return (
@@ -10,12 +12,11 @@ const Header = ({ children }) => {
       justifyContent="space-between"
       alignSelf="stretch"
       padding={5}
-      paddingBottom={1}
+      paddingTop={5}
+      paddingBottom={2}
     >
       <Row flex={1} alignItems="center">
-        {/* <Text fontSize={3} fontWeight={4}>
-          {route.data.params.project}
-        </Text> */}
+        <ProjectSelector />
       </Row>
       <Row justifyContent="center" flex={1}>
         {children}

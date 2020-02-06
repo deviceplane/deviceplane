@@ -18,10 +18,12 @@ const Avatar = ({ name }) => (
     height="36px"
     alignItems="center"
     justifyContent="center"
-    bg="primary"
+    bg="black"
     borderRadius={6}
+    border={0}
+    borderColor="white"
   >
-    <Text color="black" fontWeight={2} fontSize={0}>
+    <Text color="white" fontWeight={3} fontSize={0}>
       {getInitials(name)}
     </Text>
   </Column>

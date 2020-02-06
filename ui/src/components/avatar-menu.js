@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { useNavigation, useActive, useCurrentRoute } from 'react-navi';
 
 import api from '../api';
-import { Box, Row, Text, Icon } from './core';
+import { Row, Text, Icon, MenuItem } from './core';
 import Popup from './popup';
 import Popover from './popover';
 import Avatar from './avatar';
@@ -12,30 +12,6 @@ import ChangePassword from '../containers/change-password';
 import Profile from '../containers/profile';
 import UserAccessKeys from '../containers/user-access-keys';
 import SSHKeys from '../containers/ssh-keys';
-
-const MenuItem = styled(Box).attrs({ as: 'button' })`
-  background: none;
-  appearance: none;
-  cursor: pointer;
-  border: none;
-  text-align: left;
-  text-transform: uppercase;
-
-  &:hover {
-    color: ${props => props.theme.colors.pureWhite};
-    background-color: ${props => props.theme.colors.grays[0]};
-  }
-`;
-
-MenuItem.defaultProps = {
-  paddingY: 1,
-  color: 'white',
-  fontSize: 1,
-  fontWeight: 2,
-  paddingX: 3,
-  marginX: 1,
-  borderRadius: 1,
-};
 
 const Divider = styled.div`
   width: 100%;
@@ -52,8 +28,8 @@ const AvatarMenu = () => {
   const [showUserAccessKeys, setShowUserAccessKeys] = useState();
   const [showChangePassword, setShowChangePassword] = useState();
   const [showSSHKeys, setShowSSHKeys] = useState();
-  const isProjectsRoute = useActive('/projects');
   const navigation = useNavigation();
+  const isProjectsRoute = useActive('/projects');
   const name = `${context.currentUser.firstName} ${context.currentUser.lastName}`;
 
   return (
@@ -86,10 +62,13 @@ const AvatarMenu = () => {
         />
       </Popup>
       <Popover
+        top="45px"
+        right={0}
+        width="240px"
         content={({ close }) => (
           <>
             <Text
-              fontSize={4}
+              fontSize={3}
               fontWeight={2}
               paddingX={3}
               marginX={1}
@@ -98,7 +77,7 @@ const AvatarMenu = () => {
               {name}
             </Text>
             <Text
-              fontSize={2}
+              fontSize={1}
               marginBottom={1}
               paddingX={3}
               marginX={1}
@@ -106,6 +85,12 @@ const AvatarMenu = () => {
             >
               {context.currentUser.email}
             </Text>
+            <Divider />
+            {!isProjectsRoute && (
+              <MenuItem onClick={() => navigation.navigate('/projects')}>
+                Projects
+              </MenuItem>
+            )}
             <Divider />
             <MenuItem
               onClick={() => {
@@ -150,11 +135,6 @@ const AvatarMenu = () => {
               Download CLI
             </MenuItem>
             <Divider />
-            {!isProjectsRoute && (
-              <MenuItem onClick={() => navigation.navigate('/projects')}>
-                Switch Project
-              </MenuItem>
-            )}
             <MenuItem
               onClick={async () => {
                 context.setCurrentUser(null);
