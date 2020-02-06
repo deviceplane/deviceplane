@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -67,6 +68,9 @@ func (c *Client) RegisterDevice(ctx context.Context, registrationToken string) (
 		return nil, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("non-200 status %d", resp.StatusCode)
+	}
 
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
