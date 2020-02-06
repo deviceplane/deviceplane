@@ -1,14 +1,7 @@
 import React from 'react';
-import styled from 'styled-components';
-import {
-  typography,
-  color,
-  space,
-  layout,
-  border,
-  shadow,
-} from 'styled-system';
-import { Column, Radio } from './core';
+
+import { Column } from './box';
+import Radio from './radio';
 
 const RadioGroup = ({ value, options = [], onChange }) => {
   return (

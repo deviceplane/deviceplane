@@ -1,20 +1,21 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
 import { useNavigation } from 'react-navi';
 
 import api from '../../api';
 import utils from '../../utils';
 import { renderLabels } from '../../helpers/labels';
-import { DevicesFilterButtons } from '../../components/devices-filter-buttons';
 import {
-  DevicesFilter,
+  OperatorIs,
+  OperatorIsOptions,
   LabelValueCondition,
 } from '../../components/devices-filter';
 import Card from '../../components/card';
 import Alert from '../../components/alert';
 import Table from '../../components/table';
-import RadioGroup from '../../components/radio-group';
 import DeviceStatus from '../../components/device-status';
 import Popup from '../../components/popup';
+import Field from '../../components/field';
 import {
   Column,
   Row,
@@ -25,11 +26,21 @@ import {
   Input,
   Icon,
   toaster,
+  Form,
 } from '../../components/core';
 
 const ScheduleTypeConditional = 'Conditional';
 const ScheduleTypeAll = 'AllDevices';
 const ScheduleTypeNone = 'NoDevices';
+const InitialCondition = {
+  type: LabelValueCondition,
+  params: {
+    key: '',
+    operator: OperatorIs,
+    value: '',
+  },
+};
+const InitialFilter = [InitialCondition];
 
 const Scheduling = ({
   route: {
@@ -37,18 +48,23 @@ const Scheduling = ({
   },
 }) => {
   const [conditionalQuery, setConditionalQuery] = useState(
-    application.schedulingRule.conditionalQuery || []
-  );
-  const [scheduleType, setScheduleType] = useState(
-    application.schedulingRule.scheduleType || 'NoDevices'
+    application.schedulingRule.conditionalQuery &&
+      application.schedulingRule.conditionalQuery.length
+      ? application.schedulingRule.conditionalQuery
+      : [InitialFilter]
   );
   const [scheduledDevices, setScheduledDevices] = useState([]);
   const [backendError, setBackendError] = useState();
-  const [showConditionPopup, setShowConditionPopup] = useState();
-  const [conditionToEdit, setConditionToEdit] = useState(null);
   const [searchInput, setSearchInput] = useState('');
   const [searchFocused, setSearchFocused] = useState();
   const [showPreview, setShowPreview] = useState();
+  const { register, watch, control, handleSubmit, getValues } = useForm({
+    defaultValues: {
+      scheduleType: application.schedulingRule.scheduleType || 'NoDevices',
+      conditionalQuery,
+    },
+  });
+  const watchScheduleType = watch('scheduleType');
 
   const columns = useMemo(
     () => [
@@ -83,21 +99,12 @@ const Scheduling = ({
 
   const navigation = useNavigation();
 
-  let isSubmitDisabled =
-    scheduleType === application.schedulingRule.scheduleType;
+  const addTypeToConditionalQuery = conditionalQuery =>
+    conditionalQuery.map(filters =>
+      filters.map(condition => ({ type: LabelValueCondition, ...condition }))
+    );
 
-  if (scheduleType === ScheduleTypeConditional) {
-    isSubmitDisabled =
-      conditionalQuery.length === 0 ||
-      utils.deepEqual(
-        conditionalQuery.map(arr => arr.map(({ options, ...rest }) => rest)),
-        application.schedulingRule.conditionalQuery
-      );
-  }
-
-  const submit = async () => {
-    setBackendError(null);
-
+  const submit = async data => {
     try {
       await api.updateApplication({
         projectId: params.project,
@@ -107,8 +114,8 @@ const Scheduling = ({
           description: application.description,
           schedulingRule: {
             ...application.schedulingRule,
-            scheduleType,
-            conditionalQuery,
+            scheduleType: data.scheduleType,
+            conditionalQuery: addTypeToConditionalQuery(data.conditionalQuery),
           },
         },
       });
@@ -125,14 +132,7 @@ const Scheduling = ({
   };
 
   const getScheduledDevices = async () => {
-    if (
-      scheduleType === ScheduleTypeConditional &&
-      conditionalQuery.length === 0
-    ) {
-      setScheduledDevices([]);
-      return;
-    }
-
+    const { scheduleType, conditionalQuery } = getValues({ nest: true });
     try {
       const { data: devices } = await api.scheduledDevices({
         projectId: params.project,
@@ -140,7 +140,7 @@ const Scheduling = ({
         schedulingRule: {
           ...application.schedulingRule,
           scheduleType,
-          conditionalQuery: conditionalQuery,
+          conditionalQuery: addTypeToConditionalQuery(conditionalQuery),
         },
         search: searchInput,
       });
@@ -150,31 +150,14 @@ const Scheduling = ({
     }
   };
 
-  const removeCondition = index => {
-    setConditionalQuery(conditionalQuery.filter((_, i) => i !== index));
-  };
-
-  const addCondition = condition => {
-    setShowConditionPopup(false);
-    if (conditionToEdit !== null) {
-      setConditionalQuery(conditionalQuery =>
-        conditionalQuery.map((rule, index) =>
-          index === conditionToEdit ? condition : rule
-        )
-      );
-    } else {
-      setConditionalQuery(conditionalQuery => [...conditionalQuery, condition]);
-    }
-    setConditionToEdit(null);
-  };
-
-  const clearConditions = () => {
-    setConditionalQuery([]);
-  };
-
   useEffect(() => {
     getScheduledDevices();
   }, [searchInput]);
+
+  const isSubmitDisabled =
+    watchScheduleType === ScheduleTypeConditional
+      ? false
+      : watchScheduleType === application.schedulingRule.scheduleType;
 
   return (
     <>
@@ -182,7 +165,7 @@ const Scheduling = ({
         title="Scheduling"
         size="xlarge"
         actions={
-          scheduleType === ScheduleTypeConditional
+          watchScheduleType === ScheduleTypeConditional
             ? [
                 {
                   title: 'Preview',
@@ -203,92 +186,154 @@ const Scheduling = ({
               variant="error"
               description={backendError}
             />
-            <Group>
-              <Label>This application will run on</Label>
-              <RadioGroup
-                onChange={setScheduleType}
-                value={scheduleType}
-                options={[
-                  { label: 'No Devices', value: ScheduleTypeNone },
-                  { label: 'All Devices', value: ScheduleTypeAll },
-                  {
-                    label: 'Some Devices',
-                    value: ScheduleTypeConditional,
-                  },
-                ]}
-              />
-            </Group>
-            {scheduleType === ScheduleTypeConditional && (
-              <Column>
-                <Group>
-                  <Row justifyContent="space-between" alignItems="center">
-                    <Label marginBottom={0}>Conditions</Label>
-                    <Row>
-                      {conditionalQuery.length > 0 && (
-                        <Button
-                          title="Clear"
-                          variant="text"
-                          onClick={clearConditions}
-                          marginRight={4}
-                        />
-                      )}
-                      <Button
-                        title="Add Conditions"
-                        variant="secondary"
-                        onClick={() => setShowConditionPopup(true)}
-                      />
+            <Form
+              onSubmit={e => {
+                handleSubmit(submit)(e);
+              }}
+            >
+              <Group>
+                <Label>This application will run on</Label>
+                <Field
+                  type="radiogroup"
+                  name="scheduleType"
+                  control={control}
+                  options={[
+                    { label: 'No Devices', value: ScheduleTypeNone },
+                    { label: 'All Devices', value: ScheduleTypeAll },
+                    {
+                      label: 'Some Devices',
+                      value: ScheduleTypeConditional,
+                    },
+                  ]}
+                />
+              </Group>
+              {watchScheduleType === ScheduleTypeConditional &&
+                conditionalQuery.map((filter, i) => (
+                  <Column flex={1}>
+                    <Row marginBottom={4}>
+                      <Text width="165px" paddingTop={1}>
+                        {i === 0 ? 'If devices match' : 'and devices match'}
+                      </Text>
+                      <Column flex={1}>
+                        {filter.map((_, j) => (
+                          <Column alignItems="flex-start" flex={1}>
+                            {j > 0 && (
+                              <Text marginY={2} fontSize={0} fontWeight={2}>
+                                OR
+                              </Text>
+                            )}
+                            <Row alignItems="center" alignSelf="stretch">
+                              <Field
+                                inline
+                                required
+                                flex={1}
+                                variant="small"
+                                name={`conditionalQuery[${i}][${j}].params.key`}
+                                placeholder="Label Key"
+                                ref={register}
+                              />
+
+                              <Field
+                                inline
+                                required
+                                width="100px"
+                                marginX={4}
+                                type="select"
+                                variant="small"
+                                name={`conditionalQuery[${i}][${j}].params.operator`}
+                                placeholder="Operator"
+                                options={OperatorIsOptions}
+                                ref={register}
+                              />
+
+                              <Field
+                                inline
+                                required
+                                flex={1}
+                                variant="small"
+                                name={`conditionalQuery[${i}][${j}].params.value`}
+                                placeholder="Label Value"
+                                ref={register}
+                              />
+
+                              {(i > 0 || j > 0) && (
+                                <Button
+                                  type="button"
+                                  marginLeft={2}
+                                  variant="icon"
+                                  title={
+                                    <Icon icon="cross" size={14} color="red" />
+                                  }
+                                  onClick={() =>
+                                    setConditionalQuery(query =>
+                                      query
+                                        .map((filters, filterIndex) =>
+                                          filterIndex === i
+                                            ? filters.filter(
+                                                (_, conditionIndex) =>
+                                                  conditionIndex !== j
+                                              )
+                                            : filters
+                                        )
+                                        .filter(
+                                          (filters, filterIndex) =>
+                                            filterIndex === 0 || filters.length
+                                        )
+                                    )
+                                  }
+                                />
+                              )}
+                            </Row>
+                            {j === filter.length - 1 && (
+                              <Button
+                                marginTop={2}
+                                type="button"
+                                title="+ OR"
+                                color="primary"
+                                opacity={1}
+                                variant="text"
+                                onClick={() =>
+                                  setConditionalQuery(query =>
+                                    query.map((filter, filterIndex) =>
+                                      filterIndex === i
+                                        ? [...filter, InitialCondition]
+                                        : filter
+                                    )
+                                  )
+                                }
+                              />
+                            )}
+                          </Column>
+                        ))}
+                      </Column>
                     </Row>
-                  </Row>
-                  <Row
-                    bg="grays.0"
-                    borderRadius={1}
-                    minHeight={7}
-                    padding={2}
-                    marginTop={4}
-                  >
-                    {conditionalQuery.length ? (
-                      <DevicesFilterButtons
-                        canRemoveFilter
-                        query={conditionalQuery}
-                        removeFilter={removeCondition}
-                        onEdit={index => {
-                          setShowConditionPopup(true);
-                          setConditionToEdit(index);
-                        }}
-                      />
-                    ) : (
-                      <Row flex={1} justifyContent="center" alignItems="center">
-                        <Text>
-                          Add <strong>Conditions</strong>.
-                        </Text>
+
+                    {i === conditionalQuery.length - 1 && (
+                      <Row marginBottom={2}>
+                        <Button
+                          type="button"
+                          title="+ AND"
+                          color="primary"
+                          opacity={1}
+                          variant="text"
+                          onClick={() =>
+                            setConditionalQuery(filters => [
+                              ...filters,
+                              InitialFilter,
+                            ])
+                          }
+                        />
                       </Row>
                     )}
-                  </Row>
-                </Group>
-              </Column>
-            )}
-            <Button
-              marginTop={6}
-              title="Apply Scheduling"
-              onClick={submit}
-              disabled={isSubmitDisabled}
-            />
+                  </Column>
+                ))}
+              <Button
+                marginTop={6}
+                title="Apply Scheduling"
+                disabled={isSubmitDisabled}
+              />
+            </Form>
           </Column>
-          {showConditionPopup && (
-            <DevicesFilter
-              title="Conditions"
-              buttonTitle="Set Conditions"
-              filter={
-                conditionToEdit !== null && conditionalQuery[conditionToEdit]
-              }
-              whitelistedConditions={[LabelValueCondition]}
-              onClose={() => {
-                setShowConditionPopup(false);
-                setConditionToEdit(null);
-              }}
-              onSubmit={addCondition}
-            />
-          )}
         </Row>
       </Card>
       <Popup show={showPreview} onClose={() => setShowPreview(false)}>
@@ -321,16 +366,9 @@ const Scheduling = ({
             columns={columns}
             data={tableData}
             placeholder={
-              conditionalQuery.length > 0 ? (
-                <Text>
-                  There are no <strong>Devices</strong>.
-                </Text>
-              ) : (
-                <Text>
-                  Add <strong>Conditions</strong> to preview{' '}
-                  <strong>Devices</strong>.
-                </Text>
-              )
+              <Text>
+                There are no <strong>Devices</strong>.
+              </Text>
             }
           />
         </Card>

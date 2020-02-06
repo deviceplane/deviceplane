@@ -17,6 +17,7 @@ import {
   Select,
   MultiSelect,
   Checkbox,
+  RadioGroup,
 } from './core';
 
 const PasswordButton = styled(Row)`
@@ -99,6 +100,17 @@ const Field = forwardRef(
               control={control}
               label={label}
               as={<Checkbox />}
+              {...props}
+            />
+          );
+        case 'radiogroup':
+          return (
+            <Controller
+              name={name}
+              id={name}
+              control={control}
+              label={label}
+              as={<RadioGroup />}
               {...props}
             />
           );
