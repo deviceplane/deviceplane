@@ -56,7 +56,7 @@ const Projects = ({
         <Table
           columns={columns}
           data={tableData}
-          onRowSelect={({ name }) => navigation.navigate(`/${name}`)}
+          rowHref={({ name }) => `/${name}`}
           placeholder={
             <Text>
               There are no <strong>Projects</strong>.

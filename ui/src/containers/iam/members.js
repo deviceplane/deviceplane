@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { useNavigation } from 'react-navi';
 
 import Card from '../../components/card';
 import Table from '../../components/table';
@@ -10,7 +9,6 @@ const Members = ({
     data: { params, members },
   },
 }) => {
-  const navigation = useNavigation();
   const columns = useMemo(
     () => [
       { Header: 'Email', accessor: 'user.email' },
@@ -41,9 +39,7 @@ const Members = ({
       <Table
         columns={columns}
         data={tableData}
-        onRowSelect={({ user }) => {
-          navigation.navigate(`/${params.project}/iam/members/${user.id}`);
-        }}
+        rowHref={({ user: { id } }) => `/${params.project}/iam/members/${id}`}
         placeholder={
           <Text>
             There are no <strong>Members</strong>.

@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import moment from 'moment';
-import { useNavigation } from 'react-navi';
 
 import Layout from '../components/layout';
 import Card from '../components/card';
@@ -12,7 +11,6 @@ const Applications = ({
     data: { params, applications },
   },
 }) => {
-  const navigation = useNavigation();
   const columns = useMemo(
     () => [
       { Header: 'Name', accessor: 'name', style: { flex: 2 } },
@@ -73,9 +71,7 @@ const Applications = ({
         <Table
           columns={columns}
           data={tableData}
-          onRowSelect={row =>
-            navigation.navigate(`/${params.project}/applications/${row.name}`)
-          }
+          rowHref={({ name }) => `/${params.project}/applications/${name}`}
           placeholder={
             <Text>
               There are no <strong>Applications</strong>.

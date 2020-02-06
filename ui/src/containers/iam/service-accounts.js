@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { useNavigation } from 'react-navi';
 
 import Card from '../../components/card';
 import Table from '../../components/table';
@@ -10,7 +9,6 @@ const ServiceAccounts = ({
     data: { params, serviceAccounts },
   },
 }) => {
-  const navigation = useNavigation();
   const columns = useMemo(
     () => [
       { Header: 'Name', accessor: 'name' },
@@ -42,8 +40,8 @@ const ServiceAccounts = ({
       <Table
         columns={columns}
         data={tableData}
-        onRowSelect={({ name }) =>
-          navigation.navigate(`/${params.project}/iam/service-accounts/${name}`)
+        rowHref={({ name }) =>
+          `/${params.project}/iam/service-accounts/${name}`
         }
         placeholder={
           <Text>
