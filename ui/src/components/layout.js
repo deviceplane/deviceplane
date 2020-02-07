@@ -1,28 +1,27 @@
 import React from 'react';
 
-import { Box, Column, Row } from './core';
+import { Row, Column } from './core';
 import Header from './header';
 import Sidebar from './sidebar';
 
 const Layout = ({ children, header, ...rest }) => (
-  <Box>
-    <Header>{header}</Header>
-    <Row>
-      <Sidebar />
+  <Row flex={1} flexDirection={['column-reverse', 'column-reverse', 'row']}>
+    <Sidebar />
+    <Column flex={1}>
+      <Header>{header}</Header>
+
       <Column
-        height="calc(100vh - 64px)"
         flex={1}
-        alignSelf="stretch"
         overflow="auto"
-        bg="pageBackground"
+        bg={['black', 'black', 'pageBackground']}
         borderRadius={1}
         padding={5}
         {...rest}
       >
         {children}
       </Column>
-    </Row>
-  </Box>
+    </Column>
+  </Row>
 );
 
 export default Layout;

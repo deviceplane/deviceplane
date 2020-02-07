@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import moment from 'moment';
-import { useNavigation } from 'react-navi';
 
 import { renderLabels } from '../helpers/labels';
 import Layout from '../components/layout';
@@ -13,27 +12,24 @@ const Provisioning = ({
     data: { params, registrationTokens },
   },
 }) => {
-  const navigation = useNavigation();
   const columns = useMemo(
     () => [
-      { Header: 'Name', accessor: 'name' },
+      { Header: 'Name', accessor: 'name', minWidth: '150px' },
       {
         Header: 'Created At',
         accessor: ({ createdAt }) =>
           createdAt ? moment(createdAt).fromNow() : '-',
-        style: {
-          flex: '0 0 150px',
-        },
+        minWidth: '150px',
       },
       {
-        Header: 'Devices Registered',
+        Header: 'Registered Devices',
         accessor: 'deviceCounts.allCount',
-        style: { flex: '0 0 169px' },
+        minWidth: '130px',
+        maxWidth: '130px',
       },
       {
         Header: 'Registration Limit',
         accessor: 'maxRegistrations',
-        style: { flex: '0 0 160px' },
         Cell: ({ row: { original } }) => (
           <Text>
             {typeof original.maxRegistrations === 'number'
@@ -41,15 +37,16 @@ const Provisioning = ({
               : 'Unlimited'}
           </Text>
         ),
+        minWidth: '130px',
+        maxWidth: '130px',
       },
       {
         Header: 'Labels',
         accessor: 'labels',
         Cell: ({ row: { original } }) =>
           original.labels ? renderLabels(original.labels) : null,
-        style: {
-          flex: 2,
-        },
+        minWidth: '200px',
+        maxWidth: '2fr',
         cellStyle: {
           marginBottom: '-8px',
         },

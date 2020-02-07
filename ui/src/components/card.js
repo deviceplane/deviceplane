@@ -11,6 +11,7 @@ const Container = styled(Column)`
   overflow: ${props =>
     props.overflow ? `${props.overflow} !important` : 'initial'};
   transition: all 250ms;
+  flex: 0 0 auto;
   width: 100%;
 
   ${variant({
@@ -30,15 +31,8 @@ const Container = styled(Column)`
       xxlarge: {
         maxWidth: 16,
       },
-      full: {
-        alignSelf: 'stretch',
-      },
     },
   })}
-
-  @media (max-width: 600px) {
-    border-radius: 0;
-  }
 `;
 
 const Card = ({
@@ -62,38 +56,53 @@ const Card = ({
       color="white"
       variant={size}
       borderRadius={2}
-      padding={7}
+      padding={[0, 0, 6]}
       border={border ? 0 : undefined}
       borderColor="white"
       disabled={disabled}
+      overflow="hidden"
       {...props}
     >
-      {logo && (
-        <Link href="https://deviceplane.com" marginX="auto" marginBottom={6}>
-          <Logo size={50} />
-        </Link>
-      )}
-      {top}
       {title && (
         <Column marginBottom={6} borderColor="white">
-          <Row alignItems="center" justifyContent="space-between">
-            <Row alignItems="center">
-              <Text fontSize={5} fontWeight={2} marginRight={4}>
+          {logo && (
+            <Link
+              href="https://deviceplane.com"
+              marginX="auto"
+              marginBottom={6}
+            >
+              <Logo size={50} />
+            </Link>
+          )}
+          {top}
+          <Row
+            flexWrap="wrap"
+            justifyContent="space-between"
+            alignItems="flex-end"
+            marginLeft={-4}
+          >
+            <Row alignItems="center" marginLeft={4}>
+              <Text fontSize="28px" fontWeight={2} marginRight={4}>
                 {title}
               </Text>
               {left}
             </Row>
-            {center && <Row marginX={6}>{center}</Row>}
-            <Row>
+            <Row justifyContent="center" marginTop={4} marginLeft={4}>
+              {center}
+            </Row>
+            <Row marginLeft={4} marginTop={4}>
               {actions.map(
-                ({
-                  href,
-                  variant = 'primary',
-                  title,
-                  onClick,
-                  disabled,
-                  show = true,
-                }) =>
+                (
+                  {
+                    href,
+                    variant = 'primary',
+                    title,
+                    onClick,
+                    disabled,
+                    show = true,
+                  },
+                  index
+                ) =>
                   show && (
                     <Button
                       key={title}
@@ -102,7 +111,7 @@ const Card = ({
                       variant={variant}
                       onClick={onClick}
                       disabled={disabled}
-                      marginLeft={4}
+                      marginLeft={index === 0 ? 0 : 4}
                     />
                   )
               )}

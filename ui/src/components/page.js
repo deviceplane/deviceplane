@@ -3,22 +3,21 @@ import { NotFoundBoundary, useCurrentRoute } from 'react-navi';
 import { createGlobalStyle } from 'styled-components';
 import { Helmet } from 'react-helmet-async';
 
-import { Box } from './core';
 import NotFound from './not-found';
 
 const GlobalStyle = createGlobalStyle`
-  * {
-    box-sizing: inherit;
-  }
-
   ::selection {
     background-color: rgba(255,255,255,.99);
     color: #000;
   }
 
+  * {
+    box-sizing: inherit;
+  }
+
   html {
-    height: 100%;
     box-sizing: border-box;
+    height: 100%;
     font-family: ${props => props.theme.fonts.default};
     font-size: 16px;
     font-weight: 400;
@@ -34,12 +33,14 @@ const GlobalStyle = createGlobalStyle`
 
   body {
     height: 100%;
-    overflow: hidden !important;
+    display: flex;
     margin: 0;
+    overflow: hidden !important;
   }
 
-  main {
-    height: 100%;
+  #root {
+    display: flex;
+    flex: 1;
   }
 
   strong, strong * {

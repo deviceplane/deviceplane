@@ -70,7 +70,7 @@ if (process.env.BUGSNAG_KEY) {
       <LoadIntercom />
       <App />
     </ErrorBoundary>,
-    document.querySelector('main')
+    document.querySelector('#root')
   );
 } else {
   ReactDOM.render(
@@ -79,6 +79,6 @@ if (process.env.BUGSNAG_KEY) {
       <LoadIntercom />
       <App />
     </>,
-    document.querySelector('main')
+    document.querySelector('#root')
   );
 }

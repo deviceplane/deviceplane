@@ -8,7 +8,7 @@ import { Btn } from './core/button';
 const TabButton = styled(Btn)`
   margin: 0;
   padding: 0;
-  cursor: ${props => (props.active ? 'default' : 'pointer')};
+  cursor: pointer;
   text-transform: uppercase;
   white-space: nowrap;
   text-decoration: none !important;
@@ -18,6 +18,8 @@ const TabButton = styled(Btn)`
   background-color: ${props => props.theme.colors.black};
   color: ${props =>
     props.active ? props.theme.colors.primary : props.theme.colors.grays[13]};
+
+  margin-top: 8px;
 
   &:not(:last-child) {
     padding-right: 12px;
@@ -38,7 +40,7 @@ const TabLink = styled(TabButton).attrs({ as: 'a' })`
   text-decoration: none !important;
 `;
 
-const Tab = ({ title, tooltip, href, onClick, disabled, active = true }) => {
+const Tab = ({ title, href, onClick, disabled, active = true }) => {
   if (href) {
     return (
       <TabLink
@@ -60,7 +62,10 @@ const Tab = ({ title, tooltip, href, onClick, disabled, active = true }) => {
 
 const Tabs = ({ content = [] }) => {
   return (
-    <Row marginX={4}>
+    <Row
+      flexWrap={['wrap', 'wrap', 'wrap', 'unset']}
+      justifyContent={['center', 'center', 'center', 'unset']}
+    >
       {content.map(tab => (
         <Tab key={tab.title} {...tab} />
       ))}

@@ -3,6 +3,7 @@ import parsePrometheusTextFormat from 'parse-prometheus-text-format';
 
 import api from '../../api';
 import {
+  Column,
   Group,
   Button,
   Value,
@@ -73,10 +74,6 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
             }}
           />
         ),
-        style: {
-          flex: '0 0 50px',
-          justifyContent: 'flex-end',
-        },
       },
     ],
     []

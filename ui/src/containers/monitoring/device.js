@@ -179,7 +179,11 @@ const Device = ({
             />
           );
         },
-        style: { flex: '0 0 80px', justifyContent: 'center' },
+        minWidth: '100px',
+        maxWidth: '100px',
+        cellStyle: {
+          justifyContent: 'center',
+        },
       },
       {
         Header: ' ',
@@ -213,8 +217,9 @@ const Device = ({
               />
             </Row>
           ),
-        style: {
-          flex: '0 0 50px',
+        minWidth: '80px',
+        maxWidth: '80px',
+        cellStyle: {
           justifyContent: 'flex-end',
         },
       },

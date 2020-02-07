@@ -3,43 +3,17 @@ import { useTable, useSortBy } from 'react-table';
 import styled from 'styled-components';
 import { useLinkProps } from 'react-navi';
 
-import { Column, Row, Icon } from './core';
-
-const Container = styled(Column)``;
-
-Container.defaultProps = { borderRadius: 1, borderColor: 'white' };
-
-const Cell = styled(Row)`
-  flex: 1 0 0%;
-  min-width: 50px;
-  box-sizing: content-box;
-  padding: 8px 16px;
-`;
-
-Cell.defaultProps = {
-  overflow: 'hidden',
-};
-
-const TableRow = styled(Row)`
-  align-items: center;
-  border-bottom: 1px solid ${props => props.theme.colors.grays[1]};
-  cursor: ${props => (props.selectable ? 'pointer' : 'default')};
-  transition: ${props => props.theme.transitions[0]};
-
-  &:hover {
-    background-color: ${props =>
-      props.selectable
-        ? props.theme.colors.grays[4]
-        : props.theme.colors.black};
-  }
-`;
+import { Column, Row, Grid, Icon } from './core';
 
 const A = styled.a`
   text-decoration: none;
   color: unset;
+  flex: 1;
+  margin: -8px -12px;
+  padding: 8px 12px;
 `;
 
-const LinkRow = ({ children, href, ...rest }) => {
+const LinkCell = ({ children, href, ...rest }) => {
   const linkProps = useLinkProps({ href });
   return (
     <A {...linkProps} {...rest}>
@@ -48,12 +22,43 @@ const LinkRow = ({ children, href, ...rest }) => {
   );
 };
 
-const Header = styled(Row)`
-  min-height: 50px;
-  border-top-left-radius: 3px;
-  border-top-right-radius: 3px;
+const StyledTable = styled(Grid).attrs({ as: 'table' })`
+  width: auto;
+  border-collapse: collapse;
+`;
+
+const TableHead = styled.thead`
+  display: contents;
+`;
+
+const TableBody = styled.tbody`
+  display: contents;
+`;
+
+const TableRow = styled.tr`
+  border-bottom: 1px solid ${props => props.theme.colors.grays[1]};
+  cursor: ${props => (props.selectable ? 'pointer' : 'default')};
+  transition: ${props => props.theme.transitions[0]};
+  display: contents;
+
+  &:hover td {
+    background-color: ${props =>
+      props.selectable
+        ? props.theme.colors.grays[4]
+        : props.theme.colors.black};
+  }
+`;
+
+const HeaderCell = styled.th`
+  position: sticky;
+  top: 0;
   text-transform: uppercase;
-  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 16px 12px;
+  text-align: left;
+  color: ${props => props.theme.colors.white};
+  background-color: ${props => props.theme.colors.grays[0]};
 
   & ${Cell} svg {
     transition: fill 200ms;
@@ -64,12 +69,10 @@ const Header = styled(Row)`
   }
 `;
 
-Header.defaultProps = {
-  fontSize: 1,
-  fontWeight: 2,
-  color: 'white',
-  bg: 'grays.0',
-};
+const Cell = styled.td`
+  display: flex;
+  padding: 8px 12px;
+`;
 
 const Table = ({
   columns,
@@ -105,85 +108,103 @@ const Table = ({
   };
 
   return (
-    <Container {...getTableProps()} overflowY="hidden">
-      <Header flex={1}>
-        {headerGroups.map(headerGroup => (
-          <Row flex={1} {...headerGroup.getHeaderGroupProps()}>
-            {headerGroup.headers.map(column => (
+    <>
+      <StyledTable
+        {...getTableProps()}
+        overflowY="hidden"
+        gridTemplateColumns={columns
+          .map(
+            ({ minWidth = 'min-content', maxWidth = '1fr' }) =>
+              `minmax(${minWidth}, ${maxWidth})`
+          )
+          .join(' ')}
+      >
+        <TableHead>
+          <TableRow>
+            {headerGroups.map(headerGroup =>
+              headerGroup.headers.map(column => (
+                <HeaderCell
+                  {...column.getHeaderProps(column.getSortByToggleProps())}
+                  title=""
+                  style={{
+                    cursor: column.canSort ? 'pointer' : 'default',
+                  }}
+                >
+                  <Row justifyContent="space-between">
+                    {column.render('Header')}
+                    {column.isSorted ? (
+                      <Icon
+                        icon={
+                          column.isSortedDesc ? 'chevron-down' : 'chevron-up'
+                        }
+                        size={14}
+                        color="white"
+                        marginLeft={2}
+                      />
+                    ) : column.canSort ? (
+                      <Icon
+                        size={12}
+                        icon="expand-all"
+                        color="grays.5"
+                        marginLeft={2}
+                      />
+                    ) : null}
+                  </Row>
+                </HeaderCell>
+              ))
+            )}
+          </TableRow>
+        </TableHead>
+        <TableBody {...getTableBodyProps()} overflowY="auto">
+          {rows.map((row, i) => {
+            prepareRow(row);
+            const cells = row.cells.map(cell => (
               <Cell
-                {...column.getHeaderProps(column.getSortByToggleProps())}
-                title=""
+                {...cell.getCellProps()}
                 style={{
-                  ...column.style,
-                  cursor: column.canSort ? 'pointer' : 'default',
-                  alignSelf: 'center',
-                  justifyContent: 'space-between',
+                  textAlign:
+                    isNaN(cell.value) || cell.value === '-' ? 'left' : 'right',
+                  ...cell.column.cellStyle,
                 }}
+                selectable={selectable}
+                overflow={editRow ? 'visible' : 'hidden'}
               >
-                {column.render('Header')}
-                <Row marginLeft={2} alignItems="center">
-                  {column.isSorted ? (
-                    <Icon
-                      icon={column.isSortedDesc ? 'chevron-down' : 'chevron-up'}
-                      size={14}
-                      color="white"
-                    />
-                  ) : column.canSort ? (
-                    <Icon size={12} icon="expand-all" color="grays.5" />
-                  ) : null}
-                </Row>
+                {rowHref ? (
+                  <LinkCell href={rowHref(row.original)}>
+                    {cell.render('Cell')}
+                  </LinkCell>
+                ) : (
+                  cell.render('Cell')
+                )}
               </Cell>
-            ))}
-          </Row>
-        ))}
-      </Header>
-      <Column {...getTableBodyProps()} overflowY="auto">
-        {rows.length === 0 && (
-          <Row
-            justifyContent="center"
-            padding={4}
-            borderBottom={0}
-            borderColor="grays.1"
-          >
-            {placeholder}
-          </Row>
-        )}
-        {rows.map((row, i) => {
-          prepareRow(row);
-          const cells = row.cells.map(cell => (
-            <Cell
-              {...cell.getCellProps()}
-              style={{
-                justifyContent:
-                  isNaN(cell.value) || cell.value === '-'
-                    ? 'flex-start'
-                    : 'flex-end',
-                ...cell.column.style,
-                ...cell.column.cellStyle,
-              }}
-              overflow={editRow ? 'visible' : 'hidden'}
-            >
-              {cell.render('Cell')}
-            </Cell>
-          ));
-          const tableRow = (
-            <TableRow
-              {...row.getRowProps()}
-              selectable={selectable}
-              onClick={handleRowClick(row.index)}
-              position="relative"
-              style={{ transform: 'translate2d(0,0)' }}
-            >
-              {cells}
-            </TableRow>
-          );
-          if (rowHref) {
-            return <LinkRow href={rowHref(row.original)}>{tableRow}</LinkRow>;
-          }
-          return tableRow;
-        })}
-      </Column>
-    </Container>
+            ));
+            const tableRow = (
+              <TableRow
+                {...row.getRowProps()}
+                selectable={selectable}
+                onClick={handleRowClick(row.index)}
+                position="relative"
+                style={{ transform: 'translate2d(0,0)' }}
+              >
+                {cells}
+              </TableRow>
+            );
+            return tableRow;
+          })}
+        </TableBody>
+      </StyledTable>
+      {rows.length === 0 && (
+        <Row
+          flex={1}
+          justifyContent="center"
+          padding={4}
+          borderBottom={0}
+          borderColor="grays.1"
+        >
+          {placeholder}
+        </Row>
+      )}
+    </>
   );
 };
 

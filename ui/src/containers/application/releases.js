@@ -15,9 +15,6 @@ const Releases = ({
       {
         Header: 'Release',
         accessor: 'number',
-        style: {
-          flex: '0 0 75px',
-        },
       },
       {
         Header: 'Released by',
@@ -34,16 +31,10 @@ const Releases = ({
         Header: 'Started At',
         accessor: ({ createdAt }) =>
           createdAt ? moment(createdAt).fromNow() : '-',
-        style: {
-          flex: '0 0 150px',
-        },
       },
       {
         Header: 'Devices',
         accessor: 'deviceCounts.allCount',
-        style: {
-          flex: '0 0 76px',
-        },
       },
     ],
     []

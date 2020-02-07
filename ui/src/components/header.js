@@ -27,41 +27,63 @@ const Header = ({ children }) => {
   const isProjectsRoute = useActive('/projects');
   return (
     <Row
-      alignItems="center"
-      justifyContent="space-between"
+      flexDirection={['column', 'column', 'column', 'row']}
+      alignItems={['unset', 'unset', 'unset', 'center']}
+      justifyContent={['unset', 'unset', 'unset', 'space-between']}
       alignSelf="stretch"
-      paddingRight={5}
+      paddingX={5}
       paddingY={4}
-      bg="black"
+      paddingLeft={isProjectsRoute ? 5 : 0}
+      flexShrink={0}
+      bg={'black'}
+      borderBottom={[0, 0, 'none']}
+      borderColor={['grays.5', 'grays.5', 'none']}
     >
-      <Row
-        marginLeft={isProjectsRoute ? 5 : 0}
-        width={isProjectsRoute ? 'unset' : '136px'}
-        justifyContent="center"
-      >
-        <Logo />
-      </Row>
-      <Row flex={1} alignItems="center">
-        <ProjectSelector />
-      </Row>
-      <Row justifyContent="center" flex={1} marginX={5}>
-        {children}
-      </Row>
-      <Row justifyContent="flex-end" alignItems="center" flex={1}>
-        <HeaderLink
-          newTab
-          href="https://deviceplane.com/docs"
-          marginRight={5}
-          borderRadius={1}
-          padding={1}
-          paddingX="6px"
-          border={0}
-          borderColor="white"
+      <Row flex={1}>
+        {isProjectsRoute && (
+          <Row
+            justifyContent="center"
+            marginRight={[5, 5, 5, 7]}
+            marginLeft={[0, 0, 0, isProjectsRoute ? 0 : 6]}
+          >
+            <Logo />
+          </Row>
+        )}
+        <Row flex={1} alignItems="center">
+          <ProjectSelector />
+        </Row>
+        <Row
+          justifyContent="center"
+          flex={1}
+          marginX={5}
+          display={['none', 'none', 'none', 'flex']}
         >
-          <Icon icon="manual" size={12} color="white" marginRight={2} />
-          Docs
-        </HeaderLink>
-        <AvatarMenu />
+          {children}
+        </Row>
+        <Row justifyContent="flex-end" alignItems="center" flex={1}>
+          <HeaderLink
+            newTab
+            href="https://deviceplane.com/docs"
+            marginRight={5}
+            borderRadius={1}
+            padding={1}
+            paddingX="6px"
+            border={0}
+            borderColor="white"
+          >
+            <Icon icon="manual" size={12} color="white" marginRight={2} />
+            Docs
+          </HeaderLink>
+          <AvatarMenu />
+        </Row>
+      </Row>
+      <Row
+        marginTop={2}
+        justifyContent="center"
+        flex={1}
+        display={['flex', 'flex', 'flex', 'none']}
+      >
+        {children}
       </Row>
     </Row>
   );

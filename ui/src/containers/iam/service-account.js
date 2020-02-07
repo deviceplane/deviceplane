@@ -242,10 +242,6 @@ const ServiceAccountAccessKeys = ({ projectId, serviceAccount }) => {
               onClick={() => setKeyToDelete(row.original.id)}
             />
           ),
-        style: {
-          justifyContent: 'flex-end',
-          flex: '0 0 100px',
-        },
       },
     ],
     [keyToDelete]
