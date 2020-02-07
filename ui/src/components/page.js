@@ -36,10 +36,6 @@ const GlobalStyle = createGlobalStyle`
     margin: 0;
   }
 
-  html, body, #root, #root > div, main {
-    height: 100%;
-  }
-
   strong, strong * {
     font-weight: 500;
   }
@@ -83,22 +79,18 @@ const Page = ({ children }) => {
         />
       </Helmet>
       <GlobalStyle />
-      <Box>
-        <main>
-          <NotFoundBoundary
-            render={() => {
-              if (route.data.context.currentUser) {
-                return <NotFound />;
-              } else {
-                window.location.replace('/login');
-                return null;
-              }
-            }}
-          >
-            {children}
-          </NotFoundBoundary>
-        </main>
-      </Box>
+      <NotFoundBoundary
+        render={() => {
+          if (route.data.context.currentUser) {
+            return <NotFound />;
+          } else {
+            window.location.replace('/login');
+            return null;
+          }
+        }}
+      >
+        {children}
+      </NotFoundBoundary>
     </>
   );
 };

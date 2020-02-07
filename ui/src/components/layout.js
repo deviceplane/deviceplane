@@ -1,27 +1,28 @@
 import React from 'react';
 
-import { Column, Row } from './core';
+import { Box, Column, Row } from './core';
 import Header from './header';
 import Sidebar from './sidebar';
 
 const Layout = ({ children, header, ...rest }) => (
-  <Column height="100%">
+  <Box>
     <Header>{header}</Header>
-    <Row height="100%">
+    <Row>
       <Sidebar />
       <Column
+        height="calc(100vh - 64px)"
         flex={1}
+        alignSelf="stretch"
         overflow="auto"
-        height="100%"
-        padding={5}
         bg="pageBackground"
         borderRadius={1}
+        padding={5}
         {...rest}
       >
         {children}
       </Column>
     </Row>
-  </Column>
+  </Box>
 );
 
 export default Layout;
