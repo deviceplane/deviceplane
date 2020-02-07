@@ -31,7 +31,7 @@ const Header = ({ children }) => {
       justifyContent="space-between"
       alignSelf="stretch"
       paddingRight={5}
-      paddingY={2}
+      paddingY={4}
       bg="black"
     >
       <Row

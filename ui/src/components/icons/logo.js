@@ -15,7 +15,7 @@ const Container = styled(Row)`
   }
 `;
 
-const Logo = ({ size = 36, color = 'white', ...props }) => (
+const Logo = ({ size = 32, color = 'white', ...props }) => (
   <Container
     width={size}
     height={size}
