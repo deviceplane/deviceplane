@@ -92,11 +92,13 @@ const AvatarMenu = () => {
             >
               {context.currentUser.email}
             </Text>
-            <Divider />
             {!isProjectsRoute && (
-              <MenuItem onClick={() => navigation.navigate('/projects')}>
-                Projects
-              </MenuItem>
+              <>
+                <Divider />
+                <MenuItem onClick={() => navigation.navigate('/projects')}>
+                  Projects
+                </MenuItem>
+              </>
             )}
             <Divider />
             <MenuItem

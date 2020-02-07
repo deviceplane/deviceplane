@@ -15,13 +15,14 @@ const Container = styled(Row)`
   }
 `;
 
-const Logo = ({ size = 45, color = 'white' }) => (
+const Logo = ({ size = 36, color = 'white', ...props }) => (
   <Container
     width={size}
     height={size}
     alignItems="center"
     justifyContent="center"
     overflow="hidden"
+    {...props}
   >
     <svg
       width={175}

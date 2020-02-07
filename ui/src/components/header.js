@@ -1,8 +1,10 @@
 import React from 'react';
 import styled from 'styled-components';
+import { useActive } from 'react-navi';
 
 import AvatarMenu from './avatar-menu';
 import ProjectSelector from './project-selector';
+import Logo from './icons/logo';
 import { Row, Link, Icon } from './core';
 
 const HeaderLink = styled(Link)`
@@ -22,16 +24,23 @@ const HeaderLink = styled(Link)`
 `;
 
 const Header = ({ children }) => {
+  const isProjectsRoute = useActive('/projects');
   return (
     <Row
       alignItems="center"
       justifyContent="space-between"
       alignSelf="stretch"
-      padding={5}
-      paddingTop={5}
-      paddingBottom={3}
+      paddingRight={5}
+      paddingY={2}
       bg="black"
     >
+      <Row
+        marginLeft={isProjectsRoute ? 5 : 0}
+        width={isProjectsRoute ? 'unset' : '136px'}
+        justifyContent="center"
+      >
+        <Logo />
+      </Row>
       <Row flex={1} alignItems="center">
         <ProjectSelector />
       </Row>
