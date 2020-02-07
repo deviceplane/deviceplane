@@ -88,8 +88,6 @@ const Sidebar = () => {
     projectSelected && (
       <Column
         width={136}
-        height="100%"
-        alignSelf="stretch"
         bg="black"
         alignItems="center"
         flexShrink={0}

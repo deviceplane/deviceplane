@@ -9,17 +9,16 @@ const Layout = ({ children, header, ...rest }) => (
     <Header>{header}</Header>
     <Row height="100%">
       <Sidebar />
-      <Column flex={1} overflow="auto">
-        <Column
-          flex={1}
-          {...rest}
-          padding={5}
-          overflow="auto"
-          bg="pageBackground"
-          borderRadius={1}
-        >
-          {children}
-        </Column>
+      <Column
+        flex={1}
+        overflow="auto"
+        height="100%"
+        padding={5}
+        bg="pageBackground"
+        borderRadius={1}
+        {...rest}
+      >
+        {children}
       </Column>
     </Row>
   </Column>

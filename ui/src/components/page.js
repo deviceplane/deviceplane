@@ -32,6 +32,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   body {
+    overflow: hidden !important;
     margin: 0;
   }
 
