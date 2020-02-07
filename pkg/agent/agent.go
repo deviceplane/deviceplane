@@ -263,7 +263,7 @@ func (a *Agent) loadSavedBundle() *models.Bundle {
 }
 
 func (a *Agent) downloadLatestBundle(oldBundle *models.Bundle) *models.Bundle {
-	bundleBytes, err := a.client.GetBundle(context.TODO())
+	bundleBytes, err := a.client.GetBundleBytes(context.TODO())
 	if err != nil {
 		log.WithError(err).Error("get bundle")
 		return nil
