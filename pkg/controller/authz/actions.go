@@ -42,6 +42,8 @@ const (
 	ActionListAllDeviceLabels                = Action("ListAllDeviceLabels")
 	ActionSetDeviceLabel                     = Action("SetDeviceLabel")
 	ActionDeleteDeviceLabel                  = Action("DeleteDeviceLabel")
+	ActionSetDeviceEnvironmentVariable       = Action("SetDeviceEnvironmentVariable")
+	ActionDeleteDeviceEnvironmentVariable    = Action("DeleteDeviceEnvironmentVariable")
 	ActionCreateDeviceRegistrationToken      = Action("CreateDeviceRegistrationToken")
 	ActionUpdateDeviceRegistrationToken      = Action("UpdateDeviceRegistrationToken")
 	ActionDeleteDeviceRegistrationToken      = Action("DeleteDeviceRegistrationToken")
@@ -108,6 +110,8 @@ var (
 		ActionReboot,
 		ActionSetDeviceLabel,
 		ActionDeleteDeviceLabel,
+		ActionSetDeviceEnvironmentVariable,
+		ActionDeleteDeviceEnvironmentVariable,
 		ActionCreateDeviceRegistrationToken,
 		ActionUpdateDeviceRegistrationToken,
 		ActionDeleteDeviceRegistrationToken,

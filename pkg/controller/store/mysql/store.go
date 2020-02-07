@@ -1216,10 +1216,15 @@ func (s *Store) scanServiceAccountRoleBinding(scanner scanner) (*models.ServiceA
 	return &serviceAccountRoleBinding, nil
 }
 
-func (s *Store) CreateDevice(ctx context.Context, projectID, name, deviceRegistrationTokenID string, deviceLabels map[string]string) (*models.Device, error) {
+func (s *Store) CreateDevice(ctx context.Context, projectID, name, deviceRegistrationTokenID string, deviceLabels, environmentVariables map[string]string) (*models.Device, error) {
 	deviceID := newDeviceID()
 
 	serializedDeviceLabels, err := json.Marshal(deviceLabels)
+	if err != nil {
+		return nil, err
+	}
+
+	serializedDeviceEnvironmentVariables, err := json.Marshal(environmentVariables)
 	if err != nil {
 		return nil, err
 	}
@@ -1232,6 +1237,7 @@ func (s *Store) CreateDevice(ctx context.Context, projectID, name, deviceRegistr
 		name,
 		deviceRegistrationTokenID,
 		string(serializedDeviceLabels),
+		string(serializedDeviceEnvironmentVariables),
 	); err != nil {
 		return nil, err
 	}
@@ -1354,6 +1360,7 @@ func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 	var device models.Device
 	var infoString string
 	var labelsString string
+	var environmentVariablesString string
 	if err := scanner.Scan(
 		&device.ID,
 		&device.CreatedAt,
@@ -1363,6 +1370,7 @@ func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 		&device.DesiredAgentVersion,
 		&infoString,
 		&labelsString,
+		&environmentVariablesString,
 		&device.LastSeenAt,
 	); err != nil {
 		return nil, err
@@ -1378,6 +1386,14 @@ func (s *Store) scanDevice(scanner scanner) (*models.Device, error) {
 		device.Labels = map[string]string{}
 	} else {
 		if err := json.Unmarshal([]byte(labelsString), &device.Labels); err != nil {
+			return nil, err
+		}
+	}
+
+	if environmentVariablesString == "" {
+		device.EnvironmentVariables = map[string]string{}
+	} else {
+		if err := json.Unmarshal([]byte(environmentVariablesString), &device.EnvironmentVariables); err != nil {
 			return nil, err
 		}
 	}
@@ -1496,6 +1512,62 @@ func (s *Store) DeleteDeviceLabel(ctx context.Context, deviceID, projectID, key 
 		ctx,
 		updateDeviceLabels,
 		labelsString,
+		deviceID,
+		projectID,
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Store) SetDeviceEnvironmentVariable(ctx context.Context, deviceID, projectID, key, value string) (*string, error) {
+	device, err := s.GetDevice(ctx, deviceID, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	device.EnvironmentVariables[key] = value
+
+	environmentVariablesString, err := json.Marshal(device.EnvironmentVariables)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateDeviceEnvironmentVariables,
+		environmentVariablesString,
+		deviceID,
+		projectID,
+	); err != nil {
+		return nil, err
+	}
+
+	device, err = s.GetDevice(ctx, deviceID, projectID)
+	if err != nil {
+		return nil, err
+	}
+	v := device.EnvironmentVariables[key]
+	return &v, nil
+}
+
+func (s *Store) DeleteDeviceEnvironmentVariable(ctx context.Context, deviceID, projectID, key string) error {
+	device, err := s.GetDevice(ctx, deviceID, projectID)
+	if err != nil {
+		return err
+	}
+
+	delete(device.EnvironmentVariables, key)
+
+	environmentVariablesString, err := json.Marshal(device.EnvironmentVariables)
+	if err != nil {
+		return err
+	}
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateDeviceEnvironmentVariables,
+		environmentVariablesString,
 		deviceID,
 		projectID,
 	); err != nil {

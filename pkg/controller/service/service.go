@@ -247,6 +247,9 @@ func NewService(
 
 	apiRouter.HandleFunc("/projects/{project}/devicelabels", s.validateAuthorization(authz.ResourceDeviceLabels, authz.ActionListAllDeviceLabels, s.listAllDeviceLabelKeys)).Methods("GET")
 
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/environmentvariables", s.validateAuthorization(authz.ResourceDeviceEnvironmentVariables, authz.ActionSetDeviceEnvironmentVariable, s.withDevice(s.setDeviceEnvironmentVariable))).Methods("PUT")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/environmentvariables/{key}", s.validateAuthorization(authz.ResourceDeviceEnvironmentVariables, authz.ActionDeleteDeviceEnvironmentVariable, s.withDevice(s.deleteDeviceEnvironmentVariable))).Methods("DELETE")
+
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens", s.validateAuthorization(authz.ResourceDeviceRegistrationTokens, authz.ActionListDeviceRegistrationTokens, s.listDeviceRegistrationTokens)).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens", s.validateAuthorization(authz.ResourceDeviceRegistrationTokens, authz.ActionCreateDeviceRegistrationToken, s.createDeviceRegistrationToken)).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}", s.validateAuthorization(authz.ResourceDeviceRegistrationTokens, authz.ActionGetDeviceRegistrationToken, s.withDeviceRegistrationToken(s.getDeviceRegistrationToken))).Methods("GET")
@@ -2494,6 +2497,49 @@ func (s *Service) deleteDeviceLabel(w http.ResponseWriter, r *http.Request,
 	}
 }
 
+func (s *Service) setDeviceEnvironmentVariable(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	deviceID string,
+) {
+	var setDeviceEnvironmentVariableRequest struct {
+		Key   string `json:"key" validate:"environmentvariablekey"`
+		Value string `json:"value" validate:"environmentvariablevalue"`
+	}
+	if err := read(r, &setDeviceEnvironmentVariableRequest); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	deviceEnvironmentVariable, err := s.devices.SetDeviceEnvironmentVariable(
+		r.Context(),
+		deviceID,
+		projectID,
+		setDeviceEnvironmentVariableRequest.Key,
+		setDeviceEnvironmentVariableRequest.Value,
+	)
+	if err != nil {
+		log.WithError(err).Error("set device environment variable")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	utils.Respond(w, deviceEnvironmentVariable)
+}
+
+func (s *Service) deleteDeviceEnvironmentVariable(w http.ResponseWriter, r *http.Request,
+	projectID, authenticatedUserID, authenticatedServiceAccountID,
+	deviceID string,
+) {
+	vars := mux.Vars(r)
+	key := vars["key"]
+
+	if err := s.devices.DeleteDeviceEnvironmentVariable(r.Context(), deviceID, projectID, key); err != nil {
+		log.WithError(err).Error("delete device environment variable")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
 func (s *Service) createDeviceRegistrationToken(w http.ResponseWriter, r *http.Request,
 	projectID, authenticatedUserID, authenticatedServiceAccountID string,
 ) {
@@ -2838,7 +2884,9 @@ func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	device, err := s.devices.CreateDevice(r.Context(), projectID, namesgenerator.GetRandomName(), deviceRegistrationToken.ID, deviceRegistrationToken.Labels)
+	device, err := s.devices.CreateDevice(r.Context(),
+		projectID, namesgenerator.GetRandomName(), deviceRegistrationToken.ID, deviceRegistrationToken.Labels, map[string]string{},
+	)
 	if err != nil {
 		log.WithError(err).Error("create device")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -2894,6 +2942,8 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request, project mode
 	}
 
 	bundle := models.Bundle{
+		EnvironmentVariables: device.EnvironmentVariables,
+
 		DesiredAgentVersion: device.DesiredAgentVersion,
 
 		DeviceMetricsConfig:   deviceMetricsConfig,
