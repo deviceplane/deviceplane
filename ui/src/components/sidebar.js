@@ -87,6 +87,7 @@ const Sidebar = () => {
   return (
     projectSelected && (
       <Column
+        height="calc(100vh - 64px)"
         width={136}
         bg="black"
         alignItems="center"
