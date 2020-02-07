@@ -443,32 +443,33 @@ const createDevice = `
     project_id,
     name,
     registration_token_id,
-    labels
+    labels,
+    environment_variables
   )
-  values (?, ?, ?, ?, ?)
+  values (?, ?, ?, ?, ?, ?)
 `
 
 // Index: project_id_id
 const getDevice = `
-  select id, created_at, project_id, name, registration_token_id, desired_agent_version, info, labels, last_seen_at from devices
+  select id, created_at, project_id, name, registration_token_id, desired_agent_version, info, labels, environment_variables, last_seen_at from devices
   where id = ? and project_id = ?
 `
 
 // Index: project_id_name
 const lookupDevice = `
-  select id, created_at, project_id, name, registration_token_id, desired_agent_version, info, labels, last_seen_at from devices
+  select id, created_at, project_id, name, registration_token_id, desired_agent_version, info, labels, environment_variables, last_seen_at from devices
   where name = ? and project_id = ?
 `
 
 // Index: project_id_id
 const listDevices = `
-  select id, created_at, project_id, name, registration_token_id, desired_agent_version, info, labels, last_seen_at from devices
+  select id, created_at, project_id, name, registration_token_id, desired_agent_version, info, labels, environment_variables, last_seen_at from devices
   where project_id = ?
 `
 
 // Index: project_id_id,fulltext
 const searchDevices = `
-  select id, created_at, project_id, name, registration_token_id, desired_agent_version, info, labels, last_seen_at from devices
+  select id, created_at, project_id, name, registration_token_id, desired_agent_version, info, labels, environment_variables, last_seen_at from devices
   where project_id = ?
   and match (name, labels) against (concat('*', ?, '*') in boolean mode)
 `
@@ -484,6 +485,13 @@ const updateDeviceName = `
 const updateDeviceLabels = `
   update devices
   set labels = ?
+  where id = ? and project_id = ?
+`
+
+// Index: project_id_id
+const updateDeviceEnvironmentVariables = `
+  update devices
+  set environment_variables = ?
   where id = ? and project_id = ?
 `
 

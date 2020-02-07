@@ -112,16 +112,17 @@ type ServiceAccountRoleBinding struct {
 }
 
 type Device struct {
-	ID                  string            `json:"id" yaml:"id"`
-	CreatedAt           time.Time         `json:"createdAt" yaml:"createdAt"`
-	ProjectID           string            `json:"projectId" yaml:"projectId"`
-	Name                string            `json:"name" yaml:"name"`
-	RegistrationTokenID *string           `json:"registrationTokenId" yaml:"registrationTokenId"`
-	DesiredAgentVersion string            `json:"desiredAgentVersion" yaml:"desiredAgentVersion"`
-	Info                DeviceInfo        `json:"info" yaml:"info"`
-	LastSeenAt          time.Time         `json:"lastSeenAt" yaml:"lastSeenAt"`
-	Status              DeviceStatus      `json:"status" yaml:"status"`
-	Labels              map[string]string `json:"labels" yaml:"labels"`
+	ID                   string            `json:"id" yaml:"id"`
+	CreatedAt            time.Time         `json:"createdAt" yaml:"createdAt"`
+	ProjectID            string            `json:"projectId" yaml:"projectId"`
+	Name                 string            `json:"name" yaml:"name"`
+	RegistrationTokenID  *string           `json:"registrationTokenId" yaml:"registrationTokenId"`
+	DesiredAgentVersion  string            `json:"desiredAgentVersion" yaml:"desiredAgentVersion"`
+	Info                 DeviceInfo        `json:"info" yaml:"info"`
+	LastSeenAt           time.Time         `json:"lastSeenAt" yaml:"lastSeenAt"`
+	Status               DeviceStatus      `json:"status" yaml:"status"`
+	Labels               map[string]string `json:"labels" yaml:"labels"`
+	EnvironmentVariables map[string]string `json:"environmentVariables" yaml:"environmentVariables"`
 }
 
 type DeviceStatus string
@@ -253,6 +254,8 @@ type Bundle struct {
 	Applications        []FullBundledApplication  `json:"applications" yaml:"applications"`
 	ApplicationStatuses []DeviceApplicationStatus `json:"applicationStatuses" yaml:"applicationStatuses"`
 	ServiceStatuses     []DeviceServiceStatus     `json:"serviceStatuses" yaml:"serviceStatuses"`
+
+	EnvironmentVariables map[string]string `json:"environmentVariables" yaml:"environmentVariables"`
 
 	DesiredAgentVersion string `json:"desiredAgentVersion" yaml:"desiredAgentVersion"`
 

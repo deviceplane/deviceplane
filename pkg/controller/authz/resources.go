@@ -16,6 +16,7 @@ const (
 	ResourceReleases                      = Resource("releases")
 	ResourceDevices                       = Resource("devices")
 	ResourceDeviceLabels                  = Resource("devicelabels")
+	ResourceDeviceEnvironmentVariables    = Resource("deviceenvironmentvariables")
 	ResourceDeviceRegistrationTokens      = Resource("deviceregistrationtokens")
 	ResourceDeviceRegistrationTokenLabels = Resource("deviceregistrationtokenlabels")
 	ResourceProjectConfigs                = Resource("projectconfigs")

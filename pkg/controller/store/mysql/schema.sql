@@ -297,6 +297,7 @@ create table if not exists devices (
   info longtext not null,
   last_seen_at timestamp not null default current_timestamp,
   labels longtext not null,
+  environment_variables longtext not null,
 
   primary key (id),
   unique name_project_id_unique (name, project_id),
