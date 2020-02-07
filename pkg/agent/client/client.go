@@ -91,12 +91,8 @@ func (c *Client) RegisterDevice(ctx context.Context, registrationToken string) (
 	return &registerDeviceResponse, nil
 }
 
-func (c *Client) GetBundle(ctx context.Context) (*models.Bundle, error) {
-	var bundle models.Bundle
-	if err := c.get(ctx, &bundle, "projects", c.projectID, "devices", c.deviceID, "bundle"); err != nil {
-		return nil, err
-	}
-	return &bundle, nil
+func (c *Client) GetBundle(ctx context.Context) ([]byte, error) {
+	return c.get(ctx, "projects", c.projectID, "devices", c.deviceID, "bundle")
 }
 
 func (c *Client) SetDeviceInfo(ctx context.Context, req models.SetDeviceInfoRequest) error {
@@ -147,23 +143,23 @@ func (c *Client) Revdial(ctx context.Context, path string) (*websocket.Conn, *ht
 	return websocket.DefaultDialer.Dial(getWebsocketURL(c.url, strings.TrimPrefix(path, "/")), nil)
 }
 
-func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {
+func (c *Client) get(ctx context.Context, s ...string) ([]byte, error) {
 	req, err := http.NewRequest("GET", getURL(c.url, s...), nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req.SetBasicAuth(c.accessKey, "")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	log.WithFields(log.Fields{
@@ -172,11 +168,7 @@ func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {
 		"body":   string(bytes),
 	}).Debug("GET response")
 
-	if len(bytes) == 0 {
-		return nil
-	}
-
-	return json.Unmarshal(bytes, &out)
+	return bytes, nil
 }
 
 func (c *Client) post(ctx context.Context, in, out interface{}, s ...string) error {

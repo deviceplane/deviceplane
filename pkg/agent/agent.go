@@ -204,7 +204,8 @@ func (a *Agent) Run() {
 }
 
 func (a *Agent) runBundleApplier() {
-	if bundle := a.loadSavedBundle(); bundle != nil {
+	bundle := a.loadSavedBundle()
+	if bundle != nil {
 		a.supervisor.SetApplications(bundle.Applications)
 	}
 
@@ -212,7 +213,8 @@ func (a *Agent) runBundleApplier() {
 	defer ticker.Stop()
 
 	for {
-		if bundle := a.downloadLatestBundle(); bundle != nil {
+		bundle = a.downloadLatestBundle(bundle)
+		if bundle != nil {
 			a.supervisor.SetApplications(bundle.Applications)
 			a.statusGarbageCollector.SetBundle(*bundle)
 			a.updater.SetDesiredVersion(bundle.DesiredAgentVersion)
@@ -260,14 +262,34 @@ func (a *Agent) loadSavedBundle() *models.Bundle {
 	}
 }
 
-func (a *Agent) downloadLatestBundle() *models.Bundle {
-	bundle, err := a.client.GetBundle(context.TODO())
+func (a *Agent) downloadLatestBundle(oldBundle *models.Bundle) *models.Bundle {
+	bundleBytes, err := a.client.GetBundle(context.TODO())
 	if err != nil {
 		log.WithError(err).Error("get bundle")
 		return nil
 	}
 
-	bundleBytes, err := json.Marshal(bundle)
+	var bundle models.Bundle
+	err = json.Unmarshal(bundleBytes, &bundle)
+	if err != nil {
+		log.WithError(err).Error("unmarshaling full bundle")
+
+		var minimalBundle struct {
+			DesiredAgentVersion string `json:"desiredAgentVersion" yaml:"desiredAgentVersion"`
+		}
+		err := json.Unmarshal(bundleBytes, &minimalBundle)
+		if err != nil {
+			log.WithError(err).Error("unmarshaling minimal bundle")
+			return nil
+		}
+
+		if oldBundle != nil {
+			bundle = *oldBundle
+		}
+		bundle.DesiredAgentVersion = minimalBundle.DesiredAgentVersion
+	}
+
+	bundleBytes, err = json.Marshal(bundle)
 	if err != nil {
 		log.WithError(err).Error("marshal bundle")
 		return nil
@@ -278,7 +300,7 @@ func (a *Agent) downloadLatestBundle() *models.Bundle {
 		return nil
 	}
 
-	return bundle
+	return &bundle
 }
 
 func (a *Agent) runInfoReporter() {
