@@ -63,7 +63,7 @@ const Card = ({
       variant={size}
       borderRadius={2}
       padding={7}
-      border={border ? 1 : undefined}
+      border={border ? 0 : undefined}
       borderColor="white"
       disabled={disabled}
       {...props}

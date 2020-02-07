@@ -11,16 +11,22 @@ const MenuItem = styled(Link)`
 
   &:hover {
     color: ${props => props.theme.colors.pureWhite};
-    background-color: ${props => props.theme.colors.grays[0]};
+    background-color: ${props => props.theme.colors.grays[3]};
   }
 `;
 MenuItem.defaultProps = {
-  paddingX: 2,
+  paddingX: '6px',
   paddingY: 2,
   color: 'white',
-  fontSize: 2,
+  fontSize: 1,
   fontWeight: 1,
 };
+
+const Selector = styled(Row)`
+  &:hover {
+    border-color: ${props => props.theme.colors.primary};
+  }
+`;
 
 const ProjectSelector = ({}) => {
   const { data } = useCurrentRoute();
@@ -45,6 +51,22 @@ const ProjectSelector = ({}) => {
 
   return (
     <Popover
+      button={({ show }) => (
+        <Selector
+          alignItems="center"
+          padding={1}
+          paddingX="6px"
+          borderRadius={1}
+          bg="black"
+          border={0}
+          borderColor={show ? 'primary' : 'white'}
+        >
+          <Text fontSize={1} fontWeight={1} color="white">
+            {data.params.project}
+          </Text>
+          <Icon icon="caret-down" size={16} color="white" marginLeft={4} />
+        </Selector>
+      )}
       content={({ close }) =>
         projects.map(({ name }) => (
           <MenuItem href={`/${name}`} onClick={close}>
@@ -52,24 +74,9 @@ const ProjectSelector = ({}) => {
           </MenuItem>
         ))
       }
-      top="40px"
+      top="43px"
       width="180px"
-    >
-      <Row
-        alignItems="center"
-        paddingX={2}
-        paddingY="6px"
-        borderRadius={1}
-        bg="black"
-        border={0}
-        borderColor="white"
-      >
-        <Text fontSize={2} fontWeight={2} color="white">
-          {data.params.project}
-        </Text>
-        <Icon icon="caret-down" size={16} color="white" marginLeft={4} />
-      </Row>
-    </Popover>
+    ></Popover>
   );
 };
 
