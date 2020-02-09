@@ -8,6 +8,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/agent/utils"
 	"github.com/deviceplane/deviceplane/pkg/agent/validator"
 	"github.com/deviceplane/deviceplane/pkg/agent/variables"
+	dpcontext "github.com/deviceplane/deviceplane/pkg/context"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
@@ -15,8 +16,8 @@ import (
 type Supervisor struct {
 	engine                  engine.Engine
 	variables               variables.Interface
-	reportApplicationStatus func(ctx context.Context, applicationID string, currentReleaseID string) error
-	reportServiceStatus     func(ctx context.Context, applicationID, service, currentReleaseID string) error
+	reportApplicationStatus func(ctx *dpcontext.Context, applicationID string, currentReleaseID string) error
+	reportServiceStatus     func(ctx *dpcontext.Context, applicationID, service, currentReleaseID string) error
 	validators              []validator.Validator
 
 	applicationIDs         map[string]struct{}
@@ -31,8 +32,8 @@ type Supervisor struct {
 func NewSupervisor(
 	engine engine.Engine,
 	variables variables.Interface,
-	reportApplicationStatus func(ctx context.Context, applicationID, currentReleaseID string) error,
-	reportServiceStatus func(ctx context.Context, applicationID, service, currentReleaseID string) error,
+	reportApplicationStatus func(ctx *dpcontext.Context, applicationID, currentReleaseID string) error,
+	reportServiceStatus func(ctx *dpcontext.Context, applicationID, service, currentReleaseID string) error,
 	validators []validator.Validator,
 ) *Supervisor {
 	ctx, cancel := context.WithCancel(context.Background())

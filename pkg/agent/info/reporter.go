@@ -2,9 +2,11 @@ package info
 
 import (
 	"context"
+	"time"
 
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/agent/client"
+	dpcontext "github.com/deviceplane/deviceplane/pkg/context"
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
@@ -24,14 +26,20 @@ func NewReporter(client *client.Client, agentVersion string) *Reporter {
 
 func (r *Reporter) Report() error {
 	newInfo := r.readInfo()
+
 	if newInfo != r.info {
-		if err := r.client.SetDeviceInfo(context.TODO(), models.SetDeviceInfoRequest{
+		ctx, cancel := dpcontext.New(context.Background(), time.Minute)
+		defer cancel()
+
+		if err := r.client.SetDeviceInfo(ctx, models.SetDeviceInfoRequest{
 			DeviceInfo: newInfo,
 		}); err != nil {
 			return err
 		}
+
 		r.info = newInfo
 	}
+
 	return nil
 }
 

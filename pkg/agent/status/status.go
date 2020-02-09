@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/apex/log"
+	dpcontext "github.com/deviceplane/deviceplane/pkg/context"
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
 type GarbageCollector struct {
-	deleteApplicationStatus func(ctx context.Context, applicationID string) error
-	deleteServiceStatus     func(ctx context.Context, applicationID, service string) error
+	deleteApplicationStatus func(ctx *dpcontext.Context, applicationID string) error
+	deleteServiceStatus     func(ctx *dpcontext.Context, applicationID, service string) error
 
 	bundle                                models.Bundle
 	applicationStatusGarbageCollectorDone chan struct{}
@@ -24,8 +25,8 @@ type GarbageCollector struct {
 }
 
 func NewGarbageCollector(
-	deleteApplicationStatus func(ctx context.Context, applicationID string) error,
-	deleteServiceStatus func(ctx context.Context, applicationID, service string) error,
+	deleteApplicationStatus func(ctx *dpcontext.Context, applicationID string) error,
+	deleteServiceStatus func(ctx *dpcontext.Context, applicationID, service string) error,
 ) *GarbageCollector {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &GarbageCollector{
@@ -74,11 +75,15 @@ func (gc *GarbageCollector) applicationStatusGarbageCollector() {
 
 		for _, applicationStatus := range bundle.ApplicationStatuses {
 			if _, ok := applications[applicationStatus.ApplicationID]; !ok {
-				if err := gc.deleteApplicationStatus(gc.ctx, applicationStatus.ApplicationID); err != nil {
+				ctx, cancel := dpcontext.New(gc.ctx, time.Minute)
+
+				if err := gc.deleteApplicationStatus(ctx, applicationStatus.ApplicationID); err != nil {
 					log.WithField("application", applicationStatus.ApplicationID).
 						WithError(err).
 						Error("delete application status")
 				}
+
+				cancel()
 			}
 		}
 
@@ -118,12 +123,16 @@ func (gc *GarbageCollector) serviceStatusGarbageCollector() {
 		}
 
 		deleteServiceStatus := func(applicationID, service string) {
-			if err := gc.deleteServiceStatus(gc.ctx, applicationID, service); err != nil {
+			ctx, cancel := dpcontext.New(gc.ctx, time.Minute)
+
+			if err := gc.deleteServiceStatus(ctx, applicationID, service); err != nil {
 				log.WithField("application", applicationID).
 					WithField("service", service).
 					WithError(err).
 					Error("delete service status")
 			}
+
+			cancel()
 		}
 
 		for applicationID, serviceStatuses := range serviceStatuses {

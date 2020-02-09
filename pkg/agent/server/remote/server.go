@@ -3,9 +3,11 @@ package remote
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/deviceplane/deviceplane/pkg/agent/client"
 	"github.com/deviceplane/deviceplane/pkg/agent/server/conncontext"
+	dpcontext "github.com/deviceplane/deviceplane/pkg/context"
 	"github.com/deviceplane/deviceplane/pkg/revdial"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
@@ -27,15 +29,23 @@ func NewServer(client *client.Client, service http.Handler) *Server {
 }
 
 func (s *Server) Serve() error {
-	conn, err := s.client.InitiateDeviceConnection(context.TODO())
+	ctx, cancel := dpcontext.New(context.Background(), time.Minute)
+	defer cancel()
+
+	conn, err := s.client.InitiateDeviceConnection(ctx)
 	if err != nil {
 		return errors.Wrap(err, "initiate connection")
 	}
 
-	listener := revdial.NewListener(conn, func(ctx context.Context, path string) (*websocket.Conn, *http.Response, error) {
-		return s.client.Revdial(ctx, path)
-	})
+	listener := revdial.NewListener(conn, s.revdial)
 	defer listener.Close()
 
 	return s.httpServer.Serve(listener)
+}
+
+func (s *Server) revdial(ctx context.Context, path string) (*websocket.Conn, *http.Response, error) {
+	dpctx, cancel := dpcontext.New(ctx, time.Minute)
+	defer cancel()
+
+	return s.client.Revdial(dpctx, path)
 }
