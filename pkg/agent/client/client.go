@@ -5,15 +5,15 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net"
-	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/apex/log"
 	dpcontext "github.com/deviceplane/deviceplane/pkg/context"
+	dphttp "github.com/deviceplane/deviceplane/pkg/http"
 	"github.com/deviceplane/deviceplane/pkg/models"
+	dpwebsocket "github.com/deviceplane/deviceplane/pkg/websocket"
 	"github.com/function61/holepunch-server/pkg/wsconnadapter"
-	"github.com/gorilla/websocket"
 )
 
 const (
@@ -23,15 +23,15 @@ const (
 type Client struct {
 	url        *url.URL
 	projectID  string
-	httpClient *http.Client
+	httpClient *dphttp.Client
 
 	deviceID  string
 	accessKey string
 }
 
-func NewClient(url *url.URL, projectID string, httpClient *http.Client) *Client {
+func NewClient(url *url.URL, projectID string, httpClient *dphttp.Client) *Client {
 	if httpClient == nil {
-		httpClient = http.DefaultClient
+		httpClient = dphttp.DefaultClient
 	}
 	return &Client{
 		url:        url,
@@ -57,7 +57,7 @@ func (c *Client) RegisterDevice(ctx *dpcontext.Context, registrationToken string
 	}
 	reader := bytes.NewReader(reqBytes)
 
-	req, err := http.NewRequest("POST", getURL(c.url, "projects", c.projectID, "devices", "register"), reader)
+	req, err := dphttp.NewRequest(ctx, "POST", getURL(c.url, "projects", c.projectID, "devices", "register"), reader)
 	if err != nil {
 		return nil, err
 	}
@@ -124,27 +124,35 @@ func (c *Client) DeleteDeviceServiceStatus(ctx *dpcontext.Context, applicationID
 }
 
 func (c *Client) InitiateDeviceConnection(ctx *dpcontext.Context) (net.Conn, error) {
-	req, err := http.NewRequest("", "", nil)
+	req, err := dphttp.NewRequest(ctx, "", "", nil)
 	if err != nil {
 		return nil, err
 	}
 
 	req.SetBasicAuth(c.accessKey, "")
 
-	wsConn, _, err := websocket.DefaultDialer.Dial(getWebsocketURL(c.url, "projects", c.projectID, "devices", c.deviceID, "connection"), req.Header)
+	wsConn, _, err := dpwebsocket.DefaultDialer.Dial(
+		ctx,
+		getWebsocketURL(c.url, "projects", c.projectID, "devices", c.deviceID, "connection"),
+		req.Header,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	return wsconnadapter.New(wsConn), nil
+	return wsconnadapter.New(wsConn.Conn), nil
 }
 
-func (c *Client) Revdial(ctx *dpcontext.Context, path string) (*websocket.Conn, *http.Response, error) {
-	return websocket.DefaultDialer.Dial(getWebsocketURL(c.url, strings.TrimPrefix(path, "/")), nil)
+func (c *Client) Revdial(ctx *dpcontext.Context, path string) (*dpwebsocket.Conn, *dphttp.Response, error) {
+	return dpwebsocket.DefaultDialer.Dial(
+		ctx,
+		getWebsocketURL(c.url, strings.TrimPrefix(path, "/")),
+		nil,
+	)
 }
 
 func (c *Client) get(ctx *dpcontext.Context, out interface{}, s ...string) error {
-	req, err := http.NewRequest("GET", getURL(c.url, s...), nil)
+	req, err := dphttp.NewRequest(ctx, "GET", getURL(c.url, s...), nil)
 	if err != nil {
 		return err
 	}
@@ -182,7 +190,7 @@ func (c *Client) post(ctx *dpcontext.Context, in, out interface{}, s ...string) 
 	}
 	reader := bytes.NewReader(reqBytes)
 
-	req, err := http.NewRequest("POST", getURL(c.url, s...), reader)
+	req, err := dphttp.NewRequest(ctx, "POST", getURL(c.url, s...), reader)
 	if err != nil {
 		return err
 	}
@@ -214,7 +222,7 @@ func (c *Client) post(ctx *dpcontext.Context, in, out interface{}, s ...string) 
 }
 
 func (c *Client) delete(ctx *dpcontext.Context, out interface{}, s ...string) error {
-	req, err := http.NewRequest("DELETE", getURL(c.url, s...), nil)
+	req, err := dphttp.NewRequest(ctx, "DELETE", getURL(c.url, s...), nil)
 	if err != nil {
 		return err
 	}

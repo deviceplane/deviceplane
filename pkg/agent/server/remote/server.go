@@ -47,5 +47,10 @@ func (s *Server) revdial(ctx context.Context, path string) (*websocket.Conn, *ht
 	dpctx, cancel := dpcontext.New(ctx, time.Minute)
 	defer cancel()
 
-	return s.client.Revdial(dpctx, path)
+	conn, resp, err := s.client.Revdial(dpctx, path)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return conn.Conn, resp.Response, nil
 }
