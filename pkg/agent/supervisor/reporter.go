@@ -6,13 +6,14 @@ import (
 	"time"
 
 	"github.com/apex/log"
+	dpcontext "github.com/deviceplane/deviceplane/pkg/context"
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
 type Reporter struct {
 	applicationID           string
-	reportApplicationStatus func(ctx context.Context, applicationID string, currentRelease string) error
-	reportServiceStatus     func(ctx context.Context, applicationID, service, currentRelease string) error
+	reportApplicationStatus func(ctx *dpcontext.Context, applicationID string, currentRelease string) error
+	reportServiceStatus     func(ctx *dpcontext.Context, applicationID, service, currentRelease string) error
 
 	desiredApplicationRelease      string
 	desiredApplicationServiceNames map[string]struct{}
@@ -31,8 +32,8 @@ type Reporter struct {
 
 func NewReporter(
 	applicationID string,
-	reportApplicationStatus func(ctx context.Context, applicationID, currentRelease string) error,
-	reportServiceStatus func(ctx context.Context, applicationID, service, currentRelease string) error,
+	reportApplicationStatus func(ctx *dpcontext.Context, applicationID, currentRelease string) error,
+	reportServiceStatus func(ctx *dpcontext.Context, applicationID, service, currentRelease string) error,
 ) *Reporter {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Reporter{
@@ -86,6 +87,9 @@ func (r *Reporter) applicationStatusReporter() {
 	defer ticker.Stop()
 
 	for {
+		var ctx *dpcontext.Context
+		var cancel func()
+
 		r.lock.RLock()
 		releaseToReport := r.desiredApplicationRelease
 		if releaseToReport == r.reportedApplicationRelease {
@@ -101,10 +105,14 @@ func (r *Reporter) applicationStatusReporter() {
 		}
 		r.lock.RUnlock()
 
-		if err := r.reportApplicationStatus(r.ctx, r.applicationID, releaseToReport); err != nil {
+		ctx, cancel = dpcontext.New(r.ctx, time.Minute)
+
+		if err := r.reportApplicationStatus(ctx, r.applicationID, releaseToReport); err != nil {
 			log.WithError(err).Error("report application status")
 			goto cont
 		}
+
+		cancel()
 
 		r.reportedApplicationRelease = releaseToReport
 
@@ -124,6 +132,9 @@ func (r *Reporter) serviceStatusReporter() {
 	defer ticker.Stop()
 
 	for {
+		var ctx *dpcontext.Context
+		var cancel func()
+
 		r.lock.RLock()
 		diff := make(map[string]string)
 		copy := make(map[string]string)
@@ -137,10 +148,14 @@ func (r *Reporter) serviceStatusReporter() {
 		r.lock.RUnlock()
 
 		for serviceName, release := range diff {
-			if err := r.reportServiceStatus(r.ctx, r.applicationID, serviceName, release); err != nil {
+			ctx, cancel = dpcontext.New(r.ctx, time.Minute)
+
+			if err := r.reportServiceStatus(ctx, r.applicationID, serviceName, release); err != nil {
 				log.WithError(err).Error("report service status")
 				goto cont
 			}
+
+			cancel()
 		}
 
 		r.reportedServiceReleases = copy

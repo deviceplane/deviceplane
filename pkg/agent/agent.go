@@ -26,6 +26,7 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/agent/validator/image"
 	"github.com/deviceplane/deviceplane/pkg/agent/variables"
 	"github.com/deviceplane/deviceplane/pkg/agent/variables/fsnotify"
+	dpcontext "github.com/deviceplane/deviceplane/pkg/context"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/file"
 	"github.com/deviceplane/deviceplane/pkg/models"
@@ -79,12 +80,12 @@ func NewAgent(
 	supervisor := supervisor.NewSupervisor(
 		engine,
 		variables,
-		func(ctx context.Context, applicationID, currentReleaseID string) error {
+		func(ctx *dpcontext.Context, applicationID, currentReleaseID string) error {
 			return client.SetDeviceApplicationStatus(ctx, applicationID, models.SetDeviceApplicationStatusRequest{
 				CurrentReleaseID: currentReleaseID,
 			})
 		},
-		func(ctx context.Context, applicationID, service, currentReleaseID string) error {
+		func(ctx *dpcontext.Context, applicationID, service, currentReleaseID string) error {
 			return client.SetDeviceServiceStatus(ctx, applicationID, service, models.SetDeviceServiceStatusRequest{
 				CurrentReleaseID: currentReleaseID,
 			})
@@ -182,7 +183,10 @@ func (a *Agent) Initialize() error {
 }
 
 func (a *Agent) register() error {
-	registerDeviceResponse, err := a.client.RegisterDevice(context.Background(), a.registrationToken)
+	ctx, cancel := dpcontext.New(context.Background(), time.Minute)
+	defer cancel()
+
+	registerDeviceResponse, err := a.client.RegisterDevice(ctx, a.registrationToken)
 	if err != nil {
 		return errors.Wrap(err, "failed to register device")
 	}
@@ -261,7 +265,10 @@ func (a *Agent) loadSavedBundle() *models.Bundle {
 }
 
 func (a *Agent) downloadLatestBundle() *models.Bundle {
-	bundle, err := a.client.GetBundle(context.TODO())
+	ctx, cancel := dpcontext.New(context.Background(), time.Minute)
+	defer cancel()
+
+	bundle, err := a.client.GetBundle(ctx)
 	if err != nil {
 		log.WithError(err).Error("get bundle")
 		return nil

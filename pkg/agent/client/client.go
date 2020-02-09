@@ -2,7 +2,6 @@ package client
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net"
@@ -11,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/apex/log"
+	dpcontext "github.com/deviceplane/deviceplane/pkg/context"
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/function61/holepunch-server/pkg/wsconnadapter"
 	"github.com/gorilla/websocket"
@@ -48,7 +48,7 @@ func (c *Client) SetAccessKey(accessKey string) {
 	c.accessKey = accessKey
 }
 
-func (c *Client) RegisterDevice(ctx context.Context, registrationToken string) (*models.RegisterDeviceResponse, error) {
+func (c *Client) RegisterDevice(ctx *dpcontext.Context, registrationToken string) (*models.RegisterDeviceResponse, error) {
 	reqBytes, err := json.Marshal(models.RegisterDeviceRequest{
 		DeviceRegistrationTokenID: registrationToken,
 	})
@@ -87,7 +87,7 @@ func (c *Client) RegisterDevice(ctx context.Context, registrationToken string) (
 	return &registerDeviceResponse, nil
 }
 
-func (c *Client) GetBundle(ctx context.Context) (*models.Bundle, error) {
+func (c *Client) GetBundle(ctx *dpcontext.Context) (*models.Bundle, error) {
 	var bundle models.Bundle
 	if err := c.get(ctx, &bundle, "projects", c.projectID, "devices", c.deviceID, "bundle"); err != nil {
 		return nil, err
@@ -95,35 +95,35 @@ func (c *Client) GetBundle(ctx context.Context) (*models.Bundle, error) {
 	return &bundle, nil
 }
 
-func (c *Client) SetDeviceInfo(ctx context.Context, req models.SetDeviceInfoRequest) error {
+func (c *Client) SetDeviceInfo(ctx *dpcontext.Context, req models.SetDeviceInfoRequest) error {
 	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "info")
 }
 
-func (c *Client) SendDeviceMetrics(ctx context.Context, req models.DatadogPostMetricsRequest) error {
+func (c *Client) SendDeviceMetrics(ctx *dpcontext.Context, req models.DatadogPostMetricsRequest) error {
 	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "forwardmetrics", "device")
 }
 
-func (c *Client) SendServiceMetrics(ctx context.Context, req models.IntermediateServiceMetricsRequest) error {
+func (c *Client) SendServiceMetrics(ctx *dpcontext.Context, req models.IntermediateServiceMetricsRequest) error {
 	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "forwardmetrics", "service")
 }
 
-func (c *Client) SetDeviceApplicationStatus(ctx context.Context, applicationID string, req models.SetDeviceApplicationStatusRequest) error {
+func (c *Client) SetDeviceApplicationStatus(ctx *dpcontext.Context, applicationID string, req models.SetDeviceApplicationStatusRequest) error {
 	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "applications", applicationID, "deviceapplicationstatuses")
 }
 
-func (c *Client) DeleteDeviceApplicationStatus(ctx context.Context, applicationID string) error {
+func (c *Client) DeleteDeviceApplicationStatus(ctx *dpcontext.Context, applicationID string) error {
 	return c.delete(ctx, nil, "projects", c.projectID, "devices", c.deviceID, "applications", applicationID, "deviceapplicationstatuses")
 }
 
-func (c *Client) SetDeviceServiceStatus(ctx context.Context, applicationID, service string, req models.SetDeviceServiceStatusRequest) error {
+func (c *Client) SetDeviceServiceStatus(ctx *dpcontext.Context, applicationID, service string, req models.SetDeviceServiceStatusRequest) error {
 	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "applications", applicationID, "services", service, "deviceservicestatuses")
 }
 
-func (c *Client) DeleteDeviceServiceStatus(ctx context.Context, applicationID, service string) error {
+func (c *Client) DeleteDeviceServiceStatus(ctx *dpcontext.Context, applicationID, service string) error {
 	return c.delete(ctx, nil, "projects", c.projectID, "devices", c.deviceID, "applications", applicationID, "services", service, "deviceservicestatuses")
 }
 
-func (c *Client) InitiateDeviceConnection(ctx context.Context) (net.Conn, error) {
+func (c *Client) InitiateDeviceConnection(ctx *dpcontext.Context) (net.Conn, error) {
 	req, err := http.NewRequest("", "", nil)
 	if err != nil {
 		return nil, err
@@ -139,11 +139,11 @@ func (c *Client) InitiateDeviceConnection(ctx context.Context) (net.Conn, error)
 	return wsconnadapter.New(wsConn), nil
 }
 
-func (c *Client) Revdial(ctx context.Context, path string) (*websocket.Conn, *http.Response, error) {
+func (c *Client) Revdial(ctx *dpcontext.Context, path string) (*websocket.Conn, *http.Response, error) {
 	return websocket.DefaultDialer.Dial(getWebsocketURL(c.url, strings.TrimPrefix(path, "/")), nil)
 }
 
-func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {
+func (c *Client) get(ctx *dpcontext.Context, out interface{}, s ...string) error {
 	req, err := http.NewRequest("GET", getURL(c.url, s...), nil)
 	if err != nil {
 		return err
@@ -175,7 +175,7 @@ func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {
 	return json.Unmarshal(bytes, &out)
 }
 
-func (c *Client) post(ctx context.Context, in, out interface{}, s ...string) error {
+func (c *Client) post(ctx *dpcontext.Context, in, out interface{}, s ...string) error {
 	reqBytes, err := json.Marshal(in)
 	if err != nil {
 		return err
@@ -213,7 +213,7 @@ func (c *Client) post(ctx context.Context, in, out interface{}, s ...string) err
 	return json.Unmarshal(bytes, &out)
 }
 
-func (c *Client) delete(ctx context.Context, out interface{}, s ...string) error {
+func (c *Client) delete(ctx *dpcontext.Context, out interface{}, s ...string) error {
 	req, err := http.NewRequest("DELETE", getURL(c.url, s...), nil)
 	if err != nil {
 		return err
