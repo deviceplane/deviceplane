@@ -17,6 +17,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   html {
+    height: 100%;
     box-sizing: border-box;
     font-family: ${props => props.theme.fonts.default};
     font-size: 16px;
@@ -32,8 +33,13 @@ const GlobalStyle = createGlobalStyle`
   }
 
   body {
+    height: 100%;
     overflow: hidden !important;
     margin: 0;
+  }
+
+  main {
+    height: 100%;
   }
 
   strong, strong * {
