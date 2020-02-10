@@ -29,7 +29,14 @@ const EditableCell = ({ mode, value, autoFocus, onChange }) => {
   );
 };
 
-const EditableLabelTable = ({ data, onAdd, onRemove }) => {
+const EditableLabelTable = ({
+  data,
+  onAdd,
+  onRemove,
+  title = 'Labels',
+  dataName = 'Label',
+  marginBottom,
+}) => {
   const [labelToRemove, setLabelToRemove] = useState();
   const [labels, setLabels] = useState(
     Object.keys(data)
@@ -190,7 +197,7 @@ const EditableLabelTable = ({ data, onAdd, onRemove }) => {
         )
       );
     } catch (error) {
-      toaster.danger('Label was not saved.');
+      toaster.danger(`${dataName} save failed.`);
       console.error(error);
     }
   };
@@ -202,7 +209,7 @@ const EditableLabelTable = ({ data, onAdd, onRemove }) => {
         labels.filter(label => label.key !== labelToRemove.key)
       );
     } catch (error) {
-      toaster.danger('Label was not removed.');
+      toaster.danger(`${dataName} removal failed.`);
       console.error(error);
     }
     setLabelToRemove(null);
@@ -211,25 +218,26 @@ const EditableLabelTable = ({ data, onAdd, onRemove }) => {
   return (
     <>
       <Card
-        title="Labels"
+        title={title}
         size="xlarge"
-        actions={[{ title: 'Add Label', onClick: () => createLabel() }]}
+        actions={[{ title: `Add ${dataName}`, onClick: () => createLabel() }]}
+        marginBottom={marginBottom}
       >
         <Table
           columns={columns}
           data={tableData}
           placeholder={
             <Text>
-              There are no <strong>Labels</strong>.
+              There are no <strong>{title}</strong>.
             </Text>
           }
         />
       </Card>
       <Popup show={!!labelToRemove} onClose={() => setLabelToRemove(null)}>
-        <Card title="Remove Label" border size="large">
+        <Card title={`Remove ${dataName}`} border size="large">
           <Text>
             You are about to remove the{' '}
-            <strong>{labelToRemove && labelToRemove.key}</strong> label.
+            <strong>{labelToRemove && labelToRemove.key}</strong> {dataName}.
           </Text>
           <Button
             marginTop={5}
