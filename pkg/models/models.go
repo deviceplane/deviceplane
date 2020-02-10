@@ -255,9 +255,9 @@ type Bundle struct {
 	ApplicationStatuses []DeviceApplicationStatus `json:"applicationStatuses" yaml:"applicationStatuses"`
 	ServiceStatuses     []DeviceServiceStatus     `json:"serviceStatuses" yaml:"serviceStatuses"`
 
+	DeviceID             string            `json:"deviceId" yaml:"deviceId"`
 	EnvironmentVariables map[string]string `json:"environmentVariables" yaml:"environmentVariables"`
-
-	DesiredAgentVersion string `json:"desiredAgentVersion" yaml:"desiredAgentVersion"`
+	DesiredAgentVersion  string            `json:"desiredAgentVersion" yaml:"desiredAgentVersion"`
 
 	ServiceMetricsConfigs []ServiceMetricsConfig `json:"serviceMetricsConfig" yaml:"serviceMetricsConfig"`
 	DeviceMetricsConfig   *DeviceMetricsConfig   `json:"deviceMetricsConfig" yaml:"deviceMetricsConfig"`

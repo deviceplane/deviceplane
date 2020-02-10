@@ -209,7 +209,7 @@ func (a *Agent) Run() {
 
 func (a *Agent) runBundleApplier() {
 	if bundle := a.loadSavedBundle(); bundle != nil {
-		a.supervisor.SetApplications(bundle.Applications)
+		a.supervisor.Set(*bundle, bundle.Applications)
 	}
 
 	ticker := time.NewTicker(5 * time.Second)
@@ -217,7 +217,7 @@ func (a *Agent) runBundleApplier() {
 
 	for {
 		if bundle := a.downloadLatestBundle(); bundle != nil {
-			a.supervisor.SetApplications(bundle.Applications)
+			a.supervisor.Set(*bundle, bundle.Applications)
 			a.statusGarbageCollector.SetBundle(*bundle)
 			a.updater.SetDesiredVersion(bundle.DesiredAgentVersion)
 			a.metricsPusher.SetBundle(*bundle)
