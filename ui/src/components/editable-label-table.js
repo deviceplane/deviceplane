@@ -30,7 +30,7 @@ const EditableCell = ({ mode, value, autoFocus, onChange }) => {
 };
 
 const EditableLabelTable = ({
-  data,
+  data = {},
   onAdd,
   onRemove,
   title = 'Labels',
