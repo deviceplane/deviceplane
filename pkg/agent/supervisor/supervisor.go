@@ -52,7 +52,7 @@ func NewSupervisor(
 	}
 }
 
-func (s *Supervisor) SetApplications(applications []models.FullBundledApplication) {
+func (s *Supervisor) Set(bundle models.Bundle, applications []models.FullBundledApplication) {
 	applicationIDs := make(map[string]struct{})
 	for _, application := range applications {
 		s.lock.Lock()
@@ -67,9 +67,8 @@ func (s *Supervisor) SetApplications(applications []models.FullBundledApplicatio
 			)
 			s.applicationSupervisors[application.Application.ID] = applicationSupervisor
 		}
+		applicationSupervisor.Set(bundle, application)
 		s.lock.Unlock()
-
-		applicationSupervisor.SetApplication(application)
 
 		applicationIDs[application.Application.ID] = struct{}{}
 	}
