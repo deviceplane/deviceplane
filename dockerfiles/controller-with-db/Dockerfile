@@ -18,7 +18,7 @@ RUN go get github.com/rakyll/statik
 RUN statik -src=./ui/build -dest=./pkg
 RUN GOOS=linux CGO_ENABLED=0 go build -mod vendor -ldflags "-X main.version=$version" -o ./controller ./cmd/controller
 
-FROM mysql:5.6
+FROM mysql:5.7
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=2 /app/controller /bin/controller
 COPY ./pkg/controller/store/mysql/schema.sql /docker-entrypoint-initdb.d/
