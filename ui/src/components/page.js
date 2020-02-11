@@ -41,6 +41,7 @@ const GlobalStyle = createGlobalStyle`
   #root {
     display: flex;
     flex: 1;
+    overflow: hidden;
   }
 
   strong, strong * {

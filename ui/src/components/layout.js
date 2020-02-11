@@ -5,14 +5,18 @@ import Header from './header';
 import Sidebar from './sidebar';
 
 const Layout = ({ children, header, ...rest }) => (
-  <Row flex={1} flexDirection={['column-reverse', 'column-reverse', 'row']}>
+  <Row
+    flex={1}
+    flexDirection={['column-reverse', 'column-reverse', 'row']}
+    overflow="hidden"
+  >
     <Sidebar />
-    <Column flex={1}>
+    <Column flex={1} overflow="hidden">
       <Header>{header}</Header>
 
       <Column
         flex={1}
-        overflow="auto"
+        overflowY="auto"
         bg={['black', 'black', 'pageBackground']}
         borderRadius={1}
         padding={5}
