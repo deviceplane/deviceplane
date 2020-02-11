@@ -65,8 +65,9 @@ func (s *Service) validateAuthorization(
 	serviceAccount *models.ServiceAccount,
 	f func(project *models.Project),
 ) {
-	if user == nil || serviceAccount == nil {
-		http.Error(w, ErrDependencyNotSupplied.Error(), http.StatusInternalServerError)
+	if user == nil && serviceAccount == nil {
+		log.WithError(ErrDependencyNotSupplied).Error("validating authorization")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -227,7 +228,8 @@ func (s *Service) withDeviceAuth(w http.ResponseWriter, r *http.Request, f func(
 
 func (s *Service) withRole(w http.ResponseWriter, r *http.Request, project *models.Project, f func(role *models.Role)) {
 	if project == nil {
-		http.Error(w, ErrDependencyNotSupplied.Error(), http.StatusInternalServerError)
+		log.WithError(ErrDependencyNotSupplied).Error("getting role")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -347,7 +349,7 @@ func (s *Service) withUserOrServiceAccountAuth(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	w.WriteHeader(http.StatusInternalServerError)
+	w.WriteHeader(http.StatusUnauthorized)
 	return
 }
 
@@ -364,7 +366,8 @@ func (s *Service) withUserAuth(w http.ResponseWriter, r *http.Request, f func(us
 
 func (s *Service) withSuperUserAuth(w http.ResponseWriter, r *http.Request, user *models.User, f func()) {
 	if user == nil {
-		http.Error(w, ErrDependencyNotSupplied.Error(), http.StatusInternalServerError)
+		log.WithError(ErrDependencyNotSupplied).Error("verifying super-user auth")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -378,7 +381,8 @@ func (s *Service) withSuperUserAuth(w http.ResponseWriter, r *http.Request, user
 
 func (s *Service) withServiceAccount(w http.ResponseWriter, r *http.Request, project *models.Project, f func(serviceAccount *models.ServiceAccount)) {
 	if project == nil {
-		http.Error(w, ErrDependencyNotSupplied.Error(), http.StatusInternalServerError)
+		log.WithError(ErrDependencyNotSupplied).Error("getting service account")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -410,7 +414,8 @@ func (s *Service) withServiceAccount(w http.ResponseWriter, r *http.Request, pro
 
 func (s *Service) withApplication(w http.ResponseWriter, r *http.Request, project *models.Project, f func(application *models.Application)) {
 	if project == nil {
-		http.Error(w, ErrDependencyNotSupplied.Error(), http.StatusInternalServerError)
+		log.WithError(ErrDependencyNotSupplied).Error("getting application")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -442,7 +447,8 @@ func (s *Service) withApplication(w http.ResponseWriter, r *http.Request, projec
 
 func (s *Service) withRelease(w http.ResponseWriter, r *http.Request, project *models.Project, application *models.Application, f func(release *models.Release)) {
 	if application == nil || project == nil {
-		http.Error(w, ErrDependencyNotSupplied.Error(), http.StatusInternalServerError)
+		log.WithError(ErrDependencyNotSupplied).Error("getting release")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 

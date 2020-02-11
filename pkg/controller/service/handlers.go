@@ -1757,7 +1757,7 @@ func (s *Service) updateApplication(w http.ResponseWriter, r *http.Request) {
 					var app *models.Application
 					var err error
 					if updateApplicationRequest.Name != nil {
-						if application, err = s.applications.LookupApplication(r.Context(),
+						if app, err = s.applications.LookupApplication(r.Context(),
 							*updateApplicationRequest.Name, project.ID); err == nil && app.ID != application.ID {
 							http.Error(w, store.ErrApplicationNameAlreadyInUse.Error(), http.StatusBadRequest)
 							return
