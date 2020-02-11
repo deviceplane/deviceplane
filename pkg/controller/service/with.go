@@ -33,524 +33,503 @@ type FetchObject struct {
 	ClientConn              net.Conn
 }
 
-func HandlerFunc(hf http.HandlerFunc) Handler {
-	return func(with *FetchObject) http.HandlerFunc {
-		return hf
+func (s *Service) withHijackedWebSocketConnection(w http.ResponseWriter, r *http.Request, f func(clientConn net.Conn)) {
+	conn, err := s.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
+
+	// TODO: set conn.CloseHandler() here
+
+	f(wsconnadapter.New(conn))
 }
 
-type Handler func(with *FetchObject) http.HandlerFunc
-type Middleware func(with *FetchObject, hf http.HandlerFunc) http.HandlerFunc
-
-func (s *Service) initWith(middlewares ...Middleware) func(handler Handler) http.HandlerFunc {
-	return func(handler Handler) http.HandlerFunc {
-		with := FetchObject{}
-
-		if len(middlewares) == 0 {
-			return handler(&with)
-		}
-
-		var chain http.HandlerFunc = handler(&with)
-		for i := len(middlewares) - 1; i >= 0; i-- {
-			middleware := middlewares[i]
-			chain = middleware(&with, chain)
-		}
-
-		return chain
+func (s *Service) withDeviceConnection(w http.ResponseWriter, r *http.Request, project *models.Project, device *models.Device, f func(deviceConn net.Conn)) {
+	deviceConn, err := s.connman.Dial(r.Context(), project.ID+device.ID)
+	if err != nil {
+		http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
+		return
 	}
+	defer deviceConn.Close()
+
+	f(deviceConn)
 }
 
-func (s *Service) withHijackedWebSocketConnection(with *FetchObject, hf http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, err := s.upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+func (s *Service) validateAuthorization(
+	requestedResource authz.Resource,
+	requestedAction authz.Action,
+	w http.ResponseWriter,
+	r *http.Request,
+	user *models.User,
+	serviceAccount *models.ServiceAccount,
+	f func(project *models.Project),
+) {
+	if user == nil || serviceAccount == nil {
+		http.Error(w, ErrDependencyNotSupplied.Error(), http.StatusInternalServerError)
+		return
+	}
 
-		// TODO: set conn.CloseHandler() here
+	vars := mux.Vars(r)
+	projectIdentifier := vars["project"]
+	if projectIdentifier == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-		with.ClientConn = wsconnadapter.New(conn)
-		hf.ServeHTTP(w, r)
-	})
-}
+	var project *models.Project
+	var err error
+	if strings.Contains(projectIdentifier, "_") {
+		project, err = s.projects.GetProject(r.Context(), projectIdentifier)
+	} else {
+		project, err = s.projects.LookupProject(r.Context(), projectIdentifier)
+	}
+	if err == store.ErrProjectNotFound {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("lookup project")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
-func (s *Service) withDeviceConnection(with *FetchObject, hf http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		deviceConn, err := s.connman.Dial(r.Context(), with.Project.ID+with.Device.ID)
-		if err != nil {
-			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
-			return
-		}
-		defer deviceConn.Close()
-
-		with.DeviceConn = deviceConn
-		hf.ServeHTTP(w, r)
-	})
-}
-
-// Prefix with withUserOrServiceAccountAuth
-func (s *Service) validateAuthorization(requestedResource authz.Resource, requestedAction authz.Action) func(with *FetchObject, hf http.HandlerFunc) http.HandlerFunc {
-	return func(with *FetchObject, hf http.HandlerFunc) http.HandlerFunc {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if with.User == nil || with.ServiceAccount == nil {
-				http.Error(w, ErrDependencyNotSupplied.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			vars := mux.Vars(r)
-			projectIdentifier := vars["project"]
-			if projectIdentifier == "" {
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-
-			var project *models.Project
-			var err error
-			if strings.Contains(projectIdentifier, "_") {
-				project, err = s.projects.GetProject(r.Context(), projectIdentifier)
-			} else {
-				project, err = s.projects.LookupProject(r.Context(), projectIdentifier)
-			}
-			if err == store.ErrProjectNotFound {
+	var roles []string
+	superAdmin := false
+	if user != nil {
+		if user.SuperAdmin {
+			superAdmin = true
+		} else {
+			if _, err := s.memberships.GetMembership(r.Context(),
+				user.ID, project.ID,
+			); err == store.ErrMembershipNotFound {
 				http.Error(w, err.Error(), http.StatusNotFound)
 				return
 			} else if err != nil {
-				log.WithError(err).Error("lookup project")
+				// TODO: better logging all around
+				log.WithField("user_id", user.ID).
+					WithField("project_id", project.ID).
+					WithError(err).
+					Error("get membership")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			with.Project = project
 
-			var roles []string
-			superAdmin := false
-			if with.User != nil {
-				if with.User.SuperAdmin {
-					superAdmin = true
-				} else {
-					if _, err := s.memberships.GetMembership(r.Context(),
-						with.User.ID, with.Project.ID,
-					); err == store.ErrMembershipNotFound {
-						http.Error(w, err.Error(), http.StatusNotFound)
-						return
-					} else if err != nil {
-						// TODO: better logging all around
-						log.WithField("user_id", with.User.ID).
-							WithField("project_id", with.Project.ID).
-							WithError(err).
-							Error("get membership")
-						w.WriteHeader(http.StatusInternalServerError)
-						return
-					}
-
-					roleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(
-						r.Context(),
-						with.User.ID,
-						with.Project.ID,
-					)
-					if err != nil {
-						log.WithError(err).Error("list membership role bindings")
-						w.WriteHeader(http.StatusInternalServerError)
-						return
-					}
-
-					for _, roleBinding := range roleBindings {
-						roles = append(roles, roleBinding.RoleID)
-					}
-				}
-			} else if with.ServiceAccount != nil {
-				// Sanity check that this service account belongs to this project
-				if _, err := s.serviceAccounts.GetServiceAccount(r.Context(),
-					with.ServiceAccount.ID, with.Project.ID,
-				); err == store.ErrServiceAccountNotFound {
-					w.WriteHeader(http.StatusForbidden)
-					return
-				} else if err != nil {
-					log.WithError(err).Error("get service account")
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-
-				roleBindings, err := s.serviceAccountRoleBindings.ListServiceAccountRoleBindings(r.Context(),
-					with.ServiceAccount.ID, with.Project.ID)
-				if err != nil {
-					log.WithError(err).Error("list service account role bindings")
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-
-				for _, roleBinding := range roleBindings {
-					roles = append(roles, roleBinding.RoleID)
-				}
-			}
-
-			var configs []authz.Config
-			if superAdmin {
-				configs = []authz.Config{
-					authz.AdminAllRole,
-				}
-			} else {
-				for _, roleID := range roles {
-					role, err := s.roles.GetRole(r.Context(), roleID, with.Project.ID)
-					if err == store.ErrRoleNotFound {
-						continue
-					} else if err != nil {
-						log.WithError(err).Error("get role")
-						w.WriteHeader(http.StatusInternalServerError)
-						return
-					}
-					var config authz.Config
-					if err := yaml.Unmarshal([]byte(role.Config), &config); err != nil {
-						log.WithError(err).Error("unmarshal role config")
-						w.WriteHeader(http.StatusInternalServerError)
-						return
-					}
-					configs = append(configs, config)
-				}
-			}
-
-			if !authz.Evaluate(requestedResource, requestedAction, configs) {
-				w.WriteHeader(http.StatusForbidden)
+			roleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(
+				r.Context(),
+				user.ID,
+				project.ID,
+			)
+			if err != nil {
+				log.WithError(err).Error("list membership role bindings")
+				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			hf.ServeHTTP(w, r)
-		})
-	}
-}
 
-func (s *Service) withDeviceAuth(with *FetchObject, hf http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		deviceAccessKeyValue, _, _ := r.BasicAuth()
-		if deviceAccessKeyValue == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
+			for _, roleBinding := range roleBindings {
+				roles = append(roles, roleBinding.RoleID)
+			}
 		}
-
-		deviceAccessKey, err := s.deviceAccessKeys.ValidateDeviceAccessKey(r.Context(), with.Project.ID, hash.Hash(deviceAccessKeyValue))
-		if err == store.ErrDeviceAccessKeyNotFound {
-			w.WriteHeader(http.StatusUnauthorized)
+	} else if serviceAccount != nil {
+		// Sanity check that this service account belongs to this project
+		if _, err := s.serviceAccounts.GetServiceAccount(r.Context(),
+			serviceAccount.ID, project.ID,
+		); err == store.ErrServiceAccountNotFound {
+			w.WriteHeader(http.StatusForbidden)
 			return
 		} else if err != nil {
-			log.WithError(err).Error("validate device access key")
+			log.WithError(err).Error("get service account")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		device, err := s.devices.GetDevice(r.Context(), deviceAccessKey.DeviceID, with.Project.ID)
+		roleBindings, err := s.serviceAccountRoleBindings.ListServiceAccountRoleBindings(r.Context(),
+			serviceAccount.ID, project.ID)
 		if err != nil {
-			log.WithError(err).Error("get device")
+			log.WithError(err).Error("list service account role bindings")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		with.Device = device
-		hf.ServeHTTP(w, r)
-	})
+		for _, roleBinding := range roleBindings {
+			roles = append(roles, roleBinding.RoleID)
+		}
+	}
+
+	var configs []authz.Config
+	if superAdmin {
+		configs = []authz.Config{
+			authz.AdminAllRole,
+		}
+	} else {
+		for _, roleID := range roles {
+			role, err := s.roles.GetRole(r.Context(), roleID, project.ID)
+			if err == store.ErrRoleNotFound {
+				continue
+			} else if err != nil {
+				log.WithError(err).Error("get role")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			var config authz.Config
+			if err := yaml.Unmarshal([]byte(role.Config), &config); err != nil {
+				log.WithError(err).Error("unmarshal role config")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			configs = append(configs, config)
+		}
+	}
+
+	if !authz.Evaluate(requestedResource, requestedAction, configs) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	f(project)
 }
 
-func (s *Service) withRole(with *FetchObject, hf http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if with.Project == nil {
-			http.Error(w, ErrDependencyNotSupplied.Error(), http.StatusInternalServerError)
-			return
-		}
+func (s *Service) withDeviceAuth(w http.ResponseWriter, r *http.Request, f func(project *models.Project, device *models.Device)) {
+	vars := mux.Vars(r)
+	projectID := vars["project"]
 
-		roleIdentifier := mux.Vars(r)["role"]
-		if roleIdentifier == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
+	deviceAccessKeyValue, _, _ := r.BasicAuth()
+	if deviceAccessKeyValue == "" {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 
-		var role *models.Role
-		var err error
-		if strings.Contains(roleIdentifier, "_") {
-			role, err = s.roles.GetRole(r.Context(), roleIdentifier, with.Project.ID)
-		} else {
-			role, err = s.roles.LookupRole(r.Context(), roleIdentifier, with.Project.ID)
-		}
-		if err == store.ErrRoleNotFound {
-			http.Error(w, err.Error(), http.StatusNotFound)
+	deviceAccessKey, err := s.deviceAccessKeys.ValidateDeviceAccessKey(r.Context(), projectID, hash.Hash(deviceAccessKeyValue))
+	if err == store.ErrDeviceAccessKeyNotFound {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("validate device access key")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	device, err := s.devices.GetDevice(r.Context(), deviceAccessKey.DeviceID, projectID)
+	if err != nil {
+		log.WithError(err).Error("get device")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	project, err := s.projects.GetProject(r.Context(), projectID)
+	if err != nil {
+		log.WithError(err).Error("get project")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	f(project, device)
+}
+
+func (s *Service) withRole(w http.ResponseWriter, r *http.Request, project *models.Project, f func(role *models.Role)) {
+	if project == nil {
+		http.Error(w, ErrDependencyNotSupplied.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	roleIdentifier := mux.Vars(r)["role"]
+	if roleIdentifier == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var role *models.Role
+	var err error
+	if strings.Contains(roleIdentifier, "_") {
+		role, err = s.roles.GetRole(r.Context(), roleIdentifier, project.ID)
+	} else {
+		role, err = s.roles.LookupRole(r.Context(), roleIdentifier, project.ID)
+	}
+	if err == store.ErrRoleNotFound {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("get/lookup role")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	f(role)
+}
+
+func (s *Service) withUserOrServiceAccountAuth(w http.ResponseWriter, r *http.Request, f func(user *models.User, serviceAccount *models.ServiceAccount)) {
+	var userID string
+	var serviceAccountAccessKey *models.ServiceAccountAccessKey
+
+	sessionValue, err := r.Cookie(sessionCookie)
+
+	switch err {
+	case nil:
+		session, err := s.sessions.ValidateSession(r.Context(), hash.Hash(sessionValue.Value))
+		if err == store.ErrSessionNotFound {
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		} else if err != nil {
-			log.WithError(err).Error("get/lookup role")
+			log.WithError(err).Error("validate session")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		with.Role = role
-		hf.ServeHTTP(w, r)
-	})
-}
+		userID = session.UserID
+	case http.ErrNoCookie:
+		accessKeyValue, _, _ := r.BasicAuth()
+		if accessKeyValue == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 
-func (s *Service) withUserOrServiceAccountAuth(with *FetchObject, hf http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var userID string
-		var serviceAccountAccessKey *models.ServiceAccountAccessKey
-
-		sessionValue, err := r.Cookie(sessionCookie)
-
-		switch err {
-		case nil:
-			session, err := s.sessions.ValidateSession(r.Context(), hash.Hash(sessionValue.Value))
-			if err == store.ErrSessionNotFound {
+		if strings.HasPrefix(accessKeyValue, "u") {
+			userAccessKey, err := s.userAccessKeys.ValidateUserAccessKey(r.Context(), hash.Hash(accessKeyValue))
+			if err == store.ErrUserAccessKeyNotFound {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			} else if err != nil {
-				log.WithError(err).Error("validate session")
+				log.WithError(err).Error("validate user access key")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
-			userID = session.UserID
-		case http.ErrNoCookie:
-			accessKeyValue, _, _ := r.BasicAuth()
-			if accessKeyValue == "" {
+			userID = userAccessKey.UserID
+		} else if strings.HasPrefix(accessKeyValue, "s") {
+			serviceAccountAccessKey, err = s.serviceAccountAccessKeys.ValidateServiceAccountAccessKey(r.Context(), hash.Hash(accessKeyValue))
+			if err == store.ErrServiceAccountAccessKeyNotFound {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
-			}
-
-			if strings.HasPrefix(accessKeyValue, "u") {
-				userAccessKey, err := s.userAccessKeys.ValidateUserAccessKey(r.Context(), hash.Hash(accessKeyValue))
-				if err == store.ErrUserAccessKeyNotFound {
-					w.WriteHeader(http.StatusUnauthorized)
-					return
-				} else if err != nil {
-					log.WithError(err).Error("validate user access key")
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-
-				userID = userAccessKey.UserID
-			} else if strings.HasPrefix(accessKeyValue, "s") {
-				serviceAccountAccessKey, err = s.serviceAccountAccessKeys.ValidateServiceAccountAccessKey(r.Context(), hash.Hash(accessKeyValue))
-				if err == store.ErrServiceAccountAccessKeyNotFound {
-					w.WriteHeader(http.StatusUnauthorized)
-					return
-				} else if err != nil {
-					log.WithError(err).Error("validate service account access key")
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-			} else {
-				w.WriteHeader(http.StatusUnauthorized)
-				return
-			}
-		default:
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		if userID == "" && serviceAccountAccessKey == nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		var user *models.User
-		var serviceAccount *models.ServiceAccount
-		if userID != "" {
-			user, err = s.users.GetUser(r.Context(), userID)
-			if err != nil {
-				log.WithError(err).Error("get user")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			if !user.RegistrationCompleted {
-				w.WriteHeader(http.StatusForbidden)
-				return
-			}
-		} else if serviceAccountAccessKey != nil {
-			serviceAccount, err = s.serviceAccounts.GetServiceAccount(r.Context(),
-				serviceAccountAccessKey.ServiceAccountID, serviceAccountAccessKey.ProjectID)
-			if err != nil {
-				log.WithError(err).Error("get service account")
+			} else if err != nil {
+				log.WithError(err).Error("validate service account access key")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 		} else {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+	default:
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	if userID == "" && serviceAccountAccessKey == nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	if userID != "" {
+		user, err := s.users.GetUser(r.Context(), userID)
+		if err != nil {
+			log.WithError(err).Error("get user")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		with.User = user
-		with.ServiceAccount = serviceAccount
-		hf.ServeHTTP(w, r)
-	})
-}
-
-func (s *Service) withSuperUserAuth(with *FetchObject, hf http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if with.User == nil {
-			http.Error(w, ErrDependencyNotSupplied.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if !with.User.SuperAdmin {
+		if !user.RegistrationCompleted {
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
 
-		hf.ServeHTTP(w, r)
-	})
-}
-
-func (s *Service) withServiceAccount(with *FetchObject, hf http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if with.Project == nil {
-			http.Error(w, ErrDependencyNotSupplied.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		vars := mux.Vars(r)
-		serviceAccountIdentifier := vars["serviceaccount"]
-		if serviceAccountIdentifier == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		var serviceAccount *models.ServiceAccount
-		var err error
-		if strings.Contains(serviceAccountIdentifier, "_") {
-			serviceAccount, err = s.serviceAccounts.GetServiceAccount(r.Context(), serviceAccountIdentifier, with.Project.ID)
-		} else {
-			serviceAccount, err = s.serviceAccounts.LookupServiceAccount(r.Context(), serviceAccountIdentifier, with.Project.ID)
-		}
-		if err == store.ErrServiceAccountNotFound {
-			http.Error(w, err.Error(), http.StatusNotFound)
-			return
-		} else if err != nil {
-			log.WithError(err).Error("lookup service account")
+		f(user, nil)
+		return
+	}
+	if serviceAccountAccessKey != nil {
+		serviceAccount, err := s.serviceAccounts.GetServiceAccount(r.Context(),
+			serviceAccountAccessKey.ServiceAccountID, serviceAccountAccessKey.ProjectID)
+		if err != nil {
+			log.WithError(err).Error("get service account")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		with.ServiceAccount = serviceAccount
-		hf.ServeHTTP(w, r)
-	})
+		f(nil, serviceAccount)
+		return
+	}
+
+	w.WriteHeader(http.StatusInternalServerError)
+	return
 }
 
-func (s *Service) withApplication(with *FetchObject, hf http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if with.Project == nil {
-			http.Error(w, ErrDependencyNotSupplied.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		vars := mux.Vars(r)
-		applicationIdentifier := vars["application"]
-		if applicationIdentifier == "" {
+func (s *Service) withUserAuth(w http.ResponseWriter, r *http.Request, f func(user *models.User)) {
+	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
+		if user == nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
-		var application *models.Application
-		var err error
-		if strings.Contains(applicationIdentifier, "_") {
-			application, err = s.applications.GetApplication(r.Context(), applicationIdentifier, with.Project.ID)
-		} else {
-			application, err = s.applications.LookupApplication(r.Context(), applicationIdentifier, with.Project.ID)
-		}
-		if err == store.ErrApplicationNotFound {
-			http.Error(w, err.Error(), http.StatusNotFound)
-			return
-		} else if err != nil {
-			log.WithError(err).Error("lookup application")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		with.Application = application
-		hf.ServeHTTP(w, r)
+		f(user)
 	})
 }
 
-func (s *Service) withRelease(with *FetchObject, hf http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if with.Application == nil {
-			http.Error(w, ErrDependencyNotSupplied.Error(), http.StatusInternalServerError)
-			return
-		}
+func (s *Service) withSuperUserAuth(w http.ResponseWriter, r *http.Request, user *models.User, f func()) {
+	if user == nil {
+		http.Error(w, ErrDependencyNotSupplied.Error(), http.StatusInternalServerError)
+		return
+	}
 
-		vars := mux.Vars(r)
-		releaseIdentifier := vars["application"]
-		if releaseIdentifier == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
+	if !user.SuperAdmin {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
 
-		var release *models.Release
-		var err error
-		release, err = utils.GetReleaseByIdentifier(s.releases, r.Context(), with.Project.ID, with.Application.ID, releaseIdentifier)
-		if err == store.ErrReleaseNotFound {
-			http.Error(w, err.Error(), http.StatusNotFound)
-			return
-		} else if err != nil {
-			log.WithError(err).Error("get/lookup release")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		with.Release = release
-		hf.ServeHTTP(w, r)
-	})
+	f()
 }
 
-func (s *Service) withDevice(with *FetchObject, hf http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		deviceIdentifier := vars["device"]
-		if deviceIdentifier == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
+func (s *Service) withServiceAccount(w http.ResponseWriter, r *http.Request, project *models.Project, f func(serviceAccount *models.ServiceAccount)) {
+	if project == nil {
+		http.Error(w, ErrDependencyNotSupplied.Error(), http.StatusInternalServerError)
+		return
+	}
 
-		var device *models.Device
-		var err error
-		if strings.Contains(deviceIdentifier, "_") {
-			device, err = s.devices.GetDevice(r.Context(), deviceIdentifier, with.Project.ID)
-		} else {
-			device, err = s.devices.LookupDevice(r.Context(), deviceIdentifier, with.Project.ID)
-		}
-		if err == store.ErrDeviceNotFound {
-			http.Error(w, err.Error(), http.StatusNotFound)
-			return
-		} else if err != nil {
-			log.WithError(err).Error("lookup device")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+	vars := mux.Vars(r)
+	serviceAccountIdentifier := vars["serviceaccount"]
+	if serviceAccountIdentifier == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-		with.Device = device
-		hf.ServeHTTP(w, r)
-	})
+	var serviceAccount *models.ServiceAccount
+	var err error
+	if strings.Contains(serviceAccountIdentifier, "_") {
+		serviceAccount, err = s.serviceAccounts.GetServiceAccount(r.Context(), serviceAccountIdentifier, project.ID)
+	} else {
+		serviceAccount, err = s.serviceAccounts.LookupServiceAccount(r.Context(), serviceAccountIdentifier, project.ID)
+	}
+	if err == store.ErrServiceAccountNotFound {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("lookup service account")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	f(serviceAccount)
 }
 
-func (s *Service) withDeviceRegistrationToken(with *FetchObject, hf http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		tokenIdentifier := vars["deviceregistrationtoken"]
-		if tokenIdentifier == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
+func (s *Service) withApplication(w http.ResponseWriter, r *http.Request, project *models.Project, f func(application *models.Application)) {
+	if project == nil {
+		http.Error(w, ErrDependencyNotSupplied.Error(), http.StatusInternalServerError)
+		return
+	}
 
-		var token *models.DeviceRegistrationToken
-		var err error
-		if strings.Contains(tokenIdentifier, "_") {
-			token, err = s.deviceRegistrationTokens.GetDeviceRegistrationToken(r.Context(), tokenIdentifier, with.Project.ID)
-		} else {
-			token, err = s.deviceRegistrationTokens.LookupDeviceRegistrationToken(r.Context(), tokenIdentifier, with.Project.ID)
-		}
-		if err == store.ErrDeviceRegistrationTokenNotFound {
-			http.Error(w, err.Error(), http.StatusNotFound)
-			return
-		} else if err != nil {
-			log.WithError(err).Error("lookup device registration token")
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+	vars := mux.Vars(r)
+	applicationIdentifier := vars["application"]
+	if applicationIdentifier == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-		with.DeviceRegistrationToken = token
-		hf.ServeHTTP(w, r)
-	})
+	var application *models.Application
+	var err error
+	if strings.Contains(applicationIdentifier, "_") {
+		application, err = s.applications.GetApplication(r.Context(), applicationIdentifier, project.ID)
+	} else {
+		application, err = s.applications.LookupApplication(r.Context(), applicationIdentifier, project.ID)
+	}
+	if err == store.ErrApplicationNotFound {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("lookup application")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	f(application)
+}
+
+func (s *Service) withRelease(w http.ResponseWriter, r *http.Request, project *models.Project, application *models.Application, f func(release *models.Release)) {
+	if application == nil || project == nil {
+		http.Error(w, ErrDependencyNotSupplied.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	vars := mux.Vars(r)
+	releaseIdentifier := vars["application"]
+	if releaseIdentifier == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var release *models.Release
+	var err error
+	release, err = utils.GetReleaseByIdentifier(s.releases, r.Context(), project.ID, application.ID, releaseIdentifier)
+	if err == store.ErrReleaseNotFound {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("get/lookup release")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	f(release)
+}
+
+func (s *Service) withDevice(w http.ResponseWriter, r *http.Request, project *models.Project, f func(device *models.Device)) {
+	vars := mux.Vars(r)
+	deviceIdentifier := vars["device"]
+	if deviceIdentifier == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var device *models.Device
+	var err error
+	if strings.Contains(deviceIdentifier, "_") {
+		device, err = s.devices.GetDevice(r.Context(), deviceIdentifier, project.ID)
+	} else {
+		device, err = s.devices.LookupDevice(r.Context(), deviceIdentifier, project.ID)
+	}
+	if err == store.ErrDeviceNotFound {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("lookup device")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	f(device)
+}
+
+func (s *Service) withDeviceRegistrationToken(w http.ResponseWriter, r *http.Request, project *models.Project, f func(deviceRegistrationToken *models.DeviceRegistrationToken)) {
+	vars := mux.Vars(r)
+	tokenIdentifier := vars["deviceregistrationtoken"]
+	if tokenIdentifier == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var token *models.DeviceRegistrationToken
+	var err error
+	if strings.Contains(tokenIdentifier, "_") {
+		token, err = s.deviceRegistrationTokens.GetDeviceRegistrationToken(r.Context(), tokenIdentifier, project.ID)
+	} else {
+		token, err = s.deviceRegistrationTokens.LookupDeviceRegistrationToken(r.Context(), tokenIdentifier, project.ID)
+	}
+	if err == store.ErrDeviceRegistrationTokenNotFound {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("lookup device registration token")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	f(token)
+}
+
+func (s *Service) GorillaSuperUserAuth(handler http.Handler) http.Handler {
+	return http.Handler(http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
+				s.withSuperUserAuth(w, r, user, func() {
+					handler.ServeHTTP(w, r)
+				})
+			})
+		},
+	))
 }
