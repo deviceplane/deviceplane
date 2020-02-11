@@ -3,7 +3,6 @@ import parsePrometheusTextFormat from 'parse-prometheus-text-format';
 
 import api from '../../api';
 import {
-  Column,
   Group,
   Button,
   Value,

@@ -47,9 +47,6 @@ const Provisioning = ({
           original.labels ? renderLabels(original.labels) : null,
         minWidth: '200px',
         maxWidth: '2fr',
-        cellStyle: {
-          marginBottom: '-8px',
-        },
       },
     ],
     []

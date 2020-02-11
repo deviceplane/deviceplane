@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { useNavigation } from 'react-navi';
 
 import Layout from '../components/layout';
 import Card from '../components/card';
@@ -11,29 +10,19 @@ const Projects = ({
     data: { projects },
   },
 }) => {
-  const navigation = useNavigation();
   const columns = useMemo(
     () => [
       {
         Header: 'Name',
         accessor: 'name',
-        style: {
-          flex: 2,
-        },
       },
       {
         Header: 'Devices',
         accessor: 'deviceCounts.allCount',
-        style: {
-          flex: '0 0 76px',
-        },
       },
       {
         Header: 'Applications',
         accessor: 'applicationCounts.allCount',
-        style: {
-          flex: '0 0 120px',
-        },
       },
     ],
     []

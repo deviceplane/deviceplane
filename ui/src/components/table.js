@@ -76,14 +76,7 @@ const Cell = styled.td`
   padding: 8px 12px;
 `;
 
-const Table = ({
-  columns,
-  data,
-  onRowSelect,
-  placeholder,
-  editRow,
-  rowHref,
-}) => {
+const Table = ({ columns, data, onRowSelect, placeholder, rowHref }) => {
   const selectable = onRowSelect || rowHref;
   onRowSelect = onRowSelect || function() {};
 
@@ -168,7 +161,6 @@ const Table = ({
                   ...cell.column.cellStyle,
                 }}
                 selectable={selectable}
-                overflow={editRow ? 'visible' : 'hidden'}
               >
                 {rowHref ? (
                   <LinkCell href={rowHref(row.original)}>
@@ -185,7 +177,6 @@ const Table = ({
                 selectable={selectable}
                 onClick={handleRowClick(row.index)}
                 position="relative"
-                style={{ transform: 'translate2d(0,0)' }}
               >
                 {cells}
               </TableRow>

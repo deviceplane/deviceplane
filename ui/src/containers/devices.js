@@ -96,17 +96,12 @@ const Devices = ({ route }) => {
         accessor: 'labels',
         Cell: ({ cell: { value } }) =>
           value ? renderLabels(value, addLabelFilter) : null,
-        maxWidth: '1fr',
         minWidth: '300px',
-        cellStyle: {
-          marginBottom: '-8px',
-          overflow: 'hidden',
-        },
       },
     ],
     [filterQuery]
   );
-  const tableData = useMemo(() => devices, [devices]);
+  const tableData = useMemo(() => [...devices, ...devices], [devices]);
 
   const fetchDevices = async queryString => {
     try {

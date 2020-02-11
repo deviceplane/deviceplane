@@ -72,9 +72,6 @@ const Scheduling = ({
         Header: 'Status',
         accessor: 'status',
         Cell: ({ cell: { value } }) => <DeviceStatus status={value} />,
-        style: {
-          flex: '0 0 72px',
-        },
       },
       {
         Header: 'Name',
@@ -84,13 +81,6 @@ const Scheduling = ({
         Header: 'Labels',
         accessor: 'labels',
         Cell: ({ cell: { value } }) => (value ? renderLabels(value) : null),
-        style: {
-          flex: 2,
-          overflow: 'hidden',
-        },
-        cellStyle: {
-          marginBottom: '-8px',
-        },
       },
     ],
     []
