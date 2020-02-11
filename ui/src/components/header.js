@@ -33,7 +33,7 @@ const Header = ({ children }) => {
       alignSelf="stretch"
       paddingX={5}
       paddingY={4}
-      paddingLeft={isProjectsRoute ? 5 : 0}
+      paddingLeft={[5, 5, isProjectsRoute ? 5 : 0]}
       flexShrink={0}
       bg={'black'}
       borderBottom={[0, 0, 'none']}

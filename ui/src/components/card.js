@@ -11,7 +11,6 @@ const Container = styled(Column)`
   overflow: ${props =>
     props.overflow ? `${props.overflow} !important` : 'initial'};
   transition: all 250ms;
-  flex: 0 0 auto;
   width: 100%;
 
   ${variant({
@@ -56,11 +55,10 @@ const Card = ({
       color="white"
       variant={size}
       borderRadius={2}
-      padding={[0, 0, 6]}
+      padding={6}
       border={border ? 0 : undefined}
       borderColor="white"
       disabled={disabled}
-      overflow="hidden"
       {...props}
     >
       {title && (

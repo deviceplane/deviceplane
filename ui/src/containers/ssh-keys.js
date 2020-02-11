@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 
 import storage from '../storage';
 import Card from '../components/card';
@@ -9,8 +9,6 @@ import {
   Column,
   Button,
   Text,
-  Input,
-  Textarea,
   Link,
   Icon,
   toaster,
@@ -144,10 +142,6 @@ const SSHKeys = () => {
             onChange={e => editSSHKey(index, 'editedName', e.target.value)}
           />
         ),
-        style: {
-          flex: '0 0 150px',
-          alignSelf: 'flex-start',
-        },
       },
       {
         Header: 'Key',
@@ -162,9 +156,6 @@ const SSHKeys = () => {
             onChange={e => editSSHKey(index, 'editedKey', e.target.value)}
           />
         ),
-        style: {
-          alignSelf: 'flex-start',
-        },
       },
       {
         Header: ' ',
@@ -224,11 +215,11 @@ const SSHKeys = () => {
             </Row>
           );
         },
-        style: {
+        maxWidth: '50px',
+        cellStyle: {
           alignItems: 'center',
           justifyContent: 'flex-end',
           alignSelf: 'flex-start',
-          flex: '0 0 100px',
         },
       },
     ],

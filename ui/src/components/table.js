@@ -3,7 +3,7 @@ import { useTable, useSortBy } from 'react-table';
 import styled from 'styled-components';
 import { useLinkProps } from 'react-navi';
 
-import { Column, Row, Grid, Icon } from './core';
+import { Row, Grid, Icon } from './core';
 
 const A = styled.a`
   text-decoration: none;
@@ -25,6 +25,7 @@ const LinkCell = ({ children, href, ...rest }) => {
 const StyledTable = styled(Grid).attrs({ as: 'table' })`
   width: auto;
   border-collapse: collapse;
+  overflow: auto;
 `;
 
 const TableHead = styled.thead`
@@ -52,6 +53,7 @@ const TableRow = styled.tr`
 const HeaderCell = styled.th`
   position: sticky;
   top: 0;
+  z-index: 1;
   text-transform: uppercase;
   font-size: 14px;
   font-weight: 500;
@@ -111,7 +113,6 @@ const Table = ({
     <>
       <StyledTable
         {...getTableProps()}
-        overflowY="hidden"
         gridTemplateColumns={columns
           .map(
             ({ minWidth = 'min-content', maxWidth = '1fr' }) =>

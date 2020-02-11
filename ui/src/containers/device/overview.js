@@ -74,6 +74,10 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
             }}
           />
         ),
+        maxWidth: '50px',
+        cellStyle: {
+          justifyContent: 'flex-end',
+        },
       },
     ],
     []
@@ -154,7 +158,7 @@ const DeviceOverview = ({
         size="xlarge"
         title={device.name}
         subtitle={<DeviceStatus status={device.status} />}
-        marginBottom={4}
+        marginBottom={5}
         actions={[
           {
             title: <Icon icon="pulse" size={18} color="white" />,
@@ -236,7 +240,7 @@ const DeviceOverview = ({
             labelId,
           })
         }
-        marginBottom={4}
+        marginBottom={5}
       />
       <EditableLabelTable
         title="Environment Variables"
@@ -256,7 +260,7 @@ const DeviceOverview = ({
             key,
           })
         }
-        marginBottom={4}
+        marginBottom={5}
       />
       <Card title="Services" size="xlarge">
         <DeviceServices
