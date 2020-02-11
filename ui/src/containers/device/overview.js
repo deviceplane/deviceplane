@@ -239,8 +239,29 @@ const DeviceOverview = ({
             labelId,
           })
         }
+        marginBottom={4}
       />
-      <Card title="Services" size="xlarge" marginTop={4}>
+      <EditableLabelTable
+        title="Environment Variables"
+        dataName="Environment Variable"
+        data={device.environmentVariables}
+        onAdd={environmentVariable =>
+          api.addEnvironmentVariable({
+            projectId: params.project,
+            deviceId: device.id,
+            data: environmentVariable,
+          })
+        }
+        onRemove={key =>
+          api.removeEnvironmentVariable({
+            projectId: params.project,
+            deviceId: device.id,
+            key,
+          })
+        }
+        marginBottom={4}
+      />
+      <Card title="Services" size="xlarge">
         <DeviceServices
           projectId={params.project}
           device={device}

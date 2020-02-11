@@ -140,7 +140,7 @@ type ServiceAccountRoleBindings interface {
 var ErrServiceAccountRoleBindingNotFound = errors.New("service account role binding not found")
 
 type Devices interface {
-	CreateDevice(ctx context.Context, projectID, name, registrationTokenID string, deviceLabels map[string]string) (*models.Device, error)
+	CreateDevice(ctx context.Context, projectID, name, registrationTokenID string, deviceLabels, deviceEnvironmentVariables map[string]string) (*models.Device, error)
 	GetDevice(ctx context.Context, deviceID, projectID string) (*models.Device, error)
 	LookupDevice(ctx context.Context, name, projectID string) (*models.Device, error)
 	ListDevices(ctx context.Context, projectID, searchQuery string) ([]models.Device, error)
@@ -151,6 +151,8 @@ type Devices interface {
 	ListAllDeviceLabelKeys(ctx context.Context, projectID string) ([]string, error)
 	SetDeviceLabel(ctx context.Context, deviceID, projectID, key, value string) (*string, error)
 	DeleteDeviceLabel(ctx context.Context, deviceID, projectID, key string) error
+	SetDeviceEnvironmentVariable(ctx context.Context, deviceID, projectID, key, value string) (*string, error)
+	DeleteDeviceEnvironmentVariable(ctx context.Context, deviceID, projectID, key string) error
 }
 
 var ErrDeviceNotFound = errors.New("device not found")

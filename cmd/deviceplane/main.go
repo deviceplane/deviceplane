@@ -39,5 +39,6 @@ func main() {
 	metrics.Initialize(&config)
 
 	app.PreAction(cliutils.InitializeAPIClient(&config))
-	kingpin.MustParse(app.Parse(os.Args[1:]))
+	preSSH, _ := cliutils.GetSSHArgs(os.Args[1:])
+	kingpin.MustParse(app.Parse(preSSH))
 }

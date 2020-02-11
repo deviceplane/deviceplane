@@ -1,11 +1,13 @@
 db:
-  image: mysql:5.6
+  image: mysql:5.7
   command:
-  - --performance_schema=0
+    - --performance_schema=0
+    - --sql-mode
+    - ""
   environment:
-  - MYSQL_ROOT_PASSWORD=root
-  - MYSQL_USER=deviceplane
-  - MYSQL_PASSWORD=deviceplane
-  - MYSQL_DATABASE=deviceplane
+    - MYSQL_ROOT_PASSWORD=root
+    - MYSQL_USER=deviceplane
+    - MYSQL_PASSWORD=deviceplane
+    - MYSQL_DATABASE=deviceplane
   ports:
-  - "3306:3306"
+    - "3306:3306"

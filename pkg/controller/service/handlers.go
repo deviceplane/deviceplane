@@ -2215,6 +2215,65 @@ func (s *Service) deleteDevice(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (s *Service) setDeviceEnvironmentVariable(w http.ResponseWriter, r *http.Request) {
+	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
+		s.validateAuthorization(
+			authz.ResourceDeviceEnvironmentVariables, authz.ActionSetDeviceEnvironmentVariable,
+			w, r,
+			user, serviceAccount,
+			func(project *models.Project) {
+				s.withDevice(w, r, project, func(device *models.Device) {
+					var setDeviceEnvironmentVariableRequest struct {
+						Key   string `json:"key" validate:"environmentvariablekey"`
+						Value string `json:"value" validate:"environmentvariablevalue"`
+					}
+					if err := read(r, &setDeviceEnvironmentVariableRequest); err != nil {
+						http.Error(w, err.Error(), http.StatusBadRequest)
+						return
+					}
+
+					deviceEnvironmentVariable, err := s.devices.SetDeviceEnvironmentVariable(
+						r.Context(),
+						device.ID,
+						project.ID,
+						setDeviceEnvironmentVariableRequest.Key,
+						setDeviceEnvironmentVariableRequest.Value,
+					)
+					if err != nil {
+						log.WithError(err).Error("set device environment variable")
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+
+					utils.Respond(w, deviceEnvironmentVariable)
+				})
+			},
+		)
+	})
+}
+
+func (s *Service) deleteDeviceEnvironmentVariable(w http.ResponseWriter, r *http.Request) {
+	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
+		s.validateAuthorization(
+			authz.ResourceDeviceEnvironmentVariables, authz.ActionDeleteDeviceEnvironmentVariable,
+			w, r,
+			user, serviceAccount,
+			func(project *models.Project) {
+				s.withDevice(w, r, project, func(device *models.Device) {
+					vars := mux.Vars(r)
+					key := vars["key"]
+
+					if err := s.devices.DeleteDeviceEnvironmentVariable(r.Context(), device.ID, project.ID, key); err != nil {
+						log.WithError(err).Error("delete device environment variable")
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+				})
+			},
+		)
+	})
+}
+
 func (s *Service) listAllDeviceLabelKeys(w http.ResponseWriter, r *http.Request) {
 	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
 		s.validateAuthorization(
@@ -2655,7 +2714,7 @@ func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	device, err := s.devices.CreateDevice(r.Context(), projectID, namesgenerator.GetRandomName(), deviceRegistrationToken.ID, deviceRegistrationToken.Labels)
+	device, err := s.devices.CreateDevice(r.Context(), projectID, namesgenerator.GetRandomName(), deviceRegistrationToken.ID, deviceRegistrationToken.Labels, map[string]string{})
 	if err != nil {
 		log.WithError(err).Error("create device")
 		w.WriteHeader(http.StatusInternalServerError)

@@ -2,6 +2,7 @@ package supervisor
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -19,6 +20,10 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/models"
 )
 
+const (
+	deviceIDEnvironmentVariableKey = "DEVICEPLANE_DEVICE_ID"
+)
+
 type ServiceSupervisor struct {
 	applicationID string
 	serviceName   string
@@ -28,6 +33,7 @@ type ServiceSupervisor struct {
 
 	imagePuller *imagePuller
 
+	bundle              models.Bundle
 	release             string
 	service             models.Service
 	keepAliveRelease    chan string
@@ -73,8 +79,9 @@ func NewServiceSupervisor(
 	}
 }
 
-func (s *ServiceSupervisor) SetService(release string, service models.Service) {
+func (s *ServiceSupervisor) Set(bundle models.Bundle, release string, service models.Service) {
 	s.lock.Lock()
+	s.bundle = bundle
 	s.release = release
 	s.service = service
 	s.lock.Unlock()
@@ -177,7 +184,7 @@ func (s *ServiceSupervisor) reconcileLoop() {
 			ctx,
 			s.engine,
 			strings.Join([]string{s.serviceName, hash.ShortHash(s.applicationID), spec.ShortHash(service, s.serviceName)}, "-"),
-			spec.WithStandardLabels(service, s.applicationID, s.serviceName),
+			s.transformService(spec.WithStandardLabels(service, s.applicationID, s.serviceName)),
 		); err != nil {
 			goto cont
 		}
@@ -196,6 +203,20 @@ func (s *ServiceSupervisor) reconcileLoop() {
 			continue
 		}
 	}
+}
+
+func (s *ServiceSupervisor) transformService(service models.Service) models.Service {
+	service.Environment = append(
+		service.Environment,
+		fmt.Sprintf("%s=%s", deviceIDEnvironmentVariableKey, s.bundle.DeviceID),
+	)
+	for key, val := range s.bundle.EnvironmentVariables {
+		service.Environment = append(
+			service.Environment,
+			fmt.Sprintf("%s=%s", key, val),
+		)
+	}
+	return service
 }
 
 func (s *ServiceSupervisor) sendKeepAliveRelease(release string) {

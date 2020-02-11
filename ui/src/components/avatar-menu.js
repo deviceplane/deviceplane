@@ -62,9 +62,16 @@ const AvatarMenu = () => {
         />
       </Popup>
       <Popover
-        top="45px"
+        top="46px"
         right={0}
         width="240px"
+        button={({ show }) => (
+          <Avatar
+            name={name}
+            color={show ? 'primary' : 'white'}
+            borderColor={show ? 'primary' : 'white'}
+          />
+        )}
         content={({ close }) => (
           <>
             <Text
@@ -85,11 +92,13 @@ const AvatarMenu = () => {
             >
               {context.currentUser.email}
             </Text>
-            <Divider />
             {!isProjectsRoute && (
-              <MenuItem onClick={() => navigation.navigate('/projects')}>
-                Projects
-              </MenuItem>
+              <>
+                <Divider />
+                <MenuItem onClick={() => navigation.navigate('/projects')}>
+                  Projects
+                </MenuItem>
+              </>
             )}
             <Divider />
             <MenuItem
@@ -148,12 +157,7 @@ const AvatarMenu = () => {
             </MenuItem>
           </>
         )}
-      >
-        <Row alignItems="center">
-          <Avatar name={name} />
-          <Icon icon="caret-down" size={16} color="white" marginLeft={1} />
-        </Row>
-      </Popover>
+      />
     </>
   );
 };

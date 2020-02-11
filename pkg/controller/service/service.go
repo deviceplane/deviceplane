@@ -215,6 +215,9 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/metrics", s.serviceMetrics).Methods("GET")
 	apiRouter.PathPrefix("/projects/{project}/devices/{device}/debug/").HandlerFunc(s.deviceDebug)
 
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/environmentvariables", s.setDeviceEnvironmentVariable).Methods("PUT")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/environmentvariables/{key}", s.deleteDeviceEnvironmentVariable).Methods("DELETE")
+
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels", s.setDeviceLabel).Methods("PUT")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.deleteDeviceLabel).Methods("DELETE")
 

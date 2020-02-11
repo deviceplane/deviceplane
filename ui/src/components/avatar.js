@@ -1,4 +1,5 @@
 import React from 'react';
+import styled from 'styled-components';
 
 import { Column, Text } from './core';
 
@@ -12,21 +13,30 @@ const getInitials = (name, fallback = '?') => {
     .join('');
 };
 
-const Avatar = ({ name }) => (
-  <Column
-    width="36px"
-    height="36px"
+const Container = styled(Column)`
+  &:hover {
+    border-color: ${props => props.theme.colors.primary};
+  }
+  &:hover span {
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const Avatar = ({ name, color = 'white', borderColor = 'white' }) => (
+  <Container
+    width="32px"
+    height="32px"
     alignItems="center"
     justifyContent="center"
     bg="black"
     borderRadius={6}
     border={0}
-    borderColor="white"
+    borderColor={borderColor}
   >
-    <Text color="white" fontWeight={3} fontSize={0}>
+    <Text color={color} fontWeight={2} fontSize={0}>
       {getInitials(name)}
     </Text>
-  </Column>
+  </Container>
 );
 
 export default Avatar;
