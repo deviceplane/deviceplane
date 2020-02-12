@@ -124,7 +124,7 @@ func main() {
 		)(svc),
 	}
 
-	log.Info("Server will now listen")
+	log.Info("Server will now listen on " + *addr)
 	if err := server.ListenAndServe(); err != nil {
 		log.WithError(err).Fatal("listen and serve")
 	}
