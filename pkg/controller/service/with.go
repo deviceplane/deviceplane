@@ -453,7 +453,7 @@ func (s *Service) withRelease(w http.ResponseWriter, r *http.Request, project *m
 	}
 
 	vars := mux.Vars(r)
-	releaseIdentifier := vars["application"]
+	releaseIdentifier := vars["release"]
 	if releaseIdentifier == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
