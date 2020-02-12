@@ -35,6 +35,7 @@ require (
 	github.com/jaytaylor/html2text v0.0.0-20190408195923-01ec452cbe43 // indirect
 	github.com/kr/pty v1.1.3
 	github.com/leodido/go-urn v1.1.0 // indirect
+	github.com/matcornic/hermes v1.2.0
 	github.com/matcornic/hermes/v2 v2.1.0 // indirect
 	github.com/mattn/go-runewidth v0.0.8 // indirect
 	github.com/mitchellh/copystructure v1.0.0 // indirect
@@ -61,5 +62,6 @@ require (
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.29.1
+	gopkg.in/russross/blackfriday.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 )
