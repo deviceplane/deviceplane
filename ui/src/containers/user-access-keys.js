@@ -25,19 +25,9 @@ const UserAccessKeys = () => {
   const columns = useMemo(
     () => [
       {
-        Header: 'Access Key ID',
-        accessor: 'id',
-        style: {
-          flex: 3,
-        },
-      },
-      {
         Header: 'Created At',
         accessor: ({ createdAt }) =>
-          createdAt ? moment(createdAt).fromNow() : '-',
-        style: {
-          flex: '0 0 150px',
-        },
+          createdAt ? moment(createdAt).format('LLL') : '-',
       },
       {
         Header: ' ',
