@@ -151,11 +151,6 @@ github.com/segmentio/objconv/adapters/net/url
 github.com/segmentio/objconv/json
 github.com/segmentio/objconv/objutil
 github.com/segmentio/objconv/yaml
-# github.com/sendgrid/rest v2.4.1+incompatible
-github.com/sendgrid/rest
-# github.com/sendgrid/sendgrid-go v3.4.1+incompatible
-github.com/sendgrid/sendgrid-go
-github.com/sendgrid/sendgrid-go/helpers/mail
 # github.com/siebenmann/go-kstat v0.0.0-20160321171754-d34789b79745
 github.com/siebenmann/go-kstat
 # github.com/sirupsen/logrus v1.4.2

@@ -37,7 +37,7 @@ require (
 	github.com/segmentio/conf v1.1.0
 	github.com/segmentio/ksuid v1.0.2
 	github.com/sendgrid/rest v2.4.1+incompatible // indirect
-	github.com/sendgrid/sendgrid-go v3.4.1+incompatible
+	github.com/sendgrid/sendgrid-go v3.4.1+incompatible // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/urfave/cli v1.20.0 // indirect
 	github.com/vishvananda/netns v0.0.0-20190625233234-7109fa855b0f
