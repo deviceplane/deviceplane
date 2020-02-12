@@ -133,17 +133,20 @@ func tryConnect(uri string) (*sql.DB, error) {
 	var err error
 
 	for i := 0; i < 30; i++ {
+		log.Info("attempting to connect to db")
 		if db, err = sql.Open("mysql", uri); err != nil {
 			time.Sleep(time.Second)
 			continue
 		}
 
+		log.Info("attempting to ping db")
 		if err = db.Ping(); err != nil {
 			db.Close()
 			time.Sleep(time.Second)
 			continue
 		}
 
+		log.Info("connected to db")
 		break
 	}
 
