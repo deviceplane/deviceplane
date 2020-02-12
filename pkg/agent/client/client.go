@@ -14,14 +14,11 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/models"
 	dpwebsocket "github.com/deviceplane/deviceplane/pkg/websocket"
 	"github.com/function61/holepunch-server/pkg/wsconnadapter"
-	"github.com/pkg/errors"
 )
 
 const (
 	bundleURL = "bundle"
 )
-
-var ErrNonSuccessResponse = errors.New("non-200 status code")
 
 type Client struct {
 	url        *url.URL
@@ -149,9 +146,6 @@ func (c *Client) getB(ctx *dpcontext.Context, out interface{}, s ...string) ([]b
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return nil, errors.WithMessagef(ErrNonSuccessResponse, "code %d", resp.StatusCode)
-	}
 
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -197,9 +191,6 @@ func (c *Client) postB(ctx *dpcontext.Context, in, out interface{}, s ...string)
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return nil, errors.WithMessagef(ErrNonSuccessResponse, "code %d", resp.StatusCode)
-	}
 
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -239,9 +230,6 @@ func (c *Client) deleteB(ctx *dpcontext.Context, out interface{}, s ...string) (
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return nil, errors.WithMessagef(ErrNonSuccessResponse, "code %d", resp.StatusCode)
-	}
 
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
