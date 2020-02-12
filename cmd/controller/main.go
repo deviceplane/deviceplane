@@ -104,6 +104,7 @@ func main() {
 
 	connman := connman.New()
 
+	log.Info("Beginning background runners")
 	runnerManager := runner.NewManager([]runner.Runner{
 		datadog.NewRunner(sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, st, connman),
 	})
@@ -123,6 +124,7 @@ func main() {
 		)(svc),
 	}
 
+	log.Info("Server will now listen")
 	if err := server.ListenAndServe(); err != nil {
 		log.WithError(err).Fatal("listen and serve")
 	}
