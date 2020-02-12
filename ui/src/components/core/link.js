@@ -21,10 +21,14 @@ A.defaultProps = {
   fontWeight: 2,
 };
 
-const Link = ({ children, href, ...rest }) => {
+const Link = ({ children, href, newTab, ...rest }) => {
   const linkProps = useLinkProps({ href });
   return (
-    <A {...linkProps} {...rest}>
+    <A
+      {...linkProps}
+      {...(newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+      {...rest}
+    >
       {children}
     </A>
   );

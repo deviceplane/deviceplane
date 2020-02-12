@@ -115,7 +115,9 @@ const Scheduling = ({
           schedulingRule: {
             ...application.schedulingRule,
             scheduleType: data.scheduleType,
-            conditionalQuery: addTypeToConditionalQuery(data.conditionalQuery),
+            conditionalQuery: data.conditionalQuery
+              ? addTypeToConditionalQuery(data.conditionalQuery)
+              : application.schedulingRule.conditionalQuery,
           },
         },
       });

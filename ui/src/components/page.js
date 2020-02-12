@@ -17,12 +17,13 @@ const GlobalStyle = createGlobalStyle`
   }
 
   html {
+    height: 100%;
     box-sizing: border-box;
     font-family: ${props => props.theme.fonts.default};
     font-size: 16px;
     font-weight: 400;
     line-height: 1.2;
-    background-color: ${props => props.theme.colors.pageBackground};
+    background-color: ${props => props.theme.colors.black};
   }
 
   html, body {
@@ -32,10 +33,12 @@ const GlobalStyle = createGlobalStyle`
   }
 
   body {
+    height: 100%;
+    overflow: hidden !important;
     margin: 0;
   }
 
-  html, body, #root, #root > div, main {
+  main {
     height: 100%;
   }
 
@@ -82,22 +85,18 @@ const Page = ({ children }) => {
         />
       </Helmet>
       <GlobalStyle />
-      <Box>
-        <main>
-          <NotFoundBoundary
-            render={() => {
-              if (route.data.context.currentUser) {
-                return <NotFound />;
-              } else {
-                window.location.replace('/login');
-                return null;
-              }
-            }}
-          >
-            {children}
-          </NotFoundBoundary>
-        </main>
-      </Box>
+      <NotFoundBoundary
+        render={() => {
+          if (route.data.context.currentUser) {
+            return <NotFound />;
+          } else {
+            window.location.replace('/login');
+            return null;
+          }
+        }}
+      >
+        {children}
+      </NotFoundBoundary>
     </>
   );
 };

@@ -6,21 +6,24 @@ import { Row } from './core';
 import { Btn } from './core/button';
 
 const TabButton = styled(Btn)`
-  border: none;
-  padding: 10px 14px;
-  margin: 0 12px;
-  font-size: 12px;
+  margin: 0;
+  padding: 0;
   cursor: ${props => (props.active ? 'default' : 'pointer')};
   text-transform: uppercase;
   white-space: nowrap;
   text-decoration: none !important;
-  box-shadow: none !important;
-  border-color: none !important;
+  border: none;
+  border-radius: 0;
   pointer-events: ${props => (props.disabled ? 'none' : 'auto')};
+  background-color: ${props => props.theme.colors.black};
   color: ${props =>
-    props.active ? props.theme.colors.primary : props.theme.colors.white};
-  background-color: ${props =>
-    props.active ? props.theme.colors.black : props.theme.colors.grays[4]};
+    props.active ? props.theme.colors.primary : props.theme.colors.grays[13]};
+
+  &:not(:last-child) {
+    padding-right: 12px;
+    margin-right: 12px;
+    border-right: 2px solid ${props => props.theme.colors.grays[5]};
+  }
 
   &:focus,
   &:hover {
@@ -28,10 +31,6 @@ const TabButton = styled(Btn)`
       props.active
         ? props.theme.colors.primary
         : props.theme.colors.pureWhite} !important;
-    background-color: ${props =>
-      props.active
-        ? props.theme.colors.black
-        : props.theme.colors.grays[3]} !important;
   }
 `;
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/agent/client"
+	dpcontext "github.com/deviceplane/deviceplane/pkg/context"
 	"github.com/deviceplane/deviceplane/pkg/metrics/datadog/processing"
 	"github.com/deviceplane/deviceplane/pkg/metrics/datadog/translation"
 	"github.com/deviceplane/deviceplane/pkg/models"
@@ -50,7 +51,7 @@ func (m *MetricsPusher) begin() {
 	defer ticker.Stop()
 
 	for {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := dpcontext.New(context.Background(), 10*time.Second)
 
 		var wg sync.WaitGroup
 		wg.Add(2)
@@ -71,7 +72,7 @@ func (m *MetricsPusher) begin() {
 	}
 }
 
-func (m *MetricsPusher) PushDeviceMetrics(ctx context.Context) {
+func (m *MetricsPusher) PushDeviceMetrics(ctx *dpcontext.Context) {
 	if m.bundle.DeviceMetricsConfig == nil {
 		return
 	}
@@ -109,7 +110,7 @@ func (m *MetricsPusher) PushDeviceMetrics(ctx context.Context) {
 	}
 }
 
-func (m *MetricsPusher) PushServiceMetrics(ctx context.Context) {
+func (m *MetricsPusher) PushServiceMetrics(ctx *dpcontext.Context) {
 	if len(m.bundle.ServiceMetricsConfigs) == 0 {
 		return
 	}

@@ -136,7 +136,7 @@ export const ToastManager = () => {
       right={0}
       top={4}
       alignItems="center"
-      width="calc(100% - 136px)"
+      width="100%"
       style={{ pointerEvents: 'none' }}
     >
       {toasts.map(({ id, ...toast }, index) => (

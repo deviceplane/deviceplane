@@ -97,6 +97,20 @@ const api = {
   removeDeviceLabel: ({ projectId, deviceId, labelId }) =>
     del(`projects/${projectId}/devices/${deviceId}/labels/${labelId}`),
 
+  addEnvironmentVariable: ({ projectId, deviceId, data }) =>
+    put(
+      `projects/${projectId}/devices/${deviceId}/environmentvariables`,
+      data
+    ).then(response => {
+      segment.track('Environment Variable Added');
+      return response;
+    }),
+
+  removeEnvironmentVariable: ({ projectId, deviceId, key }) =>
+    del(
+      `projects/${projectId}/devices/${deviceId}/environmentvariables/${key}`
+    ),
+
   defaultRegistrationToken: ({ projectId }) =>
     get(`projects/${projectId}/deviceregistrationtokens/default`),
 

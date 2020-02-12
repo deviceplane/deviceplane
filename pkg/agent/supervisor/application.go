@@ -56,7 +56,7 @@ func NewApplicationSupervisor(
 	}
 }
 
-func (s *ApplicationSupervisor) SetApplication(application models.FullBundledApplication) {
+func (s *ApplicationSupervisor) Set(bundle models.Bundle, application models.FullBundledApplication) {
 	s.stopLock.Lock()
 	defer s.stopLock.Unlock()
 
@@ -84,9 +84,8 @@ func (s *ApplicationSupervisor) SetApplication(application models.FullBundledApp
 			)
 			s.serviceSupervisors[serviceName] = serviceSupervisor
 		}
+		serviceSupervisor.Set(bundle, application.LatestRelease.ID, service)
 		s.lock.Unlock()
-
-		serviceSupervisor.SetService(application.LatestRelease.ID, service)
 
 		serviceNames[serviceName] = struct{}{}
 	}
