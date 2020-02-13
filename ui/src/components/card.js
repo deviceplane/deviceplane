@@ -12,6 +12,7 @@ const Container = styled(Column)`
     props.overflow ? `${props.overflow} !important` : 'initial'};
   transition: all 250ms;
   width: 100%;
+  flex-shrink: 0;
 
   ${variant({
     variants: {
@@ -55,7 +56,7 @@ const Card = ({
       color="white"
       variant={size}
       borderRadius={2}
-      padding={6}
+      padding={[0, 0, 6]}
       border={border ? 0 : undefined}
       borderColor="white"
       disabled={disabled}
