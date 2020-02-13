@@ -84,7 +84,7 @@ const Template = `
 		border-radius: 2px;
 		padding: 12px 24px;
 		text-transform: uppercase;
-		font-weight: 700;
+		font-weight: 500;
 		text-decoration: none;
 		font-family: Rubik,Roboto,sans-serif !important;
 		font-size: 14px;
