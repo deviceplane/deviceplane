@@ -46,9 +46,9 @@ const Template = `
 		font-size: 18px;
   	}
     body {
-    	width: 100% !important;
-    	height: 100% !important;
-    	margin: 0;
+		width: 100% !important;
+		height: 100% !important;
+		margin: 0;
 		line-height: 1.4;
 		font-weight: 400;
 		-webkit-text-size-adjust: none;
@@ -56,7 +56,7 @@ const Template = `
 	}
 	table {
 		background-color: #000 !important;
-    	color: #fff !important;
+		color: #fff !important;
 		width: 100%;
 		border: none;
 		border-spacing: 0;
