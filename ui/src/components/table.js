@@ -77,7 +77,14 @@ const Cell = styled.td`
   padding: 8px 12px;
 `;
 
-const Table = ({ columns, data, onRowSelect, placeholder, rowHref }) => {
+const Table = ({
+  columns,
+  data,
+  onRowSelect,
+  placeholder,
+  rowHref,
+  maxHeight,
+}) => {
   const selectable = onRowSelect || rowHref;
   onRowSelect = onRowSelect || function() {};
 
@@ -107,6 +114,7 @@ const Table = ({ columns, data, onRowSelect, placeholder, rowHref }) => {
     <>
       <StyledTable
         {...getTableProps()}
+        maxHeight={maxHeight}
         gridTemplateColumns={columns
           .map(
             ({ minWidth = 'min-content', maxWidth = '1fr' }) =>

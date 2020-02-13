@@ -250,6 +250,7 @@ const SSHKeys = () => {
         actions={[{ title: 'Add SSH Key', onClick: addSSHKey }]}
       >
         <Table
+          maxHeight="300px"
           columns={columns}
           data={tableData}
           placeholder={

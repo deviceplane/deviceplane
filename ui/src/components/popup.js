@@ -25,8 +25,9 @@ const Container = styled(Column)`
 const Content = styled(Column)`
   max-height: 80vh;
   & > div {
+    flex-shrink: 1;
     width: 100vw;
-    overflow: scroll;
+    overflow: hidden;
   }
 `;
 
