@@ -26,6 +26,7 @@ const StyledTable = styled(Grid).attrs({ as: 'table' })`
   width: auto;
   border-collapse: collapse;
   overflow: auto;
+  flex-shrink: 0;
 `;
 
 const TableHead = styled.thead`

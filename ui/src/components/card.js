@@ -63,7 +63,7 @@ const Card = ({
       {...props}
     >
       {title && (
-        <Column marginBottom={6} borderColor="white">
+        <Column marginBottom={6} borderColor="white" flexShrink={0}>
           {logo && (
             <Link
               href="https://deviceplane.com"
@@ -79,6 +79,7 @@ const Card = ({
             justifyContent="space-between"
             alignItems="flex-end"
             marginLeft={-4}
+            flexShrink={0}
           >
             <Row alignItems="center" marginLeft={4}>
               <Text fontSize="28px" fontWeight={2} marginRight={4}>
