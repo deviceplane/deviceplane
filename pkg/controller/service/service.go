@@ -621,12 +621,6 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if err != nil {
-				log.WithError(err).Error("create registration email")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
 			if err := s.email.Send(email.Request{
 				FromName:    s.emailFromName,
 				FromAddress: s.emailFromAddress,
