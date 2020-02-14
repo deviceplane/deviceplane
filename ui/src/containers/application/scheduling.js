@@ -72,15 +72,18 @@ const Scheduling = ({
         Header: 'Status',
         accessor: 'status',
         Cell: ({ cell: { value } }) => <DeviceStatus status={value} />,
+        maxWidth: '72px',
       },
       {
         Header: 'Name',
         accessor: 'name',
+        minWidth: '200px',
       },
       {
         Header: 'Labels',
         accessor: 'labels',
         Cell: ({ cell: { value } }) => (value ? renderLabels(value) : null),
+        minWidth: '300px',
       },
     ],
     []

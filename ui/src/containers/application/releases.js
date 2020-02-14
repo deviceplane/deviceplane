@@ -15,6 +15,8 @@ const Releases = ({
       {
         Header: 'Release',
         accessor: 'number',
+        maxWidth: '100px',
+        minWidth: '100px',
       },
       {
         Header: 'Released by',
@@ -35,6 +37,8 @@ const Releases = ({
       {
         Header: 'Devices',
         accessor: 'deviceCounts.allCount',
+        maxWidth: '100px',
+        minWidth: '100px',
       },
     ],
     []

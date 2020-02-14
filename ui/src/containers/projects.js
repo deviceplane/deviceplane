@@ -19,6 +19,8 @@ const Projects = ({
       {
         Header: 'Devices',
         accessor: 'deviceCounts.allCount',
+        maxWidth: '100px',
+        minWidth: '100px',
       },
       {
         Header: 'Applications',
