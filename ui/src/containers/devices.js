@@ -101,7 +101,7 @@ const Devices = ({ route }) => {
     ],
     [filterQuery]
   );
-  const tableData = useMemo(() => [...devices, ...devices], [devices]);
+  const tableData = useMemo(() => devices, [devices]);
 
   const fetchDevices = async queryString => {
     try {
