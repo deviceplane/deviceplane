@@ -15,10 +15,7 @@ type Request struct {
 	ToName      string
 	ToAddress   string
 	Subject     string
-	Title       string
-	Body        string
-	ActionTitle string
-	ActionLink  string
+	Content     Content
 }
 
 type Content struct {
@@ -165,7 +162,7 @@ const Template = `
 `
 
 func GenerateHTML(request Request) (string, error) {
-	templateContent := Content{request.Title, request.Body, request.ActionTitle, request.ActionLink}
+	templateContent := request.Content
 
 	t, err := template.New("email").Parse(Template)
 

@@ -627,10 +627,12 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 				ToName:      user.FirstName + " " + user.LastName,
 				ToAddress:   user.Email,
 				Subject:     "Deviceplane Email Confirmation",
-				Title:       "Email Confirmation",
-				Body:        "Thank you for using Deviceplane! Please click the button below to confirm your email.",
-				ActionTitle: "Confirm Email",
-				ActionLink:  fmt.Sprintf("%s://%s/confirm/%s", referrer.Scheme, referrer.Host, registrationTokenValue),
+				Content: email.Content{
+					Title:       "Email Confirmation",
+					Body:        "Thank you for using Deviceplane! Please click the button below to confirm your email.",
+					ActionTitle: "Confirm Email",
+					ActionLink:  fmt.Sprintf("%s://%s/confirm/%s", referrer.Scheme, referrer.Host, registrationTokenValue),
+				},
 			}); err != nil {
 				log.WithError(err).Error("send registration email")
 				w.WriteHeader(http.StatusInternalServerError)
@@ -704,10 +706,12 @@ func (s *Service) recoverPassword(w http.ResponseWriter, r *http.Request) {
 			ToName:      user.FirstName + " " + user.LastName,
 			ToAddress:   user.Email,
 			Subject:     "Deviceplane Password Reset",
-			Title:       "Password Reset",
-			Body:        "Please click the button below to reset your password.",
-			ActionTitle: "Reset Password",
-			ActionLink:  fmt.Sprintf("%s://%s/recover/%s", referrer.Scheme, referrer.Host, passwordRecoveryTokenValue),
+			Content: email.Content{
+				Title:       "Password Reset",
+				Body:        "Please click the button below to reset your password.",
+				ActionTitle: "Reset Password",
+				ActionLink:  fmt.Sprintf("%s://%s/recover/%s", referrer.Scheme, referrer.Host, passwordRecoveryTokenValue),
+			},
 		}); err != nil {
 			log.WithError(err).Error("send recovery email")
 			w.WriteHeader(http.StatusInternalServerError)
