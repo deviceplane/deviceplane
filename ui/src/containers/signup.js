@@ -61,6 +61,7 @@ const Signup = () => {
   return (
     <Column
       alignItems="center"
+      justifyContent="center"
       flex={1}
       paddingY={[0, 0, 5]}
       height={['initial', 'initial', '100%']}
