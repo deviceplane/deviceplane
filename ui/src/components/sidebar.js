@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { useActive, useCurrentRoute } from 'react-navi';
+
 import Logo from './icons/logo';
 import { Row, Column, Link, Text, Icon } from './core';
 
@@ -39,37 +40,28 @@ const links = [
 
 const SidebarLink = styled(Link)`
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   transition: ${props => props.theme.transitions[0]};
-  border-radius: 4px;
   text-transform: uppercase;
   text-decoration: none !important;
-
-  background-color: ${props =>
-    props.active ? props.theme.colors.grays[1] : 'inherit'};
   color: ${props =>
-    props.active ? props.theme.colors.primary : props.theme.colors.white};
-
+    props.active ? props.theme.colors.primary : props.theme.colors.grays[12]};
   &:hover {
     color: ${props =>
       props.active ? props.theme.colors.primary : props.theme.colors.pureWhite};
-    background-color: ${props =>
-      props.active ? props.theme.colors.grays[1] : props.theme.colors.grays[0]};
   }
-
-  & span {
-    color: ${props =>
-      props.active ? props.theme.colors.primary : props.theme.colors.white};
+  &:hover svg {
+    fill: ${props =>
+      props.active ? props.theme.colors.primary : props.theme.colors.pureWhite};
   }
-
-  & > div > svg {
+  & svg {
     fill: ${props =>
       props.active
         ? props.theme.colors.primary
-        : props.theme.colors.white} !important;
+        : props.theme.colors.grays[12]}};
   }
-
   &:last-child {
     margin-top: auto;
   }
@@ -87,30 +79,41 @@ const Sidebar = () => {
   return (
     projectSelected && (
       <Column
-        height="calc(100vh - 64px)"
-        width={136}
-        bg="black"
-        alignItems="center"
+        flexDirection={['row', 'row', 'column']}
+        bg={['grays.0', 'grays.0', 'black']}
+        alignItems={['unset', 'unset', 'stretch']}
+        justifyContent={['space-between', 'space-between', 'unset']}
         flexShrink={0}
         overflow="auto"
       >
+        <Row
+          paddingY={4}
+          justifyContent="center"
+          display={['none', 'none', 'flex']}
+        >
+          <Logo size={40} />
+        </Row>
+
         {links.map(({ to, title, icon }) => {
           const href = `/${route.data.params.project}${to}`;
 
           return (
             <SidebarLink
               href={href}
-              width={120}
-              paddingY={4}
-              marginBottom={2}
+              paddingY={[2, 2, 4, 4]}
+              paddingX={[5, 5, 5, 4]}
               key={title}
-              fontSize={0}
               active={useActive(href, { exact: false })}
             >
-              <Column alignItems="center">
-                <Icon icon={icon} color="white" size={24} />
-                <Text marginTop={3}>{title}</Text>
-              </Column>
+              <Icon icon={icon} color="white" size={24} />
+              <Text
+                marginTop={[2, 2, 2, 3]}
+                display={['none', 'none', 'none', 'block']}
+                fontSize={0}
+                color="inherit"
+              >
+                {title}
+              </Text>
             </SidebarLink>
           );
         })}

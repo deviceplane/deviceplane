@@ -13,7 +13,7 @@ const Applications = ({
 }) => {
   const columns = useMemo(
     () => [
-      { Header: 'Name', accessor: 'name', style: { flex: 2 } },
+      { Header: 'Name', accessor: 'name' },
       {
         Header: 'Services',
         accessor: 'latestRelease.config',
@@ -27,7 +27,6 @@ const Applications = ({
           ) : (
             '-'
           ),
-        style: { flex: 2 },
       },
       {
         Header: 'Scheduling',
@@ -37,7 +36,6 @@ const Applications = ({
             : scheduleType === 'NoDevices'
             ? 'No devices'
             : 'Conditional',
-        style: { flex: '0 0 120px' },
       },
       {
         Header: 'Last Release',
@@ -45,16 +43,12 @@ const Applications = ({
         Cell: ({ cell: { value } }) => (
           <Text>{value ? moment(value).fromNow() : '-'}</Text>
         ),
-        style: {
-          flex: '0 0 150px',
-        },
       },
       {
         Header: 'Devices',
         accessor: 'deviceCounts.allCount',
-        style: {
-          flex: '0 0 76px',
-        },
+        maxWidth: '100px',
+        minWidth: '100px',
       },
     ],
     []

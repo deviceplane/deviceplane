@@ -79,7 +79,7 @@ const RegistrationTokenSettings = ({
   return (
     <Card
       title="Registration Token Settings"
-      maxWidth="550px"
+      maxWidth="560px"
       actions={[
         {
           title: 'Delete',

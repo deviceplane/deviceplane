@@ -53,9 +53,9 @@ const UserAccessKeys = () => {
               onClick={() => setKeyToDelete(row.original.id)}
             />
           ),
-        style: {
+        maxWidth: '50px',
+        cellStyle: {
           justifyContent: 'flex-end',
-          flex: '0 0 100px',
         },
       },
     ],
