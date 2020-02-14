@@ -123,6 +123,14 @@ func (c *Client) DeleteDeviceServiceStatus(ctx *dpcontext.Context, applicationID
 	return c.delete(ctx, nil, "projects", c.projectID, "devices", c.deviceID, "applications", applicationID, "services", service, "deviceservicestatuses")
 }
 
+func (c *Client) SetDeviceServiceState(ctx *dpcontext.Context, applicationID, service string, req models.SetDeviceServiceStateRequest) error {
+	return c.post(ctx, req, nil, "projects", c.projectID, "devices", c.deviceID, "applications", applicationID, "services", service, "deviceservicestates")
+}
+
+func (c *Client) DeleteDeviceServiceState(ctx *dpcontext.Context, applicationID, service string) error {
+	return c.delete(ctx, nil, "projects", c.projectID, "devices", c.deviceID, "applications", applicationID, "services", service, "deviceservicestates")
+}
+
 func (c *Client) InitiateDeviceConnection(ctx *dpcontext.Context) (net.Conn, error) {
 	req, err := dphttp.NewRequest(ctx, "", "", nil)
 	if err != nil {

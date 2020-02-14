@@ -51,8 +51,17 @@ func (e *Engine) InspectContainer(ctx context.Context, id string) (*engine.Inspe
 	if err != nil {
 		return nil, err
 	}
+
+	var exitCode *int
+	var containerErr string
+	if container.State != nil {
+		exitCode = &container.State.ExitCode
+		containerErr = container.State.Error
+	}
 	return &engine.InspectResponse{
-		PID: container.State.Pid,
+		PID:      container.State.Pid,
+		ExitCode: exitCode,
+		Error:    containerErr,
 	}, nil
 }
 

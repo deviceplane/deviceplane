@@ -236,6 +236,16 @@ type DeviceServiceStatuses interface {
 
 var ErrDeviceServiceStatusNotFound = errors.New("device service status not found")
 
+type DeviceServiceStates interface {
+	SetDeviceServiceState(ctx context.Context, projectID, deviceID, applicationID, service string, state models.ServiceState, errorMessage string) error
+	GetDeviceServiceState(ctx context.Context, projectID, deviceID, applicationID, service string) (*models.DeviceServiceState, error)
+	GetDeviceServiceStates(ctx context.Context, projectID, deviceID, applicationID string) ([]models.DeviceServiceState, error)
+	ListDeviceServiceStates(ctx context.Context, projectID, deviceID string) ([]models.DeviceServiceState, error)
+	DeleteDeviceServiceState(ctx context.Context, projectID, deviceID, applicationID, service string) error
+}
+
+var ErrDeviceServiceStateNotFound = errors.New("device service state not found")
+
 var ErrProjectConfigNotFound = errors.New("project config not found")
 
 type MetricConfigs interface {

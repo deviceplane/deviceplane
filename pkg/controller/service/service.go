@@ -68,6 +68,7 @@ type Service struct {
 	releaseDeviceCounts        store.ReleaseDeviceCounts
 	deviceApplicationStatuses  store.DeviceApplicationStatuses
 	deviceServiceStatuses      store.DeviceServiceStatuses
+	deviceServiceStates        store.DeviceServiceStates
 	metricConfigs              store.MetricConfigs
 	email                      email.Interface
 	emailFromName              string
@@ -105,6 +106,7 @@ func NewService(
 	releasesDeviceCounts store.ReleaseDeviceCounts,
 	deviceApplicationStatuses store.DeviceApplicationStatuses,
 	deviceServiceStatuses store.DeviceServiceStatuses,
+	deviceServiceStates store.DeviceServiceStates,
 	metricConfigs store.MetricConfigs,
 	email email.Interface,
 	emailFromName string,
@@ -140,6 +142,7 @@ func NewService(
 		releaseDeviceCounts:        releasesDeviceCounts,
 		deviceApplicationStatuses:  deviceApplicationStatuses,
 		deviceServiceStatuses:      deviceServiceStatuses,
+		deviceServiceStates:        deviceServiceStates,
 		metricConfigs:              metricConfigs,
 		email:                      email,
 		emailFromName:              emailFromName,
@@ -269,6 +272,8 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/deviceapplicationstatuses", s.withDeviceAuth(s.deleteDeviceApplicationStatus)).Methods("DELETE")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.withDeviceAuth(s.setDeviceServiceStatus)).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.withDeviceAuth(s.deleteDeviceServiceStatus)).Methods("DELETE")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestates", s.withDeviceAuth(s.setDeviceServiceState)).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestates", s.withDeviceAuth(s.deleteDeviceServiceState)).Methods("DELETE")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/forwardmetrics/service", s.withDeviceAuth(s.forwardServiceMetrics)).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/forwardmetrics/device", s.withDeviceAuth(s.forwardDeviceMetrics)).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/connection", s.withDeviceAuth(s.initiateDeviceConnection)).Methods("GET")
@@ -3060,7 +3065,9 @@ func (s *Service) setDeviceServiceStatus(w http.ResponseWriter, r *http.Request,
 	}
 
 	if err := s.deviceServiceStatuses.SetDeviceServiceStatus(r.Context(), project.ID, device.ID,
-		applicationID, service, setDeviceServiceStatusRequest.CurrentReleaseID,
+		applicationID,
+		service,
+		setDeviceServiceStatusRequest.CurrentReleaseID,
 	); err != nil {
 		log.WithError(err).Error("set device service status")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -3077,6 +3084,43 @@ func (s *Service) deleteDeviceServiceStatus(w http.ResponseWriter, r *http.Reque
 		project.ID, device.ID, applicationID, service,
 	); err != nil {
 		log.WithError(err).Error("delete device service status")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Service) setDeviceServiceState(w http.ResponseWriter, r *http.Request, project models.Project, device models.Device) {
+	vars := mux.Vars(r)
+	applicationID := vars["application"]
+	service := vars["service"]
+
+	var setDeviceServiceStateRequest models.SetDeviceServiceStateRequest
+	if err := read(r, &setDeviceServiceStateRequest); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := s.deviceServiceStates.SetDeviceServiceState(r.Context(), project.ID, device.ID,
+		applicationID,
+		service,
+		setDeviceServiceStateRequest.State,
+		setDeviceServiceStateRequest.ErrorMessage,
+	); err != nil {
+		log.WithError(err).Error("set device service state")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Service) deleteDeviceServiceState(w http.ResponseWriter, r *http.Request, project models.Project, device models.Device) {
+	vars := mux.Vars(r)
+	applicationID := vars["application"]
+	service := vars["service"]
+
+	if err := s.deviceServiceStates.DeleteDeviceServiceState(r.Context(),
+		project.ID, device.ID, applicationID, service,
+	); err != nil {
+		log.WithError(err).Error("delete device service state")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

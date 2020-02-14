@@ -28,3 +28,8 @@ type SetDeviceApplicationStatusRequest struct {
 type SetDeviceServiceStatusRequest struct {
 	CurrentReleaseID string `json:"currentReleaseId" validate:"id"`
 }
+
+type SetDeviceServiceStateRequest struct {
+	State        ServiceState `json:"state"`
+	ErrorMessage string       `json:"errorMessage"`
+}

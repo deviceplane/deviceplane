@@ -85,11 +85,8 @@ func NewAgent(
 				CurrentReleaseID: currentReleaseID,
 			})
 		},
-		func(ctx *dpcontext.Context, applicationID, service, currentReleaseID string) error {
-			return client.SetDeviceServiceStatus(ctx, applicationID, service, models.SetDeviceServiceStatusRequest{
-				CurrentReleaseID: currentReleaseID,
-			})
-		},
+		client.SetDeviceServiceStatus,
+		client.SetDeviceServiceState,
 		[]validator.Validator{
 			image.NewValidator(variables),
 			customcommands.NewValidator(variables),

@@ -24,11 +24,14 @@ type Engine interface {
 }
 
 type Instance struct {
-	ID      string
-	Labels  map[string]string
-	Running bool
+	ID     string
+	Labels map[string]string
+	Status string
+	State  models.ServiceState
 }
 
 type InspectResponse struct {
-	PID int
+	PID      int
+	ExitCode *int
+	Error    string
 }

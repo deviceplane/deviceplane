@@ -787,6 +787,46 @@ const deleteDeviceServiceStatus = `
 `
 
 // Index: primary key
+const setDeviceServiceState = `
+  insert into device_service_states (
+    project_id,
+    device_id,
+    application_id,
+    service,
+    state,
+    error_message
+  )
+  values (?, ?, ?, ?, ?, ?)
+  on duplicate key update
+    state = ?,
+    error_message = ?
+`
+
+// Index: primary key
+const getDeviceServiceState = `
+  select project_id, device_id, application_id, service, state, error_message from device_service_states
+  where project_id = ? and device_id = ? and application_id = ? and service = ?
+`
+
+// Index: project_id_device_id_application_id
+const getDeviceServiceStates = `
+  select project_id, device_id, application_id, service, state, error_message from device_service_states
+  where project_id = ? and device_id = ? and application_id = ?
+`
+
+// Index: project_id_device_id_application_id
+const listDeviceServiceStates = `
+  select project_id, device_id, application_id, service, state, error_message from device_service_states
+  where project_id = ? and device_id = ?
+`
+
+// Index: primary key
+const deleteDeviceServiceState = `
+  delete from device_service_states
+  where project_id = ? and device_id = ? and application_id = ? and service = ?
+`
+
+// Index: primary key
 const setProjectConfig = `
   replace into project_configs (
     project_id,
