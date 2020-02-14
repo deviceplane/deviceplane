@@ -4,13 +4,8 @@ go 1.12
 
 require (
 	github.com/DataDog/datadog-go v3.2.0+incompatible
-	github.com/Knetic/govaluate v3.0.0+incompatible // indirect
-	github.com/Masterminds/goutils v1.1.0 // indirect
-	github.com/Masterminds/semver v1.5.0 // indirect
-	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
 	github.com/Microsoft/go-winio v0.4.13 // indirect
-	github.com/PuerkitoBio/goquery v1.5.1 // indirect
-	github.com/aokoli/goutils v1.1.0 // indirect
+	github.com/anmitsu/go-shlex v0.0.0-20161002113705-648efa622239 // indirect
 	github.com/apex/log v1.1.0
 	github.com/cobaugh/osrelease v0.0.0-20181218015638-a93a0a55a249
 	github.com/docker/distribution v2.7.1+incompatible // indirect
@@ -24,21 +19,13 @@ require (
 	github.com/go-playground/locales v0.12.1 // indirect
 	github.com/go-playground/universal-translator v0.16.0 // indirect
 	github.com/go-sql-driver/mysql v1.4.1
-	github.com/gomodule/redigo v2.0.0+incompatible // indirect
-	github.com/google/uuid v1.1.1 // indirect
 	github.com/gorilla/handlers v1.4.0
 	github.com/gorilla/mux v1.7.1
 	github.com/gorilla/websocket v1.4.0
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
-	github.com/huandu/xstrings v1.3.0 // indirect
-	github.com/imdario/mergo v0.3.8 // indirect
-	github.com/jaytaylor/html2text v0.0.0-20190408195923-01ec452cbe43 // indirect
 	github.com/kr/pty v1.1.3
 	github.com/leodido/go-urn v1.1.0 // indirect
-	github.com/matcornic/hermes/v2 v2.1.0 // indirect
 	github.com/mattn/go-runewidth v0.0.8 // indirect
-	github.com/mitchellh/copystructure v1.0.0 // indirect
-	github.com/mitchellh/reflectwalk v1.0.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/pkg/errors v0.8.1
@@ -49,15 +36,12 @@ require (
 	github.com/rakyll/statik v0.1.6
 	github.com/segmentio/conf v1.1.0
 	github.com/segmentio/ksuid v1.0.2
-	github.com/sendgrid/rest v2.4.1+incompatible // indirect
-	github.com/sendgrid/sendgrid-go v3.4.1+incompatible // indirect
 	github.com/stretchr/testify v1.3.0
-	github.com/urfave/cli v1.20.0 // indirect
 	github.com/vishvananda/netns v0.0.0-20190625233234-7109fa855b0f
-	github.com/zorkian/go-datadog-api v2.24.0+incompatible // indirect
-	golang.org/x/build v0.0.0-20190604154314-6c34d49dff48 // indirect
 	golang.org/x/crypto v0.0.0-20200210222208-86ce3cb69678
+	golang.org/x/net v0.0.0-20200202094626-16171245cfb2 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
+	google.golang.org/appengine v1.5.0 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.29.1

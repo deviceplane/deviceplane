@@ -621,25 +621,24 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			content := fmt.Sprintf(
-				"Please go to the following URL to complete registration. %s://%s/confirm/%s",
-				referrer.Scheme,
-				referrer.Host,
-				registrationTokenValue,
-			)
-
 			if err := s.email.Send(email.Request{
 				FromName:    s.emailFromName,
 				FromAddress: s.emailFromAddress,
 				ToName:      user.FirstName + " " + user.LastName,
 				ToAddress:   user.Email,
-				Subject:     "Deviceplane Registration Confirmation",
-				Body:        content,
+				Subject:     "Deviceplane Email Confirmation",
+				Content: email.Content{
+					Title:       "Email Confirmation",
+					Body:        "Thank you for using Deviceplane! Please click the button below to confirm your email.",
+					ActionTitle: "Confirm Email",
+					ActionLink:  fmt.Sprintf("%s://%s/confirm/%s", referrer.Scheme, referrer.Host, registrationTokenValue),
+				},
 			}); err != nil {
 				log.WithError(err).Error("send registration email")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+
 		}
 
 		utils.Respond(w, user)
@@ -701,20 +700,18 @@ func (s *Service) recoverPassword(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		content := fmt.Sprintf(
-			"Please go to the following URL to recover your password. %s://%s/recover/%s",
-			referrer.Scheme,
-			referrer.Host,
-			passwordRecoveryTokenValue,
-		)
-
 		if err := s.email.Send(email.Request{
 			FromName:    s.emailFromName,
 			FromAddress: s.emailFromAddress,
 			ToName:      user.FirstName + " " + user.LastName,
 			ToAddress:   user.Email,
-			Subject:     "Deviceplane Password Recovery",
-			Body:        content,
+			Subject:     "Deviceplane Password Reset",
+			Content: email.Content{
+				Title:       "Password Reset",
+				Body:        "Please click the button below to reset your password.",
+				ActionTitle: "Reset Password",
+				ActionLink:  fmt.Sprintf("%s://%s/recover/%s", referrer.Scheme, referrer.Host, passwordRecoveryTokenValue),
+			},
 		}); err != nil {
 			log.WithError(err).Error("send recovery email")
 			w.WriteHeader(http.StatusInternalServerError)
