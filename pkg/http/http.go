@@ -49,6 +49,8 @@ func (c *Client) Do(req *Request) (*Response, error) {
 		}, nil
 	}
 
+	defer resp.Body.Close()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err == nil {
 		err = errors.New(string(body))
