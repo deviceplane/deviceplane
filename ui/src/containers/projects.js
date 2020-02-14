@@ -25,6 +25,8 @@ const Projects = ({
       {
         Header: 'Applications',
         accessor: 'applicationCounts.allCount',
+        maxWidth: '140px',
+        minWidth: '140px',
       },
     ],
     []
