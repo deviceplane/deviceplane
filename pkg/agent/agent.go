@@ -276,8 +276,25 @@ func (a *Agent) downloadLatestBundle(oldBundle *models.Bundle) *models.Bundle {
 		return nil
 	}
 
+	bundle := mergeBundle(oldBundle, bundleBytes)
+
+	bundleBytes, err = json.Marshal(bundle)
+	if err != nil {
+		log.WithError(err).Error("marshal validated bundle")
+		return nil
+	}
+
+	if err = a.writeFile(bundleBytes, bundleFilename); err != nil {
+		log.WithError(err).Error("save bundle")
+		return nil
+	}
+
+	return bundle
+}
+
+func mergeBundle(oldBundle *models.Bundle, bundleBytes []byte) *models.Bundle {
 	var bundle models.Bundle
-	err = json.Unmarshal(bundleBytes, &bundle)
+	err := json.Unmarshal(bundleBytes, &bundle)
 	if err != nil {
 		log.WithError(err).Error("unmarshaling full bundle")
 
@@ -294,17 +311,6 @@ func (a *Agent) downloadLatestBundle(oldBundle *models.Bundle) *models.Bundle {
 			bundle = *oldBundle
 		}
 		bundle.DesiredAgentVersion = minimalBundle.DesiredAgentVersion
-	}
-
-	bundleBytes, err = json.Marshal(bundle)
-	if err != nil {
-		log.WithError(err).Error("marshal bundle")
-		return nil
-	}
-
-	if err = a.writeFile(bundleBytes, bundleFilename); err != nil {
-		log.WithError(err).Error("save bundle")
-		return nil
 	}
 
 	return &bundle
