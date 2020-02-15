@@ -149,7 +149,7 @@ download() {
 
 # --- download binary from github url ---
 download_binary() {
-    BIN_URL=https://agent.deviceplane.com/${VERSION}/linux/${ARCH}/deviceplane-agent
+    BIN_URL=https://downloads.deviceplane.com/agent/${VERSION}/linux/${ARCH}/deviceplane-agent
     info "Downloading binary ${BIN_URL}"
     download ${TMP_BIN} ${BIN_URL}
 }
