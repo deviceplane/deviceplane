@@ -81,6 +81,26 @@ func metricProcessorFunc(
 				)
 			}
 
+			// Only keep tags on whitelist
+			if len(exposedMetric.WhitelistedTags) != 0 { // Trim only if whitelist exists
+				var allowedTags []string
+				for _, tagPair := range m.Tags {
+					tag := strings.Split(tagPair, ":")[0]
+
+					if strings.HasPrefix(tag, "deviceplane.") {
+						allowedTags = append(allowedTags, tagPair)
+						continue
+					}
+					for _, wTagName := range exposedMetric.WhitelistedTags {
+						if tag == wTagName {
+							allowedTags = append(allowedTags, tagPair)
+							break
+						}
+					}
+				}
+				m.Tags = allowedTags
+			}
+
 			// Optional labels
 			if device != nil {
 				for _, label := range exposedMetric.Labels {
