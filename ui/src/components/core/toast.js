@@ -121,8 +121,8 @@ export const ToastManager = () => {
     setToasts(toasts => [...toasts, { ...toast }]);
   };
 
-  const removeToast = index => () =>
-    setToasts(toasts => toasts.filter((_, i) => i !== index));
+  const removeToast = id => () =>
+    setToasts(toasts => toasts.filter(toast => toast.id !== id));
 
   useEffect(() => {
     window.addEventListener(ToastEvent, addToast);
@@ -139,8 +139,8 @@ export const ToastManager = () => {
       width="100%"
       style={{ pointerEvents: 'none' }}
     >
-      {toasts.map(({ id, ...toast }, index) => (
-        <Toast key={id} {...toast} close={removeToast(index)} />
+      {toasts.map(({ id, ...toast }) => (
+        <Toast key={id} {...toast} close={removeToast(id)} />
       ))}
     </Column>
   );

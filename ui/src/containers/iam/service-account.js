@@ -209,14 +209,11 @@ const ServiceAccountAccessKeys = ({ projectId, serviceAccount }) => {
 
   const columns = useMemo(
     () => [
-      { Header: 'Access Key ID', accessor: 'id', style: { flex: 2 } },
+      { Header: 'Access Key ID', accessor: 'id' },
       {
         Header: 'Created At',
         accessor: ({ createdAt }) =>
           createdAt ? moment(createdAt).fromNow() : '-',
-        style: {
-          flex: '0 0 150px',
-        },
       },
       {
         Header: ' ',
@@ -242,9 +239,8 @@ const ServiceAccountAccessKeys = ({ projectId, serviceAccount }) => {
               onClick={() => setKeyToDelete(row.original.id)}
             />
           ),
-        style: {
+        cellStyle: {
           justifyContent: 'flex-end',
-          flex: '0 0 100px',
         },
       },
     ],

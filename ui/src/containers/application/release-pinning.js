@@ -75,32 +75,23 @@ const ReleasePinning = ({
         Header: 'Status',
         accessor: 'status',
         Cell: ({ cell: { value } }) => <DeviceStatus status={value} />,
-        style: {
-          flex: '0 0 72px',
-        },
+        maxWidth: '72px',
       },
       {
         Header: 'Release',
         accessor: ({ releaseId }) => (isNaN(releaseId) ? 'Latest' : releaseId),
-        style: {
-          flex: '0 0 75px',
-        },
+        maxWidth: '120px',
       },
       {
         Header: 'Name',
         accessor: 'name',
+        minWidth: '200px',
       },
       {
         Header: 'Labels',
         accessor: 'labels',
         Cell: ({ cell: { value } }) => (value ? renderLabels(value) : null),
-        style: {
-          flex: 2,
-          overflow: 'hidden',
-        },
-        cellStyle: {
-          marginBottom: '-8px',
-        },
+        minWidth: '300px',
       },
     ],
     []

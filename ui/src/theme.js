@@ -1,4 +1,4 @@
-const breakpoints = ['600px', '800px', '1000px'];
+const breakpoints = ['0px', '600px', '1000px'];
 
 const space = [
   0,
@@ -71,7 +71,7 @@ export default {
 
   fontWeights: [300, 400, 500, 700],
 
-  radii: [0, 3, 6, 8, 12, 16, 9999, '100%'],
+  radii: [0, 2, 4, 8, 12, 16, 9999, '100%'],
 
   breakpoints,
 

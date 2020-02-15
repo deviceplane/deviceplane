@@ -91,6 +91,7 @@ font-size: 12px;
 padding: 10px 12px;
 text-transform: uppercase;
 text-renderering: geometricPercision;
+flex: 0;
 
 &:disabled {
   cursor: not-allowed;

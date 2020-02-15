@@ -8,18 +8,21 @@ import {
   typography,
   shadow,
   position,
+  grid,
 } from 'styled-system';
 
 export const Box = styled.div`
-  ${space} ${layout} ${color} ${border} ${typography} ${shadow} ${position}
+  ${space} ${layout} ${color} ${border} ${typography} ${shadow} ${position} ${flexbox} ${grid}
 `;
 
 export const Row = styled(Box)`
-  ${flexbox}
-
   display: flex;
 `;
 
 export const Column = styled(Row)`
   flex-direction: column;
+`;
+
+export const Grid = styled(Box)`
+  display: grid;
 `;

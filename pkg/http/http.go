@@ -2,9 +2,11 @@ package http
 
 import (
 	"io"
+	"io/ioutil"
 	"net/http"
 
 	dpcontext "github.com/deviceplane/deviceplane/pkg/context"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -40,7 +42,31 @@ func (c *Client) Do(req *Request) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Response{
-		Response: resp,
-	}, nil
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		return &Response{
+			Response: resp,
+		}, nil
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err == nil {
+		err = errors.New(string(body))
+	}
+
+	return nil, errors.Wrapf(err, "status code %d", resp.StatusCode)
+}
+
+func (c *Client) Get(ctx *dpcontext.Context, url string) (*Response, error) {
+	req, err := NewRequest(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	return c.Do(req)
+}
+
+func Get(ctx *dpcontext.Context, url string) (*Response, error) {
+	return DefaultClient.Get(ctx, url)
 }
