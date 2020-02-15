@@ -1,10 +1,10 @@
 package updater
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"runtime"
 	"sync"
@@ -12,10 +12,13 @@ import (
 	"time"
 
 	"github.com/apex/log"
+	dpcontext "github.com/deviceplane/deviceplane/pkg/context"
+	dphttp "github.com/deviceplane/deviceplane/pkg/http"
 )
 
 const (
-	location = "https://downloads.deviceplane.com/agent/%s/linux/%s/deviceplane-agent"
+	location        = "https://downloads.deviceplane.com/agent/%s/linux/%s/deviceplane-agent"
+	downloadTimeout = time.Hour
 )
 
 type Updater struct {
@@ -56,7 +59,10 @@ func (u *Updater) updater() {
 		u.lock.RUnlock()
 
 		if desiredVersion != "" && desiredVersion != u.version {
-			if err := u.update(desiredVersion); err != nil {
+			ctx, cancel := dpcontext.New(context.Background(), downloadTimeout)
+			defer cancel()
+
+			if err := u.update(ctx, desiredVersion); err != nil {
 				log.WithError(err).Error("update agent")
 				goto cont
 			}
@@ -67,8 +73,8 @@ func (u *Updater) updater() {
 	}
 }
 
-func (u *Updater) update(desiredVersion string) error {
-	resp, err := http.Get(fmt.Sprintf(location, desiredVersion, runtime.GOARCH))
+func (u *Updater) update(ctx *dpcontext.Context, desiredVersion string) error {
+	resp, err := dphttp.Get(ctx, fmt.Sprintf(location, desiredVersion, runtime.GOARCH))
 	if err != nil {
 		return err
 	}

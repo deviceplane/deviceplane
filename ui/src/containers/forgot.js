@@ -44,10 +44,10 @@ const PasswordReset = () => {
       flex={1}
       alignItems="center"
       justifyContent="center"
-      paddingY={[0, 6]}
+      paddingY={[0, 0, 6]}
       height="100%"
       overflow="auto"
-      bg={['black', 'pageBackground']}
+      bg={['black', 'black', 'pageBackground']}
     >
       <Card logo size="medium" title="Reset Password">
         <Alert

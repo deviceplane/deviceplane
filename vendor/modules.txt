@@ -91,7 +91,7 @@ github.com/kr/pty
 github.com/leodido/go-urn
 # github.com/lufia/iostat v0.0.0-20170605150913-9f7362b77ad3
 github.com/lufia/iostat
-# github.com/mattn/go-runewidth v0.0.6
+# github.com/mattn/go-runewidth v0.0.8
 github.com/mattn/go-runewidth
 # github.com/mattn/go-xmlrpc v0.0.3
 github.com/mattn/go-xmlrpc
@@ -105,7 +105,7 @@ github.com/mdlayher/netlink/nlenc
 # github.com/mdlayher/wifi v0.0.0-20190303161829-b1436901ddee
 github.com/mdlayher/wifi
 github.com/mdlayher/wifi/internal/nl80211
-# github.com/olekukonko/tablewriter v0.0.3
+# github.com/olekukonko/tablewriter v0.0.4
 github.com/olekukonko/tablewriter
 # github.com/opencontainers/go-digest v1.0.0-rc1
 github.com/opencontainers/go-digest
@@ -151,11 +151,6 @@ github.com/segmentio/objconv/adapters/net/url
 github.com/segmentio/objconv/json
 github.com/segmentio/objconv/objutil
 github.com/segmentio/objconv/yaml
-# github.com/sendgrid/rest v2.4.1+incompatible
-github.com/sendgrid/rest
-# github.com/sendgrid/sendgrid-go v3.4.1+incompatible
-github.com/sendgrid/sendgrid-go
-github.com/sendgrid/sendgrid-go/helpers/mail
 # github.com/siebenmann/go-kstat v0.0.0-20160321171754-d34789b79745
 github.com/siebenmann/go-kstat
 # github.com/sirupsen/logrus v1.4.2
@@ -171,15 +166,17 @@ github.com/vishvananda/netns
 go.uber.org/atomic
 # go.uber.org/multierr v1.1.0
 go.uber.org/multierr
-# golang.org/x/crypto v0.0.0-20191002192127-34f69633bfdc
+# golang.org/x/crypto v0.0.0-20200210222208-86ce3cb69678
+golang.org/x/crypto/blowfish
+golang.org/x/crypto/chacha20
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/ed25519/internal/edwards25519
-golang.org/x/crypto/internal/chacha20
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/ssh
-# golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297
+golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
+# golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 golang.org/x/net/bpf
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp

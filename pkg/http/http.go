@@ -44,6 +44,7 @@ func (c *Client) Do(req *Request) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		body, _ := ioutil.ReadAll(resp.Body)
 		resp.Body.Close()
@@ -53,4 +54,16 @@ func (c *Client) Do(req *Request) (*Response, error) {
 	return &Response{
 		Response: resp,
 	}, nil
+}
+
+func (c *Client) Get(ctx *dpcontext.Context, url string) (*Response, error) {
+	req, err := NewRequest(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	return c.Do(req)
+}
+
+func Get(ctx *dpcontext.Context, url string) (*Response, error) {
+	return DefaultClient.Get(ctx, url)
 }

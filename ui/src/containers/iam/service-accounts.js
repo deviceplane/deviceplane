@@ -12,7 +12,7 @@ const ServiceAccounts = ({
   const columns = useMemo(
     () => [
       { Header: 'Name', accessor: 'name' },
-      { Header: 'Description', accessor: 'description' },
+      { Header: 'Description', accessor: 'description', maxWidth: '2fr' },
       {
         Header: 'Roles',
         accessor: 'roles',

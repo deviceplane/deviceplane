@@ -25,19 +25,9 @@ const UserAccessKeys = () => {
   const columns = useMemo(
     () => [
       {
-        Header: 'Access Key ID',
-        accessor: 'id',
-        style: {
-          flex: 3,
-        },
-      },
-      {
         Header: 'Created At',
         accessor: ({ createdAt }) =>
-          createdAt ? moment(createdAt).fromNow() : '-',
-        style: {
-          flex: '0 0 150px',
-        },
+          createdAt ? moment(createdAt).format('LLL') : '-',
       },
       {
         Header: ' ',
@@ -63,9 +53,9 @@ const UserAccessKeys = () => {
               onClick={() => setKeyToDelete(row.original.id)}
             />
           ),
-        style: {
+        maxWidth: '50px',
+        cellStyle: {
           justifyContent: 'flex-end',
-          flex: '0 0 100px',
         },
       },
     ],

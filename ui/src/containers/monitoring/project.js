@@ -130,9 +130,6 @@ const Project = ({
             <Text fontSize={0} color="grays.8">{`deviceplane.${value}`}</Text>
           </Column>
         ),
-        style: {
-          flex: '0 0 175px',
-        },
       },
       {
         Header: 'Description',
@@ -204,7 +201,11 @@ const Project = ({
             />
           );
         },
-        style: { flex: '0 0 80px', justifyContent: 'center' },
+        minWidth: '100px',
+        maxWidth: '100px',
+        cellStyle: {
+          justifyContent: 'center',
+        },
       },
       {
         Header: 'Enabled',
@@ -223,8 +224,9 @@ const Project = ({
             />
           );
         },
-        style: {
-          flex: '0 0 80px',
+        minWidth: '100px',
+        maxWidth: '100px',
+        cellStyle: {
           justifyContent: 'center',
         },
       },
@@ -232,7 +234,7 @@ const Project = ({
         Header: ' ',
         Cell: ({ row: { original } }) =>
           editRow && editRow.name === original.name ? (
-            <Row>
+            <Row justifyContent="flex-end">
               <Button
                 title={<Icon icon="floppy-disk" size={16} color="primary" />}
                 variant="icon"
@@ -246,7 +248,7 @@ const Project = ({
               />
             </Row>
           ) : (
-            <Row>
+            <Row justifyContent="flex-end">
               <Button
                 title={<Icon icon="edit" size={16} color="primary" />}
                 variant="icon"
@@ -254,10 +256,8 @@ const Project = ({
               />
             </Row>
           ),
-        style: {
-          flex: '0 0 50px',
-          justifyContent: 'flex-end',
-        },
+        minWidth: '50px',
+        maxWidth: '50px',
       },
     ];
   }, [editRow]);

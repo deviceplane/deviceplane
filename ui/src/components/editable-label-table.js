@@ -62,6 +62,7 @@ const EditableLabelTable = ({
     () => [
       {
         Header: 'Key',
+        accessor: 'key',
         Cell: ({ row: { index, original } }) => (
           <EditableCell
             mode={original.mode === 'edit' ? 'default' : original.mode}
@@ -70,14 +71,14 @@ const EditableLabelTable = ({
             autoFocus
           />
         ),
-        style: {
-          flex: 3,
+        cellStyle: {
           minHeight: '32px',
           alignItems: 'center',
         },
       },
       {
         Header: 'Value',
+        accessor: 'value',
         Cell: ({ row: { index, original } }) => (
           <EditableCell
             mode={original.mode}
@@ -85,8 +86,7 @@ const EditableLabelTable = ({
             onChange={e => editLabel(index, 'editedValue', e.target.value)}
           />
         ),
-        style: {
-          flex: 3,
+        cellStyle: {
           alignItems: 'center',
           minHeight: '32px',
         },
@@ -132,10 +132,9 @@ const EditableLabelTable = ({
             </Row>
           );
         },
-        style: {
-          alignItems: 'center',
-          justifyContent: 'flex-end',
+        cellStyle: {
           minHeight: '32px',
+          justifyContent: 'flex-end',
         },
       },
     ],

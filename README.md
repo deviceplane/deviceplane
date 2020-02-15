@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="./logo/name.png" alt="Build Status" width="500">
+    <img src="./logo/name-black.png" alt="Build Status" width="500">
 </p>
 
 <p align="center">

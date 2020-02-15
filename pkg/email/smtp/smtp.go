@@ -79,14 +79,21 @@ func (e *Email) Send(request email.Request) error {
 		return errors.WithMessage(err, "DATA command")
 	}
 
+	html, err := email.GenerateHTML(request)
+	if err != nil {
+		return errors.WithMessage(err, "generating html")
+	}
+
 	if _, err = w.Write([]byte(
 		strings.Join([]string{
 			strings.Join([]string{
 				fmt.Sprintf("From: %s", from.String()),
 				fmt.Sprintf("To: %s", to.String()),
 				fmt.Sprintf("Subject: %s", request.Subject),
+				"MIME-version: 1.0",
+				"Content-Type: text/html",
 			}, "\r\n"),
-			request.Body,
+			html,
 		}, "\r\n\r\n"),
 	)); err != nil {
 		return errors.WithMessage(err, "writing data")
