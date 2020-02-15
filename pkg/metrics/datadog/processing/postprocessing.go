@@ -91,10 +91,17 @@ func metricProcessorFunc(
 						allowedTags = append(allowedTags, tagPair)
 						continue
 					}
-					for _, wTagName := range exposedMetric.WhitelistedTags {
-						if tag == wTagName {
-							allowedTags = append(allowedTags, tagPair)
-							break
+					for _, wTag := range exposedMetric.WhitelistedTags {
+						if strings.Contains(wTag, ":") {
+							if tagPair == wTag {
+								allowedTags = append(allowedTags, tagPair)
+								break
+							}
+						} else {
+							if tag == wTag {
+								allowedTags = append(allowedTags, tagPair)
+								break
+							}
 						}
 					}
 				}
