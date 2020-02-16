@@ -203,7 +203,7 @@ type DeviceServiceState struct {
 	DeviceID      string       `json:"deviceId" yaml:"deviceId"`
 	ApplicationID string       `json:"applicationId" yaml:"applicationId"`
 	Service       string       `json:"service" yaml:"service"`
-	CurrentState  ServiceState `json:"currentState" yaml:"currentState"`
+	State         ServiceState `json:"state" yaml:"state"`
 	ErrorMessage  string       `json:"errorMessage" yaml:"errorMessage"`
 }
 

@@ -2491,7 +2491,7 @@ func (s *Store) scanDeviceServiceState(scanner scanner) (*models.DeviceServiceSt
 		&deviceServiceState.DeviceID,
 		&deviceServiceState.ApplicationID,
 		&deviceServiceState.Service,
-		&deviceServiceState.CurrentState,
+		&deviceServiceState.State,
 		&deviceServiceState.ErrorMessage,
 	); err != nil {
 		return nil, err
