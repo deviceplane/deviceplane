@@ -252,6 +252,7 @@ type DeviceApplicationStatusInfo struct {
 	Application       Application              `json:"application" yaml:"application"`
 	ApplicationStatus *DeviceApplicationStatus `json:"applicationStatus" yaml:"applicationStatus"`
 	ServiceStatuses   []DeviceServiceStatus    `json:"serviceStatuses" yaml:"serviceStatuses"`
+	ServiceStates     []DeviceServiceState     `json:"serviceStates" yaml:"serviceStates"`
 }
 
 type ApplicationFull1 struct {

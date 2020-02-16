@@ -2385,6 +2385,16 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request,
 				return
 			}
 
+			deviceServiceStates, err := s.deviceServiceStates.GetDeviceServiceStates(
+				r.Context(), projectID, device.ID, application.ID)
+			if err == nil {
+				applicationStatusInfo.ServiceStates = deviceServiceStates
+			} else {
+				log.WithError(err).Error("get device service states")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
 			allApplicationStatusInfo = append(allApplicationStatusInfo, applicationStatusInfo)
 		}
 
