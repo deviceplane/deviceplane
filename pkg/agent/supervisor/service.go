@@ -332,7 +332,16 @@ func (s *ServiceSupervisor) keepAlive() {
 			// TODO: filter down to just one instance if we find more
 			instance := instances[0]
 
-			if instance.State != models.ServiceStateRunning {
+			if instance.State == models.ServiceStateRunning {
+				s.reporter.SetServiceState(s.serviceName, models.SetDeviceServiceStateRequest{
+					State:        models.ServiceStateRunning,
+					ErrorMessage: "",
+				})
+				s.reporter.SetServiceStatus(s.serviceName, models.SetDeviceServiceStatusRequest{
+					CurrentReleaseID: release,
+				})
+				s.containerID.Store(instance.ID)
+			} else {
 				inspectResponse, err := s.engine.InspectContainer(s.ctx, instance.ID)
 				s.reporter.SetServiceState(s.serviceName, models.SetDeviceServiceStateRequest{
 					State: instance.State,
@@ -358,17 +367,7 @@ func (s *ServiceSupervisor) keepAlive() {
 				})
 
 				containerStart(s.ctx, s.engine, instance.ID)
-				continue
 			}
-
-			s.reporter.SetServiceState(s.serviceName, models.SetDeviceServiceStateRequest{
-				State:        instance.State,
-				ErrorMessage: "",
-			})
-			s.reporter.SetServiceStatus(s.serviceName, models.SetDeviceServiceStatusRequest{
-				CurrentReleaseID: release,
-			})
-			s.containerID.Store(instance.ID)
 		}
 	}
 }
