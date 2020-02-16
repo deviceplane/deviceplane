@@ -276,6 +276,7 @@ type Bundle struct {
 	Applications        []FullBundledApplication  `json:"applications" yaml:"applications"`
 	ApplicationStatuses []DeviceApplicationStatus `json:"applicationStatuses" yaml:"applicationStatuses"`
 	ServiceStatuses     []DeviceServiceStatus     `json:"serviceStatuses" yaml:"serviceStatuses"`
+	ServiceStates       []DeviceServiceState      `json:"serviceStates" yaml:"serviceStates"`
 
 	DeviceID             string            `json:"deviceId" yaml:"deviceId"`
 	EnvironmentVariables map[string]string `json:"environmentVariables" yaml:"environmentVariables"`
