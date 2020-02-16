@@ -13,10 +13,12 @@ import (
 type GarbageCollector struct {
 	deleteApplicationStatus func(ctx *dpcontext.Context, applicationID string) error
 	deleteServiceStatus     func(ctx *dpcontext.Context, applicationID, service string) error
+	deleteServiceState      func(ctx *dpcontext.Context, applicationID, service string) error
 
 	bundle                                models.Bundle
 	applicationStatusGarbageCollectorDone chan struct{}
 	serviceStatusGarbageCollectorDone     chan struct{}
+	serviceStateGarbageCollectorDone      chan struct{}
 
 	once   sync.Once
 	lock   sync.RWMutex
@@ -27,14 +29,17 @@ type GarbageCollector struct {
 func NewGarbageCollector(
 	deleteApplicationStatus func(ctx *dpcontext.Context, applicationID string) error,
 	deleteServiceStatus func(ctx *dpcontext.Context, applicationID, service string) error,
+	deleteServiceState func(ctx *dpcontext.Context, applicationID, service string) error,
 ) *GarbageCollector {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &GarbageCollector{
 		deleteApplicationStatus: deleteApplicationStatus,
 		deleteServiceStatus:     deleteServiceStatus,
+		deleteServiceState:      deleteServiceState,
 
 		applicationStatusGarbageCollectorDone: make(chan struct{}),
 		serviceStatusGarbageCollectorDone:     make(chan struct{}),
+		serviceStateGarbageCollectorDone:      make(chan struct{}),
 
 		ctx:    ctx,
 		cancel: cancel,
@@ -49,6 +54,7 @@ func (gc *GarbageCollector) SetBundle(bundle models.Bundle) {
 	gc.once.Do(func() {
 		go gc.applicationStatusGarbageCollector()
 		go gc.serviceStatusGarbageCollector()
+		go gc.serviceStateGarbageCollector()
 	})
 }
 
@@ -57,6 +63,7 @@ func (gc *GarbageCollector) Stop() {
 	// TODO: don't do this if SetBundle was never called
 	<-gc.applicationStatusGarbageCollectorDone
 	<-gc.serviceStatusGarbageCollectorDone
+	<-gc.serviceStateGarbageCollectorDone
 }
 
 func (gc *GarbageCollector) applicationStatusGarbageCollector() {
@@ -152,6 +159,68 @@ func (gc *GarbageCollector) serviceStatusGarbageCollector() {
 		select {
 		case <-gc.ctx.Done():
 			gc.serviceStatusGarbageCollectorDone <- struct{}{}
+			return
+		case <-ticker.C:
+			continue
+		}
+	}
+}
+
+func (gc *GarbageCollector) serviceStateGarbageCollector() {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for {
+		gc.lock.RLock()
+		bundle := gc.bundle
+		gc.lock.RUnlock()
+
+		services := make(map[string]map[string]struct{})
+		for _, application := range bundle.Applications {
+			services[application.Application.ID] = make(map[string]struct{})
+			for serviceName := range application.LatestRelease.Config {
+				services[application.Application.ID][serviceName] = struct{}{}
+			}
+		}
+
+		serviceStates := make(map[string]map[string]struct{})
+		for _, serviceState := range bundle.ServiceStates {
+			if _, ok := serviceStates[serviceState.ApplicationID]; !ok {
+				serviceStates[serviceState.ApplicationID] = make(map[string]struct{})
+			}
+			serviceStates[serviceState.ApplicationID][serviceState.Service] = struct{}{}
+		}
+
+		deleteServiceState := func(applicationID, service string) {
+			ctx, cancel := dpcontext.New(gc.ctx, time.Minute)
+
+			if err := gc.deleteServiceState(ctx, applicationID, service); err != nil {
+				log.WithField("application", applicationID).
+					WithField("service", service).
+					WithError(err).
+					Error("delete service state")
+			}
+
+			cancel()
+		}
+
+		for applicationID, serviceStates := range serviceStates {
+			if services, ok := services[applicationID]; ok {
+				for service := range serviceStates {
+					if _, ok = services[service]; !ok {
+						deleteServiceState(applicationID, service)
+					}
+				}
+			} else {
+				for service := range serviceStates {
+					deleteServiceState(applicationID, service)
+				}
+			}
+		}
+
+		select {
+		case <-gc.ctx.Done():
+			gc.serviceStateGarbageCollectorDone <- struct{}{}
 			return
 		case <-ticker.C:
 			continue
