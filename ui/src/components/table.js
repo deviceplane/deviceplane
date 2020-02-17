@@ -6,9 +6,10 @@ import { useLinkProps } from 'react-navi';
 import { Row, Grid, Icon } from './core';
 
 const A = styled.a`
+  overflow: hidden;
   text-decoration: none;
   color: unset;
-  flex: 1;
+  flex: 1 0;
   margin: -8px -12px;
   padding: 8px 12px;
 `;
@@ -72,7 +73,9 @@ const HeaderCell = styled.th`
 `;
 
 const Cell = styled.td`
+  overflow: hidden;
   display: flex;
+  flex-shrink: 0;
   padding: 8px 12px;
 `;
 
