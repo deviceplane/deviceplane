@@ -6,6 +6,7 @@ import { useLinkProps } from 'react-navi';
 import { Row, Grid, Icon } from './core';
 
 const A = styled.a`
+  overflow-x: hidden;
   text-decoration: none;
   color: unset;
   flex: 1 0 auto;
@@ -72,7 +73,6 @@ const HeaderCell = styled.th`
 `;
 
 const Cell = styled.td`
-  overflow-x: hidden;
   display: flex;
   flex-shrink: 0;
   padding: 8px 12px;
