@@ -2368,7 +2368,21 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request,
 			deviceApplicationStatus, err := s.deviceApplicationStatuses.GetDeviceApplicationStatus(
 				r.Context(), projectID, device.ID, application.ID)
 			if err == nil {
-				applicationStatusInfo.ApplicationStatus = deviceApplicationStatus
+				currentRelease, err := s.releases.GetRelease(r.Context(),
+					deviceApplicationStatus.CurrentReleaseID,
+					deviceApplicationStatus.ProjectID,
+					deviceApplicationStatus.ApplicationID,
+				)
+				if err != nil {
+					log.WithError(err).Error("get release")
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				applicationStatusInfo.ApplicationStatus = &models.DeviceApplicationStatusFull{
+					DeviceApplicationStatus: *deviceApplicationStatus,
+					CurrentRelease:          *currentRelease,
+				}
 			} else if err != store.ErrDeviceApplicationStatusNotFound {
 				log.WithError(err).Error("get device application status")
 				w.WriteHeader(http.StatusInternalServerError)
@@ -2378,7 +2392,23 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request,
 			deviceServiceStatuses, err := s.deviceServiceStatuses.GetDeviceServiceStatuses(
 				r.Context(), projectID, device.ID, application.ID)
 			if err == nil {
-				applicationStatusInfo.ServiceStatuses = deviceServiceStatuses
+				for _, deviceServiceStatus := range deviceServiceStatuses {
+					currentRelease, err := s.releases.GetRelease(r.Context(),
+						deviceServiceStatus.CurrentReleaseID,
+						deviceServiceStatus.ProjectID,
+						deviceServiceStatus.ApplicationID,
+					)
+					if err != nil {
+						log.WithError(err).Error("get release")
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+
+					applicationStatusInfo.ServiceStatuses = append(applicationStatusInfo.ServiceStatuses, models.DeviceServiceStatusFull{
+						DeviceServiceStatus: deviceServiceStatus,
+						CurrentRelease:      *currentRelease,
+					})
+				}
 			} else {
 				log.WithError(err).Error("get device service statuses")
 				w.WriteHeader(http.StatusInternalServerError)
