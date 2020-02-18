@@ -216,6 +216,7 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
       Cell: ({ row: { original } }) => (
         <Button
           flex={0}
+          height="20px"
           disabled={device.status === 'offline'}
           title={<Icon icon="pulse" size={18} color="white" />}
           variant="icon"
