@@ -2764,10 +2764,13 @@ func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) getBundle(w http.ResponseWriter, r *http.Request) {
 	s.withDeviceAuth(w, r, func(project *models.Project, device *models.Device) {
-		s.st.Incr("get_bundle", []string{
-			fmt.Sprintf("project_id:%s", project.ID),
-			fmt.Sprintf("project_name:%s", project.Name),
-		}, 1)
+		s.st.Incr("get_bundle",
+			utils.WithTags(
+				[]string{},
+				utils.TagItems{Project: project},
+			),
+			1,
+		)
 
 		if err := s.devices.UpdateDeviceLastSeenAt(r.Context(), device.ID, project.ID); err != nil {
 			log.WithError(err).Error("update device last seen at")

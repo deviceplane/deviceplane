@@ -73,10 +73,38 @@ func EqualASCIIFold(s, t string) bool {
 	return s == t
 }
 
-func InternalTags(projectID string) []string {
-	return []string{
-		"project:" + projectID,
+type TagItems struct {
+	Project     *models.Project
+	Device      *models.Device
+	Application *models.Application
+}
+
+func WithTags(tags []string, items TagItems) []string {
+
+	var internalTags []string
+	if items.Project != nil {
+		internalTags = append(internalTags,
+			"project_id:"+items.Project.ID,
+			"project_name:"+items.Project.Name,
+		)
 	}
+	if items.Device != nil {
+		internalTags = append(internalTags,
+			"device_id:"+items.Device.ID,
+			"device_name:"+items.Device.Name,
+		)
+	}
+	if items.Application != nil {
+		internalTags = append(internalTags,
+			"application_id:"+items.Application.ID,
+			"application_name:"+items.Application.Name,
+		)
+	}
+
+	return append(
+		tags,
+		internalTags...,
+	)
 }
 
 // Elliot Chance's github gist: https://gist.github.com/elliotchance/d419395aa776d632d897
