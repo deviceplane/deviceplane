@@ -34,6 +34,6 @@ type ExposedMetric struct {
 }
 
 type WhitelistedTag struct {
-	Key    string
-	Values []string
+	Key    string   `json:"key" yaml:"key"`
+	Values []string `json:"values" yaml:"values"`
 }
