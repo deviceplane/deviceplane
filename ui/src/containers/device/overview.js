@@ -114,7 +114,7 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
               ...s,
               currentRelease: {
                 number:
-                  info.serviceStatuses && info.serviceStates.length
+                  info.serviceStatuses && info.serviceStatuses.length
                     ? info.serviceStatuses[0].currentRelease.number
                     : '-',
               },
