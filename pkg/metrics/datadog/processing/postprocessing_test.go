@@ -20,6 +20,24 @@ var device = models.Device{
 	},
 }
 
+func ValidateClientAndServerProcessing(
+	t *testing.T,
+	mp metricProcessor,
+	metrics []models.DatadogMetric,
+	exposedMetrics []models.ExposedMetric,
+	project *models.Project,
+	device *models.Device,
+	expectedFilteredMetrics []models.DatadogMetric,
+) {
+	t.Helper()
+
+	filteredMetrics := mp(metrics, exposedMetrics, project, device)
+	assert.Equal(t, expectedFilteredMetrics, filteredMetrics, "client-side test")
+
+	doubleFilteredMetrics := mp(filteredMetrics, exposedMetrics, project, device)
+	assert.Equal(t, expectedFilteredMetrics, doubleFilteredMetrics, "server-side test")
+}
+
 func TestFilteringMetrics(t *testing.T) {
 	metrics := []models.DatadogMetric{
 		models.DatadogMetric{
@@ -50,13 +68,17 @@ func TestAllowingMetrics(t *testing.T) {
 		},
 	}
 
-	filteredMetrics := ProcessDeviceMetrics(metrics, exposedMetrics, &project, &device)
-	assert.Equal(t, []models.DatadogMetric{
-		models.DatadogMetric{
-			Metric: "deviceplane.device.Test_Metric",
-			Tags:   []string{"TEST:TRUE", "deviceplane.project:project-name"},
-		},
-	}, filteredMetrics)
+	ValidateClientAndServerProcessing(t,
+		ProcessDeviceMetrics,
+		metrics,
+		exposedMetrics,
+		&project, &device,
+		[]models.DatadogMetric{
+			models.DatadogMetric{
+				Metric: "deviceplane.device.Test_Metric",
+				Tags:   []string{"TEST:TRUE", "deviceplane.project:project-name"},
+			},
+		})
 }
 
 func TestAllowingAllMetrics(t *testing.T) {
@@ -76,17 +98,22 @@ func TestAllowingAllMetrics(t *testing.T) {
 		},
 	}
 
-	filteredMetrics := ProcessDeviceMetrics(metrics, exposedMetrics, &project, &device)
-	assert.Equal(t, []models.DatadogMetric{
-		models.DatadogMetric{
-			Metric: "deviceplane.device.Test_Metric",
-			Tags:   []string{"TEST:TRUE", "deviceplane.project:project-name"},
+	ValidateClientAndServerProcessing(t,
+		ProcessDeviceMetrics,
+		metrics,
+		exposedMetrics,
+		&project, &device,
+		[]models.DatadogMetric{
+			models.DatadogMetric{
+				Metric: "deviceplane.device.Test_Metric",
+				Tags:   []string{"TEST:TRUE", "deviceplane.project:project-name"},
+			},
+			models.DatadogMetric{
+				Metric: "deviceplane.device.Test_Metric_Two",
+				Tags:   []string{"TEST:TRUE", "deviceplane.project:project-name"},
+			},
 		},
-		models.DatadogMetric{
-			Metric: "deviceplane.device.Test_Metric_Two",
-			Tags:   []string{"TEST:TRUE", "deviceplane.project:project-name"},
-		},
-	}, filteredMetrics)
+	)
 }
 
 func TestMetricLabels(t *testing.T) {
@@ -103,13 +130,18 @@ func TestMetricLabels(t *testing.T) {
 		},
 	}
 
-	filteredMetrics := ProcessDeviceMetrics(metrics, exposedMetrics, &project, &device)
-	assert.Equal(t, []models.DatadogMetric{
-		models.DatadogMetric{
-			Metric: "deviceplane.device.Test_Metric",
-			Tags:   []string{"TEST:TRUE", "deviceplane.labels.company:nasa", "deviceplane.project:project-name"},
+	ValidateClientAndServerProcessing(t,
+		ProcessDeviceMetrics,
+		metrics,
+		exposedMetrics,
+		&project, &device,
+		[]models.DatadogMetric{
+			models.DatadogMetric{
+				Metric: "deviceplane.device.Test_Metric",
+				Tags:   []string{"TEST:TRUE", "deviceplane.labels.company:nasa", "deviceplane.project:project-name"},
+			},
 		},
-	}, filteredMetrics)
+	)
 }
 
 func TestMetricProperties(t *testing.T) {
@@ -126,13 +158,18 @@ func TestMetricProperties(t *testing.T) {
 		},
 	}
 
-	filteredMetrics := ProcessDeviceMetrics(metrics, exposedMetrics, &project, &device)
-	assert.Equal(t, []models.DatadogMetric{
-		models.DatadogMetric{
-			Metric: "deviceplane.device.Test_Metric",
-			Tags:   []string{"TEST:TRUE", "deviceplane.device:device-name", "deviceplane.project:project-name"},
+	ValidateClientAndServerProcessing(t,
+		ProcessDeviceMetrics,
+		metrics,
+		exposedMetrics,
+		&project, &device,
+		[]models.DatadogMetric{
+			models.DatadogMetric{
+				Metric: "deviceplane.device.Test_Metric",
+				Tags:   []string{"TEST:TRUE", "deviceplane.device:device-name", "deviceplane.project:project-name"},
+			},
 		},
-	}, filteredMetrics)
+	)
 }
 
 func TestMetricSeparation(t *testing.T) {
@@ -164,21 +201,26 @@ func TestMetricSeparation(t *testing.T) {
 		},
 	}
 
-	filteredMetrics := ProcessDeviceMetrics(metrics, exposedMetrics, &project, &device)
-	assert.Equal(t, []models.DatadogMetric{
-		models.DatadogMetric{
-			Metric: "deviceplane.device.Test_Metric",
-			Tags:   []string{"TEST:TRUE", "deviceplane.labels.company:nasa", "deviceplane.project:project-name"},
+	ValidateClientAndServerProcessing(t,
+		ProcessDeviceMetrics,
+		metrics,
+		exposedMetrics,
+		&project, &device,
+		[]models.DatadogMetric{
+			models.DatadogMetric{
+				Metric: "deviceplane.device.Test_Metric",
+				Tags:   []string{"TEST:TRUE", "deviceplane.labels.company:nasa", "deviceplane.project:project-name"},
+			},
+			models.DatadogMetric{
+				Metric: "deviceplane.device.Test_Metric_Two",
+				Tags:   []string{"TEST:TRUE", "deviceplane.project:project-name"},
+			},
+			models.DatadogMetric{
+				Metric: "deviceplane.device.Test_Metric_Three",
+				Tags:   []string{"TEST:TRUE", "deviceplane.labels.location:ohio", "deviceplane.project:project-name"},
+			},
 		},
-		models.DatadogMetric{
-			Metric: "deviceplane.device.Test_Metric_Two",
-			Tags:   []string{"TEST:TRUE", "deviceplane.project:project-name"},
-		},
-		models.DatadogMetric{
-			Metric: "deviceplane.device.Test_Metric_Three",
-			Tags:   []string{"TEST:TRUE", "deviceplane.labels.location:ohio", "deviceplane.project:project-name"},
-		},
-	}, filteredMetrics)
+	)
 }
 
 func TestMetricTagWhitelist(t *testing.T) {
@@ -195,35 +237,82 @@ func TestMetricTagWhitelist(t *testing.T) {
 			Metric: "Test_Metric_Three",
 			Tags:   []string{"TEST:TRUE"},
 		},
+		models.DatadogMetric{
+			Metric: "Test_Metric_Four",
+			Tags:   []string{"TEST:TRUE"},
+		},
+		models.DatadogMetric{
+			Metric: "Test_Metric_Five",
+			Tags:   []string{"TEST:FALSE"},
+		},
 	}
 	exposedMetrics := []models.ExposedMetric{
 		models.ExposedMetric{
-			Name:            "Test_Metric",
-			WhitelistedTags: []string{"TEST"},
+			Name: "Test_Metric",
+			WhitelistedTags: []models.WhitelistedTag{
+				models.WhitelistedTag{
+					Key: "TEST",
+				},
+			},
 		},
 		models.ExposedMetric{
-			Name:            "Test_Metric_Two",
-			WhitelistedTags: []string{"WEST"},
+			Name: "Test_Metric_Two",
+			WhitelistedTags: []models.WhitelistedTag{
+				models.WhitelistedTag{
+					Key: "WEST",
+				},
+			},
 		},
 		models.ExposedMetric{
 			Name:            "Test_Metric_Three",
-			WhitelistedTags: []string{},
+			WhitelistedTags: []models.WhitelistedTag{},
+		},
+		models.ExposedMetric{
+			Name: "Test_Metric_Four",
+			WhitelistedTags: []models.WhitelistedTag{
+				models.WhitelistedTag{
+					Key:    "TEST",
+					Values: []string{"TRUE"},
+				},
+			},
+		},
+		models.ExposedMetric{
+			Name: "Test_Metric_Five",
+			WhitelistedTags: []models.WhitelistedTag{
+				models.WhitelistedTag{
+					Key:    "TEST",
+					Values: []string{"TRUE"},
+				},
+			},
 		},
 	}
 
-	filteredMetrics := ProcessDeviceMetrics(metrics, exposedMetrics, &project, &device)
-	assert.Equal(t, []models.DatadogMetric{
-		models.DatadogMetric{
-			Metric: "deviceplane.device.Test_Metric",
-			Tags:   []string{"TEST:TRUE", "deviceplane.project:project-name"},
+	ValidateClientAndServerProcessing(t,
+		ProcessDeviceMetrics,
+		metrics,
+		exposedMetrics,
+		&project, &device,
+		[]models.DatadogMetric{
+			models.DatadogMetric{
+				Metric: "deviceplane.device.Test_Metric",
+				Tags:   []string{"TEST:TRUE", "deviceplane.project:project-name"},
+			},
+			models.DatadogMetric{
+				Metric: "deviceplane.device.Test_Metric_Two",
+				Tags:   []string{"deviceplane.project:project-name"},
+			},
+			models.DatadogMetric{
+				Metric: "deviceplane.device.Test_Metric_Three",
+				Tags:   []string{"TEST:TRUE", "deviceplane.project:project-name"},
+			},
+			models.DatadogMetric{
+				Metric: "deviceplane.device.Test_Metric_Four",
+				Tags:   []string{"TEST:TRUE", "deviceplane.project:project-name"},
+			},
+			models.DatadogMetric{
+				Metric: "deviceplane.device.Test_Metric_Five",
+				Tags:   []string{"deviceplane.project:project-name"},
+			},
 		},
-		models.DatadogMetric{
-			Metric: "deviceplane.device.Test_Metric_Two",
-			Tags:   []string{"deviceplane.project:project-name"},
-		},
-		models.DatadogMetric{
-			Metric: "deviceplane.device.Test_Metric_Three",
-			Tags:   []string{"TEST:TRUE", "deviceplane.project:project-name"},
-		},
-	}, filteredMetrics)
+	)
 }

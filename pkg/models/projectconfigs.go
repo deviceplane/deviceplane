@@ -27,8 +27,13 @@ type DeviceMetricsConfig struct {
 }
 
 type ExposedMetric struct {
-	Name            string   `json:"name" yaml:"name"`
-	Labels          []string `json:"labels" yaml:"labels"`
-	Properties      []string `json:"properties" yaml:"properties"`
-	WhitelistedTags []string `json:"whitelistedTags" yaml:"whitelistedTags"`
+	Name            string           `json:"name" yaml:"name"`
+	Labels          []string         `json:"labels" yaml:"labels"`
+	Properties      []string         `json:"properties" yaml:"properties"`
+	WhitelistedTags []WhitelistedTag `json:"whitelistedTags" yaml:"whitelistedTags"`
+}
+
+type WhitelistedTag struct {
+	Key    string
+	Values []string
 }
