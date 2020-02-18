@@ -113,7 +113,10 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
             ...info.serviceStates.map(s => ({
               ...s,
               currentRelease: {
-                number: info.serviceStatuses[0].currentRelease.number,
+                number:
+                  info.serviceStatuses && info.serviceStates.length
+                    ? info.serviceStatuses[0].currentRelease.number
+                    : '-',
               },
               application: info.application,
             })),
