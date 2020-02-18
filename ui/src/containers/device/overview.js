@@ -38,6 +38,7 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
     });
     if (
       applicationStatusInfo.length &&
+      applicationStatusInfo[0].serviceStates &&
       applicationStatusInfo[0].serviceStates.length
     ) {
       cols.push({
