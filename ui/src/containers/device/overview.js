@@ -36,20 +36,6 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
         </Link>
       ),
     });
-    cols.push({
-      Header: 'Release',
-      accessor: 'currentRelease.number',
-      Cell: ({ cell: { value }, row: { original } }) => (
-        <Link
-          href={`/${projectId}/applications/${original.application.name}/releases/${value}`}
-        >
-          {value}
-        </Link>
-      ),
-      maxWidth: '100px',
-      minWidth: '100px',
-      cellStyle: { justifyContent: 'flex-end' },
-    });
     if (
       applicationStatusInfo.length &&
       applicationStatusInfo[0].serviceStates.length
@@ -69,6 +55,20 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
         ),
       });
     }
+    cols.push({
+      Header: 'Release',
+      accessor: 'currentRelease.number',
+      Cell: ({ cell: { value }, row: { original } }) => (
+        <Link
+          href={`/${projectId}/applications/${original.application.name}/releases/${value}`}
+        >
+          {value}
+        </Link>
+      ),
+      maxWidth: '100px',
+      minWidth: '100px',
+      cellStyle: { justifyContent: 'flex-end' },
+    });
     cols.push({
       Header: ' ',
       Cell: ({ row: { original } }) => (
