@@ -106,7 +106,7 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
   const tableData = useMemo(
     () =>
       applicationStatusInfo.reduce((data, info) => {
-        if (info.serviceStates.length) {
+        if (info.serviceStates && info.serviceStates.length) {
           return [
             ...data,
             ...info.serviceStates.map(s => ({
@@ -117,7 +117,7 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
               application: info.application,
             })),
           ];
-        } else if (info.serviceStatuses.length) {
+        } else if (info.serviceStatuses && info.serviceStatuses.length) {
           return [
             ...data,
             ...info.serviceStatuses.map(s => ({
