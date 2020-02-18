@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import parsePrometheusTextFormat from 'parse-prometheus-text-format';
 
 import api from '../../api';
 import {
   Column,
+  Row,
   Group,
   Button,
   Value,
@@ -19,11 +20,95 @@ import Popup from '../../components/popup';
 import Editor from '../../components/editor';
 import EditableLabelTable from '../../components/editable-label-table';
 import DeviceStatus from '../../components/device-status';
-import ServiceState from '../../components/service-state';
+import ServiceState, {
+  ServiceStatePullingImage,
+} from '../../components/service-state';
 import { getMetricLabel } from '../../helpers/metrics';
 
 const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
+  const getImagePullProgress = async ({ applicationId, serviceId }) => {
+    try {
+      const { data } = await api.imagePullProgress({
+        projectId: projectId,
+        deviceId: device.name,
+        applicationId,
+        serviceId,
+      });
+      return data;
+    } catch (e) {
+      console.error(e);
+    }
+    return null;
+  };
+
+  const getServices = async () => {
+    let appStatusInfo = [];
+    try {
+      const { data } = await api.device({
+        projectId,
+        deviceId: device.id,
+      });
+      appStatusInfo = data.applicationStatusInfo;
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+
+    return appStatusInfo.reduce(async (arr, info) => {
+      if (info.serviceStates && info.serviceStates.length) {
+        const services = await Promise.all(
+          info.serviceStates.map(async s => {
+            let imagePullProgress = null;
+            if (s.state === ServiceStatePullingImage) {
+              imagePullProgress = await getImagePullProgress({
+                applicationId: info.application.id,
+                serviceId: s.service,
+              });
+            }
+            return {
+              ...s,
+              currentRelease: {
+                number:
+                  info.serviceStatuses && info.serviceStatuses.length
+                    ? info.serviceStatuses[0].currentRelease.number
+                    : null,
+              },
+              imagePullProgress,
+              application: info.application,
+            };
+          })
+        );
+        return [...arr, ...services];
+      } else if (info.serviceStatuses && info.serviceStatuses.length) {
+        return [
+          ...arr,
+          ...info.serviceStatuses.map(s => ({
+            ...s,
+            application: info.application,
+          })),
+        ];
+      } else {
+        return [];
+      }
+    }, []);
+  };
+
+  const [services, setServices] = useState([]);
+  const [showProgress, setShowProgress] = useState({});
+
+  const serviceEffect = async () => {
+    const services = await getServices();
+    setServices(services);
+  };
+
+  useEffect(() => {
+    serviceEffect();
+    const serviceInterval = setInterval(serviceEffect, 2000);
+    return () => clearInterval(serviceInterval);
+  }, []);
+
   const [serviceMetrics, setServiceMetrics] = useState({});
+
   const columns = useMemo(() => {
     const cols = [];
     cols.push({
@@ -44,28 +129,84 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
       cols.push({
         Header: 'State',
         accessor: 'state',
-        Cell: ({ cell: { value }, row: { original } }) => (
-          <Column>
-            <ServiceState state={value} />
-            {original.errorMessage ? (
-              <Text color="red" fontSize={0} marginTop={2}>
-                {original.errorMessage}
-              </Text>
-            ) : null}
-          </Column>
-        ),
+        Cell: ({
+          cell: { value },
+          row: {
+            original: { application, service, imagePullProgress, errorMessage },
+          },
+        }) => {
+          const key = `${application.name}:${service}`;
+          return (
+            <Column flex={1}>
+              <ServiceState state={value} />
+              {errorMessage && (
+                <Text color="red" fontSize={0} marginTop={2}>
+                  {errorMessage}
+                </Text>
+              )}
+              {imagePullProgress && (
+                <>
+                  <Row
+                    flex={1}
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
+                    <Text
+                      marginTop={2}
+                      fontWeight={2}
+                      fontSize={0}
+                      color="primary"
+                    >
+                      {imagePullProgress['latest'].status}
+                    </Text>
+                    <Button
+                      title={
+                        <Icon
+                          icon={
+                            showProgress[key] ? 'caret-down' : 'caret-right'
+                          }
+                          size={18}
+                          color="primary"
+                        />
+                      }
+                      onClick={() =>
+                        setShowProgress(sp => ({
+                          ...sp,
+                          [key]: !sp[key],
+                        }))
+                      }
+                      variant="icon"
+                    />
+                  </Row>
+                  <Column height={showProgress[key] ? 'auto' : 0}>
+                    {Object.keys(imagePullProgress)
+                      .filter(k => k !== 'latest')
+                      .map(k => (
+                        <Text fontSize={0} marginTop={1}>
+                          {k}: {imagePullProgress[k].status}
+                        </Text>
+                      ))}
+                  </Column>
+                </>
+              )}
+            </Column>
+          );
+        },
       });
     }
     cols.push({
       Header: 'Release',
       accessor: 'currentRelease.number',
-      Cell: ({ cell: { value }, row: { original } }) => (
-        <Link
-          href={`/${projectId}/applications/${original.application.name}/releases/${value}`}
-        >
-          {value}
-        </Link>
-      ),
+      Cell: ({ cell: { value }, row: { original } }) =>
+        value ? (
+          <Link
+            href={`/${projectId}/applications/${original.application.name}/releases/${value}`}
+          >
+            {value}
+          </Link>
+        ) : (
+          '-'
+        ),
       maxWidth: '100px',
       minWidth: '100px',
       cellStyle: { justifyContent: 'flex-end' },
@@ -74,6 +215,8 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
       Header: ' ',
       Cell: ({ row: { original } }) => (
         <Button
+          flex={0}
+          height="20px"
           disabled={device.status === 'offline'}
           title={<Icon icon="pulse" size={18} color="white" />}
           variant="icon"
@@ -102,39 +245,9 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
       },
     });
     return cols;
-  }, []);
+  }, [showProgress]);
 
-  const tableData = useMemo(
-    () =>
-      applicationStatusInfo.reduce((data, info) => {
-        if (info.serviceStates && info.serviceStates.length) {
-          return [
-            ...data,
-            ...info.serviceStates.map(s => ({
-              ...s,
-              currentRelease: {
-                number:
-                  info.serviceStatuses && info.serviceStatuses.length
-                    ? info.serviceStatuses[0].currentRelease.number
-                    : '-',
-              },
-              application: info.application,
-            })),
-          ];
-        } else if (info.serviceStatuses && info.serviceStatuses.length) {
-          return [
-            ...data,
-            ...info.serviceStatuses.map(s => ({
-              ...s,
-              application: info.application,
-            })),
-          ];
-        } else {
-          return [];
-        }
-      }, []),
-    [applicationStatusInfo]
-  );
+  const tableData = useMemo(() => services, [services]);
 
   return (
     <>
@@ -191,6 +304,7 @@ const DeviceOverview = ({
   },
 }) => {
   const [hostMetrics, setHostMetrics] = useState();
+
   return (
     <>
       <Card
