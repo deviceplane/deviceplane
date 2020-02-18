@@ -2113,7 +2113,9 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request) {
 						allApplicationStatusInfo := make([]models.DeviceApplicationStatusInfo, 0)
 						for _, application := range applications {
 							applicationStatusInfo := models.DeviceApplicationStatusInfo{
-								Application: application,
+								Application:     application,
+								ServiceStatuses: []models.DeviceServiceStatusFull{},
+								ServiceStates:   []models.DeviceServiceState{},
 							}
 
 							deviceApplicationStatus, err := s.deviceApplicationStatuses.GetDeviceApplicationStatus(
