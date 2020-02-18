@@ -45,10 +45,24 @@ func (s *Service) initiateSSH(w http.ResponseWriter, r *http.Request) {
 							}
 
 							sshCount := atomic.AddInt64(&currentSSHCount, 1)
-							s.st.Gauge(currentSSHCountName, float64(sshCount), utils.InternalTags(project.ID), 1)
+							s.st.Gauge(currentSSHCountName,
+								float64(sshCount),
+								utils.WithTags(
+									[]string{},
+									utils.TagItems{Project: project},
+								),
+								1,
+							)
 							defer func() {
 								sshCount := atomic.AddInt64(&currentSSHCount, -1)
-								s.st.Gauge(currentSSHCountName, float64(sshCount), utils.InternalTags(project.ID), 1)
+								s.st.Gauge(currentSSHCountName,
+									float64(sshCount),
+									utils.WithTags(
+										[]string{},
+										utils.TagItems{Project: project},
+									),
+									1,
+								)
 							}()
 
 							go io.Copy(deviceConn, clientConn)

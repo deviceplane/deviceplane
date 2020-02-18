@@ -70,7 +70,13 @@ func (s *Service) forwardServiceMetrics(w http.ResponseWriter, r *http.Request) 
 		} else {
 			status = "status:failure"
 		}
-		s.st.Incr("service_metrics_push", append([]string{status}, utils.InternalTags(project.Name)...), 1)
+		s.st.Incr("service_metrics_push",
+			utils.WithTags(
+				[]string{status},
+				utils.TagItems{Project: project},
+			),
+			1,
+		)
 	})
 }
 
@@ -115,6 +121,12 @@ func (s *Service) forwardDeviceMetrics(w http.ResponseWriter, r *http.Request) {
 		} else {
 			status = "status:failure"
 		}
-		s.st.Incr("device_metrics_push", append([]string{status}, utils.InternalTags(project.Name)...), 1)
+		s.st.Incr("device_metrics_push",
+			utils.WithTags(
+				[]string{status},
+				utils.TagItems{Project: project},
+			),
+			1,
+		)
 	})
 }
