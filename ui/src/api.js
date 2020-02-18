@@ -330,6 +330,11 @@ const api = {
 
   updateServiceMetricsConfig: ({ projectId, data }) =>
     put(`projects/${projectId}/configs/service-metrics-config`, data),
+
+  imagePullProgress: ({ projectId, deviceId, applicationId, serviceId }) =>
+    get(
+      `projects/${projectId}/devices/${deviceId}/applications/${applicationId}/services/${serviceId}/imagepullprogress`
+    ),
 };
 
 export default api;
