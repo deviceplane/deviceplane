@@ -7,7 +7,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	agent_utils "github.com/deviceplane/deviceplane/pkg/agent/utils"
 	"github.com/deviceplane/deviceplane/pkg/agent/variables"
 	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/utils"
@@ -79,7 +78,7 @@ func (p *imagePuller) Pull(ctx context.Context, image string) error {
 		}
 	}()
 
-	return agent_utils.ImagePull(ctx, p.engine, image, p.variables.GetRegistryAuth, w)
+	return imagePull(ctx, p.engine, image, p.variables.GetRegistryAuth, w)
 }
 
 func (p *imagePuller) Progress() (map[string]PullEvent, bool) {

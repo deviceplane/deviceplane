@@ -198,6 +198,28 @@ type DeviceServiceStatus struct {
 	CurrentReleaseID string `json:"currentReleaseId" yaml:"currentReleaseId"`
 }
 
+type DeviceServiceState struct {
+	ProjectID     string       `json:"projectId" yaml:"projectId"`
+	DeviceID      string       `json:"deviceId" yaml:"deviceId"`
+	ApplicationID string       `json:"applicationId" yaml:"applicationId"`
+	Service       string       `json:"service" yaml:"service"`
+	State         ServiceState `json:"state" yaml:"state"`
+	ErrorMessage  string       `json:"errorMessage" yaml:"errorMessage"`
+}
+
+type ServiceState string
+
+const (
+	ServiceStateUnknown                   ServiceState = "unknown"
+	ServiceStatePullingImage              ServiceState = "pulling image"
+	ServiceStateCreatingContainer         ServiceState = "creating container"
+	ServiceStateStoppingPreviousContainer ServiceState = "stopping previous container"
+	ServiceStateRemovingPreviousContainer ServiceState = "removing previous container"
+	ServiceStateStartingContainer         ServiceState = "starting container"
+	ServiceStateRunning                   ServiceState = "running"
+	ServiceStateExited                    ServiceState = "exited"
+)
+
 type MembershipFull1 struct {
 	Membership
 	User    User        `json:"user" yaml:"user"`
@@ -227,9 +249,20 @@ type DeviceFull struct {
 }
 
 type DeviceApplicationStatusInfo struct {
-	Application       Application              `json:"application" yaml:"application"`
-	ApplicationStatus *DeviceApplicationStatus `json:"applicationStatus" yaml:"applicationStatus"`
-	ServiceStatuses   []DeviceServiceStatus    `json:"serviceStatuses" yaml:"serviceStatuses"`
+	Application       Application                  `json:"application" yaml:"application"`
+	ApplicationStatus *DeviceApplicationStatusFull `json:"applicationStatus" yaml:"applicationStatus"`
+	ServiceStatuses   []DeviceServiceStatusFull    `json:"serviceStatuses" yaml:"serviceStatuses"`
+	ServiceStates     []DeviceServiceState         `json:"serviceStates" yaml:"serviceStates"`
+}
+
+type DeviceApplicationStatusFull struct {
+	DeviceApplicationStatus
+	CurrentRelease Release `json:"currentRelease" yaml:"currentRelease"`
+}
+
+type DeviceServiceStatusFull struct {
+	DeviceServiceStatus
+	CurrentRelease Release `json:"currentRelease" yaml:"currentRelease"`
 }
 
 type ApplicationFull1 struct {
@@ -254,6 +287,7 @@ type Bundle struct {
 	Applications        []FullBundledApplication  `json:"applications" yaml:"applications"`
 	ApplicationStatuses []DeviceApplicationStatus `json:"applicationStatuses" yaml:"applicationStatuses"`
 	ServiceStatuses     []DeviceServiceStatus     `json:"serviceStatuses" yaml:"serviceStatuses"`
+	ServiceStates       []DeviceServiceState      `json:"serviceStates" yaml:"serviceStates"`
 
 	DeviceID             string            `json:"deviceId" yaml:"deviceId"`
 	EnvironmentVariables map[string]string `json:"environmentVariables" yaml:"environmentVariables"`

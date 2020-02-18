@@ -3,6 +3,7 @@ import parsePrometheusTextFormat from 'parse-prometheus-text-format';
 
 import api from '../../api';
 import {
+  Column,
   Group,
   Button,
   Value,
@@ -18,81 +19,116 @@ import Popup from '../../components/popup';
 import Editor from '../../components/editor';
 import EditableLabelTable from '../../components/editable-label-table';
 import DeviceStatus from '../../components/device-status';
+import ServiceState from '../../components/service-state';
 import { getMetricLabel } from '../../helpers/metrics';
 
 const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
   const [serviceMetrics, setServiceMetrics] = useState({});
-  const columns = useMemo(
-    () => [
-      {
-        Header: 'Service',
-        accessor: ({ application, service }) =>
-          `${application.name} / ${service}`,
+  const columns = useMemo(() => {
+    const cols = [];
+    cols.push({
+      Header: 'Service',
+      accessor: ({ application, service }) =>
+        `${application.name} / ${service}`,
+      Cell: ({ cell: { value }, row: { original } }) => (
+        <Link href={`/${projectId}/applications/${original.application.name}`}>
+          {value}
+        </Link>
+      ),
+    });
+    if (
+      applicationStatusInfo.length &&
+      applicationStatusInfo[0].serviceStates.length
+    ) {
+      cols.push({
+        Header: 'State',
+        accessor: 'state',
         Cell: ({ cell: { value }, row: { original } }) => (
-          <Link
-            href={`/${projectId}/applications/${original.application.name}`}
-          >
-            {value}
-          </Link>
+          <Column>
+            <ServiceState state={value} />
+            {original.errorMessage ? (
+              <Text color="red" fontSize={0} marginTop={2}>
+                {original.errorMessage}
+              </Text>
+            ) : null}
+          </Column>
         ),
+      });
+    }
+    cols.push({
+      Header: 'Release',
+      accessor: 'currentRelease.number',
+      Cell: ({ cell: { value }, row: { original } }) => (
+        <Link
+          href={`/${projectId}/applications/${original.application.name}/releases/${value}`}
+        >
+          {value}
+        </Link>
+      ),
+      maxWidth: '100px',
+      minWidth: '100px',
+      cellStyle: { justifyContent: 'flex-end' },
+    });
+    cols.push({
+      Header: ' ',
+      Cell: ({ row: { original } }) => (
+        <Button
+          disabled={device.status === 'offline'}
+          title={<Icon icon="pulse" size={18} color="white" />}
+          variant="icon"
+          onClick={async () => {
+            try {
+              const response = await api.serviceMetrics({
+                projectId,
+                deviceId: device.id,
+                applicationId: original.application.name,
+                serviceId: original.service,
+              });
+              setServiceMetrics({
+                service: original.service,
+                metrics: response.data,
+              });
+            } catch (error) {
+              toaster.danger('Service Metrics are currently unavailable.');
+              console.error(error);
+            }
+          }}
+        />
+      ),
+      maxWidth: '30px',
+      cellStyle: {
+        justifyContent: 'flex-end',
       },
-      {
-        Header: 'Current Release',
-        accessor: 'currentReleaseId',
-        Cell: ({ cell: { value }, row: { original } }) => (
-          <Link
-            href={`/${projectId}/applications/${original.application.name}/releases/${original.currentReleaseId}`}
-          >
-            {value}
-          </Link>
-        ),
-      },
-      {
-        Header: ' ',
-        Cell: ({ row: { original } }) => (
-          <Button
-            disabled={device.status === 'offline'}
-            title={<Icon icon="pulse" size={18} color="white" />}
-            variant="icon"
-            onClick={async () => {
-              try {
-                const response = await api.serviceMetrics({
-                  projectId,
-                  deviceId: device.id,
-                  applicationId: original.application.name,
-                  serviceId: original.service,
-                });
-                setServiceMetrics({
-                  service: original.service,
-                  metrics: response.data,
-                });
-              } catch (error) {
-                toaster.danger('Service Metrics are currently unavailable.');
-                console.error(error);
-              }
-            }}
-          />
-        ),
-        maxWidth: '50px',
-        cellStyle: {
-          justifyContent: 'flex-end',
-        },
-      },
-    ],
-    []
-  );
+    });
+    return cols;
+  }, []);
+
   const tableData = useMemo(
     () =>
-      applicationStatusInfo.reduce(
-        (data, curr) => [
-          ...data,
-          ...curr.serviceStatuses.map(status => ({
-            ...status,
-            application: curr.application,
-          })),
-        ],
-        []
-      ),
+      applicationStatusInfo.reduce((data, info) => {
+        if (info.serviceStates.length) {
+          return [
+            ...data,
+            ...info.serviceStates.map(s => ({
+              ...s,
+              currentRelease: {
+                number: info.serviceStatuses[0].currentRelease.number,
+              },
+              application: info.application,
+            })),
+          ];
+        } else if (info.serviceStatuses.length) {
+          return [
+            ...data,
+            ...info.serviceStatuses.map(s => ({
+              ...s,
+              application: info.application,
+            })),
+          ];
+        } else {
+          return [];
+        }
+      }, []),
     [applicationStatusInfo]
   );
 

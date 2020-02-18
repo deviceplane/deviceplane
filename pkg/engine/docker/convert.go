@@ -131,10 +131,31 @@ func volumes(volumes *yamltypes.Volumes) []string {
 }
 
 func convertToInstance(c types.Container) engine.Instance {
+	var state models.ServiceState
+
+	switch c.State {
+	case "created":
+		state = models.ServiceStateStartingContainer
+	case "restarting":
+		state = models.ServiceStateExited
+	case "running":
+		state = models.ServiceStateRunning
+	case "paused":
+		state = models.ServiceStateUnknown
+	case "removing":
+		state = models.ServiceStateExited
+	case "exited":
+		state = models.ServiceStateExited
+	case "dead":
+		state = models.ServiceStateExited
+	default:
+		state = models.ServiceStateUnknown
+	}
+
 	return engine.Instance{
 		ID:     c.ID,
 		Labels: c.Labels,
-		// TODO
-		Running: c.State == "running",
+		Status: c.Status,
+		State:  state,
 	}
 }

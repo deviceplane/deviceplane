@@ -119,6 +119,7 @@ var (
 	_ store.ReleaseDeviceCounts        = &Store{}
 	_ store.DeviceApplicationStatuses  = &Store{}
 	_ store.DeviceServiceStatuses      = &Store{}
+	_ store.DeviceServiceStates        = &Store{}
 )
 
 type Store struct {
@@ -2285,11 +2286,18 @@ func (s *Store) SetDeviceServiceStatus(ctx context.Context, projectID, deviceID,
 }
 
 func (s *Store) GetDeviceServiceStatus(ctx context.Context, projectID, deviceID, applicationID, service string) (*models.DeviceServiceStatus, error) {
-	deviceServiceStatusRow := s.db.QueryRowContext(ctx, getDeviceServiceStatus, projectID, deviceID, applicationID, service)
+	deviceServiceStatusRow := s.db.QueryRowContext(
+		ctx,
+		getDeviceServiceStatus,
+		projectID,
+		deviceID,
+		applicationID,
+		service,
+	)
 
 	deviceServiceStatus, err := s.scanDeviceServiceStatus(deviceServiceStatusRow)
 	if err == sql.ErrNoRows {
-		return nil, store.ErrDeviceApplicationStatusNotFound
+		return nil, store.ErrDeviceServiceStatusNotFound
 	} else if err != nil {
 		return nil, err
 	}
@@ -2298,7 +2306,13 @@ func (s *Store) GetDeviceServiceStatus(ctx context.Context, projectID, deviceID,
 }
 
 func (s *Store) GetDeviceServiceStatuses(ctx context.Context, projectID, deviceID, applicationID string) ([]models.DeviceServiceStatus, error) {
-	deviceServiceStatusRows, err := s.db.QueryContext(ctx, getDeviceServiceStatuses, projectID, deviceID, applicationID)
+	deviceServiceStatusRows, err := s.db.QueryContext(
+		ctx,
+		getDeviceServiceStatuses,
+		projectID,
+		deviceID,
+		applicationID,
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "query device service statuses")
 	}
@@ -2366,7 +2380,124 @@ func (s *Store) scanDeviceServiceStatus(scanner scanner) (*models.DeviceServiceS
 	); err != nil {
 		return nil, err
 	}
+
 	return &deviceServiceStatus, nil
+}
+
+func (s *Store) SetDeviceServiceState(ctx context.Context, projectID, deviceID, applicationID, service string, state models.ServiceState, errorMessage string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		setDeviceServiceState,
+		projectID,
+		deviceID,
+		applicationID,
+		service,
+		state,
+		errorMessage,
+		state,
+		errorMessage,
+	)
+	return err
+}
+
+func (s *Store) GetDeviceServiceState(ctx context.Context, projectID, deviceID, applicationID, service string) (*models.DeviceServiceState, error) {
+	deviceServiceStateRow := s.db.QueryRowContext(
+		ctx,
+		getDeviceServiceState,
+		projectID,
+		deviceID,
+		applicationID,
+		service,
+	)
+
+	deviceServiceState, err := s.scanDeviceServiceState(deviceServiceStateRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrDeviceServiceStateNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return deviceServiceState, nil
+}
+
+func (s *Store) GetDeviceServiceStates(ctx context.Context, projectID, deviceID, applicationID string) ([]models.DeviceServiceState, error) {
+	deviceServiceStateRows, err := s.db.QueryContext(
+		ctx,
+		getDeviceServiceStates,
+		projectID,
+		deviceID,
+		applicationID,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "query device service states")
+	}
+	defer deviceServiceStateRows.Close()
+
+	deviceServiceStates := make([]models.DeviceServiceState, 0)
+	for deviceServiceStateRows.Next() {
+		deviceServiceState, err := s.scanDeviceServiceState(deviceServiceStateRows)
+		if err != nil {
+			return nil, err
+		}
+		deviceServiceStates = append(deviceServiceStates, *deviceServiceState)
+	}
+
+	if err := deviceServiceStateRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return deviceServiceStates, nil
+}
+
+func (s *Store) ListDeviceServiceStates(ctx context.Context, projectID, deviceID string) ([]models.DeviceServiceState, error) {
+	deviceServiceStateRows, err := s.db.QueryContext(ctx, listDeviceServiceStates, projectID, deviceID)
+	if err != nil {
+		return nil, errors.Wrap(err, "query device service states")
+	}
+	defer deviceServiceStateRows.Close()
+
+	deviceServiceStates := make([]models.DeviceServiceState, 0)
+	for deviceServiceStateRows.Next() {
+		deviceServiceState, err := s.scanDeviceServiceState(deviceServiceStateRows)
+		if err != nil {
+			return nil, err
+		}
+		deviceServiceStates = append(deviceServiceStates, *deviceServiceState)
+	}
+
+	if err := deviceServiceStateRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return deviceServiceStates, nil
+}
+
+func (s *Store) DeleteDeviceServiceState(ctx context.Context, projectID, deviceID, applicationID, service string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		deleteDeviceServiceState,
+		projectID,
+		deviceID,
+		applicationID,
+		service,
+	)
+	return err
+}
+
+func (s *Store) scanDeviceServiceState(scanner scanner) (*models.DeviceServiceState, error) {
+	var deviceServiceState models.DeviceServiceState
+	if err := scanner.Scan(
+		&deviceServiceState.ProjectID,
+		&deviceServiceState.DeviceID,
+		&deviceServiceState.ApplicationID,
+		&deviceServiceState.Service,
+		&deviceServiceState.State,
+		&deviceServiceState.ErrorMessage,
+	); err != nil {
+		return nil, err
+	}
+
+	return &deviceServiceState, nil
 }
 
 func (s *Store) scanProjectConfig(scanner scanner) (*models.ProjectConfig, error) {

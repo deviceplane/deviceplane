@@ -12,7 +12,6 @@ import (
 
 	"github.com/apex/log"
 
-	"github.com/deviceplane/deviceplane/pkg/agent/utils"
 	"github.com/deviceplane/deviceplane/pkg/agent/validator"
 	"github.com/deviceplane/deviceplane/pkg/agent/variables"
 	"github.com/deviceplane/deviceplane/pkg/engine"
@@ -131,7 +130,7 @@ func (s *ServiceSupervisor) reconcileLoop() {
 			}()
 		}
 
-		instances, err := utils.ContainerList(ctx, s.engine, nil, map[string]string{
+		instances, err := containerList(ctx, s.engine, nil, map[string]string{
 			models.ApplicationLabel: s.applicationID,
 			models.ServiceLabel:     s.serviceName,
 		}, true)
@@ -150,21 +149,58 @@ func (s *ServiceSupervisor) reconcileLoop() {
 			}
 
 			startCanceler()
+
+			s.reporter.SetServiceState(s.serviceName, models.SetDeviceServiceStateRequest{
+				State:        models.ServiceStatePullingImage,
+				ErrorMessage: "",
+			})
 			if err = s.imagePuller.Pull(ctx, service.Image); err != nil {
+				s.reporter.SetServiceState(s.serviceName, models.SetDeviceServiceStateRequest{
+					State:        models.ServiceStatePullingImage,
+					ErrorMessage: err.Error(),
+				})
 				goto cont
 			}
 
 			s.sendKeepAliveDeactivate()
 
-			if err = utils.ContainerStop(ctx, s.engine, instance.ID); err != nil {
+			s.reporter.SetServiceState(s.serviceName, models.SetDeviceServiceStateRequest{
+				State:        models.ServiceStateStoppingPreviousContainer,
+				ErrorMessage: "",
+			})
+			if err = containerStop(ctx, s.engine, instance.ID); err != nil {
+				s.reporter.SetServiceState(s.serviceName, models.SetDeviceServiceStateRequest{
+					State:        models.ServiceStateStoppingPreviousContainer,
+					ErrorMessage: err.Error(),
+				})
 				goto cont
 			}
-			if err = utils.ContainerRemove(ctx, s.engine, instance.ID); err != nil {
+
+			s.reporter.SetServiceState(s.serviceName, models.SetDeviceServiceStateRequest{
+				State:        models.ServiceStateRemovingPreviousContainer,
+				ErrorMessage: "",
+			})
+			if err = containerRemove(ctx, s.engine, instance.ID); err != nil {
+				s.reporter.SetServiceState(s.serviceName, models.SetDeviceServiceStateRequest{
+					State:        models.ServiceStateRemovingPreviousContainer,
+					ErrorMessage: err.Error(),
+				})
 				goto cont
 			}
 		} else {
 			startCanceler()
-			s.imagePuller.Pull(ctx, service.Image)
+
+			s.reporter.SetServiceState(s.serviceName, models.SetDeviceServiceStateRequest{
+				State:        models.ServiceStatePullingImage,
+				ErrorMessage: "",
+			})
+			if err = s.imagePuller.Pull(ctx, service.Image); err != nil {
+				s.reporter.SetServiceState(s.serviceName, models.SetDeviceServiceStateRequest{
+					State:        models.ServiceStatePullingImage,
+					ErrorMessage: err.Error(),
+				})
+				goto cont
+			}
 		}
 
 		s.sendKeepAliveDeactivate()
@@ -180,12 +216,20 @@ func (s *ServiceSupervisor) reconcileLoop() {
 			}
 		}
 
-		if _, err = utils.ContainerCreate(
+		s.reporter.SetServiceState(s.serviceName, models.SetDeviceServiceStateRequest{
+			State:        models.ServiceStateCreatingContainer,
+			ErrorMessage: "",
+		})
+		if _, err = containerCreate(
 			ctx,
 			s.engine,
 			strings.Join([]string{s.serviceName, hash.ShortHash(s.applicationID), spec.ShortHash(service, s.serviceName)}, "-"),
 			s.transformService(spec.WithStandardLabels(service, s.applicationID, s.serviceName)),
 		); err != nil {
+			s.reporter.SetServiceState(s.serviceName, models.SetDeviceServiceStateRequest{
+				State:        models.ServiceStateCreatingContainer,
+				ErrorMessage: err.Error(),
+			})
 			goto cont
 		}
 
@@ -271,7 +315,7 @@ func (s *ServiceSupervisor) keepAlive() {
 				continue
 			}
 
-			instances, err := utils.ContainerList(s.ctx, s.engine, nil, map[string]string{
+			instances, err := containerList(s.ctx, s.engine, nil, map[string]string{
 				models.ApplicationLabel: s.applicationID,
 				models.ServiceLabel:     s.serviceName,
 				models.HashLabel:        spec.Hash(service, s.serviceName),
@@ -288,14 +332,42 @@ func (s *ServiceSupervisor) keepAlive() {
 			// TODO: filter down to just one instance if we find more
 			instance := instances[0]
 
-			if !instance.Running {
-				if err = utils.ContainerStart(s.ctx, s.engine, instance.ID); err != nil {
-					continue
-				}
-			}
+			if instance.State == models.ServiceStateRunning {
+				s.reporter.SetServiceState(s.serviceName, models.SetDeviceServiceStateRequest{
+					State:        models.ServiceStateRunning,
+					ErrorMessage: "",
+				})
+				s.reporter.SetServiceStatus(s.serviceName, models.SetDeviceServiceStatusRequest{
+					CurrentReleaseID: release,
+				})
+				s.containerID.Store(instance.ID)
+			} else {
+				inspectResponse, err := s.engine.InspectContainer(s.ctx, instance.ID)
+				s.reporter.SetServiceState(s.serviceName, models.SetDeviceServiceStateRequest{
+					State: instance.State,
+					ErrorMessage: func() string {
+						if err != nil {
+							return "unknown error, cannot inspect container"
+						}
+						if inspectResponse.ExitCode != nil {
+							message := fmt.Sprintf(
+								"container exited with exit code %d",
+								*inspectResponse.ExitCode,
+							)
+							if inspectResponse.Error == "" {
+								return message
+							}
+							return fmt.Sprintf("%s (error: %s)",
+								message,
+								inspectResponse.Error,
+							)
+						}
+						return ""
+					}(),
+				})
 
-			s.reporter.SetServiceRelease(s.serviceName, release)
-			s.containerID.Store(instance.ID)
+				containerStart(s.ctx, s.engine, instance.ID)
+			}
 		}
 	}
 }

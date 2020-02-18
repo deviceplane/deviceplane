@@ -41,6 +41,7 @@ type Service struct {
 	releaseDeviceCounts        store.ReleaseDeviceCounts
 	deviceApplicationStatuses  store.DeviceApplicationStatuses
 	deviceServiceStatuses      store.DeviceServiceStatuses
+	deviceServiceStates        store.DeviceServiceStates
 	metricConfigs              store.MetricConfigs
 	email                      email.Interface
 	emailFromName              string
@@ -78,6 +79,7 @@ func NewService(
 	releasesDeviceCounts store.ReleaseDeviceCounts,
 	deviceApplicationStatuses store.DeviceApplicationStatuses,
 	deviceServiceStatuses store.DeviceServiceStatuses,
+	deviceServiceStates store.DeviceServiceStates,
 	metricConfigs store.MetricConfigs,
 	email email.Interface,
 	emailFromName string,
@@ -113,6 +115,7 @@ func NewService(
 		releaseDeviceCounts:        releasesDeviceCounts,
 		deviceApplicationStatuses:  deviceApplicationStatuses,
 		deviceServiceStatuses:      deviceServiceStatuses,
+		deviceServiceStates:        deviceServiceStates,
 		metricConfigs:              metricConfigs,
 		email:                      email,
 		emailFromName:              emailFromName,
@@ -242,6 +245,8 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/deviceapplicationstatuses", s.deleteDeviceApplicationStatus).Methods("DELETE")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.setDeviceServiceStatus).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.deleteDeviceServiceStatus).Methods("DELETE")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestates", s.setDeviceServiceState).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestates", s.deleteDeviceServiceState).Methods("DELETE")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/forwardmetrics/service", s.forwardServiceMetrics).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/forwardmetrics/device", s.forwardDeviceMetrics).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/connection", s.initiateDeviceConnection).Methods("GET")
