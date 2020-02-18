@@ -74,11 +74,56 @@ func metricProcessorFunc(
 			}
 
 			// Helper
-			addTag := func(tag, value string) {
-				m.Tags = append(
-					m.Tags,
-					fmt.Sprintf("%s:%s", tag, value),
-				)
+			addTag := func(key, value string) {
+				hasTag := false
+				for _, tag := range m.Tags { // TODO: Refactor m.Tags to be key:value pair
+					if strings.HasPrefix(tag, key) {
+						hasTag = true
+					}
+				}
+				if !hasTag {
+					m.Tags = append(
+						m.Tags,
+						fmt.Sprintf("%s:%s", key, value),
+					)
+				}
+			}
+
+			// Only keep tags on whitelist
+			if len(exposedMetric.WhitelistedTags) != 0 { // Trim only if whitelist exists
+				var allowedTags []string
+				for _, tagPair := range m.Tags {
+					var tagKey string
+					var tagValue string
+					parsedTagPair := strings.Split(tagPair, ":")
+					if len(parsedTagPair) > 0 {
+						tagKey = parsedTagPair[0]
+					}
+					if len(parsedTagPair) > 1 {
+						tagValue = parsedTagPair[1]
+					}
+
+					if strings.HasPrefix(tagKey, "deviceplane.") {
+						allowedTags = append(allowedTags, tagPair)
+						continue
+					}
+					for _, wTag := range exposedMetric.WhitelistedTags {
+						if tagKey == wTag.Key {
+							if len(wTag.Values) == 0 {
+								allowedTags = append(allowedTags, tagPair)
+							} else {
+								for _, value := range wTag.Values {
+									if tagValue == value {
+										allowedTags = append(allowedTags, tagPair)
+										break
+									}
+								}
+							}
+							break
+						}
+					}
+				}
+				m.Tags = allowedTags
 			}
 
 			// Optional labels

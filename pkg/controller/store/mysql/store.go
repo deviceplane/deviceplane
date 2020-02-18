@@ -20,21 +20,20 @@ type scanner interface {
 }
 
 const (
-	userPrefix                      = "usr"
-	registrationTokenPrefix         = "reg"
-	passwordRecoveryTokenPrefix     = "pwr"
-	sessionPrefix                   = "ses"
-	userAccessKeyPrefix             = "uky"
-	projectPrefix                   = "prj"
-	rolePrefix                      = "rol"
-	serviceAccountPrefix            = "sac"
-	serviceAccountAccessKeyPrefix   = "sak"
-	devicePrefix                    = "dev"
-	deviceRegistrationTokenPrefix   = "drt"
-	deviceAccessKeyPrefix           = "dak"
-	applicationPrefix               = "app"
-	releasePrefix                   = "rel"
-	ExposedMetricConfigHolderPrefix = "mtc"
+	userPrefix                    = "usr"
+	registrationTokenPrefix       = "reg"
+	passwordRecoveryTokenPrefix   = "pwr"
+	sessionPrefix                 = "ses"
+	userAccessKeyPrefix           = "uky"
+	projectPrefix                 = "prj"
+	rolePrefix                    = "rol"
+	serviceAccountPrefix          = "sac"
+	serviceAccountAccessKeyPrefix = "sak"
+	devicePrefix                  = "dev"
+	deviceRegistrationTokenPrefix = "drt"
+	deviceAccessKeyPrefix         = "dak"
+	applicationPrefix             = "app"
+	releasePrefix                 = "rel"
 )
 
 func newUserID() string {
@@ -91,10 +90,6 @@ func newApplicationID() string {
 
 func newReleaseID() string {
 	return fmt.Sprintf("%s_%s", releasePrefix, ksuid.New().String())
-}
-
-func newExposedMetricConfigHolderID() string {
-	return fmt.Sprintf("%s_%s", ExposedMetricConfigHolderPrefix, ksuid.New().String())
 }
 
 var (
