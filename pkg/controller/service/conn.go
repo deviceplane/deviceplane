@@ -38,7 +38,7 @@ func (s *Service) initiateSSH(w http.ResponseWriter, r *http.Request) {
 				s.withDevice(w, r, project, func(device *models.Device) {
 					s.withHijackedWebSocketConnection(w, r, func(clientConn net.Conn) {
 						s.withDeviceConnection(w, r, project, device, func(deviceConn net.Conn) {
-							err := client.InitiateSSH(r.Context(), clientConn)
+							err := client.InitiateSSH(r.Context(), deviceConn)
 							if err != nil {
 								http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 								return
