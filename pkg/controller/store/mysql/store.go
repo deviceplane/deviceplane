@@ -1721,9 +1721,66 @@ func (s *Store) DeleteDeviceRegistrationTokenLabel(ctx context.Context, deviceRe
 	return nil
 }
 
+func (s *Store) SetDeviceRegistrationTokenEnvironmentVariable(ctx context.Context, tokenID, projectID, key, value string) (*string, error) {
+	deviceRegistrationToken, err := s.GetDeviceRegistrationToken(ctx, tokenID, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	deviceRegistrationToken.EnvironmentVariables[key] = value
+
+	environmentVariablesString, err := json.Marshal(deviceRegistrationToken.EnvironmentVariables)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateDeviceRegistrationTokenEnvironmentVariables,
+		environmentVariablesString,
+		tokenID,
+		projectID,
+	); err != nil {
+		return nil, err
+	}
+
+	deviceRegistrationToken, err = s.GetDeviceRegistrationToken(ctx, tokenID, projectID)
+	if err != nil {
+		return nil, err
+	}
+	v := deviceRegistrationToken.EnvironmentVariables[key]
+	return &v, nil
+}
+
+func (s *Store) DeleteDeviceRegistrationTokenEnvironmentVariable(ctx context.Context, tokenID, projectID, key string) error {
+	deviceRegistrationToken, err := s.GetDeviceRegistrationToken(ctx, tokenID, projectID)
+	if err != nil {
+		return err
+	}
+
+	delete(deviceRegistrationToken.EnvironmentVariables, key)
+
+	environmentVariablesString, err := json.Marshal(deviceRegistrationToken.EnvironmentVariables)
+	if err != nil {
+		return err
+	}
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateDeviceRegistrationTokenEnvironmentVariables,
+		environmentVariablesString,
+		tokenID,
+		projectID,
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *Store) scanDeviceRegistrationToken(scanner scanner) (*models.DeviceRegistrationToken, error) {
 	var deviceRegistrationToken models.DeviceRegistrationToken
 	var labelsString string
+	var environmentVariablesString string
 	if err := scanner.Scan(
 		&deviceRegistrationToken.ID,
 		&deviceRegistrationToken.CreatedAt,
@@ -1732,6 +1789,7 @@ func (s *Store) scanDeviceRegistrationToken(scanner scanner) (*models.DeviceRegi
 		&deviceRegistrationToken.Name,
 		&deviceRegistrationToken.Description,
 		&labelsString,
+		&environmentVariablesString,
 	); err != nil {
 		return nil, err
 	}
@@ -1740,6 +1798,14 @@ func (s *Store) scanDeviceRegistrationToken(scanner scanner) (*models.DeviceRegi
 		deviceRegistrationToken.Labels = map[string]string{}
 	} else {
 		if err := json.Unmarshal([]byte(labelsString), &deviceRegistrationToken.Labels); err != nil {
+			return nil, err
+		}
+	}
+
+	if environmentVariablesString == "" {
+		deviceRegistrationToken.EnvironmentVariables = map[string]string{}
+	} else {
+		if err := json.Unmarshal([]byte(environmentVariablesString), &deviceRegistrationToken.EnvironmentVariables); err != nil {
 			return nil, err
 		}
 	}

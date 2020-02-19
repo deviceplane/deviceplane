@@ -232,6 +232,9 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}", s.updateDeviceRegistrationToken).Methods("PUT")
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}", s.deleteDeviceRegistrationToken).Methods("DELETE")
 
+	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}/environmentvariables", s.setDeviceRegistrationTokenEnvironmentVariable).Methods("PUT")
+	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}/environmentvariables/{key}", s.deleteDeviceRegistrationTokenEnvironmentVariable).Methods("DELETE")
+
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}/labels", s.setDeviceRegistrationTokenLabel).Methods("PUT")
 	apiRouter.HandleFunc("/projects/{project}/deviceregistrationtokens/{deviceregistrationtoken}/labels/{key}", s.deleteDeviceRegistrationTokenLabel).Methods("DELETE")
 

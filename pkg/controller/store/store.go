@@ -167,6 +167,8 @@ type DeviceRegistrationTokens interface {
 	DeleteDeviceRegistrationToken(ctx context.Context, tokenID, projectID string) error
 	SetDeviceRegistrationTokenLabel(ctx context.Context, tokenID, projectID, key, value string) (*string, error)
 	DeleteDeviceRegistrationTokenLabel(ctx context.Context, tokenID, projectID, key string) error
+	SetDeviceRegistrationTokenEnvironmentVariable(ctx context.Context, tokenID, projectID, key, value string) (*string, error)
+	DeleteDeviceRegistrationTokenEnvironmentVariable(ctx context.Context, tokenID, projectID, key string) error
 }
 
 type DevicesRegisteredWithToken interface {
