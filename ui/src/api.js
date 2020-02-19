@@ -17,13 +17,12 @@ const api = {
 
   logout: () => post('logout'),
 
-  signup: ({ email, password, firstName, lastName, company }) =>
+  signup: ({ email, password, firstName, lastName }) =>
     post(`register`, {
       email,
       password,
       firstName,
       lastName,
-      company,
     }),
 
   completeRegistration: ({ registrationTokenValue }) =>

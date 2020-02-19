@@ -10,15 +10,10 @@ import Alert from '../components/alert';
 import { Form, Button, toaster } from '../components/core';
 
 const validationSchema = yup.object().shape({
-  firstName: yup
+  fullName: yup
     .string()
     .required()
-    .max(64),
-  lastName: yup
-    .string()
-    .required()
-    .max(64),
-  company: yup.string().max(64),
+    .max(128),
 });
 
 const Profile = ({ close }) => {
@@ -30,14 +25,22 @@ const Profile = ({ close }) => {
   const { register, handleSubmit, formState, errors } = useForm({
     validationSchema,
     defaultValues: {
-      firstName: currentUser.firstName,
-      lastName: currentUser.lastName,
-      company: currentUser.company,
+      fullName: `${currentUser.firstName} ${currentUser.lastName}`,
     },
   });
   const [backendError, setBackendError] = useState();
 
   const submit = async data => {
+    const firstSpace = data.fullName.indexOf(' ');
+    if (firstSpace === -1) {
+      data.firstName = data.fullName;
+      data.lastName = ' ';
+    } else {
+      data.firstName = data.fullName.substr(0, firstSpace);
+      data.lastName = data.fullName.substr(firstSpace + 1);
+    }
+    delete data.fullName;
+
     try {
       await api.updateUser(data);
       setCurrentUser({ ...currentUser, ...data });
@@ -61,25 +64,10 @@ const Profile = ({ close }) => {
         <Field
           required
           autoCapitalize="words"
-          label="First Name"
-          name="firstName"
+          label="Full Name"
+          name="fullName"
           ref={register}
-          errors={errors.firstName}
-        />
-        <Field
-          required
-          autoCapitalize="words"
-          label="Last Name"
-          name="lastName"
-          ref={register}
-          errors={errors.lastName}
-        />
-        <Field
-          autoCapitalize="words"
-          label="Company"
-          name="company"
-          ref={register}
-          errors={errors.company}
+          errors={errors.fullName}
         />
         <Button
           marginTop={3}
