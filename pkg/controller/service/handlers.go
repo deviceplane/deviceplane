@@ -2583,7 +2583,6 @@ func (s *Service) setDeviceRegistrationTokenEnvironmentVariable(w http.ResponseW
 						Key   string `json:"key" validate:"environmentvariablekey"`
 						Value string `json:"value" validate:"environmentvariablevalue"`
 					}
-					fmt.Println("#")
 					if err := read(r, &setDeviceRegistrationTokenEnvironmentVariableRequest); err != nil {
 						http.Error(w, err.Error(), http.StatusBadRequest)
 						return
