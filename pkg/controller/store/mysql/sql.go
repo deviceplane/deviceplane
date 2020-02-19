@@ -527,9 +527,10 @@ const createDeviceRegistrationToken = `
     name,
     description,
     max_registrations,
-    labels
+    labels,
+    environment_variables
   )
-  values (?, ?, ?, ?, ?, '{}')
+  values (?, ?, ?, ?, ?, '{}', '{}')
 `
 
 // Index: project_id_id
