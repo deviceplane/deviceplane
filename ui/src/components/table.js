@@ -6,6 +6,8 @@ import { useLinkProps } from 'react-navi';
 import { Row, Grid, Icon } from './core';
 
 const A = styled.a`
+  overflow-x: hidden;
+  overflow-y: inherit;
   text-decoration: none;
   color: unset;
   flex: 1;
