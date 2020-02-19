@@ -157,7 +157,11 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
                       fontSize={0}
                       color="primary"
                     >
-                      {imagePullProgress['latest'].status}
+                      {
+                        Object.keys(imagePullProgress)[
+                          Object.keys(imagePullProgress).length - 1
+                        ].status
+                      }
                     </Text>
                     <Button
                       title={
@@ -180,7 +184,7 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
                   </Row>
                   <Column height={showProgress[key] ? 'auto' : 0}>
                     {Object.keys(imagePullProgress)
-                      .filter(k => k !== 'latest')
+                      .slice(0, -1)
                       .map(k => (
                         <Text fontSize={0} marginTop={1}>
                           {k}: {imagePullProgress[k].status}
