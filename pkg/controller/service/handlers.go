@@ -2168,6 +2168,16 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request) {
 								return
 							}
 
+							deviceServiceStates, err := s.deviceServiceStates.GetDeviceServiceStates(
+								r.Context(), project.ID, device.ID, application.ID)
+							if err == nil {
+								applicationStatusInfo.ServiceStates = deviceServiceStates
+							} else {
+								log.WithError(err).Error("get device service states")
+								w.WriteHeader(http.StatusInternalServerError)
+								return
+							}
+
 							allApplicationStatusInfo = append(allApplicationStatusInfo, applicationStatusInfo)
 						}
 
@@ -2561,6 +2571,68 @@ func (s *Service) listDeviceRegistrationTokens(w http.ResponseWriter, r *http.Re
 	})
 }
 
+func (s *Service) setDeviceRegistrationTokenEnvironmentVariable(w http.ResponseWriter, r *http.Request) {
+	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
+		s.validateAuthorization(
+			authz.ResourceDeviceRegistrationTokenEnvironmentVariables, authz.ActionSetDeviceRegistrationTokenEnvironmentVariable,
+			w, r,
+			user, serviceAccount,
+			func(project *models.Project) {
+				s.withDeviceRegistrationToken(w, r, project, func(deviceRegistrationToken *models.DeviceRegistrationToken) {
+					var setDeviceRegistrationTokenEnvironmentVariableRequest struct {
+						Key   string `json:"key" validate:"environmentvariablekey"`
+						Value string `json:"value" validate:"environmentvariablevalue"`
+					}
+					fmt.Println("#")
+					if err := read(r, &setDeviceRegistrationTokenEnvironmentVariableRequest); err != nil {
+						http.Error(w, err.Error(), http.StatusBadRequest)
+						return
+					}
+
+					deviceRegistrationTokenEnvironmentVariable, err := s.deviceRegistrationTokens.SetDeviceRegistrationTokenEnvironmentVariable(
+						r.Context(),
+						deviceRegistrationToken.ID,
+						project.ID,
+						setDeviceRegistrationTokenEnvironmentVariableRequest.Key,
+						setDeviceRegistrationTokenEnvironmentVariableRequest.Value,
+					)
+					if err != nil {
+						log.WithError(err).Error("set device registration token environment variable")
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+
+					utils.Respond(w, deviceRegistrationTokenEnvironmentVariable)
+				})
+			},
+		)
+	})
+}
+
+func (s *Service) deleteDeviceRegistrationTokenEnvironmentVariable(w http.ResponseWriter, r *http.Request) {
+	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
+		s.validateAuthorization(
+			authz.ResourceDeviceRegistrationTokenEnvironmentVariables, authz.ActionDeleteDeviceRegistrationTokenEnvironmentVariable,
+			w, r,
+			user, serviceAccount,
+			func(project *models.Project) {
+				s.withDeviceRegistrationToken(w, r, project, func(deviceRegistrationToken *models.DeviceRegistrationToken) {
+					vars := mux.Vars(r)
+					key := vars["key"]
+
+					if err := s.deviceRegistrationTokens.DeleteDeviceRegistrationTokenEnvironmentVariable(r.Context(),
+						deviceRegistrationToken.ID, project.ID, key,
+					); err != nil {
+						log.WithError(err).Error("delete device registration token environment variable")
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+				})
+			},
+		)
+	})
+}
+
 func (s *Service) setDeviceRegistrationTokenLabel(w http.ResponseWriter, r *http.Request) {
 	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
 		s.validateAuthorization(
@@ -2742,7 +2814,10 @@ func (s *Service) registerDevice(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	device, err := s.devices.CreateDevice(r.Context(), projectID, namesgenerator.GetRandomName(), deviceRegistrationToken.ID, deviceRegistrationToken.Labels, map[string]string{})
+	device, err := s.devices.CreateDevice(r.Context(),
+		projectID, namesgenerator.GetRandomName(), deviceRegistrationToken.ID,
+		deviceRegistrationToken.Labels, deviceRegistrationToken.EnvironmentVariables,
+	)
 	if err != nil {
 		log.WithError(err).Error("create device")
 		w.WriteHeader(http.StatusInternalServerError)

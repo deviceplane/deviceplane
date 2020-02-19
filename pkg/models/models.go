@@ -133,13 +133,14 @@ const (
 )
 
 type DeviceRegistrationToken struct {
-	ID               string            `json:"id" yaml:"id"`
-	CreatedAt        time.Time         `json:"createdAt" yaml:"createdAt"`
-	ProjectID        string            `json:"projectId" yaml:"projectId"`
-	MaxRegistrations *int              `json:"maxRegistrations" yaml:"maxRegistrations"`
-	Name             string            `json:"name" yaml:"name"`
-	Description      string            `json:"description" yaml:"description"`
-	Labels           map[string]string `json:"labels" yaml:"labels"`
+	ID                   string            `json:"id" yaml:"id"`
+	CreatedAt            time.Time         `json:"createdAt" yaml:"createdAt"`
+	ProjectID            string            `json:"projectId" yaml:"projectId"`
+	MaxRegistrations     *int              `json:"maxRegistrations" yaml:"maxRegistrations"`
+	Name                 string            `json:"name" yaml:"name"`
+	Description          string            `json:"description" yaml:"description"`
+	Labels               map[string]string `json:"labels" yaml:"labels"`
+	EnvironmentVariables map[string]string `json:"environmentVariables" yaml:"environmentVariables"`
 }
 
 type DevicesRegisteredWithTokenCount struct {

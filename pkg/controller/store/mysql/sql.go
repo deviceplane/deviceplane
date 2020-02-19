@@ -534,19 +534,19 @@ const createDeviceRegistrationToken = `
 
 // Index: project_id_id
 const getDeviceRegistrationToken = `
-  select id, created_at, project_id, max_registrations, name, description, labels from device_registration_tokens
+  select id, created_at, project_id, max_registrations, name, description, labels, environment_variables from device_registration_tokens
   where id = ? and project_id = ?
 `
 
 // Index: project_id_name
 const lookupDeviceRegistrationToken = `
-  select id, created_at, project_id, max_registrations, name, description, labels from device_registration_tokens
+  select id, created_at, project_id, max_registrations, name, description, labels, environment_variables from device_registration_tokens
   where name = ? and project_id = ?
 `
 
 // Index: project_id_id
 const listDeviceRegistrationTokens = `
-  select id, created_at, project_id, max_registrations, name, description, labels from device_registration_tokens
+  select id, created_at, project_id, max_registrations, name, description, labels, environment_variables from device_registration_tokens
   where project_id = ?
 `
 
@@ -561,6 +561,13 @@ const updateDeviceRegistrationToken = `
 const updateDeviceRegistrationTokenLabels = `
   update device_registration_tokens
   set labels = ?
+  where id = ? and project_id = ?
+`
+
+// Index: project_id_id
+const updateDeviceRegistrationTokenEnvironmentVariables = `
+  update device_registration_tokens
+  set environment_variables = ?
   where id = ? and project_id = ?
 `
 

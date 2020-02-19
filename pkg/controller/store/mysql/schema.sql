@@ -275,6 +275,7 @@ create table if not exists device_registration_tokens (
   description longtext not null,
   max_registrations int,
   labels longtext not null,
+  environment_variables longtext not null,
 
   primary key (id),
   unique name_project_id_unique (name, project_id),
