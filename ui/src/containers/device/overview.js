@@ -135,7 +135,21 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
             original: { application, service, imagePullProgress, errorMessage },
           },
         }) => {
-          const key = `${application.name}:${service}`;
+          const serviceId = `${application.name}:${service}`;
+          let label = 'Pulling image';
+          let layers = [];
+          if (imagePullProgress) {
+            layers = Object.values(imagePullProgress);
+            const tag = layers.find(({ status }) =>
+              status.includes('Pulling from')
+            );
+            if (tag) {
+              label = tag.status;
+              layers = layers.filter(
+                ({ status }) => !status.includes('Pulling from')
+              );
+            }
+          }
           return (
             <Column flex={1}>
               <ServiceState state={value} />
@@ -157,17 +171,15 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
                       fontSize={0}
                       color="primary"
                     >
-                      {
-                        Object.keys(imagePullProgress)[
-                          Object.keys(imagePullProgress).length - 1
-                        ].status
-                      }
+                      {label}
                     </Text>
                     <Button
                       title={
                         <Icon
                           icon={
-                            showProgress[key] ? 'caret-down' : 'caret-right'
+                            showProgress[serviceId]
+                              ? 'caret-down'
+                              : 'caret-right'
                           }
                           size={18}
                           color="primary"
@@ -176,20 +188,18 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
                       onClick={() =>
                         setShowProgress(sp => ({
                           ...sp,
-                          [key]: !sp[key],
+                          [serviceId]: !sp[serviceId],
                         }))
                       }
                       variant="icon"
                     />
                   </Row>
-                  <Column height={showProgress[key] ? 'auto' : 0}>
-                    {Object.keys(imagePullProgress)
-                      .slice(0, -1)
-                      .map(k => (
-                        <Text fontSize={0} marginTop={1}>
-                          {k}: {imagePullProgress[k].status}
-                        </Text>
-                      ))}
+                  <Column height={showProgress[serviceId] ? 'auto' : 0}>
+                    {layers.map(({ id, status }) => (
+                      <Text fontSize={0} marginTop={1}>
+                        {id}: {status}
+                      </Text>
+                    ))}
                   </Column>
                 </>
               )}
