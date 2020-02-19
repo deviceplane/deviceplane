@@ -16,7 +16,7 @@ const RegistrationTokenOverview = ({
         size="xlarge"
         title={registrationToken.name}
         subtitle={registrationToken.description}
-        marginBottom={4}
+        marginBottom={5}
       >
         <Group>
           <Label>ID</Label>
@@ -45,6 +45,26 @@ const RegistrationTokenOverview = ({
             projectId: params.project,
             tokenId: registrationToken.id,
             labelId,
+          })
+        }
+        marginBottom={5}
+      />
+      <EditableLabelTable
+        title="Environment Variables"
+        dataName="Environment Variable"
+        data={registrationToken.environmentVariables}
+        onAdd={environmentVariable =>
+          api.addRegistrationTokenEnvironmentVariable({
+            projectId: params.project,
+            tokenId: registrationToken.id,
+            data: environmentVariable,
+          })
+        }
+        onRemove={key =>
+          api.removeRegistrationTokenEnvironmentVariable({
+            projectId: params.project,
+            tokenId: registrationToken.id,
+            key,
           })
         }
       />

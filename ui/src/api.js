@@ -159,6 +159,20 @@ const api = {
       `projects/${projectId}/deviceregistrationtokens/${tokenId}/labels/${labelId}`
     ),
 
+  addRegistrationTokenEnvironmentVariable: ({ projectId, tokenId, data }) =>
+    put(
+      `projects/${projectId}/deviceregistrationtokens/${tokenId}/environmentvariables`,
+      data
+    ).then(response => {
+      segment.track('Registration Token Environment Variable Added');
+      return response;
+    }),
+
+  removeRegistrationTokenEnvironmentVariable: ({ projectId, tokenId, key }) =>
+    del(
+      `projects/${projectId}/deviceregistrationtokens/${tokenId}/environmentvariables/${key}`
+    ),
+
   applications: ({ projectId }) =>
     get(`projects/${projectId}/applications?full`),
 
