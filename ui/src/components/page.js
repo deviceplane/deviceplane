@@ -69,6 +69,15 @@ const GlobalStyle = createGlobalStyle`
   .ace_gutter-cell {
     padding-left: 0 !important;
   }
+  .ace_string {
+    color: ${props => props.theme.colors.white} !important;
+  }
+  .ace_variable, .ace_tag, .ace_keyword {
+    color: ${props => props.theme.colors.primary} !important;
+  }
+  .ace_paren {
+    color: ${props => props.theme.colors.grays[8]} !important;
+  }
 
   svg[data-icon="caret-down"] {
     fill: ${props => props.theme.colors.white} !important;

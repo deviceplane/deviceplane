@@ -428,8 +428,15 @@ const DeviceOverview = ({
           title="Current Device Metrics"
           subtitle={device.name}
           size="xxlarge"
+          overflow="scroll"
         >
-          <Editor width="100%" height="70vh" value={hostMetrics} readOnly />
+          <Editor
+            width="100%"
+            value={hostMetrics}
+            fontSize={12}
+            mode="json"
+            readOnly
+          />
         </Card>
       </Popup>
     </>
