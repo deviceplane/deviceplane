@@ -127,7 +127,7 @@ func NewStore(db *sql.DB) *Store {
 	}
 }
 
-func (s *Store) CreateUser(ctx context.Context, email, passwordHash, firstName, lastName, company string) (*models.User, error) {
+func (s *Store) CreateUser(ctx context.Context, email, passwordHash, firstName, lastName string) (*models.User, error) {
 	id := newUserID()
 
 	if _, err := s.db.ExecContext(
@@ -138,7 +138,6 @@ func (s *Store) CreateUser(ctx context.Context, email, passwordHash, firstName, 
 		passwordHash,
 		firstName,
 		lastName,
-		company,
 	); err != nil {
 		return nil, err
 	}
@@ -249,19 +248,6 @@ func (s *Store) UpdateLastName(ctx context.Context, id, lastName string) (*model
 	return s.GetUser(ctx, id)
 }
 
-func (s *Store) UpdateCompany(ctx context.Context, id, company string) (*models.User, error) {
-	if _, err := s.db.ExecContext(
-		ctx,
-		updateCompany,
-		company,
-		id,
-	); err != nil {
-		return nil, err
-	}
-
-	return s.GetUser(ctx, id)
-}
-
 func (s *Store) scanUser(scanner scanner) (*models.User, error) {
 	var user models.User
 	if err := scanner.Scan(
@@ -270,7 +256,6 @@ func (s *Store) scanUser(scanner scanner) (*models.User, error) {
 		&user.Email,
 		&user.FirstName,
 		&user.LastName,
-		&user.Company,
 		&user.RegistrationCompleted,
 		&user.SuperAdmin,
 	); err != nil {

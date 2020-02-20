@@ -10,7 +10,6 @@ type User struct {
 	Email                 string    `json:"email" yaml:"email"`
 	FirstName             string    `json:"firstName" yaml:"firstName"`
 	LastName              string    `json:"lastName" yaml:"lastName"`
-	Company               string    `json:"company" yaml:"company"`
 	RegistrationCompleted bool      `json:"registrationCompleted" yaml:"registrationCompleted"`
 	SuperAdmin            bool      `json:"superAdmin" yaml:"superAdmin"`
 }
