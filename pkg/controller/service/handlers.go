@@ -59,7 +59,6 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 			Password  string `json:"password" validate:"password"`
 			FirstName string `json:"firstName" validate:"required,min=1,max=100"`
 			LastName  string `json:"lastName" validate:"required,min=1,max=100"`
-			Company   string `json:"company" validate:"max=100"`
 		}
 		if err := read(r, &registerRequest); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -99,7 +98,7 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 		}
 
 		user, err := s.users.CreateUser(r.Context(), registerRequest.Email, hash.Hash(registerRequest.Password),
-			registerRequest.FirstName, registerRequest.LastName, registerRequest.Company)
+			registerRequest.FirstName, registerRequest.LastName)
 		if err != nil {
 			log.WithError(err).Error("create user")
 			w.WriteHeader(http.StatusInternalServerError)
@@ -395,7 +394,6 @@ func (s *Service) updateMe(w http.ResponseWriter, r *http.Request) {
 			CurrentPassword *string `json:"currentPassword"`
 			FirstName       *string `json:"firstName"`
 			LastName        *string `json:"lastName"`
-			Company         *string `json:"company"`
 		}
 		if err := read(r, &updateUserRequest); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -433,13 +431,6 @@ func (s *Service) updateMe(w http.ResponseWriter, r *http.Request) {
 		if updateUserRequest.LastName != nil {
 			if _, err := s.users.UpdateLastName(r.Context(), user.ID, *updateUserRequest.LastName); err != nil {
 				log.WithError(err).Error("update last name")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-		}
-		if updateUserRequest.Company != nil {
-			if _, err := s.users.UpdateCompany(r.Context(), user.ID, *updateUserRequest.Company); err != nil {
-				log.WithError(err).Error("update company")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}

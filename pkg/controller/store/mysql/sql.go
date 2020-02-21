@@ -7,32 +7,31 @@ const createUser = `
     password_hash,
     first_name,
     last_name,
-    company
   )
-  values (?, ?, ?, ?, ?, ?)
+  values (?, ?, ?, ?, ?)
 `
 
 // Index: primary key
 const getUser = `
-  select id, created_at, email, first_name, last_name, company, registration_completed, super_admin from users
+  select id, created_at, email, first_name, last_name, registration_completed, super_admin from users
   where id = ?
 `
 
 // Index: email
 const lookupUser = `
-  select id, created_at, email, first_name, last_name, company, registration_completed, super_admin from users
+  select id, created_at, email, first_name, last_name, registration_completed, super_admin from users
   where email = ?
 `
 
 // Index: id_password_hash
 const validateUser = `
-  select id, created_at, email, first_name, last_name, company, registration_completed, super_admin from users
+  select id, created_at, email, first_name, last_name, registration_completed, super_admin from users
   where id = ? and password_hash = ?
 `
 
 // Index: email_password_hash
 const validateUserWithEmail = `
-  select id, created_at, email, first_name, last_name, company, registration_completed, super_admin from users
+  select id, created_at, email, first_name, last_name, registration_completed, super_admin from users
   where email = ? and password_hash = ?
 `
 
@@ -61,13 +60,6 @@ const updateFirstName = `
 const updateLastName = `
   update users
   set last_name = ?
-  where id = ?
-`
-
-// Index: primary key
-const updateCompany = `
-  update users
-  set company = ?
   where id = ?
 `
 
