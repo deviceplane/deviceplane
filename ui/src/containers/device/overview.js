@@ -324,7 +324,13 @@ const DeviceOverview = ({
       <Card
         size="xlarge"
         title={device.name}
-        subtitle={<DeviceStatus status={device.status} />}
+        subtitle={
+          <DeviceStatus
+            inline
+            status={device.status}
+            lastSeenAt={device.lastSeenAt}
+          />
+        }
         marginBottom={5}
         actions={[
           {
