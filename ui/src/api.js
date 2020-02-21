@@ -69,14 +69,12 @@ export const useMutation = (endpoint, config = {}) => {
 
   const mutate = async (body = {}) => {
     const res = await fetch(endpoint, {
-      method: 'POST' || config.method,
-      headers:
-        {
-          'Content-Type': 'application/json',
-        } || config.headers,
+      method: config.method || 'POST',
+      headers: config.headers || {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(body),
     });
-    console.log('response', res);
     const result = await responseHandler(res);
     setResult(result);
     if (config.triggers) {
@@ -84,27 +82,53 @@ export const useMutation = (endpoint, config = {}) => {
     }
   };
 
-  console.log(result);
-
   return [mutate, result];
 };
 
 export const endpoints = {
-  login: () => url('login'),
+  login: () => ({ url: url('login') }),
+
+  signup: () => ({ url: url('register') }),
 
   user: () => url('me'),
+
+  updateUser: () => ({ url: url('me'), method: 'PATCH' }),
 
   projects: () => url(`memberships?full`),
 
   project: ({ projectId }) => url(`projects/${projectId}`),
 
-  createProject: () => url(`projects`),
+  createProject: () => ({ url: url(`projects`) }),
+
+  updateProject: ({ projectId }) => ({
+    url: url(`projects/${projectId}`),
+    method: 'PUT',
+  }),
+
+  deleteProject: ({ projectId }) => ({
+    url: url(`projects/${projectId}`),
+    method: 'DELETE',
+  }),
 
   applications: ({ projectId }) =>
     url(`projects/${projectId}/applications?full`),
 
   application: ({ projectId, applicationId }) =>
     url(`projects/${projectId}/applications/${applicationId}?full`),
+
+  createApplication: ({ projectId }) => ({
+    url: url(`projects/${projectId}/applications`),
+  }),
+
+  updateApplication: ({ projectId, applicationId }) => ({
+    url: url(`projects/${projectId}/applications/${applicationId}`),
+    method: 'PATCH',
+  }),
+
+  deleteApplication: ({ projectId, applicationId }) => ({
+    url: url(`projects/${projectId}/applications/${applicationId}`),
+    method: 'DELETE',
+  }),
 
   releases: ({ projectId, applicationId }) =>
     url(`projects/${projectId}/applications/${applicationId}/releases?full`),
@@ -119,15 +143,35 @@ export const endpoints = {
   membership: ({ projectId, userId }) =>
     url(`projects/${projectId}/memberships/${userId}?full`),
 
+  addMember: ({ projectId }) => ({
+    url: url(`projects/${projectId}/memberships`),
+  }),
+
   roles: ({ projectId }) => url(`projects/${projectId}/roles`),
 
   role: ({ projectId, roleId }) => url(`projects/${projectId}/roles/${roleId}`),
+
+  createRole: ({ projectId }) => ({ url: url(`projects/${projectId}/roles`) }),
+
+  updateRole: ({ projectId, roleId }) => ({
+    url: url(`projects/${projectId}/roles/${roleId}`),
+    method: 'PUT',
+  }),
+
+  deleteRole: ({ projectId, roleId }) => ({
+    url: url(`projects/${projectId}/roles/${roleId}`),
+    method: 'DELETE',
+  }),
 
   serviceAccounts: ({ projectId }) =>
     url(`projects/${projectId}/serviceaccounts?full`),
 
   serviceAccount: ({ projectId, serviceId }) =>
     url(`projects/${projectId}/serviceaccounts/${serviceId}?full`),
+
+  createServiceAccount: ({ projectId }) => ({
+    url: url(`projects/${projectId}/serviceaccounts`),
+  }),
 
   devices: ({ projectId, queryString }) =>
     url(`projects/${projectId}/devices${queryString}`),
@@ -143,18 +187,20 @@ export const endpoints = {
 
   createRegistrationToken: ({ projectId }) =>
     url(`projects/${projectId}/deviceregistrationtokens`),
+
+  updateRegistrationToken: ({ projectId, tokenId }) => ({
+    url: url(`projects/${projectId}/deviceregistrationtokens/${tokenId}`),
+    method: 'PUT',
+  }),
+
+  deleteRegistrationToken: ({ projectId, tokenId }) => ({
+    url: url(`projects/${projectId}/deviceregistrationtokens/${tokenId}`),
+    method: 'DELETE',
+  }),
 };
 
 const api = {
   logout: () => post('logout'),
-
-  signup: ({ email, password, firstName, lastName }) =>
-    post(`register`, {
-      email,
-      password,
-      firstName,
-      lastName,
-    }),
 
   completeRegistration: ({ registrationTokenValue }) =>
     post('completeregistration', { registrationTokenValue }),
@@ -172,13 +218,7 @@ const api = {
 
   user: () => get('me'),
 
-  updateUser: data => patch('me', data),
-
   project: ({ projectId }) => get(`projects/${projectId}`),
-
-  updateProject: ({ projectId, data }) => put(`projects/${projectId}`, data),
-
-  deleteProject: ({ projectId }) => del(`projects/${projectId}`),
 
   devices: ({ projectId, queryString = '' }) =>
     get(`projects/${projectId}/devices${queryString}`),
@@ -229,21 +269,6 @@ const api = {
   defaultRegistrationToken: ({ projectId }) =>
     get(`projects/${projectId}/deviceregistrationtokens/default`),
 
-  updateRegistrationToken: ({
-    projectId,
-    tokenId,
-    data: { name, description, maxRegistrations, settings },
-  }) =>
-    put(`projects/${projectId}/deviceregistrationtokens/${tokenId}`, {
-      name,
-      description,
-      maxRegistrations: Number.parseInt(maxRegistrations),
-      settings,
-    }),
-
-  deleteRegistrationToken: ({ projectId, tokenId }) =>
-    del(`projects/${projectId}/deviceregistrationtokens/${tokenId}`),
-
   addRegistrationTokenLabel: ({ projectId, tokenId, data }) =>
     put(
       `projects/${projectId}/deviceregistrationtokens/${tokenId}/labels`,
@@ -275,41 +300,6 @@ const api = {
   application: ({ projectId, applicationId }) =>
     get(`projects/${projectId}/applications/${applicationId}?full`),
 
-  createApplication: ({ projectId, data: { name, description } }) =>
-    post(`projects/${projectId}/applications`, { name, description }).then(
-      response => {
-        segment.track('Application Created');
-        return response;
-      }
-    ),
-
-  updateApplication: ({ projectId, applicationId, data }) =>
-    patch(`projects/${projectId}/applications/${applicationId}`, data),
-
-  deleteApplication: ({ projectId, applicationId }) =>
-    del(`projects/${projectId}/applications/${applicationId}`),
-
-  createRole: ({ projectId, data: { name, description, config } }) =>
-    post(`projects/${projectId}/roles`, { name, description, config }).then(
-      response => {
-        segment.track('Role Created');
-
-        return response;
-      }
-    ),
-
-  updateRole: ({ projectId, roleId, data: { name, description, config } }) =>
-    put(`projects/${projectId}/roles/${roleId}`, { name, description, config }),
-
-  deleteRole: ({ projectId, roleId }) =>
-    del(`projects/${projectId}/roles/${roleId}`),
-
-  addMember: ({ projectId, data: { email } }) =>
-    post(`projects/${projectId}/memberships`, { email }).then(response => {
-      segment.track('Member Added');
-      return response;
-    }),
-
   removeMember: ({ projectId, userId }) =>
     del(`projects/${projectId}/memberships/${userId}`),
 
@@ -323,12 +313,6 @@ const api = {
     del(
       `projects/${projectId}/memberships/${userId}/roles/${roleId}/membershiprolebindings`
     ),
-
-  createServiceAccount: ({ projectId, data }) =>
-    post(`projects/${projectId}/serviceaccounts`, data).then(response => {
-      segment.track('Service Account Created');
-      return response;
-    }),
 
   updateServiceAccount: ({
     projectId,

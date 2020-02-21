@@ -1,15 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigation } from 'react-navi';
-import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 
-import utils from '../../utils';
-import api from '../../api';
+import { endpoints } from '../../api';
+import segment from '../../lib/segment';
 import validators from '../../validators';
 import Field from '../../components/field';
 import Card from '../../components/card';
-import Alert from '../../components/alert';
-import { Row, Form, Button, toaster } from '../../components/core';
+import { Form, toaster } from '../../components/core';
 
 const validationSchema = yup.object().shape({
   name: validators.name.required(),
@@ -21,56 +19,24 @@ const CreateServiceAccount = ({
     data: { params },
   },
 }) => {
-  const { register, handleSubmit, errors } = useForm({ validationSchema });
   const navigation = useNavigation();
-  const [backendError, setBackendError] = useState();
-
-  const submit = async data => {
-    try {
-      await api.createServiceAccount({ projectId: params.project, data });
-      toaster.success('Service acccount created.');
-      navigation.navigate(`/${params.project}/iam/service-accounts/`);
-    } catch (error) {
-      setBackendError(
-        utils.parseError(error, 'Service Account creation failed.')
-      );
-      console.error(error);
-    }
-  };
 
   return (
     <Card title="Create Service Account" size="large">
-      <Alert show={backendError} variant="error" description={backendError} />
       <Form
-        onSubmit={e => {
-          setBackendError(null);
-          handleSubmit(submit)(e);
+        endpoint={endpoints.createServiceAccount({ projectId: params.project })}
+        onSuccess={() => {
+          segment.track('Service Account Created');
+          navigation.navigate(`/${params.project}/iam/service-accounts/`);
+          toaster.success('Service acccount created.');
         }}
+        onCancel={`/${params.project}/iam/service-accounts/`}
+        validationSchema={validationSchema}
+        errorMessages={{ default: 'Service Account creation failed.' }}
       >
-        <Field
-          required
-          autoFocus
-          label="Name"
-          name="name"
-          ref={register}
-          errors={errors.name}
-        />
-        <Field
-          type="textarea"
-          label="Description"
-          name="description"
-          ref={register}
-          errors={errors.description}
-        />
-        <Button marginTop={3} title="Create" type="submit" />
+        <Field required autoFocus label="Name" name="name" />
+        <Field type="textarea" label="Description" name="description" />
       </Form>
-      <Row marginTop={4}>
-        <Button
-          title="Cancel"
-          variant="text"
-          href={`/${params.project}/iam/service-accounts/`}
-        />
-      </Row>
     </Card>
   );
 };

@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import React from 'react';
 import * as yup from 'yup';
 import { useCurrentRoute } from 'react-navi';
-import api from '../api';
-import utils from '../utils';
+
+import { endpoints } from '../api';
 import Card from '../components/card';
 import Field from '../components/field';
-import Alert from '../components/alert';
-import { Form, Button, toaster } from '../components/core';
+import { Form, toaster } from '../components/core';
 
+const endpoint = endpoints.updateUser();
 const validationSchema = yup.object().shape({
   fullName: yup
     .string()
@@ -22,58 +21,42 @@ const Profile = ({ close }) => {
       context: { currentUser, setCurrentUser },
     },
   } = useCurrentRoute();
-  const { register, handleSubmit, formState, errors } = useForm({
-    validationSchema,
-    defaultValues: {
-      fullName: `${currentUser.firstName} ${currentUser.lastName}`,
-    },
-  });
-  const [backendError, setBackendError] = useState();
-
-  const submit = async data => {
-    const firstSpace = data.fullName.indexOf(' ');
-    if (firstSpace === -1) {
-      data.firstName = data.fullName;
-      data.lastName = ' ';
-    } else {
-      data.firstName = data.fullName.substr(0, firstSpace);
-      data.lastName = data.fullName.substr(firstSpace + 1);
-    }
-    delete data.fullName;
-
-    try {
-      await api.updateUser(data);
-      setCurrentUser({ ...currentUser, ...data });
-      toaster.success('Profile updated.');
-      close();
-    } catch (error) {
-      setBackendError(utils.parseError(error, 'Profile update failed.'));
-      console.error(error);
-    }
-  };
 
   return (
     <Card title="Profile" border size="large">
-      <Alert show={backendError} variant="error" description={backendError} />
       <Form
-        onSubmit={e => {
-          setBackendError(null);
-          handleSubmit(submit)(e);
+        endpoint={endpoint}
+        onSuccess={user => {
+          setCurrentUser({ ...currentUser, ...user });
+          toaster.success('Profile updated.');
+          close();
         }}
+        onData={({ fullName }) => {
+          let firstName, lastName;
+          const firstSpace = fullName.indexOf(' ');
+          if (firstSpace === -1) {
+            firstName = fullName;
+            lastName = ' ';
+          } else {
+            firstName = fullName.substr(0, firstSpace);
+            lastName = fullName.substr(firstSpace + 1);
+          }
+          return {
+            firstName,
+            lastName,
+          };
+        }}
+        validationSchema={validationSchema}
+        defaultValues={{
+          fullName: `${currentUser.firstName} ${currentUser.lastName}`,
+        }}
+        errorMessages={{ default: 'Profile update failed.' }}
       >
         <Field
           required
           autoCapitalize="words"
           label="Full Name"
           name="fullName"
-          ref={register}
-          errors={errors.fullName}
-        />
-        <Button
-          marginTop={3}
-          title="Update"
-          type="submit"
-          disabled={!formState.dirty}
         />
       </Form>
     </Card>

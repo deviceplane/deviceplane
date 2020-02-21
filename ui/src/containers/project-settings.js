@@ -1,26 +1,15 @@
-import React from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useState } from 'react';
 import { useNavigation } from 'react-navi';
 import * as yup from 'yup';
 
 import api, { useRequest, endpoints } from '../api';
-import utils from '../utils';
 import storage from '../storage';
 import validators from '../validators';
 import Layout from '../components/layout';
 import Card from '../components/card';
 import Field from '../components/field';
 import Popup from '../components/popup';
-import Alert from '../components/alert';
-import {
-  Text,
-  Button,
-  Form,
-  Input,
-  Label,
-  Group,
-  toaster,
-} from '../components/core';
+import { Text, Form, toaster } from '../components/core';
 
 const validationSchema = yup.object().shape({
   name: validators.name.required(),
@@ -37,45 +26,8 @@ const ProjectSettings = ({
       suspense: true,
     }
   );
-
-  const { control, register, handleSubmit, errors, formState } = useForm({
-    validationSchema,
-    defaultValues: {
-      name: project.name,
-      enableSSHKeys: storage.get('enableSSHKeys', project.name) || false,
-    },
-  });
   const navigation = useNavigation();
-  const [showDeletePopup, setShowDeletePopup] = React.useState();
-  const [confirmation, setConfirmation] = React.useState();
-  const [backendError, setBackendError] = React.useState();
-
-  const submit = async data => {
-    data.datadogApiKey = project.datadogApiKey;
-    try {
-      storage.set('enableSSHKeys', data.enableSSHKeys, project.name);
-      await api.updateProject({ projectId: project.name, data });
-      toaster.success('Project updated.');
-      navigation.navigate(`/${data.name}`);
-    } catch (error) {
-      setBackendError(utils.parseError(error, 'Project update failed.'));
-      console.error(error);
-    }
-  };
-
-  const submitDelete = async e => {
-    e.preventDefault();
-    setBackendError(null);
-    try {
-      await api.deleteProject({ projectId: project.name });
-      toaster.success('Project deleted.');
-      navigation.navigate(`/projects`);
-    } catch (error) {
-      setBackendError(utils.parseError(error, 'Project deletion failed.'));
-      console.error(error);
-    }
-    setShowDeletePopup(false);
-  };
+  const [showDeletePopup, setShowDeletePopup] = useState();
 
   return (
     <Layout alignItems="center">
@@ -91,36 +43,28 @@ const ProjectSettings = ({
             },
           ]}
         >
-          <Alert
-            show={backendError}
-            variant="error"
-            description={backendError}
-          />
           <Form
-            onSubmit={e => {
-              setBackendError(null);
-              handleSubmit(submit)(e);
+            endpoint={endpoints.updateProject({ projectId: project.name })}
+            onData={data => ({ ...data, datadogApiKey: project.datadogApiKey })}
+            onSuccess={data => {
+              console.log(data);
+              storage.set('enableSSHKeys', data.enableSSHKeys, data.name);
+              navigation.navigate(`/${data.name}`);
+              toaster.success('Project updated.');
             }}
+            validationSchema={validationSchema}
+            defaultValues={{
+              name: project.name,
+              enableSSHKeys:
+                storage.get('enableSSHKeys', project.name) || false,
+            }}
+            errorMessages={{ default: 'Project update failed.' }}
           >
-            <Field
-              required
-              label="Name"
-              name="name"
-              ref={register}
-              errors={errors.name}
-            />
-
+            <Field required label="Name" name="name" />
             <Field
               type="checkbox"
               label="Enable SSH Keys"
               name="enableSSHKeys"
-              control={control}
-            />
-            <Button
-              marginTop={3}
-              type="submit"
-              title="Update"
-              disabled={!formState.dirty}
             />
           </Form>
         </Card>
@@ -132,21 +76,17 @@ const ProjectSettings = ({
               permanently delete the <strong>{project.name}</strong> project.
               <p></p>Please enter the project name to confirm.
             </Text>
-            <Form onSubmit={submitDelete}>
-              <Group>
-                <Label>Project Name</Label>
-                <Input
-                  onChange={e => setConfirmation(e.target.value)}
-                  value={confirmation}
-                />
-              </Group>
-
-              <Button
-                variant="danger"
-                type="submit"
-                title="Delete"
-                disabled={confirmation !== project.name}
-              />
+            <Form
+              endpoint={endpoints.deleteProject({ projectId: project.name })}
+              onSuccess={() => {
+                setShowDeletePopup(false);
+                navigation.navigate(`/projects`);
+                toaster.success('Project deleted.');
+              }}
+              submitLabel="Delete"
+              errorMessages={{ default: 'Project deletion failed.' }}
+            >
+              <Field name="name" label="Project Name" />
             </Form>
           </Card>
         </Popup>

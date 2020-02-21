@@ -1,87 +1,47 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigation } from 'react-navi';
-import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 
-import api from '../../api';
-import utils from '../../utils';
+import { endpoints } from '../../api';
+import segment from '../../lib/segment';
 import validators from '../../validators';
 import Card from '../../components/card';
 import Field from '../../components/field';
-import Alert from '../../components/alert';
-import { Row, Button, Form, toaster } from '../../components/core';
+import { Form, toaster } from '../../components/core';
 
 const validationSchema = yup.object().shape({
   name: validators.name.required(),
   description: yup.string(),
   config: yup.string().required(),
 });
+const errorMessages = {
+  default: 'Role creation failed.',
+};
 
 const CreateRole = ({
   route: {
     data: { params },
   },
 }) => {
-  const { handleSubmit, register, control, errors } = useForm({
-    validationSchema,
-  });
   const navigation = useNavigation();
-  const [backendError, setBackendError] = useState();
-
-  const submit = async data => {
-    try {
-      await api.createRole({ projectId: params.project, data });
-      toaster.success('Role created.');
-      navigation.navigate(`/${params.project}/iam/roles`);
-    } catch (error) {
-      setBackendError(utils.parseError(error, 'Role creation failed.'));
-      console.error(error);
-    }
-  };
-
   return (
     <Card title="Create Role" size="large">
-      <Alert show={backendError} variant="error" description={backendError} />
       <Form
-        onSubmit={e => {
-          setBackendError(null);
-          handleSubmit(submit)(e);
+        endpoint={endpoints.createRole({ projectId: params.project })}
+        onSuccess={() => {
+          segment.track('Role Created');
+          navigation.navigate(`/${params.project}/iam/roles`);
+          toaster.success('Role created.');
         }}
+        onCancel={`/${params.project}/iam/roles`}
+        validationSchema={validationSchema}
+        errorMessages={errorMessages}
+        submitLabel="Create"
       >
-        <Field
-          required
-          autoFocus
-          label="Name"
-          name="name"
-          ref={register}
-          errors={errors.name}
-        />
-
-        <Field
-          type="textarea"
-          label="Description"
-          name="description"
-          ref={register}
-          errors={errors.description}
-        />
-
-        <Field
-          type="editor"
-          label="Config"
-          name="config"
-          width="100%"
-          control={control}
-          errors={errors.config}
-        />
-        <Button marginTop={3} title="Create" type="submit" />
+        <Field required autoFocus label="Name" name="name" />
+        <Field type="textarea" label="Description" name="description" />
+        <Field type="editor" label="Config" name="config" width="100%" />
       </Form>
-      <Row marginTop={4}>
-        <Button
-          title="Cancel"
-          variant="text"
-          href={`/${params.project}/iam/roles`}
-        />
-      </Row>
     </Card>
   );
 };

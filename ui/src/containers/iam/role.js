@@ -1,22 +1,21 @@
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { useNavigation } from 'react-navi';
 
-import api, { useRequest, endpoints } from '../../api';
-import utils from '../../utils';
+import { useRequest, endpoints } from '../../api';
 import validators from '../../validators';
 import Card from '../../components/card';
 import Field from '../../components/field';
 import Popup from '../../components/popup';
-import Alert from '../../components/alert';
-import { Text, Button, Form, toaster } from '../../components/core';
+import { Text, Form, toaster } from '../../components/core';
 
 const validationSchema = yup.object().shape({
   name: validators.name.required(),
   description: yup.string(),
   config: yup.string().required(),
 });
+const updateErrorMessages = { default: 'Role update failed.' };
+const deleteErrorMessages = { default: 'Role deletion failed.' };
 
 const Role = ({
   route: {
@@ -27,45 +26,8 @@ const Role = ({
     endpoints.role({ projectId: params.project, roleId: params.role }),
     { suspense: true }
   );
-  const { register, handleSubmit, errors, formState, control } = useForm({
-    validationSchema,
-    defaultValues: {
-      name: role.name,
-      description: role.description,
-      config: role.config,
-    },
-  });
   const navigation = useNavigation();
-  const [backendError, setBackendError] = useState();
   const [showDeletePopup, setShowDeletePopup] = useState();
-
-  const submit = async data => {
-    try {
-      await api.updateRole({
-        projectId: params.project,
-        roleId: role.id,
-        data,
-      });
-      toaster.success('Role updated.');
-      navigation.navigate(`/${params.project}/iam/roles`);
-    } catch (error) {
-      setBackendError(utils.parseError(error, 'Role update failed.'));
-      console.error(error);
-    }
-  };
-
-  const submitDelete = async () => {
-    setBackendError(null);
-    try {
-      await api.deleteRole({ projectId: params.project, roleId: role.id });
-      toaster.success('Role deleted.');
-      navigation.navigate(`/${params.project}/iam/roles`);
-    } catch (error) {
-      setBackendError(utils.parseError(error, 'Role deletion failed.'));
-      console.error(error);
-    }
-    setShowDeletePopup(false);
-  };
 
   return (
     <>
@@ -80,41 +42,26 @@ const Role = ({
           },
         ]}
       >
-        <Alert show={backendError} variant="error" description={backendError} />
         <Form
-          onSubmit={e => {
-            setBackendError(null);
-            handleSubmit(submit)(e);
+          endpoint={endpoints.updateRole({
+            projectId: params.project,
+            roleId: role.id,
+          })}
+          onSuccess={() => {
+            toaster.success('Role updated.');
+            navigation.navigate(`/${params.project}/iam/roles`);
           }}
+          validationSchema={validationSchema}
+          defaultValues={{
+            name: role.name,
+            description: role.description,
+            config: role.config,
+          }}
+          errorMessages={updateErrorMessages}
         >
-          <Field
-            required
-            label="Name"
-            name="name"
-            ref={register}
-            errors={errors.name}
-          />
-          <Field
-            type="textarea"
-            label="Description"
-            name="description"
-            ref={register}
-            errors={errors.description}
-          />
-          <Field
-            type="editor"
-            label="Config"
-            name="config"
-            width="100%"
-            control={control}
-            errors={errors.config}
-          />
-          <Button
-            marginTop={3}
-            title="Update"
-            type="submit"
-            disabled={!formState.dirty}
-          />
+          <Field required label="Name" name="name" />
+          <Field type="textarea" label="Description" name="description" />
+          <Field type="editor" label="Config" name="config" width="100%" />
         </Form>
       </Card>
       <Popup
@@ -123,15 +70,25 @@ const Role = ({
         onClose={() => setShowDeletePopup(false)}
       >
         <Card title="Delete Role" border size="large">
-          <Text>
-            You are about to delete the <strong>{role.name}</strong> role.
-          </Text>
-          <Button
-            marginTop={5}
-            title="Delete"
-            onClick={submitDelete}
-            variant="danger"
-          />
+          <Form
+            endpoint={endpoints.deleteRole({
+              projectId: params.project,
+              roleId: role.id,
+            })}
+            onSuccess={() => {
+              setShowDeletePopup(false);
+
+              navigation.navigate(`/${params.project}/iam/roles`);
+              toaster.success('Role deleted.');
+            }}
+            submitLabel="Delete"
+            submitVariant="danger"
+            errorMessages={deleteErrorMessages}
+          >
+            <Text>
+              You are about to delete the <strong>{role.name}</strong> role.
+            </Text>
+          </Form>
         </Card>
       </Popup>
     </>

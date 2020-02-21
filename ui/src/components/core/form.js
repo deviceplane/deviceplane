@@ -21,29 +21,38 @@ export const Form = ({
   onSubmit,
   onData,
   onCancel,
-  onSuccess,
-  onError,
-  endpoint,
+  onSuccess = () => {},
+  onError = () => {},
+  endpoint = {},
   validationSchema,
   defaultValues,
   errorMessages,
   alert,
-  submitLabel = 'Submit',
+  submitLabel = 'Update',
   submitDisabled,
+  submitVariant,
   children,
 }) => {
-  const { handleSubmit, register, errors, formState } = useForm({
+  const {
+    handleSubmit,
+    register,
+    control,
+    errors,
+    formState,
+    getValues,
+  } = useForm({
     defaultValues,
     validationSchema,
   });
   const submitButtonRef = useRef(null);
   const navigation = useNavigation();
-  const [mutate, { data, success, error }] = useMutation(endpoint, {
+  const [mutate, { data, success, error }] = useMutation(endpoint.url, {
+    method: endpoint.method,
     errors: errorMessages,
   });
   useEffect(() => {
     if (success) {
-      onSuccess(data);
+      onSuccess({ ...getValues({ nest: true }), ...data });
     }
   }, [success]);
   useEffect(() => {
@@ -71,6 +80,7 @@ export const Form = ({
           ...{
             ...child.props,
             register,
+            control,
             errors: errors[child.props.name],
             key: child.props.name,
           },
@@ -89,9 +99,10 @@ export const Form = ({
         : modifyChild(children)}
       <Button
         ref={submitButtonRef}
+        variant={submitVariant}
         type="submit"
         title={submitLabel}
-        disabled={submitDisabled || formState.isSubmitting}
+        disabled={submitDisabled || formState.isSubmitting || !formState.dirty}
       />
     </StyledForm>
   );

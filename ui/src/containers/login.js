@@ -8,6 +8,7 @@ import Card from '../components/card';
 import Field from '../components/field';
 import { Column, Row, Form, Button } from '../components/core';
 
+const endpoint = endpoints.login();
 const validationSchema = yup.object().shape({
   email: validators.email.required(),
   password: yup.string().required(),
@@ -18,13 +19,13 @@ const Login = ({
     data: { params, context },
   },
 }) => {
-  const [login, { data: loggedIn, error }] = useMutation(endpoints.login(), {
+  const [login, { success, error }] = useMutation(endpoint.url, {
     errors: {
       403: 'Email confirmation required',
       default: 'Invalid credentials',
     },
   });
-  const { data: user } = useRequest(loggedIn ? endpoints.user() : null);
+  const { data: user } = useRequest(success ? endpoints.user() : null);
   const navigation = useNavigation();
 
   useEffect(() => {

@@ -1,18 +1,19 @@
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import React from 'react';
 import { useNavigation } from 'react-navi';
 import * as yup from 'yup';
 
-import api, { useRequest, endpoints } from '../../api';
-import utils from '../../utils';
+import { useRequest, endpoints } from '../../api';
 import Card from '../../components/card';
 import Field from '../../components/field';
 import Alert from '../../components/alert';
-import { Form, Row, Button } from '../../components/core';
+import { Form } from '../../components/core';
 
 const validationSchema = yup.object().shape({
   rawConfig: yup.string().required(),
 });
+const errorMessages = {
+  default: 'Release creation failed.',
+};
 
 const CreateRelease = ({
   route: {
@@ -28,59 +29,33 @@ const CreateRelease = ({
       suspense: true,
     }
   );
-  const { control, handleSubmit, errors } = useForm({
-    validationSchema,
-    defaultValues: {
-      rawConfig: application.latestRelease
-        ? application.latestRelease.rawConfig
-        : '',
-    },
-  });
   const navigation = useNavigation();
-  const [backendError, setBackendError] = useState();
-
-  const submit = async data => {
-    try {
-      await api.createRelease({
-        projectId: params.project,
-        applicationId: application.id,
-        data,
-      });
-      navigation.navigate(
-        `/${params.project}/applications/${application.name}`
-      );
-    } catch (error) {
-      setBackendError(utils.parseError(error, 'Release creation failed.'));
-      console.error(error);
-    }
-  };
 
   return (
     <Card title="Create Release" size="xlarge">
       <Alert show={backendError} variant="error" description={backendError} />
       <Form
-        onSubmit={e => {
-          setBackendError(null);
-          handleSubmit(submit)(e);
+        endpoint={endpoints.createRelease({
+          projectId: params.project,
+          applicationId: application.id,
+        })}
+        onSuccess={() => {
+          navigation.navigate(
+            `/${params.project}/applications/${application.name}`
+          );
         }}
+        onCancel={`/${params.project}/applications/${application.name}/releases`}
+        validationSchema={validationSchema}
+        defaultValues={{
+          rawConfig: application.latestRelease
+            ? application.latestRelease.rawConfig
+            : '',
+        }}
+        errorMessages={errorMessages}
+        submitLabel="Create"
       >
-        <Field
-          type="editor"
-          label="Config"
-          width="100%"
-          name="rawConfig"
-          control={control}
-          errors={errors.rawConfig}
-        />
-        <Button marginTop={3} type="submit" title="Create" />
+        <Field type="editor" label="Config" width="100%" name="rawConfig" />
       </Form>
-      <Row marginTop={4}>
-        <Button
-          title="Cancel"
-          variant="text"
-          href={`/${params.project}/applications/${application.name}/releases`}
-        />
-      </Row>
     </Card>
   );
 };

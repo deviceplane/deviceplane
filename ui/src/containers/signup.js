@@ -1,16 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigation } from 'react-navi';
-import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 
-import api from '../api';
-import utils from '../utils';
+import { endpoints } from '../api';
 import validators from '../validators';
 import Card from '../components/card';
 import Field from '../components/field';
-import Alert from '../components/alert';
-import { Column, Button, Form, Text, Link, toaster } from '../components/core';
+import { Column, Form, Text, Link, toaster } from '../components/core';
 
+const endpoint = endpoints.signup();
 const validationSchema = yup.object().shape({
   fullName: yup
     .string()
@@ -19,44 +17,12 @@ const validationSchema = yup.object().shape({
   email: validators.email.required(),
   password: validators.password.required(),
 });
+const errorMessages = {
+  default: 'Registration failed. Please contact us at support@deviceplane.com.',
+};
 
 const Signup = () => {
-  const { register, handleSubmit, errors } = useForm({
-    validationSchema,
-  });
   const navigation = useNavigation();
-  const [backendError, setBackendError] = useState();
-
-  const submit = async data => {
-    const firstSpace = data.fullName.indexOf(' ');
-
-    if (firstSpace === -1) {
-      data.firstName = data.fullName;
-      data.lastName = ' ';
-    } else {
-      data.firstName = data.fullName.substr(0, firstSpace);
-      data.lastName = data.fullName.substr(firstSpace + 1);
-    }
-
-    delete data.fullName;
-
-    try {
-      const response = await api.signup(data);
-      navigation.navigate('/login');
-      if (!response.data.registrationCompleted) {
-        toaster.success('Check your email to confirm your registration.');
-      }
-    } catch (error) {
-      setBackendError(
-        utils.parseError(
-          error,
-          'Registration failed. Please contact us at support@deviceplane.com.'
-        )
-      );
-      console.error(error);
-    }
-  };
-
   return (
     <Column
       alignItems="center"
@@ -73,12 +39,32 @@ const Signup = () => {
         title="Sign up"
         actions={[{ href: '/login', title: 'Log in', variant: 'tertiary' }]}
       >
-        <Alert show={backendError} variant="error" description={backendError} />
         <Form
-          onSubmit={e => {
-            setBackendError(null);
-            handleSubmit(submit)(e);
+          endpoint={endpoint}
+          onSuccess={data => {
+            navigation.navigate('/login');
+            if (!data.registrationCompleted) {
+              toaster.success('Check your email to confirm your registration.');
+            }
           }}
+          onData={({ fullName }) => {
+            let firstName, lastName;
+            const firstSpace = fullName.indexOf(' ');
+            if (firstSpace === -1) {
+              firstName = fullName;
+              lastName = ' ';
+            } else {
+              firstName = fullName.substr(0, firstSpace);
+              lastName = fullName.substr(firstSpace + 1);
+            }
+            return {
+              firstName,
+              lastName,
+            };
+          }}
+          errorMessages={errorMessages}
+          validationSchema={validationSchema}
+          submitLabel="Sign up"
         >
           <Field
             required
@@ -87,8 +73,6 @@ const Signup = () => {
             autoCapitalize="on"
             label="Full Name"
             name="fullName"
-            ref={register}
-            errors={errors.fullName}
             maxLength={128}
           />
           <Field
@@ -97,8 +81,6 @@ const Signup = () => {
             type="email"
             label="Email"
             name="email"
-            ref={register}
-            errors={errors.email}
             maxLength={64}
           />
           <Field
@@ -106,12 +88,9 @@ const Signup = () => {
             type="password"
             label="Password"
             name="password"
-            ref={register}
-            errors={errors.password}
             hint="Password must be at least 8 characters."
             maxLength={64}
           />
-          <Button title="Sign up" justifyContent="center" />
         </Form>
         <Text marginTop={5} fontSize={1} fontWeight={0}>
           By signing up you agree to the{' '}

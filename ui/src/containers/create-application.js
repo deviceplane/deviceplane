@@ -1,16 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigation } from 'react-navi';
 import * as yup from 'yup';
-import { useForm } from 'react-hook-form';
 
-import api from '../api';
-import utils from '../utils';
+import { endpoints } from '../api';
+import segment from '../lib/segment';
 import validators from '../validators';
 import Layout from '../components/layout';
 import Card from '../components/card';
 import Field from '../components/field';
-import Alert from '../components/alert';
-import { Button, Row, Form, toaster } from '../components/core';
+import { Form } from '../components/core';
 
 const validationSchema = yup.object().shape({
   name: validators.name.required(),
@@ -22,55 +20,26 @@ const CreateApplication = ({
     data: { params },
   },
 }) => {
-  const { register, handleSubmit, errors } = useForm({
-    validationSchema,
-  });
   const navigation = useNavigation();
-  const [backendError, setBackendError] = useState();
-
-  const submit = async data => {
-    try {
-      await api.createApplication({ projectId: params.project, data });
-      navigation.navigate(`/${params.project}/applications/${data.name}`);
-    } catch (error) {
-      setBackendError(utils.parseError(error, 'Application creation failed.'));
-      console.error(error);
-    }
-  };
 
   return (
     <Layout alignItems="center">
       <Card title="Create Application" size="large">
-        <Alert show={backendError} variant="error" description={backendError} />
         <Form
-          onSubmit={e => {
-            setBackendError(null);
-            handleSubmit(submit)(e);
+          endpoint={endpoints.createApplication({ projectId: params.project })}
+          onSuccess={({ name }) => {
+            segment.track('Application Created');
+            navigation.navigate(`/${params.project}/applications/${name}`);
           }}
+          onCancel={() =>
+            navigation.navigate(`/${params.project}/applications`)
+          }
+          validationSchema={validationSchema}
+          submitLabel="Create"
+          errorMessages={{ default: 'Application creation failed.' }}
         >
-          <Field
-            required
-            autoFocus
-            label="Name"
-            name="name"
-            ref={register}
-            errors={errors.name}
-          />
-          <Field
-            label="Description"
-            name="description"
-            type="textarea"
-            ref={register}
-            errors={errors.description}
-          />
-          <Button marginTop={3} type="submit" title="Create Application" />
-          <Row marginTop={4}>
-            <Button
-              title="Cancel"
-              variant="text"
-              href={`/${params.project}/applications`}
-            />
-          </Row>
+          <Field required autoFocus label="Name" name="name" />
+          <Field label="Description" name="description" type="textarea" />
         </Form>
       </Card>
     </Layout>
