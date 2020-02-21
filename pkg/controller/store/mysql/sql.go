@@ -6,7 +6,7 @@ const createUser = `
     email,
     password_hash,
     first_name,
-    last_name,
+    last_name
   )
   values (?, ?, ?, ?, ?)
 `
