@@ -2927,6 +2927,16 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		deviceServiceStates, err := s.deviceServiceStates.ListDeviceServiceStates(
+			r.Context(), project.ID, device.ID)
+		if err == nil {
+			bundle.ServiceStates = deviceServiceStates
+		} else {
+			log.WithError(err).Error("list device service states")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		utils.Respond(w, bundle)
 	})
 }
