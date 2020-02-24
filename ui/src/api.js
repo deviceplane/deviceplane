@@ -15,7 +15,10 @@ const patch = (path, ...rest) => axios.patch(url(path), ...rest);
 const api = {
   login: ({ email, password }) => post('login', { email, password }),
 
-  logout: () => post('logout'),
+  logout: () =>
+    post('logout').then(() => {
+      segment.reset();
+    }),
 
   signup: ({ email, password, firstName, lastName }) =>
     post(`register`, {
