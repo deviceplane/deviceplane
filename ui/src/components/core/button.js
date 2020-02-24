@@ -196,7 +196,6 @@ export const Btn = styled(Box).attrs({ as: 'button' })`
     cursor: not-allowed;
     opacity: 0.4;
   }
-
   &:focus {
     outline: none;
   }
