@@ -5,23 +5,7 @@ import { useActive } from 'react-navi';
 import AvatarMenu from './avatar-menu';
 import ProjectSelector from './project-selector';
 import Logo from './icons/logo';
-import { Row, Link, Icon } from './core';
-
-const HeaderLink = styled(Link)`
-  display: flex;
-  align-items: center;
-  color: ${props => props.theme.colors.white};
-  font-weight: ${props => props.theme.fontWeights[1]};
-  font-size: ${props => props.theme.fontSizes[1]}px;
-  &:hover {
-    color: ${props => props.theme.colors.primary};
-    border-color: ${props => props.theme.colors.primary};
-  }
-
-  &:hover svg {
-    fill: ${props => props.theme.colors.primary};
-  }
-`;
+import { Text, Button, Row, Link, Icon } from './core';
 
 const Header = ({ children }) => {
   const isProjectsRoute = useActive('/projects');
@@ -61,19 +45,18 @@ const Header = ({ children }) => {
           {children}
         </Row>
         <Row justifyContent="flex-end" alignItems="center" flex={1}>
-          <HeaderLink
+          <Button
             newTab
+            variant="tertiary"
+            title={
+              <>
+                <Icon icon="manual" size={12} color="primary" marginRight={2} />
+                <Text color="primary">Docs</Text>
+              </>
+            }
             href="https://deviceplane.com/docs"
             marginRight={5}
-            borderRadius={1}
-            padding={1}
-            paddingX="6px"
-            border={0}
-            borderColor="white"
-          >
-            <Icon icon="manual" size={12} color="white" marginRight={2} />
-            Docs
-          </HeaderLink>
+          />
           <AvatarMenu />
         </Row>
       </Row>

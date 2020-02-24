@@ -1,15 +1,14 @@
 import styled from 'styled-components';
-import { space, border, flexbox, typography } from 'styled-system';
 
-const Group = styled.div`
-    display: flex;
-    flex-direction: column;
+import { Box } from './box';
 
-    &:last-child {
-        margin-bottom: 0;
-    }
+const Group = styled(Box)`
+  display: flex;
+  flex-direction: column;
 
-    ${space} ${border} ${flexbox} ${typography}
+  &:last-child {
+    margin-bottom: 0;
+  }
 `;
 
 Group.defaultProps = {

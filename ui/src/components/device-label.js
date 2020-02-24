@@ -17,6 +17,7 @@ const DeviceLabel = ({ label: { key, value }, onClick = () => {} }) => {
       border={0}
       borderColor={color}
       borderRadius={1}
+      height="min-content"
     >
       <Text
         paddingX={2}
@@ -50,10 +51,10 @@ export const DeviceLabelMulti = ({ children, color }) => (
     overflow="hidden"
     border={0}
     borderColor={color}
-    borderTopLeftRadius={1}
-    borderBottomLeftRadius={1}
+    borderRadius={1}
     paddingX={2}
     paddingY={1}
+    height="min-content"
   >
     <Text
       color={color}
@@ -79,6 +80,7 @@ export const DeviceLabelKey = ({ label }) => {
       borderRadius={1}
       paddingX={2}
       paddingY={1}
+      height="min-content"
     >
       <Text
         color={color}

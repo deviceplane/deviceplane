@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useTable, useSortBy, useRowSelect } from 'react-table';
 
 import api from '../api';
 import Layout from '../components/layout';
 import Card from '../components/card';
-import Table from '../components/table';
+import Table, { SelectColumn } from '../components/table';
 import { Row, Text, Input, Icon } from '../components/core';
 import {
   DevicesFilter,
@@ -98,13 +99,24 @@ const Devices = ({ route }) => {
         Header: 'Labels',
         accessor: 'labels',
         Cell: ({ cell: { value } }) =>
-          value ? renderLabels(value, addLabelFilter) : null,
+          value ? (
+            <Row marginBottom={-2}>{renderLabels(value, addLabelFilter)}</Row>
+          ) : null,
         minWidth: '300px',
       },
     ],
     [filterQuery]
   );
   const tableData = useMemo(() => devices, [devices]);
+
+  const { selectedFlatRows, ...tableProps } = useTable(
+    {
+      columns,
+      data: tableData,
+    },
+    useSortBy,
+    useRowSelect
+  );
 
   const fetchDevices = async queryString => {
     try {
@@ -297,8 +309,7 @@ const Devices = ({ route }) => {
           </Row>
         )}
         <Table
-          columns={columns}
-          data={tableData}
+          {...tableProps}
           rowHref={({ name }) =>
             `/${route.data.params.project}/devices/${name}`
           }

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTable, useSortBy } from 'react-table';
 
 import Card from '../../components/card';
 import Table from '../../components/table';
@@ -25,6 +26,14 @@ const ServiceAccounts = ({
   );
   const tableData = useMemo(() => serviceAccounts, [serviceAccounts]);
 
+  const tableProps = useTable(
+    {
+      columns,
+      data: tableData,
+    },
+    useSortBy
+  );
+
   return (
     <Card
       title="Service Accounts"
@@ -38,8 +47,7 @@ const ServiceAccounts = ({
       ]}
     >
       <Table
-        columns={columns}
-        data={tableData}
+        {...tableProps}
         rowHref={({ name }) =>
           `/${params.project}/iam/service-accounts/${name}`
         }

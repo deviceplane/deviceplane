@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
+import { useTable, useSortBy } from 'react-table';
 
 import api from '../../api';
 import utils from '../../utils';
@@ -97,6 +98,14 @@ const ReleasePinning = ({
     []
   );
   const tableData = useMemo(() => scheduledDevices, [scheduledDevices]);
+
+  const tableProps = useTable(
+    {
+      columns,
+      data: tableData,
+    },
+    useSortBy
+  );
 
   const releaseOptions = useMemo(
     () => [
@@ -291,9 +300,9 @@ const ReleasePinning = ({
                             <Button
                               type="button"
                               marginLeft={2}
-                              variant="icon"
+                              variant="iconDanger"
                               title={
-                                <Icon icon="cross" size={14} color="red" />
+                                <Icon icon="cross" size={16} color="red" />
                               }
                               onClick={() =>
                                 setReleaseSelectors(releaseSelectors =>
@@ -331,10 +340,20 @@ const ReleasePinning = ({
                             <Button
                               marginTop={2}
                               type="button"
-                              title="+ OR"
-                              color="primary"
-                              opacity={1}
-                              variant="text"
+                              title={
+                                <>
+                                  <Text
+                                    color="primary"
+                                    marginRight={1}
+                                    fontSize={1}
+                                    fontWeight={3}
+                                  >
+                                    +
+                                  </Text>
+                                  <Text color="primary">OR</Text>
+                                </>
+                              }
+                              variant="tertiary"
                               onClick={() =>
                                 setReleaseSelectors(releaseSelectors =>
                                   releaseSelectors.map(
@@ -364,10 +383,20 @@ const ReleasePinning = ({
                     <Row marginBottom={2}>
                       <Button
                         type="button"
-                        title="+ AND"
-                        color="primary"
-                        opacity={1}
-                        variant="text"
+                        title={
+                          <>
+                            <Text
+                              color="primary"
+                              marginRight={1}
+                              fontSize={1}
+                              fontWeight={3}
+                            >
+                              +
+                            </Text>
+                            <Text color="primary">AND</Text>
+                          </>
+                        }
+                        variant="tertiary"
                         onClick={() =>
                           setReleaseSelectors(releaseSelectors =>
                             releaseSelectors.map((selector, index) =>
@@ -451,8 +480,7 @@ const ReleasePinning = ({
           </Row>
 
           <Table
-            columns={columns}
-            data={tableData}
+            {...tableProps}
             placeholder={
               <Text>
                 There are no <strong>Devices</strong>.
