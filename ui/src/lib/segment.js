@@ -75,4 +75,5 @@ export default {
     }
   },
   page: (...args) => window.analytics && window.analytics.page(...args),
+  reset: (...args) => window.analytics && window.analytics.reset(...args),
 };
