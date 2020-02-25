@@ -152,9 +152,7 @@ func (c *Client) getB(ctx *dpcontext.Context, s ...string) ([]byte, error) {
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"status": resp.Status,
-			"code":   resp.StatusCode,
-			"error":  err.Error(),
+			"error": err.Error(),
 		}).Debug("GET response")
 		return nil, err
 	}
@@ -202,9 +200,7 @@ func (c *Client) postB(ctx *dpcontext.Context, in interface{}, s ...string) ([]b
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"status": resp.Status,
-			"code":   resp.StatusCode,
-			"error":  err.Error(),
+			"error": err.Error(),
 		}).Debug("POST response")
 		return nil, err
 	}
@@ -246,9 +242,7 @@ func (c *Client) deleteB(ctx *dpcontext.Context, s ...string) ([]byte, error) {
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"status": resp.Status,
-			"code":   resp.StatusCode,
-			"error":  err.Error(),
+			"error": err.Error(),
 		}).Debug("DELETE response")
 		return nil, err
 	}
