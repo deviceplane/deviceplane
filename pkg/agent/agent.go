@@ -285,6 +285,8 @@ func (a *Agent) downloadLatestBundle(oldBundle *models.Bundle) *models.Bundle {
 		return nil
 	}
 
+	fmt.Println(string(bundleBytes))
+
 	if err = a.writeFile(bundleBytes, bundleFilename); err != nil {
 		log.WithError(err).Error("save bundle")
 		return nil
