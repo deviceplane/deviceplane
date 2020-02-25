@@ -49,50 +49,21 @@ func (c *Client) SetAccessKey(accessKey string) {
 }
 
 func (c *Client) RegisterDevice(ctx *dpcontext.Context, registrationToken string) (*models.RegisterDeviceResponse, error) {
-	reqBytes, err := json.Marshal(models.RegisterDeviceRequest{
+	req := models.RegisterDeviceRequest{
 		DeviceRegistrationTokenID: registrationToken,
-	})
-	if err != nil {
-		return nil, err
 	}
-	reader := bytes.NewReader(reqBytes)
-
-	req, err := dphttp.NewRequest(ctx, "POST", getURL(c.url, "projects", c.projectID, "devices", "register"), reader)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	bytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	log.WithFields(log.Fields{
-		"status": resp.Status,
-		"code":   resp.StatusCode,
-		"body":   string(bytes),
-	}).Debug("POST response")
 
 	var registerDeviceResponse models.RegisterDeviceResponse
-	if err := json.Unmarshal(bytes, &registerDeviceResponse); err != nil {
+	err := c.post(ctx, req, &registerDeviceResponse, "projects", c.projectID, "devices", "register")
+	if err != nil {
 		return nil, err
 	}
 
 	return &registerDeviceResponse, nil
 }
 
-func (c *Client) GetBundle(ctx *dpcontext.Context) (*models.Bundle, error) {
-	var bundle models.Bundle
-	if err := c.get(ctx, &bundle, "projects", c.projectID, "devices", c.deviceID, "bundle"); err != nil {
-		return nil, err
-	}
-	return &bundle, nil
+func (c *Client) GetBundleBytes(ctx *dpcontext.Context) ([]byte, error) {
+	return c.getB(ctx, "projects", c.projectID, "devices", c.deviceID, "bundle")
 }
 
 func (c *Client) SetDeviceInfo(ctx *dpcontext.Context, req models.SetDeviceInfoRequest) error {
@@ -160,22 +131,36 @@ func (c *Client) Revdial(ctx *dpcontext.Context, path string) (*dpwebsocket.Conn
 }
 
 func (c *Client) get(ctx *dpcontext.Context, out interface{}, s ...string) error {
-	req, err := dphttp.NewRequest(ctx, "GET", getURL(c.url, s...), nil)
+	bytes, err := c.getB(ctx, s...)
 	if err != nil {
 		return err
+	}
+	if len(bytes) == 0 {
+		return nil
+	}
+	return json.Unmarshal(bytes, &out)
+}
+
+func (c *Client) getB(ctx *dpcontext.Context, s ...string) ([]byte, error) {
+	req, err := dphttp.NewRequest(ctx, "GET", getURL(c.url, s...), nil)
+	if err != nil {
+		return nil, err
 	}
 
 	req.SetBasicAuth(c.accessKey, "")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return err
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+		}).Debug("GET response")
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	log.WithFields(log.Fields{
@@ -184,36 +169,46 @@ func (c *Client) get(ctx *dpcontext.Context, out interface{}, s ...string) error
 		"body":   string(bytes),
 	}).Debug("GET response")
 
-	if len(bytes) == 0 {
-		return nil
-	}
-
-	return json.Unmarshal(bytes, &out)
+	return bytes, nil
 }
 
 func (c *Client) post(ctx *dpcontext.Context, in, out interface{}, s ...string) error {
-	reqBytes, err := json.Marshal(in)
+	bytes, err := c.postB(ctx, in, s...)
 	if err != nil {
 		return err
+	}
+	if len(bytes) == 0 {
+		return nil
+	}
+	return json.Unmarshal(bytes, &out)
+}
+
+func (c *Client) postB(ctx *dpcontext.Context, in interface{}, s ...string) ([]byte, error) {
+	reqBytes, err := json.Marshal(in)
+	if err != nil {
+		return nil, err
 	}
 	reader := bytes.NewReader(reqBytes)
 
 	req, err := dphttp.NewRequest(ctx, "POST", getURL(c.url, s...), reader)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req.SetBasicAuth(c.accessKey, "")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return err
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+		}).Debug("POST response")
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	log.WithFields(log.Fields{
@@ -222,30 +217,40 @@ func (c *Client) post(ctx *dpcontext.Context, in, out interface{}, s ...string) 
 		"body":   string(bytes),
 	}).Debug("POST response")
 
-	if len(bytes) == 0 {
-		return nil
-	}
-
-	return json.Unmarshal(bytes, &out)
+	return bytes, nil
 }
 
 func (c *Client) delete(ctx *dpcontext.Context, out interface{}, s ...string) error {
-	req, err := dphttp.NewRequest(ctx, "DELETE", getURL(c.url, s...), nil)
+	bytes, err := c.deleteB(ctx, s...)
 	if err != nil {
 		return err
+	}
+	if len(bytes) == 0 {
+		return nil
+	}
+	return json.Unmarshal(bytes, &out)
+}
+
+func (c *Client) deleteB(ctx *dpcontext.Context, s ...string) ([]byte, error) {
+	req, err := dphttp.NewRequest(ctx, "DELETE", getURL(c.url, s...), nil)
+	if err != nil {
+		return nil, err
 	}
 
 	req.SetBasicAuth(c.accessKey, "")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return err
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+		}).Debug("DELETE response")
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	log.WithFields(log.Fields{
@@ -254,11 +259,7 @@ func (c *Client) delete(ctx *dpcontext.Context, out interface{}, s ...string) er
 		"body":   string(bytes),
 	}).Debug("DELETE response")
 
-	if len(bytes) == 0 {
-		return nil
-	}
-
-	return json.Unmarshal(bytes, &out)
+	return bytes, nil
 }
 
 func getURL(url *url.URL, s ...string) string {
