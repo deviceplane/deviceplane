@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/url"
@@ -191,6 +192,7 @@ func (c *Client) postB(ctx *dpcontext.Context, in, out interface{}, s ...string)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(getURL(c.url, s...))
 
 	req.SetBasicAuth(c.accessKey, "")
 
