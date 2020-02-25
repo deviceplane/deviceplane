@@ -114,7 +114,7 @@ const config =
   process.env.NODE_ENV === 'development' ? development : production;
 
 export default {
-  agentVersion: '1.14.1',
+  agentVersion: '1.14.2',
   cliEndpoint: 'https://downloads.deviceplane.com/cli',
   supportedDeviceMetrics,
   supportedDeviceMetricProperties,
