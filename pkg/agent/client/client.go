@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/url"
@@ -115,6 +116,7 @@ func (c *Client) InitiateDeviceConnection(ctx *dpcontext.Context) (net.Conn, err
 		getWebsocketURL(c.url, "projects", c.projectID, "devices", c.deviceID, "connection"),
 		req.Header,
 	)
+	fmt.Println(getWebsocketURL(c.url, "projects", c.projectID, "devices", c.deviceID, "connection"))
 	if err != nil {
 		return nil, err
 	}
