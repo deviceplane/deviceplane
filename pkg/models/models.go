@@ -267,8 +267,9 @@ type DeviceServiceStatusFull struct {
 
 type ApplicationFull1 struct {
 	Application
-	LatestRelease *Release                `json:"latestRelease" yaml:"latestRelease"`
-	DeviceCounts  ApplicationDeviceCounts `json:"deviceCounts" yaml:"deviceCounts"`
+	LatestRelease       *Release                `json:"latestRelease" yaml:"latestRelease"`
+	DeviceCounts        ApplicationDeviceCounts `json:"deviceCounts" yaml:"deviceCounts"`
+	DeviceServiceStates []DeviceServiceState    `json:"deviceServiceStates" yaml:"deviceServiceStates"`
 }
 
 type DeviceRegistrationTokenFull struct {

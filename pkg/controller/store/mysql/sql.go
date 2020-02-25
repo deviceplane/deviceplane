@@ -815,6 +815,12 @@ const getDeviceServiceStates = `
 `
 
 // Index: project_id_device_id_application_id
+const getDeviceServiceStatesByApplication = `
+  select project_id, device_id, application_id, service, state, error_message from device_service_states
+  where project_id = ? and application_id = ?
+`
+
+// Index: project_id_device_id_application_id
 const listDeviceServiceStates = `
   select project_id, device_id, application_id, service, state, error_message from device_service_states
   where project_id = ? and device_id = ?

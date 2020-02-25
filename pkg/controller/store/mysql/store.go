@@ -2495,6 +2495,34 @@ func (s *Store) GetDeviceServiceStates(ctx context.Context, projectID, deviceID,
 	return deviceServiceStates, nil
 }
 
+func (s *Store) GetDeviceServiceStatesByApplication(ctx context.Context, projectID, applicationID string) ([]models.DeviceServiceState, error) {
+	deviceServiceStateRows, err := s.db.QueryContext(
+		ctx,
+		getDeviceServiceStatesByApplication,
+		projectID,
+		applicationID,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "query device service states by application")
+	}
+	defer deviceServiceStateRows.Close()
+
+	deviceServiceStates := make([]models.DeviceServiceState, 0)
+	for deviceServiceStateRows.Next() {
+		deviceServiceState, err := s.scanDeviceServiceState(deviceServiceStateRows)
+		if err != nil {
+			return nil, err
+		}
+		deviceServiceStates = append(deviceServiceStates, *deviceServiceState)
+	}
+
+	if err := deviceServiceStateRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return deviceServiceStates, nil
+}
+
 func (s *Store) ListDeviceServiceStates(ctx context.Context, projectID, deviceID string) ([]models.DeviceServiceState, error) {
 	deviceServiceStateRows, err := s.db.QueryContext(ctx, listDeviceServiceStates, projectID, deviceID)
 	if err != nil {
