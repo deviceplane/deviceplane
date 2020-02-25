@@ -54,7 +54,7 @@ func (c *Client) RegisterDevice(ctx *dpcontext.Context, registrationToken string
 	}
 
 	var registerDeviceResponse models.RegisterDeviceResponse
-	err := c.post(ctx, req, "projects", c.projectID, "devices", c.deviceID, "forwardmetrics", "service")
+	err := c.post(ctx, req, "projects", c.projectID, "devices", "register")
 	if err != nil {
 		return nil, err
 	}
