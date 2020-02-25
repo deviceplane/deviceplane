@@ -3,7 +3,6 @@ package client
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net"
 	"net/url"
@@ -132,7 +131,7 @@ func (c *Client) Revdial(ctx *dpcontext.Context, path string) (*dpwebsocket.Conn
 }
 
 func (c *Client) get(ctx *dpcontext.Context, out interface{}, s ...string) error {
-	bytes, err := c.getB(ctx, out, s...)
+	bytes, err := c.getB(ctx, s...)
 	if err != nil {
 		return err
 	}
@@ -142,7 +141,7 @@ func (c *Client) get(ctx *dpcontext.Context, out interface{}, s ...string) error
 	return json.Unmarshal(bytes, &out)
 }
 
-func (c *Client) getB(ctx *dpcontext.Context, out interface{}, s ...string) ([]byte, error) {
+func (c *Client) getB(ctx *dpcontext.Context, s ...string) ([]byte, error) {
 	req, err := dphttp.NewRequest(ctx, "GET", getURL(c.url, s...), nil)
 	if err != nil {
 		return nil, err
@@ -152,6 +151,11 @@ func (c *Client) getB(ctx *dpcontext.Context, out interface{}, s ...string) ([]b
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"status": resp.Status,
+			"code":   resp.StatusCode,
+			"error":  err.Error(),
+		}).Debug("GET response")
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -171,7 +175,7 @@ func (c *Client) getB(ctx *dpcontext.Context, out interface{}, s ...string) ([]b
 }
 
 func (c *Client) post(ctx *dpcontext.Context, in, out interface{}, s ...string) error {
-	bytes, err := c.postB(ctx, in, out, s...)
+	bytes, err := c.postB(ctx, in, s...)
 	if err != nil {
 		return err
 	}
@@ -181,7 +185,7 @@ func (c *Client) post(ctx *dpcontext.Context, in, out interface{}, s ...string) 
 	return json.Unmarshal(bytes, &out)
 }
 
-func (c *Client) postB(ctx *dpcontext.Context, in, out interface{}, s ...string) ([]byte, error) {
+func (c *Client) postB(ctx *dpcontext.Context, in interface{}, s ...string) ([]byte, error) {
 	reqBytes, err := json.Marshal(in)
 	if err != nil {
 		return nil, err
@@ -192,12 +196,16 @@ func (c *Client) postB(ctx *dpcontext.Context, in, out interface{}, s ...string)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(getURL(c.url, s...))
 
 	req.SetBasicAuth(c.accessKey, "")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"status": resp.Status,
+			"code":   resp.StatusCode,
+			"error":  err.Error(),
+		}).Debug("POST response")
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -217,7 +225,7 @@ func (c *Client) postB(ctx *dpcontext.Context, in, out interface{}, s ...string)
 }
 
 func (c *Client) delete(ctx *dpcontext.Context, out interface{}, s ...string) error {
-	bytes, err := c.deleteB(ctx, out, s...)
+	bytes, err := c.deleteB(ctx, s...)
 	if err != nil {
 		return err
 	}
@@ -227,7 +235,7 @@ func (c *Client) delete(ctx *dpcontext.Context, out interface{}, s ...string) er
 	return json.Unmarshal(bytes, &out)
 }
 
-func (c *Client) deleteB(ctx *dpcontext.Context, out interface{}, s ...string) ([]byte, error) {
+func (c *Client) deleteB(ctx *dpcontext.Context, s ...string) ([]byte, error) {
 	req, err := dphttp.NewRequest(ctx, "DELETE", getURL(c.url, s...), nil)
 	if err != nil {
 		return nil, err
@@ -237,6 +245,11 @@ func (c *Client) deleteB(ctx *dpcontext.Context, out interface{}, s ...string) (
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"status": resp.Status,
+			"code":   resp.StatusCode,
+			"error":  err.Error(),
+		}).Debug("DELETE response")
 		return nil, err
 	}
 	defer resp.Body.Close()
