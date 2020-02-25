@@ -8,7 +8,7 @@ import (
 )
 
 type Users interface {
-	CreateUser(ctx context.Context, email, passwordHash, firstName, lastName, company string) (*models.User, error)
+	CreateUser(ctx context.Context, email, passwordHash, firstName, lastName string) (*models.User, error)
 	GetUser(ctx context.Context, id string) (*models.User, error)
 	LookupUser(ctx context.Context, email string) (*models.User, error)
 	ValidateUser(ctx context.Context, id, passwordHash string) (*models.User, error)
@@ -17,7 +17,6 @@ type Users interface {
 	UpdatePasswordHash(ctx context.Context, id, passwordHash string) (*models.User, error)
 	UpdateFirstName(ctx context.Context, id, firstName string) (*models.User, error)
 	UpdateLastName(ctx context.Context, id, lastName string) (*models.User, error)
-	UpdateCompany(ctx context.Context, id, company string) (*models.User, error)
 }
 
 var ErrUserNotFound = errors.New("user not found")
@@ -167,6 +166,8 @@ type DeviceRegistrationTokens interface {
 	DeleteDeviceRegistrationToken(ctx context.Context, tokenID, projectID string) error
 	SetDeviceRegistrationTokenLabel(ctx context.Context, tokenID, projectID, key, value string) (*string, error)
 	DeleteDeviceRegistrationTokenLabel(ctx context.Context, tokenID, projectID, key string) error
+	SetDeviceRegistrationTokenEnvironmentVariable(ctx context.Context, tokenID, projectID, key, value string) (*string, error)
+	DeleteDeviceRegistrationTokenEnvironmentVariable(ctx context.Context, tokenID, projectID, key string) error
 }
 
 type DevicesRegisteredWithToken interface {
@@ -235,6 +236,16 @@ type DeviceServiceStatuses interface {
 }
 
 var ErrDeviceServiceStatusNotFound = errors.New("device service status not found")
+
+type DeviceServiceStates interface {
+	SetDeviceServiceState(ctx context.Context, projectID, deviceID, applicationID, service string, state models.ServiceState, errorMessage string) error
+	GetDeviceServiceState(ctx context.Context, projectID, deviceID, applicationID, service string) (*models.DeviceServiceState, error)
+	GetDeviceServiceStates(ctx context.Context, projectID, deviceID, applicationID string) ([]models.DeviceServiceState, error)
+	ListDeviceServiceStates(ctx context.Context, projectID, deviceID string) ([]models.DeviceServiceState, error)
+	DeleteDeviceServiceState(ctx context.Context, projectID, deviceID, applicationID, service string) error
+}
+
+var ErrDeviceServiceStateNotFound = errors.New("device service state not found")
 
 var ErrProjectConfigNotFound = errors.New("project config not found")
 

@@ -15,15 +15,17 @@ const patch = (path, ...rest) => axios.patch(url(path), ...rest);
 const api = {
   login: ({ email, password }) => post('login', { email, password }),
 
-  logout: () => post('logout'),
+  logout: () =>
+    post('logout').then(() => {
+      segment.reset();
+    }),
 
-  signup: ({ email, password, firstName, lastName, company }) =>
+  signup: ({ email, password, firstName, lastName }) =>
     post(`register`, {
       email,
       password,
       firstName,
       lastName,
-      company,
     }),
 
   completeRegistration: ({ registrationTokenValue }) =>
@@ -158,6 +160,20 @@ const api = {
   removeRegistrationTokenLabel: ({ projectId, tokenId, labelId }) =>
     del(
       `projects/${projectId}/deviceregistrationtokens/${tokenId}/labels/${labelId}`
+    ),
+
+  addRegistrationTokenEnvironmentVariable: ({ projectId, tokenId, data }) =>
+    put(
+      `projects/${projectId}/deviceregistrationtokens/${tokenId}/environmentvariables`,
+      data
+    ).then(response => {
+      segment.track('Registration Token Environment Variable Added');
+      return response;
+    }),
+
+  removeRegistrationTokenEnvironmentVariable: ({ projectId, tokenId, key }) =>
+    del(
+      `projects/${projectId}/deviceregistrationtokens/${tokenId}/environmentvariables/${key}`
     ),
 
   applications: ({ projectId }) =>
@@ -330,6 +346,11 @@ const api = {
 
   updateServiceMetricsConfig: ({ projectId, data }) =>
     put(`projects/${projectId}/configs/service-metrics-config`, data),
+
+  imagePullProgress: ({ projectId, deviceId, applicationId, serviceId }) =>
+    get(
+      `projects/${projectId}/devices/${deviceId}/applications/${applicationId}/services/${serviceId}/imagepullprogress`
+    ),
 };
 
 export default api;

@@ -1,6 +1,7 @@
 import React, { useLayoutEffect, useState } from 'react';
 import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
+import 'brace/mode/json';
 import 'brace/theme/pastel_on_dark';
 
 import { Column } from './core';
@@ -12,6 +13,8 @@ const Editor = ({
   width,
   height,
   maxLines = Infinity,
+  fontSize = 14,
+  mode = 'yaml',
 }) => {
   const [focused, setFocused] = useState();
   useLayoutEffect(() => {
@@ -31,8 +34,8 @@ const Editor = ({
       padding={2}
     >
       <AceEditor
-        fontSize={14}
-        mode="yaml"
+        fontSize={fontSize}
+        mode={mode}
         showPrintMargin={false}
         width={width}
         height={height}

@@ -79,9 +79,10 @@ const Card = ({
             justifyContent="space-between"
             alignItems="flex-end"
             marginLeft={-4}
+            marginTop={-4}
             flexShrink={0}
           >
-            <Row alignItems="center" marginLeft={4}>
+            <Row alignItems="center" marginLeft={4} marginTop={4}>
               <Text fontSize="28px" fontWeight={2} marginRight={4}>
                 {title}
               </Text>

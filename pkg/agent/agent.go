@@ -85,11 +85,8 @@ func NewAgent(
 				CurrentReleaseID: currentReleaseID,
 			})
 		},
-		func(ctx *dpcontext.Context, applicationID, service, currentReleaseID string) error {
-			return client.SetDeviceServiceStatus(ctx, applicationID, service, models.SetDeviceServiceStatusRequest{
-				CurrentReleaseID: currentReleaseID,
-			})
-		},
+		client.SetDeviceServiceStatus,
+		client.SetDeviceServiceState,
 		[]validator.Validator{
 			image.NewValidator(variables),
 			customcommands.NewValidator(variables),
@@ -107,20 +104,24 @@ func NewAgent(
 	service := service.NewService(variables, supervisor, engine, confDir, serviceMetricsFetcher)
 
 	return &Agent{
-		client:                 client,
-		variables:              variables,
-		projectID:              projectID,
-		registrationToken:      registrationToken,
-		confDir:                confDir,
-		stateDir:               stateDir,
-		serverPort:             serverPort,
-		supervisor:             supervisor,
-		statusGarbageCollector: status.NewGarbageCollector(client.DeleteDeviceApplicationStatus, client.DeleteDeviceServiceStatus),
-		metricsPusher:          metrics.NewMetricsPusher(client, serviceMetricsFetcher),
-		infoReporter:           info.NewReporter(client, version),
-		localServer:            local.NewServer(service),
-		remoteServer:           remote.NewServer(client, service),
-		updater:                updater.NewUpdater(projectID, version, binaryPath),
+		client:            client,
+		variables:         variables,
+		projectID:         projectID,
+		registrationToken: registrationToken,
+		confDir:           confDir,
+		stateDir:          stateDir,
+		serverPort:        serverPort,
+		supervisor:        supervisor,
+		statusGarbageCollector: status.NewGarbageCollector(
+			client.DeleteDeviceApplicationStatus,
+			client.DeleteDeviceServiceStatus,
+			client.DeleteDeviceServiceState,
+		),
+		metricsPusher: metrics.NewMetricsPusher(client, serviceMetricsFetcher),
+		infoReporter:  info.NewReporter(client, version),
+		localServer:   local.NewServer(service),
+		remoteServer:  remote.NewServer(client, service),
+		updater:       updater.NewUpdater(projectID, version, binaryPath),
 	}, nil
 }
 

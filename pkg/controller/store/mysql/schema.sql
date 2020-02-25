@@ -15,7 +15,6 @@ create table if not exists users (
   password_hash varchar(255) not null,
   first_name varchar(100) not null,
   last_name varchar(100) not null,
-  company varchar(100) not null,
   registration_completed boolean not null default false,
   super_admin boolean not null default false,
 
@@ -275,6 +274,7 @@ create table if not exists device_registration_tokens (
   description longtext not null,
   max_registrations int,
   labels longtext not null,
+  environment_variables longtext not null,
 
   primary key (id),
   unique name_project_id_unique (name, project_id),
@@ -435,6 +435,32 @@ create table if not exists device_service_statuses (
   references devices(id)
   on delete cascade,
   foreign key device_service_statuses_application_id(application_id)
+  references applications(id)
+  on delete cascade,
+  index project_id_device_id_application_id (project_id, device_id, application_id)
+);
+
+--
+-- DeviceServiceStates
+--
+
+create table if not exists device_service_states (
+  project_id varchar(32) not null,
+  device_id varchar(32) not null,
+  application_id varchar(32) not null,
+  service varchar(100) not null,
+
+  state longtext not null,
+  error_message longtext not null,
+
+  primary key (project_id, device_id, application_id, service),
+  foreign key device_service_states_project_id(project_id)
+  references projects(id)
+  on delete cascade,
+  foreign key device_service_states_device_id(device_id)
+  references devices(id)
+  on delete cascade,
+  foreign key device_service_states_application_id(application_id)
   references applications(id)
   on delete cascade,
   index project_id_device_id_application_id (project_id, device_id, application_id)

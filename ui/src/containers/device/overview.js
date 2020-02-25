@@ -1,8 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import parsePrometheusTextFormat from 'parse-prometheus-text-format';
 
 import api from '../../api';
 import {
+  Column,
+  Row,
   Group,
   Button,
   Value,
@@ -18,83 +20,248 @@ import Popup from '../../components/popup';
 import Editor from '../../components/editor';
 import EditableLabelTable from '../../components/editable-label-table';
 import DeviceStatus from '../../components/device-status';
+import ServiceState, {
+  ServiceStatePullingImage,
+} from '../../components/service-state';
 import { getMetricLabel } from '../../helpers/metrics';
 
 const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
-  const [serviceMetrics, setServiceMetrics] = useState({});
-  const columns = useMemo(
-    () => [
-      {
-        Header: 'Service',
-        accessor: ({ application, service }) =>
-          `${application.name} / ${service}`,
-        Cell: ({ cell: { value }, row: { original } }) => (
-          <Link
-            href={`/${projectId}/applications/${original.application.name}`}
-          >
-            {value}
-          </Link>
-        ),
-      },
-      {
-        Header: 'Current Release',
-        accessor: 'currentReleaseId',
-        Cell: ({ cell: { value }, row: { original } }) => (
-          <Link
-            href={`/${projectId}/applications/${original.application.name}/releases/${original.currentReleaseId}`}
-          >
-            {value}
-          </Link>
-        ),
-      },
-      {
-        Header: ' ',
-        Cell: ({ row: { original } }) => (
-          <Button
-            disabled={device.status === 'offline'}
-            title={<Icon icon="pulse" size={18} color="white" />}
-            variant="icon"
-            onClick={async () => {
-              try {
-                const response = await api.serviceMetrics({
-                  projectId,
-                  deviceId: device.id,
-                  applicationId: original.application.name,
-                  serviceId: original.service,
-                });
-                setServiceMetrics({
-                  service: original.service,
-                  metrics: response.data,
-                });
-              } catch (error) {
-                toaster.danger('Service Metrics are currently unavailable.');
-                console.error(error);
-              }
-            }}
-          />
-        ),
-        maxWidth: '50px',
-        cellStyle: {
-          justifyContent: 'flex-end',
-        },
-      },
-    ],
-    []
-  );
-  const tableData = useMemo(
-    () =>
-      applicationStatusInfo.reduce(
-        (data, curr) => [
-          ...data,
-          ...curr.serviceStatuses.map(status => ({
-            ...status,
-            application: curr.application,
+  const getImagePullProgress = async ({ applicationId, serviceId }) => {
+    try {
+      const { data } = await api.imagePullProgress({
+        projectId: projectId,
+        deviceId: device.name,
+        applicationId,
+        serviceId,
+      });
+      return data;
+    } catch (e) {
+      console.error(e);
+    }
+    return null;
+  };
+
+  const getServices = async () => {
+    let appStatusInfo = [];
+    try {
+      const { data } = await api.device({
+        projectId,
+        deviceId: device.id,
+      });
+      appStatusInfo = data.applicationStatusInfo;
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+
+    return appStatusInfo.reduce(async (arr, info) => {
+      if (info.serviceStates && info.serviceStates.length) {
+        const services = await Promise.all(
+          info.serviceStates.map(async s => {
+            let imagePullProgress = null;
+            if (s.state === ServiceStatePullingImage) {
+              imagePullProgress = await getImagePullProgress({
+                applicationId: info.application.id,
+                serviceId: s.service,
+              });
+            }
+            return {
+              ...s,
+              currentRelease: {
+                number:
+                  info.serviceStatuses && info.serviceStatuses.length
+                    ? info.serviceStatuses[0].currentRelease.number
+                    : null,
+              },
+              imagePullProgress,
+              application: info.application,
+            };
+          })
+        );
+        return [...arr, ...services];
+      } else if (info.serviceStatuses && info.serviceStatuses.length) {
+        return [
+          ...arr,
+          ...info.serviceStatuses.map(s => ({
+            ...s,
+            application: info.application,
           })),
-        ],
-        []
+        ];
+      } else {
+        return [];
+      }
+    }, []);
+  };
+
+  const [services, setServices] = useState([]);
+  const [showProgress, setShowProgress] = useState({});
+
+  const serviceEffect = async () => {
+    const services = await getServices();
+    setServices(services);
+  };
+
+  useEffect(() => {
+    serviceEffect();
+    const serviceInterval = setInterval(serviceEffect, 2000);
+    return () => clearInterval(serviceInterval);
+  }, []);
+
+  const [serviceMetrics, setServiceMetrics] = useState({});
+
+  const columns = useMemo(() => {
+    const cols = [];
+    cols.push({
+      Header: 'Service',
+      accessor: ({ application, service }) =>
+        `${application.name} / ${service}`,
+      Cell: ({ cell: { value }, row: { original } }) => (
+        <Link href={`/${projectId}/applications/${original.application.name}`}>
+          {value}
+        </Link>
       ),
-    [applicationStatusInfo]
-  );
+    });
+    if (
+      applicationStatusInfo.length &&
+      applicationStatusInfo[0].serviceStates &&
+      applicationStatusInfo[0].serviceStates.length
+    ) {
+      cols.push({
+        Header: 'State',
+        accessor: 'state',
+        Cell: ({
+          cell: { value },
+          row: {
+            original: { application, service, imagePullProgress, errorMessage },
+          },
+        }) => {
+          const serviceId = `${application.name}:${service}`;
+          let label = 'Pulling image';
+          let layers = [];
+          if (imagePullProgress) {
+            layers = Object.values(imagePullProgress);
+            const tag = layers.find(({ status }) =>
+              status.includes('Pulling from')
+            );
+            if (tag) {
+              label = tag.status;
+              layers = layers.filter(
+                ({ status }) => !status.includes('Pulling from')
+              );
+            }
+          }
+          return (
+            <Column flex={1}>
+              <ServiceState state={value} />
+              {errorMessage && (
+                <Text color="red" fontSize={0} marginTop={2}>
+                  {errorMessage}
+                </Text>
+              )}
+              {imagePullProgress && (
+                <>
+                  <Row
+                    flex={1}
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
+                    <Text
+                      marginTop={2}
+                      fontWeight={2}
+                      fontSize={0}
+                      color="primary"
+                    >
+                      {label}
+                    </Text>
+                    <Button
+                      title={
+                        <Icon
+                          icon={
+                            showProgress[serviceId]
+                              ? 'caret-down'
+                              : 'caret-right'
+                          }
+                          size={18}
+                          color="primary"
+                        />
+                      }
+                      onClick={() =>
+                        setShowProgress(sp => ({
+                          ...sp,
+                          [serviceId]: !sp[serviceId],
+                        }))
+                      }
+                      variant="icon"
+                    />
+                  </Row>
+                  <Column height={showProgress[serviceId] ? 'auto' : 0}>
+                    {layers.map(({ id, status }) => (
+                      <Text fontSize={0} marginTop={1}>
+                        {id}: {status}
+                      </Text>
+                    ))}
+                  </Column>
+                </>
+              )}
+            </Column>
+          );
+        },
+      });
+    }
+    cols.push({
+      Header: 'Release',
+      accessor: 'currentRelease.number',
+      Cell: ({ cell: { value }, row: { original } }) =>
+        value ? (
+          <Link
+            href={`/${projectId}/applications/${original.application.name}/releases/${value}`}
+          >
+            {value}
+          </Link>
+        ) : (
+          '-'
+        ),
+      maxWidth: '100px',
+      minWidth: '100px',
+      cellStyle: { justifyContent: 'flex-end' },
+    });
+    cols.push({
+      Header: ' ',
+      Cell: ({ row: { original } }) => (
+        <Button
+          flex={0}
+          height="20px"
+          disabled={device.status === 'offline'}
+          title={<Icon icon="pulse" size={18} color="white" />}
+          variant="icon"
+          onClick={async () => {
+            try {
+              const response = await api.serviceMetrics({
+                projectId,
+                deviceId: device.id,
+                applicationId: original.application.name,
+                serviceId: original.service,
+              });
+              setServiceMetrics({
+                service: original.service,
+                metrics: response.data,
+              });
+            } catch (error) {
+              toaster.danger('Service Metrics are currently unavailable.');
+              console.error(error);
+            }
+          }}
+        />
+      ),
+      maxWidth: '30px',
+      cellStyle: {
+        justifyContent: 'flex-end',
+      },
+    });
+    return cols;
+  }, [showProgress]);
+
+  const tableData = useMemo(() => services, [services]);
 
   return (
     <>
@@ -151,12 +318,19 @@ const DeviceOverview = ({
   },
 }) => {
   const [hostMetrics, setHostMetrics] = useState();
+
   return (
     <>
       <Card
         size="xlarge"
         title={device.name}
-        subtitle={<DeviceStatus status={device.status} />}
+        subtitle={
+          <DeviceStatus
+            inline
+            status={device.status}
+            lastSeenAt={device.lastSeenAt}
+          />
+        }
         marginBottom={5}
         actions={[
           {
@@ -274,8 +448,15 @@ const DeviceOverview = ({
           title="Current Device Metrics"
           subtitle={device.name}
           size="xxlarge"
+          overflow="scroll"
         >
-          <Editor width="100%" height="70vh" value={hostMetrics} readOnly />
+          <Editor
+            width="100%"
+            value={hostMetrics}
+            fontSize={12}
+            mode="json"
+            readOnly
+          />
         </Card>
       </Popup>
     </>

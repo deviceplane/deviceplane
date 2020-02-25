@@ -20,21 +20,20 @@ type scanner interface {
 }
 
 const (
-	userPrefix                      = "usr"
-	registrationTokenPrefix         = "reg"
-	passwordRecoveryTokenPrefix     = "pwr"
-	sessionPrefix                   = "ses"
-	userAccessKeyPrefix             = "uky"
-	projectPrefix                   = "prj"
-	rolePrefix                      = "rol"
-	serviceAccountPrefix            = "sac"
-	serviceAccountAccessKeyPrefix   = "sak"
-	devicePrefix                    = "dev"
-	deviceRegistrationTokenPrefix   = "drt"
-	deviceAccessKeyPrefix           = "dak"
-	applicationPrefix               = "app"
-	releasePrefix                   = "rel"
-	ExposedMetricConfigHolderPrefix = "mtc"
+	userPrefix                    = "usr"
+	registrationTokenPrefix       = "reg"
+	passwordRecoveryTokenPrefix   = "pwr"
+	sessionPrefix                 = "ses"
+	userAccessKeyPrefix           = "uky"
+	projectPrefix                 = "prj"
+	rolePrefix                    = "rol"
+	serviceAccountPrefix          = "sac"
+	serviceAccountAccessKeyPrefix = "sak"
+	devicePrefix                  = "dev"
+	deviceRegistrationTokenPrefix = "drt"
+	deviceAccessKeyPrefix         = "dak"
+	applicationPrefix             = "app"
+	releasePrefix                 = "rel"
 )
 
 func newUserID() string {
@@ -93,10 +92,6 @@ func newReleaseID() string {
 	return fmt.Sprintf("%s_%s", releasePrefix, ksuid.New().String())
 }
 
-func newExposedMetricConfigHolderID() string {
-	return fmt.Sprintf("%s_%s", ExposedMetricConfigHolderPrefix, ksuid.New().String())
-}
-
 var (
 	_ store.Users                      = &Store{}
 	_ store.RegistrationTokens         = &Store{}
@@ -119,6 +114,7 @@ var (
 	_ store.ReleaseDeviceCounts        = &Store{}
 	_ store.DeviceApplicationStatuses  = &Store{}
 	_ store.DeviceServiceStatuses      = &Store{}
+	_ store.DeviceServiceStates        = &Store{}
 )
 
 type Store struct {
@@ -131,7 +127,7 @@ func NewStore(db *sql.DB) *Store {
 	}
 }
 
-func (s *Store) CreateUser(ctx context.Context, email, passwordHash, firstName, lastName, company string) (*models.User, error) {
+func (s *Store) CreateUser(ctx context.Context, email, passwordHash, firstName, lastName string) (*models.User, error) {
 	id := newUserID()
 
 	if _, err := s.db.ExecContext(
@@ -142,7 +138,6 @@ func (s *Store) CreateUser(ctx context.Context, email, passwordHash, firstName, 
 		passwordHash,
 		firstName,
 		lastName,
-		company,
 	); err != nil {
 		return nil, err
 	}
@@ -253,19 +248,6 @@ func (s *Store) UpdateLastName(ctx context.Context, id, lastName string) (*model
 	return s.GetUser(ctx, id)
 }
 
-func (s *Store) UpdateCompany(ctx context.Context, id, company string) (*models.User, error) {
-	if _, err := s.db.ExecContext(
-		ctx,
-		updateCompany,
-		company,
-		id,
-	); err != nil {
-		return nil, err
-	}
-
-	return s.GetUser(ctx, id)
-}
-
 func (s *Store) scanUser(scanner scanner) (*models.User, error) {
 	var user models.User
 	if err := scanner.Scan(
@@ -274,7 +256,6 @@ func (s *Store) scanUser(scanner scanner) (*models.User, error) {
 		&user.Email,
 		&user.FirstName,
 		&user.LastName,
-		&user.Company,
 		&user.RegistrationCompleted,
 		&user.SuperAdmin,
 	); err != nil {
@@ -1725,9 +1706,66 @@ func (s *Store) DeleteDeviceRegistrationTokenLabel(ctx context.Context, deviceRe
 	return nil
 }
 
+func (s *Store) SetDeviceRegistrationTokenEnvironmentVariable(ctx context.Context, tokenID, projectID, key, value string) (*string, error) {
+	deviceRegistrationToken, err := s.GetDeviceRegistrationToken(ctx, tokenID, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	deviceRegistrationToken.EnvironmentVariables[key] = value
+
+	environmentVariablesString, err := json.Marshal(deviceRegistrationToken.EnvironmentVariables)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateDeviceRegistrationTokenEnvironmentVariables,
+		environmentVariablesString,
+		tokenID,
+		projectID,
+	); err != nil {
+		return nil, err
+	}
+
+	deviceRegistrationToken, err = s.GetDeviceRegistrationToken(ctx, tokenID, projectID)
+	if err != nil {
+		return nil, err
+	}
+	v := deviceRegistrationToken.EnvironmentVariables[key]
+	return &v, nil
+}
+
+func (s *Store) DeleteDeviceRegistrationTokenEnvironmentVariable(ctx context.Context, tokenID, projectID, key string) error {
+	deviceRegistrationToken, err := s.GetDeviceRegistrationToken(ctx, tokenID, projectID)
+	if err != nil {
+		return err
+	}
+
+	delete(deviceRegistrationToken.EnvironmentVariables, key)
+
+	environmentVariablesString, err := json.Marshal(deviceRegistrationToken.EnvironmentVariables)
+	if err != nil {
+		return err
+	}
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateDeviceRegistrationTokenEnvironmentVariables,
+		environmentVariablesString,
+		tokenID,
+		projectID,
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *Store) scanDeviceRegistrationToken(scanner scanner) (*models.DeviceRegistrationToken, error) {
 	var deviceRegistrationToken models.DeviceRegistrationToken
 	var labelsString string
+	var environmentVariablesString string
 	if err := scanner.Scan(
 		&deviceRegistrationToken.ID,
 		&deviceRegistrationToken.CreatedAt,
@@ -1736,6 +1774,7 @@ func (s *Store) scanDeviceRegistrationToken(scanner scanner) (*models.DeviceRegi
 		&deviceRegistrationToken.Name,
 		&deviceRegistrationToken.Description,
 		&labelsString,
+		&environmentVariablesString,
 	); err != nil {
 		return nil, err
 	}
@@ -1744,6 +1783,14 @@ func (s *Store) scanDeviceRegistrationToken(scanner scanner) (*models.DeviceRegi
 		deviceRegistrationToken.Labels = map[string]string{}
 	} else {
 		if err := json.Unmarshal([]byte(labelsString), &deviceRegistrationToken.Labels); err != nil {
+			return nil, err
+		}
+	}
+
+	if environmentVariablesString == "" {
+		deviceRegistrationToken.EnvironmentVariables = map[string]string{}
+	} else {
+		if err := json.Unmarshal([]byte(environmentVariablesString), &deviceRegistrationToken.EnvironmentVariables); err != nil {
 			return nil, err
 		}
 	}
@@ -2285,11 +2332,18 @@ func (s *Store) SetDeviceServiceStatus(ctx context.Context, projectID, deviceID,
 }
 
 func (s *Store) GetDeviceServiceStatus(ctx context.Context, projectID, deviceID, applicationID, service string) (*models.DeviceServiceStatus, error) {
-	deviceServiceStatusRow := s.db.QueryRowContext(ctx, getDeviceServiceStatus, projectID, deviceID, applicationID, service)
+	deviceServiceStatusRow := s.db.QueryRowContext(
+		ctx,
+		getDeviceServiceStatus,
+		projectID,
+		deviceID,
+		applicationID,
+		service,
+	)
 
 	deviceServiceStatus, err := s.scanDeviceServiceStatus(deviceServiceStatusRow)
 	if err == sql.ErrNoRows {
-		return nil, store.ErrDeviceApplicationStatusNotFound
+		return nil, store.ErrDeviceServiceStatusNotFound
 	} else if err != nil {
 		return nil, err
 	}
@@ -2298,7 +2352,13 @@ func (s *Store) GetDeviceServiceStatus(ctx context.Context, projectID, deviceID,
 }
 
 func (s *Store) GetDeviceServiceStatuses(ctx context.Context, projectID, deviceID, applicationID string) ([]models.DeviceServiceStatus, error) {
-	deviceServiceStatusRows, err := s.db.QueryContext(ctx, getDeviceServiceStatuses, projectID, deviceID, applicationID)
+	deviceServiceStatusRows, err := s.db.QueryContext(
+		ctx,
+		getDeviceServiceStatuses,
+		projectID,
+		deviceID,
+		applicationID,
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "query device service statuses")
 	}
@@ -2366,7 +2426,124 @@ func (s *Store) scanDeviceServiceStatus(scanner scanner) (*models.DeviceServiceS
 	); err != nil {
 		return nil, err
 	}
+
 	return &deviceServiceStatus, nil
+}
+
+func (s *Store) SetDeviceServiceState(ctx context.Context, projectID, deviceID, applicationID, service string, state models.ServiceState, errorMessage string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		setDeviceServiceState,
+		projectID,
+		deviceID,
+		applicationID,
+		service,
+		state,
+		errorMessage,
+		state,
+		errorMessage,
+	)
+	return err
+}
+
+func (s *Store) GetDeviceServiceState(ctx context.Context, projectID, deviceID, applicationID, service string) (*models.DeviceServiceState, error) {
+	deviceServiceStateRow := s.db.QueryRowContext(
+		ctx,
+		getDeviceServiceState,
+		projectID,
+		deviceID,
+		applicationID,
+		service,
+	)
+
+	deviceServiceState, err := s.scanDeviceServiceState(deviceServiceStateRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrDeviceServiceStateNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return deviceServiceState, nil
+}
+
+func (s *Store) GetDeviceServiceStates(ctx context.Context, projectID, deviceID, applicationID string) ([]models.DeviceServiceState, error) {
+	deviceServiceStateRows, err := s.db.QueryContext(
+		ctx,
+		getDeviceServiceStates,
+		projectID,
+		deviceID,
+		applicationID,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "query device service states")
+	}
+	defer deviceServiceStateRows.Close()
+
+	deviceServiceStates := make([]models.DeviceServiceState, 0)
+	for deviceServiceStateRows.Next() {
+		deviceServiceState, err := s.scanDeviceServiceState(deviceServiceStateRows)
+		if err != nil {
+			return nil, err
+		}
+		deviceServiceStates = append(deviceServiceStates, *deviceServiceState)
+	}
+
+	if err := deviceServiceStateRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return deviceServiceStates, nil
+}
+
+func (s *Store) ListDeviceServiceStates(ctx context.Context, projectID, deviceID string) ([]models.DeviceServiceState, error) {
+	deviceServiceStateRows, err := s.db.QueryContext(ctx, listDeviceServiceStates, projectID, deviceID)
+	if err != nil {
+		return nil, errors.Wrap(err, "query device service states")
+	}
+	defer deviceServiceStateRows.Close()
+
+	deviceServiceStates := make([]models.DeviceServiceState, 0)
+	for deviceServiceStateRows.Next() {
+		deviceServiceState, err := s.scanDeviceServiceState(deviceServiceStateRows)
+		if err != nil {
+			return nil, err
+		}
+		deviceServiceStates = append(deviceServiceStates, *deviceServiceState)
+	}
+
+	if err := deviceServiceStateRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return deviceServiceStates, nil
+}
+
+func (s *Store) DeleteDeviceServiceState(ctx context.Context, projectID, deviceID, applicationID, service string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		deleteDeviceServiceState,
+		projectID,
+		deviceID,
+		applicationID,
+		service,
+	)
+	return err
+}
+
+func (s *Store) scanDeviceServiceState(scanner scanner) (*models.DeviceServiceState, error) {
+	var deviceServiceState models.DeviceServiceState
+	if err := scanner.Scan(
+		&deviceServiceState.ProjectID,
+		&deviceServiceState.DeviceID,
+		&deviceServiceState.ApplicationID,
+		&deviceServiceState.Service,
+		&deviceServiceState.State,
+		&deviceServiceState.ErrorMessage,
+	); err != nil {
+		return nil, err
+	}
+
+	return &deviceServiceState, nil
 }
 
 func (s *Store) scanProjectConfig(scanner scanner) (*models.ProjectConfig, error) {

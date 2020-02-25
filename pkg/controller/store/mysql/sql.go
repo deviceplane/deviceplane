@@ -6,33 +6,32 @@ const createUser = `
     email,
     password_hash,
     first_name,
-    last_name,
-    company
+    last_name
   )
-  values (?, ?, ?, ?, ?, ?)
+  values (?, ?, ?, ?, ?)
 `
 
 // Index: primary key
 const getUser = `
-  select id, created_at, email, first_name, last_name, company, registration_completed, super_admin from users
+  select id, created_at, email, first_name, last_name, registration_completed, super_admin from users
   where id = ?
 `
 
 // Index: email
 const lookupUser = `
-  select id, created_at, email, first_name, last_name, company, registration_completed, super_admin from users
+  select id, created_at, email, first_name, last_name, registration_completed, super_admin from users
   where email = ?
 `
 
 // Index: id_password_hash
 const validateUser = `
-  select id, created_at, email, first_name, last_name, company, registration_completed, super_admin from users
+  select id, created_at, email, first_name, last_name, registration_completed, super_admin from users
   where id = ? and password_hash = ?
 `
 
 // Index: email_password_hash
 const validateUserWithEmail = `
-  select id, created_at, email, first_name, last_name, company, registration_completed, super_admin from users
+  select id, created_at, email, first_name, last_name, registration_completed, super_admin from users
   where email = ? and password_hash = ?
 `
 
@@ -61,13 +60,6 @@ const updateFirstName = `
 const updateLastName = `
   update users
   set last_name = ?
-  where id = ?
-`
-
-// Index: primary key
-const updateCompany = `
-  update users
-  set company = ?
   where id = ?
 `
 
@@ -527,26 +519,27 @@ const createDeviceRegistrationToken = `
     name,
     description,
     max_registrations,
-    labels
+    labels,
+    environment_variables
   )
-  values (?, ?, ?, ?, ?, '{}')
+  values (?, ?, ?, ?, ?, '{}', '{}')
 `
 
 // Index: project_id_id
 const getDeviceRegistrationToken = `
-  select id, created_at, project_id, max_registrations, name, description, labels from device_registration_tokens
+  select id, created_at, project_id, max_registrations, name, description, labels, environment_variables from device_registration_tokens
   where id = ? and project_id = ?
 `
 
 // Index: project_id_name
 const lookupDeviceRegistrationToken = `
-  select id, created_at, project_id, max_registrations, name, description, labels from device_registration_tokens
+  select id, created_at, project_id, max_registrations, name, description, labels, environment_variables from device_registration_tokens
   where name = ? and project_id = ?
 `
 
 // Index: project_id_id
 const listDeviceRegistrationTokens = `
-  select id, created_at, project_id, max_registrations, name, description, labels from device_registration_tokens
+  select id, created_at, project_id, max_registrations, name, description, labels, environment_variables from device_registration_tokens
   where project_id = ?
 `
 
@@ -561,6 +554,13 @@ const updateDeviceRegistrationToken = `
 const updateDeviceRegistrationTokenLabels = `
   update device_registration_tokens
   set labels = ?
+  where id = ? and project_id = ?
+`
+
+// Index: project_id_id
+const updateDeviceRegistrationTokenEnvironmentVariables = `
+  update device_registration_tokens
+  set environment_variables = ?
   where id = ? and project_id = ?
 `
 
@@ -783,6 +783,46 @@ const listDeviceServiceStatuses = `
 // Index: primary key
 const deleteDeviceServiceStatus = `
   delete from device_service_statuses
+  where project_id = ? and device_id = ? and application_id = ? and service = ?
+`
+
+// Index: primary key
+const setDeviceServiceState = `
+  insert into device_service_states (
+    project_id,
+    device_id,
+    application_id,
+    service,
+    state,
+    error_message
+  )
+  values (?, ?, ?, ?, ?, ?)
+  on duplicate key update
+    state = ?,
+    error_message = ?
+`
+
+// Index: primary key
+const getDeviceServiceState = `
+  select project_id, device_id, application_id, service, state, error_message from device_service_states
+  where project_id = ? and device_id = ? and application_id = ? and service = ?
+`
+
+// Index: project_id_device_id_application_id
+const getDeviceServiceStates = `
+  select project_id, device_id, application_id, service, state, error_message from device_service_states
+  where project_id = ? and device_id = ? and application_id = ?
+`
+
+// Index: project_id_device_id_application_id
+const listDeviceServiceStates = `
+  select project_id, device_id, application_id, service, state, error_message from device_service_states
+  where project_id = ? and device_id = ?
+`
+
+// Index: primary key
+const deleteDeviceServiceState = `
+  delete from device_service_states
   where project_id = ? and device_id = ? and application_id = ? and service = ?
 `
 

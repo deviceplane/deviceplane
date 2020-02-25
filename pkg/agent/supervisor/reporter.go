@@ -12,17 +12,22 @@ import (
 
 type Reporter struct {
 	applicationID           string
-	reportApplicationStatus func(ctx *dpcontext.Context, applicationID string, currentRelease string) error
-	reportServiceStatus     func(ctx *dpcontext.Context, applicationID, service, currentRelease string) error
+	reportApplicationStatus func(ctx *dpcontext.Context, applicationID, currentRelease string) error
+	reportServiceStatus     func(ctx *dpcontext.Context, applicationID, service string, req models.SetDeviceServiceStatusRequest) error
+	reportServiceState      func(ctx *dpcontext.Context, applicationID, service string, req models.SetDeviceServiceStateRequest) error
 
 	desiredApplicationRelease      string
 	desiredApplicationServiceNames map[string]struct{}
 	reportedApplicationRelease     string
 	applicationStatusReporterDone  chan struct{}
 
-	serviceReleases           map[string]string
-	reportedServiceReleases   map[string]string
+	serviceStatuses           map[string]models.SetDeviceServiceStatusRequest
+	reportedServiceStatuses   map[string]models.SetDeviceServiceStatusRequest
 	serviceStatusReporterDone chan struct{}
+
+	serviceStates            map[string]models.SetDeviceServiceStateRequest
+	reportedServiceStates    map[string]models.SetDeviceServiceStateRequest
+	serviceStateReporterDone chan struct{}
 
 	once   sync.Once
 	lock   sync.RWMutex
@@ -33,19 +38,26 @@ type Reporter struct {
 func NewReporter(
 	applicationID string,
 	reportApplicationStatus func(ctx *dpcontext.Context, applicationID, currentRelease string) error,
-	reportServiceStatus func(ctx *dpcontext.Context, applicationID, service, currentRelease string) error,
+	reportServiceStatus func(ctx *dpcontext.Context, applicationID, service string, req models.SetDeviceServiceStatusRequest) error,
+	reportServiceState func(ctx *dpcontext.Context, applicationID, service string, req models.SetDeviceServiceStateRequest) error,
 ) *Reporter {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Reporter{
 		applicationID:           applicationID,
 		reportApplicationStatus: reportApplicationStatus,
 		reportServiceStatus:     reportServiceStatus,
+		reportServiceState:      reportServiceState,
 
 		desiredApplicationServiceNames: make(map[string]struct{}),
 		applicationStatusReporterDone:  make(chan struct{}),
-		serviceReleases:                make(map[string]string),
-		reportedServiceReleases:        make(map[string]string),
-		serviceStatusReporterDone:      make(chan struct{}),
+
+		serviceStatuses:           make(map[string]models.SetDeviceServiceStatusRequest),
+		reportedServiceStatuses:   make(map[string]models.SetDeviceServiceStatusRequest),
+		serviceStatusReporterDone: make(chan struct{}),
+
+		serviceStates:            make(map[string]models.SetDeviceServiceStateRequest),
+		reportedServiceStates:    make(map[string]models.SetDeviceServiceStateRequest),
+		serviceStateReporterDone: make(chan struct{}),
 
 		ctx:    ctx,
 		cancel: cancel,
@@ -66,12 +78,19 @@ func (r *Reporter) SetDesiredApplication(release string, applicationConfig map[s
 	r.once.Do(func() {
 		go r.applicationStatusReporter()
 		go r.serviceStatusReporter()
+		go r.serviceStateReporter()
 	})
 }
 
-func (r *Reporter) SetServiceRelease(serviceName, release string) {
+func (r *Reporter) SetServiceStatus(serviceName string, status models.SetDeviceServiceStatusRequest) {
 	r.lock.Lock()
-	r.serviceReleases[serviceName] = release
+	r.serviceStatuses[serviceName] = status
+	r.lock.Unlock()
+}
+
+func (r *Reporter) SetServiceState(serviceName string, state models.SetDeviceServiceStateRequest) {
+	r.lock.Lock()
+	r.serviceStates[serviceName] = state
 	r.lock.Unlock()
 }
 
@@ -80,6 +99,7 @@ func (r *Reporter) Stop() {
 	// TODO: don't do this if SetDesiredApplication was never called
 	<-r.applicationStatusReporterDone
 	<-r.serviceStatusReporterDone
+	<-r.serviceStateReporterDone
 }
 
 func (r *Reporter) applicationStatusReporter() {
@@ -97,8 +117,8 @@ func (r *Reporter) applicationStatusReporter() {
 			goto cont
 		}
 		for serviceName := range r.desiredApplicationServiceNames {
-			release, ok := r.serviceReleases[serviceName]
-			if !ok || release != releaseToReport {
+			status, ok := r.serviceStatuses[serviceName]
+			if !ok || status.CurrentReleaseID != releaseToReport {
 				r.lock.RUnlock()
 				goto cont
 			}
@@ -136,21 +156,26 @@ func (r *Reporter) serviceStatusReporter() {
 		var cancel func()
 
 		r.lock.RLock()
-		diff := make(map[string]string)
-		copy := make(map[string]string)
-		for service, release := range r.serviceReleases {
-			reportedRelease, ok := r.reportedServiceReleases[service]
-			if !ok || reportedRelease != release {
-				diff[service] = release
+		diff := make(map[string]models.SetDeviceServiceStatusRequest)
+		copy := make(map[string]models.SetDeviceServiceStatusRequest)
+		for service, status := range r.serviceStatuses {
+			reportedStatus, ok := r.reportedServiceStatuses[service]
+			if !ok || reportedStatus.CurrentReleaseID != status.CurrentReleaseID {
+				diff[service] = status
 			}
-			copy[service] = release
+			copy[service] = status
 		}
 		r.lock.RUnlock()
 
-		for serviceName, release := range diff {
+		for serviceName, status := range diff {
 			ctx, cancel = dpcontext.New(r.ctx, time.Minute)
 
-			if err := r.reportServiceStatus(ctx, r.applicationID, serviceName, release); err != nil {
+			if err := r.reportServiceStatus(
+				ctx,
+				r.applicationID,
+				serviceName,
+				status,
+			); err != nil {
 				log.WithError(err).Error("report service status")
 				goto cont
 			}
@@ -158,12 +183,63 @@ func (r *Reporter) serviceStatusReporter() {
 			cancel()
 		}
 
-		r.reportedServiceReleases = copy
+		r.reportedServiceStatuses = copy
 
 	cont:
 		select {
 		case <-r.ctx.Done():
 			r.serviceStatusReporterDone <- struct{}{}
+			return
+		case <-ticker.C:
+			continue
+		}
+	}
+}
+
+func (r *Reporter) serviceStateReporter() {
+	ticker := time.NewTicker(defaultTickerFrequency)
+	defer ticker.Stop()
+
+	for {
+		var ctx *dpcontext.Context
+		var cancel func()
+
+		r.lock.RLock()
+		diff := make(map[string]models.SetDeviceServiceStateRequest)
+		copy := make(map[string]models.SetDeviceServiceStateRequest)
+		for service, state := range r.serviceStates {
+			reportedState, ok := r.reportedServiceStates[service]
+			if !ok ||
+				(reportedState.State != state.State ||
+					reportedState.ErrorMessage != state.ErrorMessage) {
+				diff[service] = state
+			}
+			copy[service] = state
+		}
+		r.lock.RUnlock()
+
+		for serviceName, state := range diff {
+			ctx, cancel = dpcontext.New(r.ctx, time.Minute)
+
+			if err := r.reportServiceState(
+				ctx,
+				r.applicationID,
+				serviceName,
+				state,
+			); err != nil {
+				log.WithError(err).Error("report service state")
+				goto cont
+			}
+
+			cancel()
+		}
+
+		r.reportedServiceStates = copy
+
+	cont:
+		select {
+		case <-r.ctx.Done():
+			r.serviceStateReporterDone <- struct{}{}
 			return
 		case <-ticker.C:
 			continue

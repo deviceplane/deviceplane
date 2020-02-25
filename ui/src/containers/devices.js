@@ -72,8 +72,11 @@ const Devices = ({ route }) => {
       {
         Header: 'Status',
         accessor: 'status',
-        Cell: ({ cell: { value } }) => <DeviceStatus status={value} />,
-        maxWidth: '72px',
+        Cell: ({ cell: { value }, row: { original } }) => (
+          <DeviceStatus status={value} lastSeenAt={original.lastSeenAt} />
+        ),
+        minWidth: '100px',
+        maxWidth: '100px',
       },
       {
         Header: 'Name',

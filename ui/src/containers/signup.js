@@ -16,7 +16,6 @@ const validationSchema = yup.object().shape({
     .string()
     .required()
     .max(128),
-  company: yup.string().max(128),
   email: validators.email.required(),
   password: validators.password.required(),
 });
@@ -91,15 +90,6 @@ const Signup = () => {
             ref={register}
             errors={errors.fullName}
             maxLength={128}
-          />
-          <Field
-            autoComplete="on"
-            autoCapitalize="on"
-            label="Company"
-            name="company"
-            ref={register}
-            errors={errors.company}
-            maxLength={64}
           />
           <Field
             required

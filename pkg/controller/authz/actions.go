@@ -31,24 +31,26 @@ const (
 	ActionListDeviceRegistrationTokens = Action("ListDeviceRegistrationTokens")
 	ActionGetProjectConfig             = Action("GetProjectConfig")
 
-	ActionCreateApplication                  = Action("CreateApplication")
-	ActionUpdateApplication                  = Action("UpdateApplication")
-	ActionDeleteApplication                  = Action("DeleteApplication")
-	ActionCreateRelease                      = Action("CreateRelease")
-	ActionUpdateDevice                       = Action("UpdateDevice")
-	ActionDeleteDevice                       = Action("DeleteDevice")
-	ActionSSH                                = Action("SSH")
-	ActionReboot                             = Action("Reboot")
-	ActionListAllDeviceLabels                = Action("ListAllDeviceLabels")
-	ActionSetDeviceLabel                     = Action("SetDeviceLabel")
-	ActionDeleteDeviceLabel                  = Action("DeleteDeviceLabel")
-	ActionSetDeviceEnvironmentVariable       = Action("SetDeviceEnvironmentVariable")
-	ActionDeleteDeviceEnvironmentVariable    = Action("DeleteDeviceEnvironmentVariable")
-	ActionCreateDeviceRegistrationToken      = Action("CreateDeviceRegistrationToken")
-	ActionUpdateDeviceRegistrationToken      = Action("UpdateDeviceRegistrationToken")
-	ActionDeleteDeviceRegistrationToken      = Action("DeleteDeviceRegistrationToken")
-	ActionSetDeviceRegistrationTokenLabel    = Action("SetDeviceRegistrationTokenLabel")
-	ActionDeleteDeviceRegistrationTokenLabel = Action("DeleteDeviceRegistrationTokenLabel")
+	ActionCreateApplication                                = Action("CreateApplication")
+	ActionUpdateApplication                                = Action("UpdateApplication")
+	ActionDeleteApplication                                = Action("DeleteApplication")
+	ActionCreateRelease                                    = Action("CreateRelease")
+	ActionUpdateDevice                                     = Action("UpdateDevice")
+	ActionDeleteDevice                                     = Action("DeleteDevice")
+	ActionSSH                                              = Action("SSH")
+	ActionReboot                                           = Action("Reboot")
+	ActionListAllDeviceLabels                              = Action("ListAllDeviceLabels")
+	ActionSetDeviceLabel                                   = Action("SetDeviceLabel")
+	ActionDeleteDeviceLabel                                = Action("DeleteDeviceLabel")
+	ActionSetDeviceEnvironmentVariable                     = Action("SetDeviceEnvironmentVariable")
+	ActionDeleteDeviceEnvironmentVariable                  = Action("DeleteDeviceEnvironmentVariable")
+	ActionCreateDeviceRegistrationToken                    = Action("CreateDeviceRegistrationToken")
+	ActionUpdateDeviceRegistrationToken                    = Action("UpdateDeviceRegistrationToken")
+	ActionDeleteDeviceRegistrationToken                    = Action("DeleteDeviceRegistrationToken")
+	ActionSetDeviceRegistrationTokenLabel                  = Action("SetDeviceRegistrationTokenLabel")
+	ActionDeleteDeviceRegistrationTokenLabel               = Action("DeleteDeviceRegistrationTokenLabel")
+	ActionSetDeviceRegistrationTokenEnvironmentVariable    = Action("SetDeviceRegistrationTokenEnvironmentVariable")
+	ActionDeleteDeviceRegistrationTokenEnvironmentVariable = Action("DeleteDeviceRegistrationTokenEnvironmentVariable")
 
 	ActionUpdateProject                   = Action("UpdateProject")
 	ActionDeleteProject                   = Action("DeleteProject")
@@ -117,6 +119,8 @@ var (
 		ActionDeleteDeviceRegistrationToken,
 		ActionSetDeviceRegistrationTokenLabel,
 		ActionDeleteDeviceRegistrationTokenLabel,
+		ActionSetDeviceRegistrationTokenEnvironmentVariable,
+		ActionDeleteDeviceRegistrationTokenEnvironmentVariable,
 	}...)
 	adminActions = append(writeActions, []Action{
 		ActionUpdateProject,
