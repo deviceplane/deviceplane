@@ -281,7 +281,7 @@ func (a *Agent) downloadLatestBundle(oldBundle *models.Bundle) *models.Bundle {
 
 	bundleBytes, err = json.Marshal(bundle)
 	if err != nil {
-		log.WithError(err).Error("marshal validated bundle")
+		log.WithError(err).Error("marshal bundle")
 		return nil
 	}
 
