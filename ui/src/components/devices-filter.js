@@ -38,13 +38,11 @@ const DefaultLabelExistenceConditionParams = () => {
 };
 
 const OperatorExistenceOptions = [
-  [
-    { label: OperatorExists, value: OperatorExists },
-    {
-      label: OperatorNotExists,
-      value: OperatorNotExists,
-    },
-  ],
+  { label: OperatorExists, value: OperatorExists },
+  {
+    label: OperatorNotExists,
+    value: OperatorNotExists,
+  },
 ];
 
 export const OperatorIsOptions = [
