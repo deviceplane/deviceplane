@@ -311,10 +311,10 @@ func (d *DeviceQuerier) deviceMatchesCondition(ctx context.Context, device model
 		}
 
 		switch params.Operator {
-		case models.OperatorExists:
+		case models.OperatorIs:
 			exists, err := existsFunc()
 			return exists, err
-		case models.OperatorNotExists:
+		case models.OperatorIsNot:
 			exists, err := existsFunc()
 			return !exists, err
 		}
