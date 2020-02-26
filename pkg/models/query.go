@@ -37,15 +37,15 @@ type LabelExistenceConditionParams struct {
 }
 
 type ApplicationExistenceConditionParams struct {
-	Application string   `json:"application"`
-	Operator    Operator `json:"operator"`
+	ApplicationID string   `json:"applicationId"`
+	Operator      Operator `json:"operator"`
 }
 
 type ServiceStateConditionParams struct {
-	Application  string       `json:"application"`
-	Service      string       `json:"service"`
-	Operator     Operator     `json:"operator"`
-	ServiceState ServiceState `json:"serviceState"`
+	ApplicationID string       `json:"applicationId"`
+	Service       string       `json:"service"`
+	Operator      Operator     `json:"operator"`
+	ServiceState  ServiceState `json:"serviceState"`
 }
 
 type Operator string

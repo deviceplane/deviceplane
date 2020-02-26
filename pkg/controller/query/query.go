@@ -165,7 +165,7 @@ func validateCondition(condition models.Condition) error {
 			return err
 		}
 
-		if params.Application == "" {
+		if params.ApplicationID == "" {
 			return ErrNoEmptyFields
 		}
 
@@ -184,7 +184,7 @@ func validateCondition(condition models.Condition) error {
 			return err
 		}
 
-		if params.Application == "" || params.Service == "" {
+		if params.ApplicationID == "" || params.Service == "" {
 			return ErrNoEmptyFields
 		}
 
@@ -250,6 +250,22 @@ func (d *DeviceQuerier) deviceMatchesCondition(ctx context.Context, device model
 		}
 		return false, ErrOperatorInvalid
 
+	case models.LabelExistenceCondition:
+		var params models.LabelExistenceConditionParams
+		err := utils.JSONConvert(condition.Params, &params)
+		if err != nil {
+			return false, err
+		}
+
+		_, ok := device.Labels[params.Key]
+		switch params.Operator {
+		case models.OperatorExists:
+			return ok, nil
+		case models.OperatorNotExists:
+			return !ok, nil
+		}
+		return false, ErrOperatorInvalid
+
 	case models.ApplicationExistenceCondition:
 		var params models.ApplicationExistenceConditionParams
 		err := utils.JSONConvert(condition.Params, &params)
@@ -257,7 +273,7 @@ func (d *DeviceQuerier) deviceMatchesCondition(ctx context.Context, device model
 			return false, err
 		}
 
-		if params.Application == "" {
+		if params.ApplicationID == "" {
 			return false, ErrNoEmptyFields
 		}
 
@@ -266,7 +282,7 @@ func (d *DeviceQuerier) deviceMatchesCondition(ctx context.Context, device model
 			ctx,
 			device.ProjectID,
 			device.ID,
-			params.Application,
+			params.ApplicationID,
 		)
 		if err == store.ErrDeviceApplicationStatusNotFound {
 			exists = false
@@ -289,7 +305,7 @@ func (d *DeviceQuerier) deviceMatchesCondition(ctx context.Context, device model
 			return false, err
 		}
 
-		if params.Application == "" || params.Service == "" {
+		if params.ApplicationID == "" || params.Service == "" {
 			return false, ErrNoEmptyFields
 		}
 
@@ -298,7 +314,7 @@ func (d *DeviceQuerier) deviceMatchesCondition(ctx context.Context, device model
 			ctx,
 			device.ProjectID,
 			device.ID,
-			params.Application,
+			params.ApplicationID,
 			params.Service,
 		)
 		if err == store.ErrDeviceServiceStateNotFound {
