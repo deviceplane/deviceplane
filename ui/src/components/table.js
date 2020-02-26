@@ -4,7 +4,7 @@ import { useLinkProps } from 'react-navi';
 
 import { labelColor } from '../helpers/labels';
 import { DeviceLabelKey } from './device-label';
-import { Checkbox, Button, Row, Grid, Icon } from './core';
+import { Checkbox, Button, Row, Grid, Icon, Link } from './core';
 
 export const SelectColumn = {
   id: 'select',
@@ -85,15 +85,13 @@ const TableBody = styled.tbody`
 `;
 
 const TableRow = styled.tr`
-  cursor: ${props => (props.selectable ? 'pointer' : 'default')};
+  cursor: ${props => (props.clickable ? 'pointer' : 'default')};
   transition: ${props => props.theme.transitions[0]};
   display: contents;
 
   &:hover td {
     background-color: ${props =>
-      props.selectable
-        ? props.theme.colors.grays[3]
-        : props.theme.colors.black};
+      props.clickable ? props.theme.colors.grays[3] : props.theme.colors.black};
   }
 `;
 
@@ -129,14 +127,14 @@ const Table = ({
   rows,
   prepareRow,
   placeholder,
-  rowHref,
   maxHeight,
   headers,
   getTableBodyProps,
   getTableProps,
-  toggleRowSelected,
+  onRowClick,
+  rowHref,
 }) => {
-  const selectable = !!toggleRowSelected || rowHref;
+  const clickable = onRowClick || rowHref;
 
   return (
     <>
@@ -195,9 +193,9 @@ const Table = ({
                     isNaN(cell.value) || cell.value === '-' ? 'left' : 'right',
                   ...cell.column.cellStyle,
                 }}
-                selectable={selectable}
+                clickable={clickable}
               >
-                {rowHref ? (
+                {rowHref && cell.column.id !== 'select' ? (
                   <LinkCell href={rowHref(row.original)}>
                     {cell.render('Cell')}
                   </LinkCell>
@@ -209,8 +207,8 @@ const Table = ({
             const tableRow = (
               <TableRow
                 {...row.getRowProps()}
-                selectable={selectable}
-                onClick={() => toggleRowSelected && toggleRowSelected(row.id)}
+                clickable={clickable}
+                onClick={() => onRowClick && onRowClick(row.original)}
                 position="relative"
               >
                 {cells}
@@ -224,7 +222,7 @@ const Table = ({
         <Row
           flex={1}
           justifyContent="center"
-          padding={4}
+          padding={3}
           borderBottom={0}
           borderColor="grays.1"
         >

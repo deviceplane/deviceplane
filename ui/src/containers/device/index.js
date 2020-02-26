@@ -10,10 +10,6 @@ const tabs = [
     to: 'overview',
   },
   {
-    title: 'SSH',
-    to: 'ssh',
-  },
-  {
     title: 'Settings',
     to: 'settings',
   },

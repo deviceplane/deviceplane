@@ -22,7 +22,7 @@ const ConditionComp = ({ type, params }) => {
             {params.key}
           </Text>
 
-          <Text fontSize={0} fontWeight={1} marginRight={2}>
+          <Text fontSize={0} fontWeight={1} marginRight={2} color="grays.12">
             {params.operator}
           </Text>
 
@@ -43,7 +43,7 @@ const ConditionComp = ({ type, params }) => {
             {params.key}
           </Text>
 
-          <Text fontSize={0} fontWeight={1}>
+          <Text fontSize={0} fontWeight={1} color="grays.12">
             {params.operator}
           </Text>
         </>
@@ -55,20 +55,19 @@ const ConditionComp = ({ type, params }) => {
             fontWeight={2}
             marginRight={2}
             fontSize={0}
-            color="primary"
             style={{ textTransform: 'uppercase' }}
           >
             {params.property}
           </Text>
 
-          <Text fontSize={0} fontWeight={1} marginRight={2}>
+          <Text fontSize={0} fontWeight={1} marginRight={2} color="grays.12">
             {params.operator}
           </Text>
 
           <Text
             fontWeight={2}
             fontSize={0}
-            style={{ textTransform: 'uppercase' }}
+            style={{ textTransform: 'capitalize' }}
           >
             {params.value}
           </Text>
@@ -92,34 +91,41 @@ export const DevicesFilterButtons = ({
   return (
     <Row flexWrap="wrap">
       {query.map((filter, index) => (
-        <Row alignItems="center" key={index} marginY={2} marginRight={3}>
-          <Row
-            border={0}
-            borderRadius={1}
-            borderColor="white"
-            padding={2}
-            alignItems="center"
-            style={{ cursor: canRemoveFilter ? 'pointer' : 'default' }}
-            onClick={canRemoveFilter ? () => onEdit(index) : () => {}}
-          >
-            {filter.map((condition, i) => (
-              <React.Fragment key={i}>
-                <ConditionComp {...condition} />
+        <Row
+          key={index}
+          marginY={2}
+          marginRight={2}
+          border={0}
+          borderRadius={5}
+          borderColor="primary"
+          paddingY={2}
+          paddingX={3}
+          alignItems="center"
+          style={{ cursor: canRemoveFilter ? 'pointer' : 'default' }}
+          onClick={canRemoveFilter ? () => onEdit(index) : () => {}}
+        >
+          {filter.map((condition, i) => (
+            <React.Fragment key={i}>
+              <ConditionComp {...condition} />
 
-                {i < filter.length - 1 && (
-                  <Text fontSize={0} fontWeight={3} marginX={4} color="white">
-                    OR
-                  </Text>
-                )}
-              </React.Fragment>
-            ))}
-          </Row>
+              {i < filter.length - 1 && (
+                <Text fontSize={0} fontWeight={2} marginX={4} color="primary">
+                  OR
+                </Text>
+              )}
+            </React.Fragment>
+          ))}
           {canRemoveFilter && (
             <Button
               marginLeft={2}
-              variant="iconDanger"
-              title={<Icon icon="cross" color="red" size={16} />}
-              onClick={() => (removeFilter ? removeFilter(index) : null)}
+              variant="text"
+              title={<Icon icon="cross" color="red" size={14} />}
+              onClick={e => {
+                e.stopPropagation();
+                if (removeFilter) {
+                  removeFilter(index);
+                }
+              }}
             />
           )}
         </Row>

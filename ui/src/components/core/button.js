@@ -5,7 +5,6 @@ import { useLinkProps } from 'react-navi';
 
 import theme from '../../theme';
 import { Box } from './box';
-import Icon from './icon';
 
 const variants = {
   variants: {
@@ -14,15 +13,12 @@ const variants = {
       bg: 'primary',
       border: 0,
       opacity: 0.9,
-      '&:disabled': {
+      '&:disabled, &[disabled]': {
         color: 'pureWhite',
         bg: 'transparent',
         borderColor: 'pureWhite',
       },
-      '&:not(:disabled):hover': {
-        opacity: 1,
-      },
-      '&:not(:disabled):focus': {
+      '&:not(:disabled):not([disabled]):hover, &:not(:disabled):not([disabled]):focus': {
         opacity: 1,
       },
     },
@@ -32,69 +28,57 @@ const variants = {
       border: 0,
       borderColor: 'primary',
       opacity: 0.9,
-      '&:disabled': {
+      '&:disabled, &[disabled]': {
         color: 'pureWhite',
         borderColor: 'pureWhite',
       },
-      '&:not(:disabled):hover': {
-        opacity: 1,
-      },
-      '&:not(:disabled):focus': {
+      '&:not(:disabled):not([disabled]):hover, &:not(:disabled):not([disabled]):focus': {
         opacity: 1,
       },
     },
     tertiary: {
       color: 'primary',
       bg: 'transparent',
-      padding: '6px 8px',
+      padding: '5px 6px',
       opacity: 0.9,
       border: 0,
 
       height: 'min-content',
-      '&:disabled': {
+      '&:disabled, &[disabled]': {
         color: 'pureWhite',
         borderColor: 'pureWhite',
       },
-      '&:not(:disabled):hover': {
-        opacity: 1,
-      },
-      '&:not(:disabled):focus': {
+      '&:not(:disabled):not([disabled]):hover, &:not(:disabled):not([disabled]):focus': {
         opacity: 1,
       },
     },
     tertiaryDanger: {
       color: 'red',
       bg: 'transparent',
-      padding: '6px 8px',
+      padding: '5px 6px',
       opacity: 0.9,
       height: 'min-content',
       border: 0,
       borderColor: 'red',
-      '&:disabled': {
+      '&:disabled, &[disabled]': {
         color: 'pureWhite',
         borderColor: 'pureWhite',
       },
-      '&:not(:disabled):hover': {
-        opacity: 1,
-      },
-      '&:not(:disabled):focus': {
+      '&:not(:disabled):not([disabled]):hover, &:not(:disabled):not([disabled]):focus': {
         opacity: 1,
       },
     },
     danger: {
       color: 'red',
-      bg: 'grays.1',
+      bg: 'transparent',
       border: 0,
       borderColor: 'red',
       opacity: 0.9,
-      '&:disabled': {
+      '&:disabled, &[disabled]': {
         color: 'pureWhite',
         borderColor: 'pureWhite',
       },
-      '&:not(:disabled):hover': {
-        opacity: 1,
-      },
-      '&:not(:disabled):focus': {
+      '&:not(:disabled):not([disabled]):hover, &:not(:disabled):not([disabled]):focus': {
         opacity: 1,
       },
     },
@@ -102,13 +86,10 @@ const variants = {
       color: 'grays.10',
       bg: 'transparent',
       padding: 0,
-      '&:disabled': {
+      '&:disabled, &[disabled]': {
         color: 'pureWhite',
       },
-      '&:not(:disabled):hover': {
-        color: 'pureWhite',
-      },
-      '&:not(:disabled):focus': {
+      '&:not(:disabled):not([disabled]):hover, &:not(:disabled):not([disabled]):focus': {
         color: 'pureWhite',
       },
     },
@@ -120,10 +101,7 @@ const variants = {
       border: 0,
       borderColor: 'grays.3',
       borderRadius: '16px',
-      '&:not(:disabled):hover': {
-        borderColor: 'primary',
-      },
-      '&:not(:disabled):focus': {
+      '&:not(:disabled):not([disabled]):hover, &:not(:disabled):not([disabled]):focus': {
         borderColor: 'primary',
       },
       '&:disabled svg': {
@@ -139,10 +117,7 @@ const variants = {
       border: 0,
       borderColor: 'grays.3',
       borderRadius: '16px',
-      '&:not(:disabled):hover': {
-        borderColor: 'pureWhite',
-      },
-      '&:not(:disabled):focus': {
+      '&:not(:disabled):not([disabled]):hover, &:not(:disabled):not([disabled]):focus': {
         borderColor: 'pureWhite',
       },
       '&:disabled svg': {
@@ -158,10 +133,7 @@ const variants = {
       border: 0,
       borderColor: 'grays.3',
       borderRadius: '16px',
-      '&:not(:disabled):hover': {
-        borderColor: 'red',
-      },
-      '&:not(:disabled):focus': {
+      '&:not(:disabled):not([disabled]):hover, &:not(:disabled):not([disabled]):focus': {
         borderColor: 'red',
       },
       '&:disabled svg': {
@@ -186,13 +158,14 @@ export const Btn = styled(Box).attrs({ as: 'button' })`
   backface-visibility: hidden;
   white-space: nowrap;
   font-size: 12px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   text-transform: uppercase;
   text-renderering: geometricPercision;
   border-radius: 2px;
   flex-shrink: 0;
 
-  &:disabled {
+  &:disabled,
+  &[disabled] {
     cursor: not-allowed;
     opacity: 0.4;
   }
@@ -213,11 +186,15 @@ export const LinkButton = styled(Btn).attrs({
   text-decoration: none;
 `;
 
-const Button = ({ href, title, onClick, icon, ...rest }) => {
+const Button = ({ href, title, onClick, newTab, ...rest }) => {
   if (href) {
     return (
-      <LinkButton {...useLinkProps({ href, onClick })} {...rest}>
-        {icon && <Icon icon={icon} />}
+      <LinkButton
+        {...(newTab
+          ? { href, target: '_blank', rel: 'noopener noreferrer' }
+          : useLinkProps({ href, onClick }))}
+        {...rest}
+      >
         {title}
       </LinkButton>
     );

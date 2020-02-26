@@ -323,7 +323,7 @@ export const DevicesFilter = ({
       >
         <Column flex={1} overflowY="auto" maxHeight="100%">
           {filter.map((condition, index) => (
-            <Group key={index}>
+            <Group key={index} marginBottom={4}>
               <Row justifyContent="space-between" alignItems="center">
                 {conditionOptions.length > 1 && (
                   <Select
@@ -381,8 +381,8 @@ export const DevicesFilter = ({
                 )}
               </Row>
               {index < filter.length - 1 && (
-                <Row marginTop={Group.defaultProps.marginBottom}>
-                  <Text fontWeight={3} fontSize={3}>
+                <Row marginTop={4}>
+                  <Text fontWeight={2} fontSize={2} color="primary">
                     OR
                   </Text>
                 </Row>

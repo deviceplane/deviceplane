@@ -1,5 +1,10 @@
 const uuidv4 = require('uuid/v4');
 
+const id = () =>
+  Math.random()
+    .toString(36)
+    .substr(2, 9);
+
 const capitalize = message => message.replace(/^\w/, c => c.toUpperCase());
 
 const randomClassName = () =>
@@ -35,4 +40,5 @@ export default {
   deepEqual,
   capitalize,
   parseError,
+  id,
 };

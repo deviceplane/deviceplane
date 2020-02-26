@@ -89,10 +89,22 @@ const Card = ({
               </Text>
               {left}
             </Row>
-            <Row justifyContent="center" marginTop={4} marginLeft={4}>
-              {center}
-            </Row>
-            <Row marginLeft={4} marginTop={4} alignItems="center">
+            {center && (
+              <Row
+                justifyContent="center"
+                flex={1}
+                marginTop={4}
+                marginLeft={4}
+              >
+                {center}
+              </Row>
+            )}
+            <Row
+              marginLeft={4}
+              marginTop={4}
+              alignItems="center"
+              justifyContent="flex-end"
+            >
               {right}
               {actions.map(
                 (
@@ -104,6 +116,8 @@ const Card = ({
                     disabled,
                     icon,
                     show = true,
+                    newTab,
+                    newWindow,
                   },
                   index
                 ) =>
@@ -113,6 +127,8 @@ const Card = ({
                       title={title}
                       icon={icon}
                       href={href}
+                      newTab={newTab}
+                      newWindow={newWindow}
                       variant={variant}
                       onClick={onClick}
                       disabled={disabled}

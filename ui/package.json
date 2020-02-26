@@ -31,7 +31,9 @@
     "ts-interface-checker": "^0.1.9",
     "typescript": "^3.7.4",
     "websocket-stream": "^5.5.0",
-    "xterm": "^2.2.0",
+    "xterm": "^4.4.0",
+    "xterm-addon-fit": "^0.3.0",
+    "xterm-addon-webgl": "^0.5.0",
     "yup": "^0.27.0"
   },
   "devDependencies": {

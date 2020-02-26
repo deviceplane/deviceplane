@@ -109,18 +109,6 @@ const Device = ({
         size="full"
         actions={[
           {
-            title: 'Delete',
-            variant: 'danger',
-            disabled: selectedFlatRows.length === 0,
-            onClick: () => setShowDeleteForm(true),
-          },
-          {
-            title: 'Edit',
-            variant: 'secondary',
-            disabled: selectedFlatRows.length !== 1,
-            onClick: () => setShowMetricOverview(true),
-          },
-          {
             title: 'Add Device Metrics',
             onClick: () => setShowMetricsForm(true),
           },
