@@ -325,11 +325,15 @@ func (d *DeviceQuerier) deviceMatchesCondition(ctx context.Context, device model
 
 		switch params.Operator {
 		case models.OperatorIs:
-			return deviceServiceState.State == params.ServiceState, nil
-		case models.OperatorIsNot:
 			if !exists {
 				return false, nil
 			}
+			return deviceServiceState.State == params.ServiceState, nil
+		case models.OperatorIsNot:
+			if !exists {
+				return true, nil
+			}
+			return deviceServiceState.State != params.ServiceState, nil
 		}
 		return false, ErrOperatorInvalid
 	}
