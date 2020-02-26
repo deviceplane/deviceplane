@@ -12,11 +12,11 @@ type Condition struct {
 type ConditionType string
 
 const (
-	DevicePropertyCondition       = ConditionType("DevicePropertyCondition")
-	LabelValueCondition           = ConditionType("LabelValueCondition")
-	LabelExistenceCondition       = ConditionType("LabelExistenceCondition")
-	ApplicationExistenceCondition = ConditionType("ApplicationExistenceCondition")
-	ServiceStateCondition         = ConditionType("ServiceStateCondition")
+	DevicePropertyCondition     = ConditionType("DevicePropertyCondition")
+	LabelValueCondition         = ConditionType("LabelValueCondition")
+	LabelExistenceCondition     = ConditionType("LabelExistenceCondition")
+	ApplicationReleaseCondition = ConditionType("ApplicationReleaseCondition")
+	ServiceStateCondition       = ConditionType("ServiceStateCondition")
 )
 
 type DevicePropertyConditionParams struct {
@@ -36,9 +36,14 @@ type LabelExistenceConditionParams struct {
 	Operator Operator `json:"operator"`
 }
 
-type ApplicationExistenceConditionParams struct {
+const (
+	AnyApplicationRelease = string("any")
+)
+
+type ApplicationReleaseConditionParams struct {
 	ApplicationID string   `json:"applicationId"`
 	Operator      Operator `json:"operator"`
+	ReleaseID     string   `json:"releaseId"`
 }
 
 type ServiceStateConditionParams struct {

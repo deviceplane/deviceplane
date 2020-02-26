@@ -119,7 +119,7 @@ func NewService(
 		deviceServiceStatuses:      deviceServiceStatuses,
 		deviceServiceStates:        deviceServiceStates,
 		metricConfigs:              metricConfigs,
-		deviceQuerier:              query.NewDeviceQuerier(deviceServiceStates, deviceApplicationStatuses),
+		deviceQuerier:              query.NewDeviceQuerier(deviceServiceStates, deviceApplicationStatuses, releases),
 		email:                      email,
 		emailFromName:              emailFromName,
 		emailFromAddress:           emailFromAddress,

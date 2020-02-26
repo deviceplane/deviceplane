@@ -50,7 +50,7 @@ func IsApplicationScheduled(device models.Device, schedulingRule models.Scheduli
 }
 
 // We don't yet need to make DB calls for the types of conditions scheduling rule queries use
-var deviceQuerier = query.NewDeviceQuerier(nil, nil)
+var deviceQuerier = query.NewDeviceQuerier(nil, nil, nil)
 
 func GetScheduledDevices(devices []models.Device, schedulingRule models.SchedulingRule) ([]models.ScheduledDevice, error) {
 	var selectedDevices []models.Device

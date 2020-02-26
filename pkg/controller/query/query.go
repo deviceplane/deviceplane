@@ -23,15 +23,18 @@ var (
 type DeviceQuerier struct {
 	deviceServiceStates       store.DeviceServiceStates
 	deviceApplicationStatuses store.DeviceApplicationStatuses
+	releases                  store.Releases
 }
 
 func NewDeviceQuerier(
 	deviceServiceStates store.DeviceServiceStates,
 	deviceApplicationStatuses store.DeviceApplicationStatuses,
+	releases store.Releases,
 ) *DeviceQuerier {
 	return &DeviceQuerier{
 		deviceApplicationStatuses: deviceApplicationStatuses,
 		deviceServiceStates:       deviceServiceStates,
+		releases:                  releases,
 	}
 }
 
@@ -158,21 +161,21 @@ func validateCondition(condition models.Condition) error {
 		}
 		return ErrOperatorInvalid
 
-	case models.ApplicationExistenceCondition:
-		var params models.ApplicationExistenceConditionParams
+	case models.ApplicationReleaseCondition:
+		var params models.ApplicationReleaseConditionParams
 		err := utils.JSONConvert(condition.Params, &params)
 		if err != nil {
 			return err
 		}
 
-		if params.ApplicationID == "" {
+		if params.ApplicationID == "" || params.ReleaseID == "" {
 			return ErrNoEmptyFields
 		}
 
 		switch params.Operator {
-		case models.OperatorExists:
+		case models.OperatorIs:
 			return nil
-		case models.OperatorNotExists:
+		case models.OperatorIsNot:
 			return nil
 		}
 		return ErrOperatorInvalid
@@ -266,19 +269,19 @@ func (d *DeviceQuerier) deviceMatchesCondition(ctx context.Context, device model
 		}
 		return false, ErrOperatorInvalid
 
-	case models.ApplicationExistenceCondition:
-		var params models.ApplicationExistenceConditionParams
+	case models.ApplicationReleaseCondition:
+		var params models.ApplicationReleaseConditionParams
 		err := utils.JSONConvert(condition.Params, &params)
 		if err != nil {
 			return false, err
 		}
 
-		if params.ApplicationID == "" {
+		if params.ApplicationID == "" || params.ReleaseID == "" {
 			return false, ErrNoEmptyFields
 		}
 
 		exists := true
-		_, err = d.deviceApplicationStatuses.GetDeviceApplicationStatus(
+		applicationStatus, err := d.deviceApplicationStatuses.GetDeviceApplicationStatus(
 			ctx,
 			device.ProjectID,
 			device.ID,
@@ -290,11 +293,30 @@ func (d *DeviceQuerier) deviceMatchesCondition(ctx context.Context, device model
 			return false, errors.Wrap(err, "getting application status")
 		}
 
+		existsFunc := func() (bool, error) {
+			if !exists {
+				return false, nil
+			}
+			if params.ReleaseID == models.AnyApplicationRelease {
+				return true, nil
+			}
+			if params.ReleaseID == models.LatestRelease {
+				release, err := d.releases.GetLatestRelease(ctx, device.ProjectID, params.ApplicationID)
+				if err != nil {
+					return false, errors.Wrap(err, "getting latest release")
+				}
+				return release.ID == params.ReleaseID, nil
+			}
+			return params.ReleaseID == applicationStatus.CurrentReleaseID, nil
+		}
+
 		switch params.Operator {
 		case models.OperatorExists:
-			return exists, nil
+			exists, err := existsFunc()
+			return exists, err
 		case models.OperatorNotExists:
-			return !exists, nil
+			exists, err := existsFunc()
+			return !exists, err
 		}
 		return false, ErrOperatorInvalid
 

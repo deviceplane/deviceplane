@@ -28,6 +28,7 @@ func init() {
 	Querier = NewDeviceQuerier(
 		sqlStore,
 		sqlStore,
+		sqlStore,
 	)
 }
 
