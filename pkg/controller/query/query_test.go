@@ -1,10 +1,13 @@
 package query
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"testing"
+	"time"
 
+	mysql_store "github.com/deviceplane/deviceplane/pkg/controller/store/mysql"
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/stretchr/testify/require"
 )
@@ -16,11 +19,36 @@ type Scenario struct {
 	out   []models.Device
 }
 
+var Querier *DeviceQuerier
+
+func init() {
+	// TODO: add sql store
+	sqlStore := mysql_store.NewStore(nil)
+
+	Querier = NewDeviceQuerier(
+		sqlStore,
+		sqlStore,
+	)
+}
+
 func testScenario(t *testing.T, scenario Scenario) {
 	t.Helper()
-	selectedDevices, _, err := QueryDevices(scenario.in, scenario.query)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	selectedDevices, _, err := Querier.QueryDevices(ctx, scenario.in, scenario.query)
 	require.NoError(t, err, scenario.desc)
 	require.Equal(t, scenario.out, selectedDevices, scenario.desc)
+}
+
+func testEmptyScenario(t *testing.T, scenario Scenario) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	selectedDevices, _, err := Querier.QueryDevices(ctx, scenario.in, scenario.query)
+	require.Error(t, err, scenario.desc)
+	require.Len(t, selectedDevices, 0, scenario.desc)
 }
 
 func TestQueryDevices(t *testing.T) {
@@ -475,9 +503,7 @@ func TestQueryDevices(t *testing.T) {
 		}
 
 		for _, scenario := range scenarios {
-			selectedDevices, _, err := QueryDevices(scenario.in, scenario.query)
-			require.Error(t, err, scenario.desc)
-			require.Len(t, selectedDevices, 0, scenario.desc)
+			testEmptyScenario(t, scenario)
 		}
 	})
 }

@@ -1,6 +1,7 @@
 package scheduling
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 
@@ -48,6 +49,9 @@ func IsApplicationScheduled(device models.Device, schedulingRule models.Scheduli
 	return true, &scheduledDevices[0], nil
 }
 
+// We don't yet need to make DB calls for the types of conditions scheduling rule queries use
+var deviceQuerier = query.NewDeviceQuerier(nil, nil)
+
 func GetScheduledDevices(devices []models.Device, schedulingRule models.SchedulingRule) ([]models.ScheduledDevice, error) {
 	var selectedDevices []models.Device
 
@@ -64,7 +68,7 @@ func GetScheduledDevices(devices []models.Device, schedulingRule models.Scheduli
 		}
 
 		var err error
-		selectedDevices, _, err = query.QueryDevices(devices, *schedulingRule.ConditionalQuery)
+		selectedDevices, _, err = deviceQuerier.QueryDevices(context.TODO(), devices, *schedulingRule.ConditionalQuery)
 		if err != nil {
 			return nil, errors.Wrap(err, "filtering by schedule query")
 		}
@@ -81,7 +85,7 @@ func GetScheduledDevices(devices []models.Device, schedulingRule models.Scheduli
 
 	// Go through release selectors
 	for _, releaseSelector := range schedulingRule.ReleaseSelectors {
-		releasePinnedDevices, newSelectedDevices, err := query.QueryDevices(selectedDevices, releaseSelector.Query)
+		releasePinnedDevices, newSelectedDevices, err := deviceQuerier.QueryDevices(context.TODO(), selectedDevices, releaseSelector.Query)
 		if err != nil {
 			return nil, errors.Wrap(err, "filtering by release query")
 		}

@@ -2015,7 +2015,7 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request) {
 				}
 
 				if len(filters) != 0 {
-					devices, _, err = query.QueryDevices(devices, filters)
+					devices, _, err = s.deviceQuerier.QueryDevices(r.Context(), devices, filters)
 					if err != nil {
 						http.Error(w, errors.Wrap(err, "filter devices").Error(), http.StatusBadRequest)
 						return
@@ -2056,7 +2056,7 @@ func (s *Service) previewScheduledDevices(w http.ResponseWriter, r *http.Request
 				}
 
 				if len(filters) != 0 {
-					devices, _, err = query.QueryDevices(devices, filters)
+					devices, _, err = s.deviceQuerier.QueryDevices(r.Context(), devices, filters)
 					if err != nil {
 						http.Error(w, errors.Wrap(err, "filter devices").Error(), http.StatusBadRequest)
 						return

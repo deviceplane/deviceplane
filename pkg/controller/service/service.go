@@ -7,6 +7,7 @@ import (
 
 	"github.com/DataDog/datadog-go/statsd"
 	"github.com/deviceplane/deviceplane/pkg/controller/connman"
+	"github.com/deviceplane/deviceplane/pkg/controller/query"
 	"github.com/deviceplane/deviceplane/pkg/controller/spaserver"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/email"
@@ -43,6 +44,7 @@ type Service struct {
 	deviceServiceStatuses      store.DeviceServiceStatuses
 	deviceServiceStates        store.DeviceServiceStates
 	metricConfigs              store.MetricConfigs
+	deviceQuerier              *query.DeviceQuerier
 	email                      email.Interface
 	emailFromName              string
 	emailFromAddress           string
@@ -117,6 +119,7 @@ func NewService(
 		deviceServiceStatuses:      deviceServiceStatuses,
 		deviceServiceStates:        deviceServiceStates,
 		metricConfigs:              metricConfigs,
+		deviceQuerier:              query.NewDeviceQuerier(deviceServiceStates, deviceApplicationStatuses),
 		email:                      email,
 		emailFromName:              emailFromName,
 		emailFromAddress:           emailFromAddress,
