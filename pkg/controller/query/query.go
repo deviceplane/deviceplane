@@ -265,7 +265,7 @@ func deviceMatchesCondition(deps QueryDependencies, device models.Device, condit
 			return false, ErrNoEmptyFields
 		}
 
-		applicationStatus, exists := deps.deviceApplicationStatuses[device.ID][params.ApplicationID]
+		applicationStatus, exists := deps.DeviceApplicationStatuses[device.ID][params.ApplicationID]
 		existsFunc := func() (bool, error) {
 			if !exists {
 				return false, nil
@@ -298,7 +298,7 @@ func deviceMatchesCondition(deps QueryDependencies, device models.Device, condit
 		}
 
 		exists := true
-		deviceServiceState, exists := deps.deviceServiceStates[device.ID][params.ApplicationID][params.Service]
+		deviceServiceState, exists := deps.DeviceServiceStates[device.ID][params.ApplicationID][params.Service]
 
 		switch params.Operator {
 		case models.OperatorIs:
