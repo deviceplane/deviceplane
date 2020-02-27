@@ -287,9 +287,9 @@ func deviceMatchesCondition(deps QueryDependencies, device models.Device, condit
 		_, exists := deps.DeviceApplicationStatuses[device.ID][params.ApplicationID]
 
 		switch params.Operator {
-		case models.OperatorIs:
+		case models.OperatorExists:
 			return exists, nil
-		case models.OperatorIsNot:
+		case models.OperatorNotExists:
 			return !exists, nil
 		}
 		return false, ErrOperatorInvalid
