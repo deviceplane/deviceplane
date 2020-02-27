@@ -165,6 +165,25 @@ func validateCondition(condition models.Condition) error {
 		}
 		return ErrOperatorInvalid
 
+	case models.ApplicationExistenceCondition:
+		var params models.ApplicationExistenceConditionParams
+		err := utils.JSONConvert(condition.Params, &params)
+		if err != nil {
+			return err
+		}
+
+		if params.ApplicationID == "" {
+			return ErrNoEmptyFields
+		}
+
+		switch params.Operator {
+		case models.OperatorExists:
+			return nil
+		case models.OperatorNotExists:
+			return nil
+		}
+		return ErrOperatorInvalid
+
 	case models.ServiceStateCondition:
 		var params models.ServiceStateConditionParams
 		err := utils.JSONConvert(condition.Params, &params)
@@ -251,6 +270,27 @@ func deviceMatchesCondition(deps QueryDependencies, device models.Device, condit
 			return ok, nil
 		case models.OperatorNotExists:
 			return !ok, nil
+		}
+		return false, ErrOperatorInvalid
+
+	case models.ApplicationExistenceCondition:
+		var params models.ApplicationExistenceConditionParams
+		err := utils.JSONConvert(condition.Params, &params)
+		if err != nil {
+			return false, err
+		}
+
+		if params.ApplicationID == "" {
+			return false, ErrNoEmptyFields
+		}
+
+		_, exists := deps.DeviceApplicationStatuses[device.ID][params.ApplicationID]
+
+		switch params.Operator {
+		case models.OperatorIs:
+			return exists, nil
+		case models.OperatorIsNot:
+			return !exists, nil
 		}
 		return false, ErrOperatorInvalid
 
