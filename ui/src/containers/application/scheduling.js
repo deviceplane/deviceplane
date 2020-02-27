@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigation } from 'react-navi';
+import { useTable, useSortBy } from 'react-table';
 
 import api from '../../api';
 import utils from '../../utils';
@@ -89,6 +90,14 @@ const Scheduling = ({
     []
   );
   const tableData = useMemo(() => scheduledDevices, [scheduledDevices]);
+
+  const tableProps = useTable(
+    {
+      columns,
+      data: tableData,
+    },
+    useSortBy
+  );
 
   const navigation = useNavigation();
 
@@ -254,9 +263,9 @@ const Scheduling = ({
                                 <Button
                                   type="button"
                                   marginLeft={2}
-                                  variant="icon"
+                                  variant="iconDanger"
                                   title={
-                                    <Icon icon="cross" size={14} color="red" />
+                                    <Icon icon="cross" size={16} color="red" />
                                   }
                                   onClick={() =>
                                     setConditionalQuery(query =>
@@ -282,10 +291,20 @@ const Scheduling = ({
                               <Button
                                 marginTop={2}
                                 type="button"
-                                title="+ OR"
-                                color="primary"
-                                opacity={1}
-                                variant="text"
+                                variant="tertiary"
+                                title={
+                                  <>
+                                    <Text
+                                      color="primary"
+                                      marginRight={1}
+                                      fontSize={1}
+                                      fontWeight={3}
+                                    >
+                                      +
+                                    </Text>
+                                    <Text color="primary">OR</Text>
+                                  </>
+                                }
                                 onClick={() =>
                                   setConditionalQuery(query =>
                                     query.map((filter, filterIndex) =>
@@ -306,10 +325,20 @@ const Scheduling = ({
                       <Row marginBottom={2}>
                         <Button
                           type="button"
-                          title="+ AND"
-                          color="primary"
-                          opacity={1}
-                          variant="text"
+                          title={
+                            <>
+                              <Text
+                                color="primary"
+                                marginRight={1}
+                                fontSize={1}
+                                fontWeight={3}
+                              >
+                                +
+                              </Text>
+                              <Text color="primary">AND</Text>
+                            </>
+                          }
+                          variant="tertiary"
                           onClick={() =>
                             setConditionalQuery(filters => [
                               ...filters,
@@ -357,8 +386,7 @@ const Scheduling = ({
           </Row>
 
           <Table
-            columns={columns}
-            data={tableData}
+            {...tableProps}
             placeholder={
               <Text>
                 There are no <strong>Devices</strong>.

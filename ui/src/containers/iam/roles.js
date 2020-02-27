@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTable, useSortBy } from 'react-table';
 
 import Card from '../../components/card';
 import Table from '../../components/table';
@@ -18,6 +19,14 @@ const Roles = ({
   );
   const tableData = useMemo(() => roles, [roles]);
 
+  const tableProps = useTable(
+    {
+      columns,
+      data: tableData,
+    },
+    useSortBy
+  );
+
   return (
     <Card
       title="Roles"
@@ -31,8 +40,7 @@ const Roles = ({
       ]}
     >
       <Table
-        columns={columns}
-        data={tableData}
+        {...tableProps}
         rowHref={({ name }) => `/${params.project}/iam/roles/${name}`}
         placeholder={
           <Text>

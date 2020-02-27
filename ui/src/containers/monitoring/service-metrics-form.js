@@ -75,8 +75,8 @@ const ServiceMetricsForm = ({
         ],
       });
       toaster.success('Metrics added.');
-      close();
       navigation.refresh();
+      close();
     } catch (error) {
       setBackendError(utils.parseError(error, 'Adding metric failed.'));
       console.error(error);

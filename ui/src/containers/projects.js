@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTable, useSortBy } from 'react-table';
 
 import Layout from '../components/layout';
 import Card from '../components/card';
@@ -33,6 +34,14 @@ const Projects = ({
   );
   const tableData = useMemo(() => projects, [projects]);
 
+  const tableProps = useTable(
+    {
+      columns,
+      data: tableData,
+    },
+    useSortBy
+  );
+
   return (
     <Layout alignItems="center">
       <Card
@@ -47,8 +56,7 @@ const Projects = ({
         ]}
       >
         <Table
-          columns={columns}
-          data={tableData}
+          {...tableProps}
           rowHref={({ name }) => `/${name}`}
           placeholder={
             <Text>

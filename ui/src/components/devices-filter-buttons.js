@@ -117,8 +117,8 @@ export const DevicesFilterButtons = ({
           {canRemoveFilter && (
             <Button
               marginLeft={2}
-              variant="icon"
-              title={<Icon icon="cross" color="red" size={14} />}
+              variant="iconDanger"
+              title={<Icon icon="cross" color="red" size={16} />}
               onClick={() => (removeFilter ? removeFilter(index) : null)}
             />
           )}

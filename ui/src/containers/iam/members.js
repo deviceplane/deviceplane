@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTable, useSortBy } from 'react-table';
 
 import Card from '../../components/card';
 import Table from '../../components/table';
@@ -29,6 +30,14 @@ const Members = ({
   );
   const tableData = useMemo(() => members, [members]);
 
+  const tableProps = useTable(
+    {
+      columns,
+      data: tableData,
+    },
+    useSortBy
+  );
+
   return (
     <Card
       title="Members"
@@ -37,8 +46,7 @@ const Members = ({
       maxHeight="100%"
     >
       <Table
-        columns={columns}
-        data={tableData}
+        {...tableProps}
         rowHref={({ user: { id } }) => `/${params.project}/iam/members/${id}`}
         placeholder={
           <Text>

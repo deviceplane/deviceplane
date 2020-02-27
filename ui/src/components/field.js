@@ -24,18 +24,12 @@ const PasswordButton = styled(Row)`
   user-select: none;
   cursor: pointer;
   align-items: center;
-
-  & span {
-    transition: ${props => props.theme.transitions[0]};
-  }
+  transition: ${props => props.theme.transitions[0]};
   &:hover span {
-    color: ${props => props.theme.colors.primary};
-  }
-  & svg {
-    transition: ${props => props.theme.transitions[0]};
+    color: ${props => props.theme.colors.pureWhite};
   }
   &:hover svg {
-    fill: ${props => props.theme.colors.primary} !important;
+    fill: ${props => props.theme.colors.pureWhite};
   }
 `;
 
@@ -159,10 +153,9 @@ const Field = forwardRef(
                     color="primary"
                   />
                   <Text
-                    fontSize={1}
-                    marginLeft={1}
+                    fontSize={0}
                     fontWeight={2}
-                    width="45px"
+                    width="40px"
                     textAlign="right"
                     color="primary"
                   >
@@ -186,7 +179,7 @@ const Field = forwardRef(
           </Text>
         )}
         {errors.map(({ message }) => (
-          <Row marginTop={2} alignItems="flex-start">
+          <Row marginTop={2} alignItems="flex-start" textAlign="left">
             <Icon
               icon="warning-sign"
               color="red"

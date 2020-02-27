@@ -1,28 +1,26 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigation } from 'react-navi';
+import { useTable, useSortBy, useRowSelect } from 'react-table';
 
 import storage from '../../storage';
 import api from '../../api';
 import Card from '../../components/card';
-import Table from '../../components/table';
+import Table, {
+  SelectColumn,
+  DeviceLabelKeyColumn,
+} from '../../components/table';
 import Popup from '../../components/popup';
-import {
-  DeviceLabelKey,
-  DeviceLabelMulti,
-} from '../../components/device-label';
 import {
   Button,
   Row,
   Text,
   Select,
-  MultiSelect,
   Checkbox,
-  Icon,
   toaster,
 } from '../../components/core';
 import ServiceMetricsForm from './service-metrics-form';
 import ServiceMetricsSettings from './service-metrics-settings';
-import { labelColor } from '../../helpers/labels';
+import MetricOverview from './metric-overview';
 
 const Service = ({
   route: {
@@ -39,94 +37,20 @@ const Service = ({
   });
   const [showMetricsForm, setShowMetricsForm] = useState();
   const [showSettings, setShowSettings] = useState();
-  const [metricToDelete, setMetricToDelete] = useState();
-  const [editRow, setEditRow] = useState();
-
-  const labelsOptions = useMemo(
-    () =>
-      [
-        ...new Set(
-          devices.reduce(
-            (options, device) => [...options, ...Object.keys(device.labels)],
-            []
-          )
-        ),
-      ].map(
-        label => ({
-          label,
-          value: label,
-          props: {
-            color: labelColor(label),
-          },
-        }),
-        []
-      ),
-    [devices]
-  );
-
+  const [showDeleteForm, setShowDeleteForm] = useState();
+  const [showMetricOverview, setShowMetricOverview] = useState();
   const navigation = useNavigation();
 
   const hideMetricsForm = () => setShowMetricsForm(false);
   const hideSettings = () => setShowSettings(false);
-  const clearMetricToDelete = () => setMetricToDelete(null);
+  const hideMetricOverview = () => setShowMetricOverview(false);
+  const hideDeleteForm = () => setShowDeleteForm(false);
 
-  const selection = selectValue && JSON.parse(selectValue);
-
-  let selectedMetrics = [];
-
-  if (selection && selection.application && selection.service) {
-    const serviceMetrics = metrics.find(
-      ({ applicationId, service }) =>
-        applicationId === selection.application.id &&
-        service === selection.service
-    );
-    if (serviceMetrics) {
-      selectedMetrics = serviceMetrics.exposedMetrics;
-    }
-  }
-
-  const saveEdit = async () => {
-    try {
-      await api.updateServiceMetricsConfig({
-        projectId: params.project,
-        data: metrics.map(m => {
-          if (
-            m.applicationId === selection.application.id &&
-            m.service === selection.service
-          ) {
-            return {
-              ...m,
-              exposedMetrics: m.exposedMetrics.map(em => {
-                if (em.name === editRow.name) {
-                  return editRow;
-                }
-                return em;
-              }),
-            };
-          }
-          return m;
-        }),
-      });
-      toaster.success('Metric updated.');
-      setEditRow(null);
-      navigation.refresh();
-    } catch (error) {
-      toaster.danger('Metric update failed.');
-      console.error(error);
-    }
-  };
-
-  const updateMetricProperty = (property, value, metric) => {
-    setEditRow({
-      ...metric,
-      properties: value
-        ? [...metric.properties, property]
-        : metric.properties.filter(p => p !== property),
-    });
-  };
+  const selection = useMemo(() => selectValue && JSON.parse(selectValue), [
+    selectValue,
+  ]);
 
   const submitDelete = async () => {
-    clearMetricToDelete();
     try {
       await api.updateServiceMetricsConfig({
         projectId: params.project,
@@ -138,13 +62,17 @@ const Service = ({
             return {
               ...m,
               exposedMetrics: m.exposedMetrics.filter(
-                ({ name }) => name !== metricToDelete.name
+                ({ name }) =>
+                  !selectedFlatRows.find(
+                    ({ original }) => original.name === name
+                  )
               ),
             };
           }
           return m;
         }),
       });
+      hideDeleteForm();
       toaster.success('Metric deleted.');
       navigation.refresh();
     } catch (error) {
@@ -157,68 +85,14 @@ const Service = ({
     storage.set('selectedService', selection, params.project);
   }, [selection]);
 
-  const tableData = useMemo(
-    () => selectedMetrics.filter(({ name }) => !!name),
-    [selectedMetrics]
-  );
-
   const columns = useMemo(
     () => [
+      SelectColumn,
       {
         Header: 'Metric',
         accessor: 'name',
       },
-      {
-        Header: 'Labels',
-        accessor: 'labels',
-        Cell: ({ cell: { value }, row: { original } }) =>
-          editRow && editRow.name === original.name ? (
-            <MultiSelect
-              multi
-              options={labelsOptions}
-              value={editRow.labels.map(label => ({
-                label,
-                value: label,
-                props: { color: labelColor(label) },
-              }))}
-              multiComponent={DeviceLabelMulti}
-              onChange={(value, props) => {
-                if (props.action === 'remove-value') {
-                  setEditRow({
-                    ...editRow,
-                    labels: editRow.labels.filter(
-                      label => label !== props.removedValue.value
-                    ),
-                  });
-                } else {
-                  setEditRow({
-                    ...editRow,
-                    labels: value.map(({ value }) => value),
-                  });
-                }
-              }}
-              placeholder="Select labels"
-              noOptionsMessage={() => (
-                <Text>
-                  There are no <strong>Labels</strong>.
-                </Text>
-              )}
-            />
-          ) : (
-            <Row
-              onClick={() => setEditRow(original)}
-              style={{ cursor: 'pointer' }}
-            >
-              {value.map(label => (
-                <DeviceLabelKey
-                  key={label}
-                  label={label}
-                  color={labelColor(label)}
-                />
-              ))}
-            </Row>
-          ),
-      },
+      DeviceLabelKeyColumn,
       {
         id: 'device',
         accessor: ({ properties }) =>
@@ -231,64 +105,38 @@ const Service = ({
             <Text marginLeft={1}>Device</Text>
           </Row>
         ),
-        Cell: ({ cell: { value }, row: { original } }) => {
-          const editing = editRow && editRow.name === original.name;
-          return (
-            <Checkbox
-              checked={editing ? editRow.properties.includes('device') : value}
-              onChange={v =>
-                updateMetricProperty('device', v, editing ? editRow : original)
-              }
-            />
-          );
-        },
+        Cell: ({ cell: { value } }) => <Checkbox readOnly checked={value} />,
         minWidth: '100px',
         maxWidth: '100px',
         cellStyle: {
           justifyContent: 'center',
         },
       },
-      {
-        Header: ' ',
-        Cell: ({ row: { original } }) =>
-          editRow && editRow.name === original.name ? (
-            <Row>
-              <Button
-                title={<Icon icon="floppy-disk" size={16} color="primary" />}
-                variant="icon"
-                onClick={saveEdit}
-              />
-              <Button
-                title={<Icon icon="cross" size={16} color="white" />}
-                variant="icon"
-                onClick={() => setEditRow(null)}
-                marginLeft={3}
-              />
-            </Row>
-          ) : (
-            <Row>
-              <Button
-                title={<Icon icon="edit" size={16} color="primary" />}
-                variant="icon"
-                onClick={() => setEditRow(original)}
-              />
-              <Button
-                title={<Icon icon="trash" size={16} color="red" />}
-                variant="icon"
-                marginLeft={3}
-                onClick={() => setMetricToDelete(original)}
-              />
-            </Row>
-          ),
-        minWidth: '80px',
-        maxWidth: '80px',
-        cellStyle: {
-          justifyContent: 'flex-end',
-        },
-      },
     ],
-    [editRow]
+    []
   );
+
+  const selectedMetrics = useMemo(() => {
+    if (selection && selection.application && selection.service) {
+      const data = metrics.find(
+        ({ applicationId, service }) =>
+          applicationId === selection.application.id &&
+          service === selection.service
+      );
+      return data ? data.exposedMetrics.filter(({ name }) => !!name) : [];
+    }
+    return [];
+  }, [metrics, selection]);
+
+  const { selectedFlatRows, ...tableProps } = useTable(
+    {
+      columns,
+      data: selectedMetrics,
+    },
+    useSortBy,
+    useRowSelect
+  );
+
   const selectOptions = useMemo(
     () =>
       applications
@@ -348,9 +196,23 @@ const Service = ({
         disabled={!(selection && selection.service)}
         maxHeight="100%"
       >
+        <Row marginBottom={3}>
+          <Button
+            marginRight={4}
+            title="Edit"
+            variant="tertiary"
+            disabled={selectedFlatRows.length !== 1}
+            onClick={() => setShowMetricOverview(true)}
+          />
+          <Button
+            title="Delete"
+            variant="tertiaryDanger"
+            disabled={selectedFlatRows.length === 0}
+            onClick={() => setShowDeleteForm(true)}
+          />
+        </Row>
         <Table
-          data={tableData}
-          columns={columns}
+          {...tableProps}
           placeholder={
             <Text>
               There are no <strong>Service Metrics</strong>.
@@ -358,6 +220,17 @@ const Service = ({
           }
         />
       </Card>
+      <Popup show={showMetricOverview} onClose={hideMetricOverview}>
+        <MetricOverview
+          service={selection && selection.service}
+          application={selection && selection.application}
+          projectId={params.project}
+          devices={devices}
+          metrics={selectedMetrics}
+          metric={selectedFlatRows[0] && selectedFlatRows[0].original}
+          close={hideMetricOverview}
+        />
+      </Popup>
       <Popup show={!!showSettings} onClose={hideSettings} overflow="visible">
         <ServiceMetricsSettings
           projectId={params.project}
@@ -384,11 +257,22 @@ const Service = ({
           close={hideMetricsForm}
         />
       </Popup>
-      <Popup show={!!metricToDelete} onClose={clearMetricToDelete}>
-        <Card border title="Delete Service Metric" size="large">
+      <Popup show={showDeleteForm} onClose={hideDeleteForm}>
+        <Card
+          border
+          title={`Delete Service Metric${
+            selectedFlatRows.length > 1 ? 's' : ''
+          }`}
+          size="large"
+        >
           <Text>
             You are about to delete the{' '}
-            <strong>{metricToDelete && metricToDelete.name}</strong> metric.
+            <strong>
+              {selectedFlatRows
+                .map(({ original: { name } }) => name)
+                .join(', ')}
+            </strong>{' '}
+            metric{selectedFlatRows.length > 1 ? 's' : ''}.
           </Text>
           <Button
             marginTop={5}

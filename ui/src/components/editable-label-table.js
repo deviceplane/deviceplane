@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTable, useSortBy } from 'react-table';
 import styled from 'styled-components';
 
 import Card from './card';
@@ -68,7 +69,7 @@ const EditableLabelTable = ({
             mode={original.mode === 'edit' ? 'default' : original.mode}
             value={original.editedKey}
             onChange={e => editLabel(index, 'editedKey', e.target.value)}
-            autoFocus
+            autoFocus={original.mode !== 'edit'}
           />
         ),
         cellStyle: {
@@ -81,6 +82,7 @@ const EditableLabelTable = ({
         accessor: 'value',
         Cell: ({ row: { index, original } }) => (
           <EditableCell
+            autoFocus={original.mode === 'edit'}
             mode={original.mode}
             value={original.editedValue}
             onChange={e => editLabel(index, 'editedValue', e.target.value)}
@@ -108,8 +110,8 @@ const EditableLabelTable = ({
                   variant="icon"
                 />
                 <Button
-                  title={<Icon icon="cross" size={16} color="white" />}
-                  variant="icon"
+                  title={<Icon icon="cross" size={16} color="pureWhite" />}
+                  variant="iconSecondary"
                   marginLeft={3}
                   onClick={() => cancelEdit(index, original.mode)}
                 />
@@ -124,8 +126,8 @@ const EditableLabelTable = ({
                 onClick={() => setEdit(index)}
               />
               <Button
-                title={<Icon icon="trash" size={16} color="red" />}
-                variant="icon"
+                title={<Icon icon="trash" size={14} color="red" />}
+                variant="iconDanger"
                 marginLeft={3}
                 onClick={() => setLabelToRemove(original)}
               />
@@ -136,11 +138,21 @@ const EditableLabelTable = ({
           minHeight: '32px',
           justifyContent: 'flex-end',
         },
+        minWidth: '100px',
+        maxWidth: '100px',
       },
     ],
     []
   );
   const tableData = useMemo(() => labels, [labels]);
+
+  const tableProps = useTable(
+    {
+      columns,
+      data: tableData,
+    },
+    useSortBy
+  );
 
   const createLabel = (label = { key: '', value: '', mode: 'new' }) => {
     setLabels([...labels, label]);
@@ -223,8 +235,7 @@ const EditableLabelTable = ({
         marginBottom={marginBottom}
       >
         <Table
-          columns={columns}
-          data={tableData}
+          {...tableProps}
           placeholder={
             <Text>
               There are no <strong>{title}</strong>.

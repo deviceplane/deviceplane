@@ -71,7 +71,7 @@ const Signup = () => {
         logo
         size="medium"
         title="Sign up"
-        actions={[{ href: '/login', title: 'Log in', variant: 'secondary' }]}
+        actions={[{ href: '/login', title: 'Log in', variant: 'tertiary' }]}
       >
         <Alert show={backendError} variant="error" description={backendError} />
         <Form

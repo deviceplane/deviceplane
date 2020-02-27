@@ -29,7 +29,7 @@ const Avatar = ({ name, color = 'white', borderColor = 'white' }) => (
     alignItems="center"
     justifyContent="center"
     bg="black"
-    borderRadius={6}
+    borderRadius="50%"
     border={0}
     borderColor={borderColor}
   >
