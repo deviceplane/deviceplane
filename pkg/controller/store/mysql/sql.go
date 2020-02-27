@@ -742,6 +742,12 @@ const listDeviceApplicationStatuses = `
   where project_id = ? and device_id = ?
 `
 
+// Index: project_id_device_id
+const listAllDeviceApplicationStatuses = `
+  select project_id, device_id, application_id, current_release_id from device_application_statuses
+  where project_id = ?
+`
+
 // Index: primary key
 const deleteDeviceApplicationStatus = `
   delete from device_application_statuses
@@ -818,6 +824,12 @@ const getDeviceServiceStates = `
 const listDeviceServiceStates = `
   select project_id, device_id, application_id, service, state, error_message from device_service_states
   where project_id = ? and device_id = ?
+`
+
+// Index: project_id_device_id_application_id
+const listAllDeviceServiceStates = `
+  select project_id, device_id, application_id, service, state, error_message from device_service_states
+  where project_id = ?
 `
 
 // Index: primary key

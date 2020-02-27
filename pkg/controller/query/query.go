@@ -1,11 +1,9 @@
 package query
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 
-	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/deviceplane/deviceplane/pkg/utils"
 	"github.com/pkg/errors"
@@ -20,22 +18,9 @@ var (
 	ErrNoEmptyFields = errors.New("fields should not be empty")
 )
 
-type DeviceQuerier struct {
-	deviceServiceStates       store.DeviceServiceStates
-	deviceApplicationStatuses store.DeviceApplicationStatuses
-	releases                  store.Releases
-}
-
-func NewDeviceQuerier(
-	deviceServiceStates store.DeviceServiceStates,
-	deviceApplicationStatuses store.DeviceApplicationStatuses,
-	releases store.Releases,
-) *DeviceQuerier {
-	return &DeviceQuerier{
-		deviceApplicationStatuses: deviceApplicationStatuses,
-		deviceServiceStates:       deviceServiceStates,
-		releases:                  releases,
-	}
+type QueryDependencies struct {
+	DeviceApplicationStatuses map[string]map[string]models.DeviceApplicationStatus
+	DeviceServiceStates       map[string]map[string]map[string]models.DeviceServiceState
 }
 
 func ValidateQuery(query models.Query) error {
@@ -50,12 +35,12 @@ func ValidateQuery(query models.Query) error {
 	return nil
 }
 
-func (d *DeviceQuerier) QueryDevices(ctx context.Context, devices []models.Device, query models.Query) (selectedDevices []models.Device, unselectedDevices []models.Device, err error) {
+func QueryDevices(deps QueryDependencies, devices []models.Device, query models.Query) (selectedDevices []models.Device, unselectedDevices []models.Device, err error) {
 	selectedDevices = make([]models.Device, 0)
 	unselectedDevices = make([]models.Device, 0)
 
 	for _, device := range devices {
-		match, err := d.DeviceMatchesQuery(ctx, device, query)
+		match, err := DeviceMatchesQuery(deps, device, query)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -69,9 +54,9 @@ func (d *DeviceQuerier) QueryDevices(ctx context.Context, devices []models.Devic
 	return selectedDevices, unselectedDevices, nil
 }
 
-func (d *DeviceQuerier) DeviceMatchesQuery(ctx context.Context, device models.Device, query models.Query) (bool, error) {
+func DeviceMatchesQuery(deps QueryDependencies, device models.Device, query models.Query) (bool, error) {
 	for _, filter := range query {
-		match, err := d.deviceMatchesFilter(ctx, device, filter)
+		match, err := deviceMatchesFilter(deps, device, filter)
 		if err != nil {
 			return false, err
 		}
@@ -82,9 +67,9 @@ func (d *DeviceQuerier) DeviceMatchesQuery(ctx context.Context, device models.De
 	return true, nil
 }
 
-func (d *DeviceQuerier) deviceMatchesFilter(ctx context.Context, device models.Device, filter models.Filter) (bool, error) {
+func deviceMatchesFilter(deps QueryDependencies, device models.Device, filter models.Filter) (bool, error) {
 	for _, condition := range filter {
-		match, err := d.deviceMatchesCondition(ctx, device, condition)
+		match, err := deviceMatchesCondition(deps, device, condition)
 		if err != nil {
 			return false, err
 		}
@@ -206,7 +191,7 @@ func validateCondition(condition models.Condition) error {
 	return ErrConditionInvalid
 }
 
-func (d *DeviceQuerier) deviceMatchesCondition(ctx context.Context, device models.Device, condition models.Condition) (bool, error) {
+func deviceMatchesCondition(deps QueryDependencies, device models.Device, condition models.Condition) (bool, error) {
 	switch condition.Type {
 	case models.DevicePropertyCondition:
 		var params models.DevicePropertyConditionParams
@@ -280,32 +265,13 @@ func (d *DeviceQuerier) deviceMatchesCondition(ctx context.Context, device model
 			return false, ErrNoEmptyFields
 		}
 
-		exists := true
-		applicationStatus, err := d.deviceApplicationStatuses.GetDeviceApplicationStatus(
-			ctx,
-			device.ProjectID,
-			device.ID,
-			params.ApplicationID,
-		)
-		if err == store.ErrDeviceApplicationStatusNotFound {
-			exists = false
-		} else if err != nil {
-			return false, errors.Wrap(err, "getting application status")
-		}
-
+		applicationStatus, exists := deps.deviceApplicationStatuses[device.ID][params.ApplicationID]
 		existsFunc := func() (bool, error) {
 			if !exists {
 				return false, nil
 			}
 			if params.ReleaseID == models.AnyApplicationRelease {
 				return true, nil
-			}
-			if params.ReleaseID == models.LatestRelease {
-				release, err := d.releases.GetLatestRelease(ctx, device.ProjectID, params.ApplicationID)
-				if err != nil {
-					return false, errors.Wrap(err, "getting latest release")
-				}
-				return release.ID == params.ReleaseID, nil
 			}
 			return params.ReleaseID == applicationStatus.CurrentReleaseID, nil
 		}
@@ -332,18 +298,7 @@ func (d *DeviceQuerier) deviceMatchesCondition(ctx context.Context, device model
 		}
 
 		exists := true
-		deviceServiceState, err := d.deviceServiceStates.GetDeviceServiceState(
-			ctx,
-			device.ProjectID,
-			device.ID,
-			params.ApplicationID,
-			params.Service,
-		)
-		if err == store.ErrDeviceServiceStateNotFound {
-			exists = false
-		} else if err != nil {
-			return false, errors.Wrap(err, "getting application status")
-		}
+		deviceServiceState, exists := deps.deviceServiceStates[device.ID][params.ApplicationID][params.Service]
 
 		switch params.Operator {
 		case models.OperatorIs:
