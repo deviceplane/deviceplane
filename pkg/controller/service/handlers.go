@@ -2042,6 +2042,7 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request) {
 							DeviceApplicationStatuses: appStatusMap,
 							DeviceServiceStates:       serviceStateMap,
 							Releases:                  s.releases,
+							Context:                   r.Context(),
 						},
 						devices,
 						filters,
