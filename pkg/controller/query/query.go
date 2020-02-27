@@ -1,9 +1,11 @@
 package query
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 
+	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/deviceplane/deviceplane/pkg/utils"
 	"github.com/pkg/errors"
@@ -19,8 +21,10 @@ var (
 )
 
 type QueryDependencies struct {
-	DeviceApplicationStatuses map[string]map[string]models.DeviceApplicationStatus
-	DeviceServiceStates       map[string]map[string]map[string]models.DeviceServiceState
+	DeviceApplicationStatuses map[string]map[string]*models.DeviceApplicationStatus
+	DeviceServiceStates       map[string]map[string]map[string]*models.DeviceServiceState
+	Releases                  store.Releases
+	Context                   context.Context
 }
 
 func ValidateQuery(query models.Query) error {
@@ -153,7 +157,7 @@ func validateCondition(condition models.Condition) error {
 			return err
 		}
 
-		if params.ApplicationID == "" || params.ReleaseID == "" {
+		if params.ApplicationID == "" || params.Release == "" {
 			return ErrNoEmptyFields
 		}
 
@@ -301,7 +305,7 @@ func deviceMatchesCondition(deps QueryDependencies, device models.Device, condit
 			return false, err
 		}
 
-		if params.ApplicationID == "" || params.ReleaseID == "" {
+		if params.ApplicationID == "" || params.Release == "" {
 			return false, ErrNoEmptyFields
 		}
 
@@ -310,10 +314,21 @@ func deviceMatchesCondition(deps QueryDependencies, device models.Device, condit
 			if !exists {
 				return false, nil
 			}
-			if params.ReleaseID == models.AnyApplicationRelease {
+			if params.Release == models.LatestRelease {
+				latestRelease, err := deps.Releases.GetLatestRelease(
+					deps.Context,
+					device.ProjectID,
+					params.ApplicationID,
+				)
+				if err != nil {
+					return false, err
+				}
+				params.Release = latestRelease.ID
+			}
+			if params.Release == models.AnyApplicationRelease {
 				return true, nil
 			}
-			return params.ReleaseID == applicationStatus.CurrentReleaseID, nil
+			return params.Release == applicationStatus.CurrentReleaseID, nil
 		}
 
 		switch params.Operator {

@@ -44,7 +44,7 @@ const (
 type ApplicationReleaseConditionParams struct {
 	ApplicationID string   `json:"applicationId"`
 	Operator      Operator `json:"operator"`
-	ReleaseID     string   `json:"releaseId"`
+	Release       string   `json:"releaseId"`
 }
 
 type ApplicationExistenceConditionParams struct {

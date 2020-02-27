@@ -2293,31 +2293,27 @@ func (s *Store) ListDeviceApplicationStatuses(ctx context.Context, projectID, de
 	return deviceApplicationStatuses, nil
 }
 
-func (s *Store) ListAllDeviceApplicationStatuses(ctx context.Context, projectID string) (map[string]map[string]models.DeviceApplicationStatus, error) {
+func (s *Store) ListAllDeviceApplicationStatuses(ctx context.Context, projectID string) ([]models.DeviceApplicationStatus, error) {
 	deviceApplicationStatusRows, err := s.db.QueryContext(ctx, listAllDeviceApplicationStatuses, projectID)
 	if err != nil {
 		return nil, errors.Wrap(err, "query all device application statuses")
 	}
 	defer deviceApplicationStatusRows.Close()
 
-	statuses := make(map[string]map[string]models.DeviceApplicationStatus)
-
+	deviceApplicationStatuses := make([]models.DeviceApplicationStatus, 0)
 	for deviceApplicationStatusRows.Next() {
 		deviceApplicationStatus, err := s.scanDeviceApplicationStatus(deviceApplicationStatusRows)
 		if err != nil {
 			return nil, err
 		}
-		if _, exists := statuses[deviceApplicationStatus.DeviceID]; !exists {
-			statuses[deviceApplicationStatus.DeviceID] = make(map[string]models.DeviceApplicationStatus)
-		}
-		statuses[deviceApplicationStatus.DeviceID][deviceApplicationStatus.ApplicationID] = *deviceApplicationStatus
+		deviceApplicationStatuses = append(deviceApplicationStatuses, *deviceApplicationStatus)
 	}
 
 	if err := deviceApplicationStatusRows.Err(); err != nil {
 		return nil, err
 	}
 
-	return statuses, nil
+	return deviceApplicationStatuses, nil
 }
 
 func (s *Store) DeleteDeviceApplicationStatus(ctx context.Context, projectID, deviceID, applicationID string) error {
@@ -2545,35 +2541,27 @@ func (s *Store) ListDeviceServiceStates(ctx context.Context, projectID, deviceID
 	return deviceServiceStates, nil
 }
 
-func (s *Store) ListAllDeviceServiceStates(ctx context.Context, projectID string) (map[string]map[string]map[string]models.DeviceServiceState, error) {
+func (s *Store) ListAllDeviceServiceStates(ctx context.Context, projectID string) ([]models.DeviceServiceState, error) {
 	deviceServiceStateRows, err := s.db.QueryContext(ctx, listAllDeviceServiceStates, projectID)
 	if err != nil {
 		return nil, errors.Wrap(err, "query all device service states")
 	}
 	defer deviceServiceStateRows.Close()
 
-	states := make(map[string]map[string]map[string]models.DeviceServiceState)
-
+	deviceServiceStates := make([]models.DeviceServiceState, 0)
 	for deviceServiceStateRows.Next() {
 		deviceServiceState, err := s.scanDeviceServiceState(deviceServiceStateRows)
 		if err != nil {
 			return nil, err
 		}
-
-		if _, exists := states[deviceServiceState.DeviceID]; !exists {
-			states[deviceServiceState.DeviceID] = make(map[string]map[string]models.DeviceServiceState)
-		}
-		if _, exists := states[deviceServiceState.DeviceID][deviceServiceState.ApplicationID]; !exists {
-			states[deviceServiceState.DeviceID][deviceServiceState.ApplicationID] = make(map[string]models.DeviceServiceState)
-		}
-		states[deviceServiceState.DeviceID][deviceServiceState.ApplicationID][deviceServiceState.Service] = *deviceServiceState
+		deviceServiceStates = append(deviceServiceStates, *deviceServiceState)
 	}
 
 	if err := deviceServiceStateRows.Err(); err != nil {
 		return nil, err
 	}
 
-	return states, nil
+	return deviceServiceStates, nil
 }
 
 func (s *Store) DeleteDeviceServiceState(ctx context.Context, projectID, deviceID, applicationID, service string) error {

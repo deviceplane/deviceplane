@@ -2020,7 +2020,18 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request) {
 						http.Error(w, errors.Wrap(err, "get filter dependencies").Error(), http.StatusBadRequest)
 						return
 					}
+					appStatusMap, err := utils.DeviceApplicationStatusesListToMap(appStatuses)
+					if err != nil {
+						http.Error(w, errors.Wrap(err, "get filter dependencies").Error(), http.StatusBadRequest)
+						return
+					}
+
 					serviceStates, err := s.deviceServiceStates.ListAllDeviceServiceStates(r.Context(), project.ID)
+					if err != nil {
+						http.Error(w, errors.Wrap(err, "get filter dependencies").Error(), http.StatusBadRequest)
+						return
+					}
+					serviceStateMap, err := utils.DeviceServiceStatesListToMap(serviceStates)
 					if err != nil {
 						http.Error(w, errors.Wrap(err, "get filter dependencies").Error(), http.StatusBadRequest)
 						return
@@ -2028,8 +2039,9 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request) {
 
 					devices, _, err = query.QueryDevices(
 						query.QueryDependencies{
-							DeviceApplicationStatuses: appStatuses,
-							DeviceServiceStates:       serviceStates,
+							DeviceApplicationStatuses: appStatusMap,
+							DeviceServiceStates:       serviceStateMap,
+							Releases:                  s.releases,
 						},
 						devices,
 						filters,
