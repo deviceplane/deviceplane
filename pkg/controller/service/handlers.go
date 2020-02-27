@@ -1659,7 +1659,7 @@ func (s *Service) getApplication(w http.ResponseWriter, r *http.Request) {
 							return
 						}
 
-						deviceServiceStates, err := s.deviceServiceStates.GetDeviceServiceStatesByApplication(
+						serviceStateCounts, err := s.deviceServiceStates.ListApplicationServiceStateCounts(
 							r.Context(), project.ID, application.ID)
 						if err != nil {
 							log.WithError(err).Error("get device service states")
@@ -1668,10 +1668,10 @@ func (s *Service) getApplication(w http.ResponseWriter, r *http.Request) {
 						}
 
 						ret = models.ApplicationFull1{
-							Application:         *application,
-							LatestRelease:       latestRelease,
-							DeviceCounts:        *applicationDeviceCounts,
-							DeviceServiceStates: deviceServiceStates,
+							Application:        *application,
+							LatestRelease:      latestRelease,
+							DeviceCounts:       *applicationDeviceCounts,
+							ServiceStateCounts: serviceStateCounts,
 						}
 					}
 
@@ -1715,7 +1715,7 @@ func (s *Service) listApplications(w http.ResponseWriter, r *http.Request) {
 							return
 						}
 
-						deviceServiceStates, err := s.deviceServiceStates.GetDeviceServiceStatesByApplication(
+						serviceStateCounts, err := s.deviceServiceStates.ListApplicationServiceStateCounts(
 							r.Context(), project.ID, application.ID)
 						if err != nil {
 							log.WithError(err).Error("get device service states")
@@ -1724,10 +1724,10 @@ func (s *Service) listApplications(w http.ResponseWriter, r *http.Request) {
 						}
 
 						applicationsFull = append(applicationsFull, models.ApplicationFull1{
-							Application:         application,
-							LatestRelease:       latestRelease,
-							DeviceCounts:        *applicationDeviceCounts,
-							DeviceServiceStates: deviceServiceStates,
+							Application:        application,
+							LatestRelease:      latestRelease,
+							DeviceCounts:       *applicationDeviceCounts,
+							ServiceStateCounts: serviceStateCounts,
 						})
 					}
 
