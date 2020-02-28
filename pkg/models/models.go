@@ -231,6 +231,14 @@ var AllServiceStates = map[ServiceState]bool{
 	ServiceStateExited:                    true,
 }
 
+type ServiceStateCount struct {
+	Count         int          `json:"count" yaml:"count"`
+	CountErroring int          `json:"countErroring" yaml:"countErroring"`
+	State         ServiceState `json:"state" yaml:"state"`
+	Service       string       `json:"service" yaml:"service"`
+	ApplicationID string       `json:"applicationId" yaml:"applicationId"`
+}
+
 type MembershipFull1 struct {
 	Membership
 	User    User        `json:"user" yaml:"user"`
@@ -278,8 +286,9 @@ type DeviceServiceStatusFull struct {
 
 type ApplicationFull1 struct {
 	Application
-	LatestRelease *Release                `json:"latestRelease" yaml:"latestRelease"`
-	DeviceCounts  ApplicationDeviceCounts `json:"deviceCounts" yaml:"deviceCounts"`
+	LatestRelease      *Release                `json:"latestRelease" yaml:"latestRelease"`
+	DeviceCounts       ApplicationDeviceCounts `json:"deviceCounts" yaml:"deviceCounts"`
+	ServiceStateCounts []ServiceStateCount     `json:"serviceStateCounts" yaml:"serviceStateCounts"`
 }
 
 type DeviceRegistrationTokenFull struct {

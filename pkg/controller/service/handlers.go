@@ -1659,10 +1659,19 @@ func (s *Service) getApplication(w http.ResponseWriter, r *http.Request) {
 							return
 						}
 
+						serviceStateCounts, err := s.deviceServiceStates.ListApplicationServiceStateCounts(
+							r.Context(), project.ID, application.ID)
+						if err != nil {
+							log.WithError(err).Error("get device service states")
+							w.WriteHeader(http.StatusInternalServerError)
+							return
+						}
+
 						ret = models.ApplicationFull1{
-							Application:   *application,
-							LatestRelease: latestRelease,
-							DeviceCounts:  *applicationDeviceCounts,
+							Application:        *application,
+							LatestRelease:      latestRelease,
+							DeviceCounts:       *applicationDeviceCounts,
+							ServiceStateCounts: serviceStateCounts,
 						}
 					}
 
@@ -1706,10 +1715,19 @@ func (s *Service) listApplications(w http.ResponseWriter, r *http.Request) {
 							return
 						}
 
+						serviceStateCounts, err := s.deviceServiceStates.ListApplicationServiceStateCounts(
+							r.Context(), project.ID, application.ID)
+						if err != nil {
+							log.WithError(err).Error("get device service states")
+							w.WriteHeader(http.StatusInternalServerError)
+							return
+						}
+
 						applicationsFull = append(applicationsFull, models.ApplicationFull1{
-							Application:   application,
-							LatestRelease: latestRelease,
-							DeviceCounts:  *applicationDeviceCounts,
+							Application:        application,
+							LatestRelease:      latestRelease,
+							DeviceCounts:       *applicationDeviceCounts,
+							ServiceStateCounts: serviceStateCounts,
 						})
 					}
 

@@ -242,6 +242,7 @@ type DeviceServiceStates interface {
 	SetDeviceServiceState(ctx context.Context, projectID, deviceID, applicationID, service string, state models.ServiceState, errorMessage string) error
 	GetDeviceServiceState(ctx context.Context, projectID, deviceID, applicationID, service string) (*models.DeviceServiceState, error)
 	GetDeviceServiceStates(ctx context.Context, projectID, deviceID, applicationID string) ([]models.DeviceServiceState, error)
+	ListApplicationServiceStateCounts(ctx context.Context, projectID, applicationID string) ([]models.ServiceStateCount, error)
 	ListDeviceServiceStates(ctx context.Context, projectID, deviceID string) ([]models.DeviceServiceState, error)
 	ListAllDeviceServiceStates(ctx context.Context, projectID string) ([]models.DeviceServiceState, error)
 	DeleteDeviceServiceState(ctx context.Context, projectID, deviceID, applicationID, service string) error

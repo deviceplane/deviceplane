@@ -2518,6 +2518,48 @@ func (s *Store) GetDeviceServiceStates(ctx context.Context, projectID, deviceID,
 	return deviceServiceStates, nil
 }
 
+func (s *Store) scanServiceStateCount(scanner scanner) (*models.ServiceStateCount, error) {
+	var serviceStateCount models.ServiceStateCount
+	if err := scanner.Scan(
+		&serviceStateCount.Count,
+		&serviceStateCount.CountErroring,
+		&serviceStateCount.State,
+		&serviceStateCount.Service,
+		&serviceStateCount.ApplicationID,
+	); err != nil {
+		return nil, err
+	}
+
+	return &serviceStateCount, nil
+}
+
+func (s *Store) ListApplicationServiceStateCounts(ctx context.Context, projectID, applicationID string) ([]models.ServiceStateCount, error) {
+	serviceStateCountRows, err := s.db.QueryContext(
+		ctx,
+		getDeviceServiceStateCountsByApplication,
+		projectID,
+		applicationID,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "query device service states by application")
+	}
+	defer serviceStateCountRows.Close()
+
+	serviceStateCounts := make([]models.ServiceStateCount, 0)
+	for serviceStateCountRows.Next() {
+		ServiceStateCount, err := s.scanServiceStateCount(serviceStateCountRows)
+		if err != nil {
+			return nil, err
+		}
+		serviceStateCounts = append(serviceStateCounts, *ServiceStateCount)
+	}
+	if err := serviceStateCountRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return serviceStateCounts, nil
+}
+
 func (s *Store) ListDeviceServiceStates(ctx context.Context, projectID, deviceID string) ([]models.DeviceServiceState, error) {
 	deviceServiceStateRows, err := s.db.QueryContext(ctx, listDeviceServiceStates, projectID, deviceID)
 	if err != nil {
