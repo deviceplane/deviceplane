@@ -464,6 +464,7 @@ create table if not exists device_service_states (
   references applications(id)
   on delete cascade,
   index project_id_device_id_application_id (project_id, device_id, application_id)
+  index project_id_application_id (project_id, application_id)
 );
 
 --

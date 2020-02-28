@@ -814,7 +814,7 @@ const getDeviceServiceStates = `
   where project_id = ? and device_id = ? and application_id = ?
 `
 
-// Index: project_id_application_id_id
+// Index: project_id_application_id
 const getDeviceServiceStateCountsByApplication = `
   select count(state) as count, sum(error_message != "") as count_erroring, state, service, application_id
   from device_service_states
