@@ -220,6 +220,17 @@ const (
 	ServiceStateExited                    ServiceState = "exited"
 )
 
+var AllServiceStates = map[ServiceState]bool{
+	ServiceStateUnknown:                   true,
+	ServiceStatePullingImage:              true,
+	ServiceStateCreatingContainer:         true,
+	ServiceStateStoppingPreviousContainer: true,
+	ServiceStateRemovingPreviousContainer: true,
+	ServiceStateStartingContainer:         true,
+	ServiceStateRunning:                   true,
+	ServiceStateExited:                    true,
+}
+
 type MembershipFull1 struct {
 	Membership
 	User    User        `json:"user" yaml:"user"`

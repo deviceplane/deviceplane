@@ -2293,6 +2293,29 @@ func (s *Store) ListDeviceApplicationStatuses(ctx context.Context, projectID, de
 	return deviceApplicationStatuses, nil
 }
 
+func (s *Store) ListAllDeviceApplicationStatuses(ctx context.Context, projectID string) ([]models.DeviceApplicationStatus, error) {
+	deviceApplicationStatusRows, err := s.db.QueryContext(ctx, listAllDeviceApplicationStatuses, projectID)
+	if err != nil {
+		return nil, errors.Wrap(err, "query all device application statuses")
+	}
+	defer deviceApplicationStatusRows.Close()
+
+	deviceApplicationStatuses := make([]models.DeviceApplicationStatus, 0)
+	for deviceApplicationStatusRows.Next() {
+		deviceApplicationStatus, err := s.scanDeviceApplicationStatus(deviceApplicationStatusRows)
+		if err != nil {
+			return nil, err
+		}
+		deviceApplicationStatuses = append(deviceApplicationStatuses, *deviceApplicationStatus)
+	}
+
+	if err := deviceApplicationStatusRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return deviceApplicationStatuses, nil
+}
+
 func (s *Store) DeleteDeviceApplicationStatus(ctx context.Context, projectID, deviceID, applicationID string) error {
 	_, err := s.db.ExecContext(
 		ctx,
@@ -2499,6 +2522,29 @@ func (s *Store) ListDeviceServiceStates(ctx context.Context, projectID, deviceID
 	deviceServiceStateRows, err := s.db.QueryContext(ctx, listDeviceServiceStates, projectID, deviceID)
 	if err != nil {
 		return nil, errors.Wrap(err, "query device service states")
+	}
+	defer deviceServiceStateRows.Close()
+
+	deviceServiceStates := make([]models.DeviceServiceState, 0)
+	for deviceServiceStateRows.Next() {
+		deviceServiceState, err := s.scanDeviceServiceState(deviceServiceStateRows)
+		if err != nil {
+			return nil, err
+		}
+		deviceServiceStates = append(deviceServiceStates, *deviceServiceState)
+	}
+
+	if err := deviceServiceStateRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return deviceServiceStates, nil
+}
+
+func (s *Store) ListAllDeviceServiceStates(ctx context.Context, projectID string) ([]models.DeviceServiceState, error) {
+	deviceServiceStateRows, err := s.db.QueryContext(ctx, listAllDeviceServiceStates, projectID)
+	if err != nil {
+		return nil, errors.Wrap(err, "query all device service states")
 	}
 	defer deviceServiceStateRows.Close()
 
