@@ -2033,7 +2033,38 @@ func (s *Service) listDevices(w http.ResponseWriter, r *http.Request) {
 				}
 
 				if len(filters) != 0 {
-					devices, _, err = query.QueryDevices(devices, filters)
+					appStatuses, err := s.deviceApplicationStatuses.ListAllDeviceApplicationStatuses(r.Context(), project.ID)
+					if err != nil {
+						http.Error(w, errors.Wrap(err, "get filter dependencies").Error(), http.StatusBadRequest)
+						return
+					}
+					appStatusMap, err := utils.DeviceApplicationStatusesListToMap(appStatuses)
+					if err != nil {
+						http.Error(w, errors.Wrap(err, "get filter dependencies").Error(), http.StatusBadRequest)
+						return
+					}
+
+					serviceStates, err := s.deviceServiceStates.ListAllDeviceServiceStates(r.Context(), project.ID)
+					if err != nil {
+						http.Error(w, errors.Wrap(err, "get filter dependencies").Error(), http.StatusBadRequest)
+						return
+					}
+					serviceStateMap, err := utils.DeviceServiceStatesListToMap(serviceStates)
+					if err != nil {
+						http.Error(w, errors.Wrap(err, "get filter dependencies").Error(), http.StatusBadRequest)
+						return
+					}
+
+					devices, _, err = query.QueryDevices(
+						query.QueryDependencies{
+							DeviceApplicationStatuses: appStatusMap,
+							DeviceServiceStates:       serviceStateMap,
+							Releases:                  s.releases,
+							Context:                   r.Context(),
+						},
+						devices,
+						filters,
+					)
 					if err != nil {
 						http.Error(w, errors.Wrap(err, "filter devices").Error(), http.StatusBadRequest)
 						return
@@ -2074,7 +2105,7 @@ func (s *Service) previewScheduledDevices(w http.ResponseWriter, r *http.Request
 				}
 
 				if len(filters) != 0 {
-					devices, _, err = query.QueryDevices(devices, filters)
+					devices, _, err = query.QueryDevices(query.QueryDependencies{}, devices, filters)
 					if err != nil {
 						http.Error(w, errors.Wrap(err, "filter devices").Error(), http.StatusBadRequest)
 						return

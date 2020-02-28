@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
 import moment from 'moment';
+import { useTable, useSortBy } from 'react-table';
 
 import { renderLabels } from '../helpers/labels';
 import Layout from '../components/layout';
 import Card from '../components/card';
 import Table from '../components/table';
-import { Text } from '../components/core';
+import { Row, Text } from '../components/core';
 
 const Provisioning = ({
   route: {
@@ -44,7 +45,9 @@ const Provisioning = ({
         Header: 'Labels',
         accessor: 'labels',
         Cell: ({ row: { original } }) =>
-          original.labels ? renderLabels(original.labels) : null,
+          original.labels ? (
+            <Row marginBottom={-2}>{renderLabels(original.labels)}</Row>
+          ) : null,
         minWidth: '200px',
         maxWidth: '2fr',
       },
@@ -52,6 +55,14 @@ const Provisioning = ({
     []
   );
   const tableData = useMemo(() => registrationTokens, [registrationTokens]);
+
+  const tableProps = useTable(
+    {
+      columns,
+      data: tableData,
+    },
+    useSortBy
+  );
 
   return (
     <Layout>
@@ -67,8 +78,7 @@ const Provisioning = ({
         ]}
       >
         <Table
-          data={tableData}
-          columns={columns}
+          {...tableProps}
           rowHref={({ name }) =>
             `/${params.project}/provisioning/registration-tokens/${name}`
           }

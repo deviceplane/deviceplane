@@ -64,7 +64,7 @@ func GetScheduledDevices(devices []models.Device, schedulingRule models.Scheduli
 		}
 
 		var err error
-		selectedDevices, _, err = query.QueryDevices(devices, *schedulingRule.ConditionalQuery)
+		selectedDevices, _, err = query.QueryDevices(query.QueryDependencies{}, devices, *schedulingRule.ConditionalQuery)
 		if err != nil {
 			return nil, errors.Wrap(err, "filtering by schedule query")
 		}
@@ -81,7 +81,7 @@ func GetScheduledDevices(devices []models.Device, schedulingRule models.Scheduli
 
 	// Go through release selectors
 	for _, releaseSelector := range schedulingRule.ReleaseSelectors {
-		releasePinnedDevices, newSelectedDevices, err := query.QueryDevices(selectedDevices, releaseSelector.Query)
+		releasePinnedDevices, newSelectedDevices, err := query.QueryDevices(query.QueryDependencies{}, selectedDevices, releaseSelector.Query)
 		if err != nil {
 			return nil, errors.Wrap(err, "filtering by release query")
 		}

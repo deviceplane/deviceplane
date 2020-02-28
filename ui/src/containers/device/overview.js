@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { useTable, useSortBy } from 'react-table';
 import parsePrometheusTextFormat from 'parse-prometheus-text-format';
 
 import api from '../../api';
@@ -229,10 +230,8 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
       Header: ' ',
       Cell: ({ row: { original } }) => (
         <Button
-          flex={0}
-          height="20px"
           disabled={device.status === 'offline'}
-          title={<Icon icon="pulse" size={18} color="white" />}
+          title={<Icon icon="pulse" size={16} color="primary" />}
           variant="icon"
           onClick={async () => {
             try {
@@ -253,7 +252,8 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
           }}
         />
       ),
-      maxWidth: '30px',
+      maxWidth: '40px',
+      minWidth: '40px',
       cellStyle: {
         justifyContent: 'flex-end',
       },
@@ -263,11 +263,18 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
 
   const tableData = useMemo(() => services, [services]);
 
+  const tableProps = useTable(
+    {
+      columns,
+      data: tableData,
+    },
+    useSortBy
+  );
+
   return (
     <>
       <Table
-        columns={columns}
-        data={tableData}
+        {...tableProps}
         placeholder={
           <Text>
             There are no <strong>Services</strong>.
@@ -334,7 +341,7 @@ const DeviceOverview = ({
         marginBottom={5}
         actions={[
           {
-            title: <Icon icon="pulse" size={18} color="white" />,
+            title: <Icon icon="pulse" size={18} color="primary" />,
             variant: 'icon',
             onClick: async () => {
               try {

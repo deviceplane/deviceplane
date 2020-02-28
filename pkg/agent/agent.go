@@ -209,7 +209,8 @@ func (a *Agent) Run() {
 }
 
 func (a *Agent) runBundleApplier() {
-	if bundle := a.loadSavedBundle(); bundle != nil {
+	bundle := a.loadSavedBundle()
+	if bundle != nil {
 		a.supervisor.Set(*bundle, bundle.Applications)
 	}
 
@@ -217,7 +218,8 @@ func (a *Agent) runBundleApplier() {
 	defer ticker.Stop()
 
 	for {
-		if bundle := a.downloadLatestBundle(); bundle != nil {
+		bundle = a.downloadLatestBundle(bundle)
+		if bundle != nil {
 			a.supervisor.Set(*bundle, bundle.Applications)
 			a.statusGarbageCollector.SetBundle(*bundle)
 			a.updater.SetDesiredVersion(bundle.DesiredAgentVersion)
@@ -265,17 +267,19 @@ func (a *Agent) loadSavedBundle() *models.Bundle {
 	}
 }
 
-func (a *Agent) downloadLatestBundle() *models.Bundle {
+func (a *Agent) downloadLatestBundle(oldBundle *models.Bundle) *models.Bundle {
 	ctx, cancel := dpcontext.New(context.Background(), time.Minute)
 	defer cancel()
 
-	bundle, err := a.client.GetBundle(ctx)
+	bundleBytes, err := a.client.GetBundleBytes(ctx)
 	if err != nil {
 		log.WithError(err).Error("get bundle")
 		return nil
 	}
 
-	bundleBytes, err := json.Marshal(bundle)
+	bundle := mergeBundle(oldBundle, bundleBytes)
+
+	bundleBytes, err = json.Marshal(bundle)
 	if err != nil {
 		log.WithError(err).Error("marshal bundle")
 		return nil
@@ -287,6 +291,30 @@ func (a *Agent) downloadLatestBundle() *models.Bundle {
 	}
 
 	return bundle
+}
+
+func mergeBundle(oldBundle *models.Bundle, bundleBytes []byte) *models.Bundle {
+	var bundle models.Bundle
+	err := json.Unmarshal(bundleBytes, &bundle)
+	if err != nil {
+		log.WithError(err).Error("unmarshaling full bundle")
+
+		var minimalBundle struct {
+			DesiredAgentVersion string `json:"desiredAgentVersion" yaml:"desiredAgentVersion"`
+		}
+		err := json.Unmarshal(bundleBytes, &minimalBundle)
+		if err != nil {
+			log.WithError(err).Error("unmarshaling minimal bundle")
+			return nil
+		}
+
+		if oldBundle != nil {
+			bundle = *oldBundle
+		}
+		bundle.DesiredAgentVersion = minimalBundle.DesiredAgentVersion
+	}
+
+	return &bundle
 }
 
 func (a *Agent) runInfoReporter() {

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTable, useSortBy } from 'react-table';
 
 import storage from '../storage';
 import Card from '../components/card';
@@ -28,6 +29,7 @@ const EditableCell = ({
   if (mode === 'edit' || mode === 'new') {
     return (
       <Field
+        flex={1}
         type={type}
         autoFocus={autoFocus}
         value={value}
@@ -174,8 +176,8 @@ const SSHKeys = () => {
                   variant="icon"
                 />
                 <Button
-                  title={<Icon icon="cross" size={16} color="white" />}
-                  variant="icon"
+                  title={<Icon icon="cross" size={16} color="pureWhite" />}
+                  variant="iconSecondary"
                   marginLeft={3}
                   onClick={() => cancelEdit(index, original.mode)}
                 />
@@ -186,13 +188,13 @@ const SSHKeys = () => {
             return (
               <>
                 <Button
-                  title={<Icon icon="tick-circle" size={16} color="red" />}
-                  variant="icon"
+                  title={<Icon icon="tick" size={16} color="red" />}
+                  variant="iconDanger"
                   onClick={() => deleteSSHKey(index)}
                 />
                 <Button
-                  title={<Icon icon="cross" size={16} color="white" />}
-                  variant="icon"
+                  title={<Icon icon="cross" size={16} color="pureWhite" />}
+                  variant="iconSecondary"
                   onClick={() => setMode(index, 'default')}
                   marginLeft={3}
                 />
@@ -207,15 +209,16 @@ const SSHKeys = () => {
                 onClick={() => setMode(index, 'edit')}
               />
               <Button
-                title={<Icon icon="trash" size={16} color="red" />}
-                variant="icon"
+                title={<Icon icon="trash" size={14} color="red" />}
+                variant="iconDanger"
                 marginLeft={3}
                 onClick={() => setMode(index, 'delete')}
               />
             </Row>
           );
         },
-        maxWidth: '50px',
+        minWidth: '100px',
+        maxWidth: '100px',
         cellStyle: {
           alignItems: 'center',
           justifyContent: 'flex-end',
@@ -226,6 +229,14 @@ const SSHKeys = () => {
     []
   );
   const tableData = useMemo(() => sshKeys, [sshKeys]);
+
+  const tableProps = useTable(
+    {
+      columns,
+      data: tableData,
+    },
+    useSortBy
+  );
 
   return (
     <>
@@ -250,8 +261,7 @@ const SSHKeys = () => {
         actions={[{ title: 'Add SSH Key', onClick: addSSHKey }]}
       >
         <Table
-          columns={columns}
-          data={tableData}
+          {...tableProps}
           placeholder={
             <Text>
               There are no <strong>SSH Keys</strong>.

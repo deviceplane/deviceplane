@@ -1,24 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import { useNavigation } from 'react-navi';
+import { useTable, useSortBy, useRowSelect } from 'react-table';
 
-import api from '../../api';
 import Card from '../../components/card';
-import Table from '../../components/table';
-import {
-  DeviceLabelMulti,
-  DeviceLabelKey,
-} from '../../components/device-label';
-import {
-  Column,
-  Row,
-  Text,
-  Checkbox,
-  MultiSelect,
-  Button,
-  Icon,
-  toaster,
-} from '../../components/core';
-import { labelColor } from '../../helpers/labels';
+import Table, {
+  SelectColumn,
+  DeviceLabelKeyColumn,
+} from '../../components/table';
+import Popup from '../../components/popup';
+import { Column, Row, Text, Checkbox, Button } from '../../components/core';
+import ProjectMetricOverview from './project-metric-overview';
 
 const supportedMetrics = [
   {
@@ -34,7 +24,10 @@ const Project = ({
     data: { params, metrics, devices },
   },
 }) => {
-  const [editRow, setEditRow] = useState();
+  const [showMetricOverview, setShowMetricOverview] = useState();
+
+  const hideMetricOverview = () => setShowMetricOverview(false);
+
   const tableData = useMemo(
     () =>
       supportedMetrics.map(supportedMetric => {
@@ -57,68 +50,9 @@ const Project = ({
     [metrics]
   );
 
-  const labelsOptions = useMemo(
-    () =>
-      [
-        ...new Set(
-          devices.reduce(
-            (options, device) => [...options, ...Object.keys(device.labels)],
-            []
-          )
-        ),
-      ].map(
-        label => ({
-          label,
-          value: label,
-          props: {
-            color: labelColor(label),
-          },
-        }),
-        []
-      ),
-    [devices]
-  );
-
-  const navigation = useNavigation();
-
-  const saveEdit = async () => {
-    let newMetrics = tableData.map(metric => {
-      if (metric.name === editRow.name) {
-        return editRow;
-      }
-      return metric;
-    });
-    newMetrics = newMetrics.filter(({ enabled }) => !!enabled);
-
-    try {
-      await api.updateProjectMetricsConfig({
-        projectId: params.project,
-        data: newMetrics.map(({ name, properties, labels }) => ({
-          name,
-          properties,
-          labels,
-        })),
-      });
-      setEditRow(null);
-      toaster.success('Metric updated.');
-      navigation.refresh();
-    } catch (error) {
-      toaster.danger('Metric update failed.');
-      console.error(error);
-    }
-  };
-
-  const updateMetricProperty = (property, value, metric) => {
-    setEditRow({
-      ...metric,
-      properties: value
-        ? [...metric.properties, property]
-        : metric.properties.filter(p => p !== property),
-    });
-  };
-
-  const columns = useMemo(() => {
-    return [
+  const columns = useMemo(
+    () => [
+      SelectColumn,
       {
         Header: 'Metric',
         accessor: 'name',
@@ -135,72 +69,17 @@ const Project = ({
         Header: 'Description',
         accessor: 'description',
       },
-      {
-        Header: 'Labels',
-        accessor: 'labels',
-        Cell: ({ row: { original }, cell: { value } }) =>
-          editRow && editRow.name === original.name ? (
-            <MultiSelect
-              multi
-              value={editRow.labels.map(label => ({
-                label,
-                value: label,
-                props: { color: labelColor(label) },
-              }))}
-              options={labelsOptions}
-              multiComponent={DeviceLabelMulti}
-              onChange={(value, props) => {
-                if (props.action === 'remove-value') {
-                  setEditRow({
-                    ...editRow,
-                    labels: editRow.labels.filter(
-                      label => label !== props.removedValue.value
-                    ),
-                  });
-                } else {
-                  setEditRow({
-                    ...editRow,
-                    labels: value.map(({ value }) => value),
-                  });
-                }
-              }}
-              placeholder="Select labels"
-              noOptionsMessage={() => (
-                <Text>
-                  There are no <strong>Labels</strong>.
-                </Text>
-              )}
-            />
-          ) : (
-            <Row
-              onClick={() => setEditRow(original)}
-              style={{ cursor: 'pointer' }}
-            >
-              {value.map(label => (
-                <DeviceLabelKey key={label} label={label} />
-              ))}
-            </Row>
-          ),
-      },
+      DeviceLabelKeyColumn,
       {
         id: 'device',
-        accessor: ({ properties }) => properties.includes('device'),
+        accessor: ({ properties }) =>
+          properties && properties.includes('device'),
         Header: (
           <Row title="When enabled, a Datadog tag with the device name is included.">
             <Text marginLeft={1}>Device</Text>
           </Row>
         ),
-        Cell: ({ cell: { value }, row: { original } }) => {
-          const editing = editRow && editRow.name === original.name;
-          return (
-            <Checkbox
-              checked={editing ? editRow.properties.includes('device') : value}
-              onChange={v =>
-                updateMetricProperty('device', v, editing ? editRow : original)
-              }
-            />
-          );
-        },
+        Cell: ({ cell: { value } }) => <Checkbox readOnly checked={value} />,
         minWidth: '100px',
         maxWidth: '100px',
         cellStyle: {
@@ -210,66 +89,54 @@ const Project = ({
       {
         Header: 'Enabled',
         accessor: 'enabled',
-        Cell: ({ cell: { value }, row: { original } }) => {
-          const editing = editRow && editRow.name === original.name;
-          return (
-            <Checkbox
-              checked={editing ? editRow.enabled : value}
-              onChange={enabled =>
-                setEditRow({
-                  ...(editing ? editRow : original),
-                  enabled,
-                })
-              }
-            />
-          );
-        },
-        minWidth: '100px',
-        maxWidth: '100px',
+        Cell: ({ cell: { value } }) => <Checkbox readOnly checked={value} />,
+        minWidth: '110px',
+        maxWidth: '110px',
         cellStyle: {
           justifyContent: 'center',
         },
       },
-      {
-        Header: ' ',
-        Cell: ({ row: { original } }) =>
-          editRow && editRow.name === original.name ? (
-            <Row justifyContent="flex-end">
-              <Button
-                title={<Icon icon="floppy-disk" size={16} color="primary" />}
-                variant="icon"
-                onClick={saveEdit}
-              />
-              <Button
-                title={<Icon icon="cross" size={16} color="white" />}
-                variant="icon"
-                onClick={() => setEditRow(null)}
-                marginLeft={3}
-              />
-            </Row>
-          ) : (
-            <Row justifyContent="flex-end">
-              <Button
-                title={<Icon icon="edit" size={16} color="primary" />}
-                variant="icon"
-                onClick={() => setEditRow(original)}
-              />
-            </Row>
-          ),
-        minWidth: '50px',
-        maxWidth: '50px',
-      },
-    ];
-  }, [editRow]);
+    ],
+    []
+  );
+
+  const { selectedFlatRows, ...tableProps } = useTable(
+    {
+      columns,
+      data: tableData,
+    },
+    useSortBy,
+    useRowSelect
+  );
 
   return (
-    <Card
-      title="Project Metrics"
-      size="full"
-      subtitle="These metrics provide insights over your entire project."
-    >
-      <Table columns={columns} data={tableData} editRow={editRow} />
-    </Card>
+    <>
+      <Card
+        title="Project Metrics"
+        size="full"
+        subtitle="These metrics provide insights over your entire project."
+      >
+        <Row marginBottom={3}>
+          <Button
+            marginRight={4}
+            title="Edit"
+            variant="tertiary"
+            disabled={selectedFlatRows.length !== 1}
+            onClick={() => setShowMetricOverview(true)}
+          />
+        </Row>
+        <Table {...tableProps} />
+      </Card>
+      <Popup show={showMetricOverview} onClose={hideMetricOverview}>
+        <ProjectMetricOverview
+          projectId={params.project}
+          devices={devices}
+          metrics={supportedMetrics}
+          metric={selectedFlatRows[0] && selectedFlatRows[0].original}
+          close={hideMetricOverview}
+        />
+      </Popup>
+    </>
   );
 };
 

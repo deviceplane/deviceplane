@@ -17,6 +17,7 @@ const DeviceLabel = ({ label: { key, value }, onClick = () => {} }) => {
       border={0}
       borderColor={color}
       borderRadius={1}
+      height="min-content"
     >
       <Text
         paddingX={2}
@@ -45,27 +46,30 @@ const DeviceLabel = ({ label: { key, value }, onClick = () => {} }) => {
   );
 };
 
-export const DeviceLabelMulti = ({ children, color }) => (
-  <Row
-    overflow="hidden"
-    border={0}
-    borderColor={color}
-    borderTopLeftRadius={1}
-    borderBottomLeftRadius={1}
-    paddingX={2}
-    paddingY={1}
-  >
-    <Text
-      color={color}
-      whiteSpace="nowrap"
+export const DeviceLabelMulti = ({ children }) => {
+  const color = labelColor(children);
+  return (
+    <Row
       overflow="hidden"
-      fontSize={0}
-      fontWeight={2}
+      border={0}
+      borderColor={color}
+      borderRadius={1}
+      paddingX={2}
+      paddingY={1}
+      height="min-content"
     >
-      {children}
-    </Text>
-  </Row>
-);
+      <Text
+        color={color}
+        whiteSpace="nowrap"
+        overflow="hidden"
+        fontSize={0}
+        fontWeight={2}
+      >
+        {children}
+      </Text>
+    </Row>
+  );
+};
 
 export const DeviceLabelKey = ({ label }) => {
   const color = labelColor(label);
@@ -79,6 +83,7 @@ export const DeviceLabelKey = ({ label }) => {
       borderRadius={1}
       paddingX={2}
       paddingY={1}
+      height="min-content"
     >
       <Text
         color={color}

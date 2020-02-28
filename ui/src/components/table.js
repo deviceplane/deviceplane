@@ -1,9 +1,55 @@
 import React from 'react';
-import { useTable, useSortBy } from 'react-table';
 import styled from 'styled-components';
 import { useLinkProps } from 'react-navi';
 
-import { Row, Grid, Icon } from './core';
+import { labelColor } from '../helpers/labels';
+import { DeviceLabelKey } from './device-label';
+import { Checkbox, Button, Row, Grid, Icon } from './core';
+
+export const SelectColumn = {
+  id: 'select',
+  Header: ({ toggleAllRowsSelected, isAllRowsSelected }) => (
+    <Checkbox checked={isAllRowsSelected} onChange={toggleAllRowsSelected} />
+  ),
+  Cell: ({ row: { isSelected, toggleRowSelected } }) => (
+    <Row onClick={e => e.stopPropagation()} alignSelf="flex-start">
+      <Checkbox checked={isSelected} onChange={toggleRowSelected} />
+    </Row>
+  ),
+  minWidth: '40px',
+  maxWidth: '40px',
+  cellStyle: {
+    backgroundColor: 'grays.5',
+  },
+};
+
+export const DeviceLabelKeyColumn = {
+  Header: 'Labels',
+  accessor: 'labels',
+  Cell: ({ cell: { value } }) => (
+    <Row marginY={-2}>
+      {value.map(label => (
+        <DeviceLabelKey key={label} label={label} color={labelColor(label)} />
+      ))}
+    </Row>
+  ),
+};
+
+export const SaveOrCancelCell = ({ onSave, onCancel }) => (
+  <Row>
+    <Button
+      title={<Icon icon="floppy-disk" size={16} color="primary" />}
+      variant="icon"
+      onClick={onSave}
+    />
+    <Button
+      title={<Icon icon="cross" size={16} color="pureWhite" />}
+      variant="iconSecondary"
+      onClick={onCancel}
+      marginLeft={3}
+    />
+  </Row>
+);
 
 const A = styled.a`
   overflow-x: hidden;
@@ -39,7 +85,6 @@ const TableBody = styled.tbody`
 `;
 
 const TableRow = styled.tr`
-  border-bottom: 1px solid ${props => props.theme.colors.grays[1]};
   cursor: ${props => (props.selectable ? 'pointer' : 'default')};
   transition: ${props => props.theme.transitions[0]};
   display: contents;
@@ -47,7 +92,7 @@ const TableRow = styled.tr`
   &:hover td {
     background-color: ${props =>
       props.selectable
-        ? props.theme.colors.grays[4]
+        ? props.theme.colors.grays[3]
         : props.theme.colors.black};
   }
 `;
@@ -69,47 +114,29 @@ const HeaderCell = styled.th`
   }
 
   & ${Cell}:hover svg {
-    fill: ${props => props.theme.colors.white} !important;
+    fill: ${props => props.theme.colors.white};
   }
 `;
 
 const Cell = styled.td`
   display: flex;
   padding: 8px 12px;
+  border-bottom: 1px solid ${props => props.theme.colors.grays[3]};
 `;
 
 const Table = ({
   columns,
-  data,
-  onRowSelect,
+  rows,
+  prepareRow,
   placeholder,
   rowHref,
   maxHeight,
+  headers,
+  getTableBodyProps,
+  getTableProps,
+  toggleRowSelected,
 }) => {
-  const selectable = onRowSelect || rowHref;
-  onRowSelect = onRowSelect || function() {};
-
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-  } = useTable(
-    {
-      columns,
-      data,
-    },
-    useSortBy
-  );
-
-  const handleRowClick = index => () => {
-    const selection = window.getSelection();
-    // Only select row if user is not highlighting text
-    if (selection.type !== 'Range') {
-      onRowSelect(data[index]);
-    }
-  };
+  const selectable = !!toggleRowSelected || rowHref;
 
   return (
     <>
@@ -117,50 +144,48 @@ const Table = ({
         {...getTableProps()}
         maxHeight={maxHeight}
         gridTemplateColumns={columns
-          .map(
-            ({ minWidth = 'min-content', maxWidth = '1fr' }) =>
-              `minmax(${minWidth}, ${maxWidth})`
-          )
+          .map(col => {
+            const minWidth = col.minWidth || 'min-content';
+            const maxWidth =
+              col.maxWidth === Number.MAX_SAFE_INTEGER ? '1fr' : col.maxWidth;
+            return `minmax(${minWidth}, ${maxWidth})`;
+          })
           .join(' ')}
       >
         <TableHead>
           <TableRow>
-            {headerGroups.map(headerGroup =>
-              headerGroup.headers.map(column => (
-                <HeaderCell
-                  {...column.getHeaderProps(column.getSortByToggleProps())}
-                  title=""
-                  style={{
-                    cursor: column.canSort ? 'pointer' : 'default',
-                  }}
-                >
-                  <Row justifyContent="space-between">
-                    {column.render('Header')}
-                    {column.isSorted ? (
-                      <Icon
-                        icon={
-                          column.isSortedDesc ? 'chevron-down' : 'chevron-up'
-                        }
-                        size={14}
-                        color="white"
-                        marginLeft={2}
-                      />
-                    ) : column.canSort ? (
-                      <Icon
-                        size={12}
-                        icon="expand-all"
-                        color="grays.5"
-                        marginLeft={2}
-                      />
-                    ) : null}
-                  </Row>
-                </HeaderCell>
-              ))
-            )}
+            {headers.map(column => (
+              <HeaderCell
+                {...column.getHeaderProps(column.getSortByToggleProps())}
+                title=""
+                style={{
+                  cursor: column.canSort ? 'pointer' : 'default',
+                }}
+              >
+                <Row justifyContent="space-between">
+                  {column.render('Header')}
+                  {column.isSorted ? (
+                    <Icon
+                      icon={column.isSortedDesc ? 'chevron-down' : 'chevron-up'}
+                      size={14}
+                      color="white"
+                      marginLeft={2}
+                    />
+                  ) : column.canSort ? (
+                    <Icon
+                      size={12}
+                      icon="expand-all"
+                      color="grays.5"
+                      marginLeft={2}
+                    />
+                  ) : null}
+                </Row>
+              </HeaderCell>
+            ))}
           </TableRow>
         </TableHead>
         <TableBody {...getTableBodyProps()} overflowY="auto">
-          {rows.map((row, i) => {
+          {rows.map(row => {
             prepareRow(row);
             const cells = row.cells.map(cell => (
               <Cell
@@ -185,7 +210,7 @@ const Table = ({
               <TableRow
                 {...row.getRowProps()}
                 selectable={selectable}
-                onClick={handleRowClick(row.index)}
+                onClick={() => toggleRowSelected && toggleRowSelected(row.id)}
                 position="relative"
               >
                 {cells}

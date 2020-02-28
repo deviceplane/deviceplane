@@ -38,13 +38,11 @@ const DefaultLabelExistenceConditionParams = () => {
 };
 
 const OperatorExistenceOptions = [
-  [
-    { label: OperatorExists, value: OperatorExists },
-    {
-      label: OperatorNotExists,
-      value: OperatorNotExists,
-    },
-  ],
+  { label: OperatorExists, value: OperatorExists },
+  {
+    label: OperatorNotExists,
+    value: OperatorNotExists,
+  },
 ];
 
 export const OperatorIsOptions = [
@@ -375,7 +373,7 @@ export const DevicesFilter = ({
                   <Button
                     title={<Icon icon="cross" size={16} color="red" />}
                     marginLeft={2}
-                    variant="icon"
+                    variant="iconDanger"
                     onClick={() =>
                       setFilter(filter.filter((_, i) => i !== index))
                     }

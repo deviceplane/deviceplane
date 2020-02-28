@@ -1,9 +1,8 @@
 import styled from 'styled-components';
-import { space, color, typography } from 'styled-system';
 
-const Label = styled.span`
-${space} ${color} ${typography}
-`;
+import { Box } from './box';
+
+const Label = styled(Box).attrs({ as: 'span' })``;
 
 Label.defaultProps = {
   color: 'white',

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import moment from 'moment';
+import { useTable, useSortBy } from 'react-table';
 
 import api from '../api';
 import utils from '../utils';
@@ -35,25 +36,26 @@ const UserAccessKeys = () => {
           keyToDelete === row.original.id ? (
             <>
               <Button
-                title={<Icon icon="tick-circle" size={16} color="red" />}
-                variant="icon"
+                title={<Icon icon="tick" size={16} color="red" />}
+                variant="iconDanger"
                 onClick={() => deleteAccessKey(keyToDelete)}
               />
               <Button
-                title={<Icon icon="cross" size={16} color="white" />}
-                variant="icon"
+                title={<Icon icon="cross" size={16} color="pureWhite" />}
+                variant="iconSecondary"
                 onClick={() => setKeyToDelete(null)}
                 marginLeft={3}
               />
             </>
           ) : (
             <Button
-              title={<Icon icon="trash" size={16} color="red" />}
-              variant="icon"
+              title={<Icon icon="trash" size={14} color="red" />}
+              variant="iconDanger"
               onClick={() => setKeyToDelete(row.original.id)}
             />
           ),
-        maxWidth: '50px',
+        minWidth: '100px',
+        maxWidth: '100px',
         cellStyle: {
           justifyContent: 'flex-end',
         },
@@ -62,6 +64,14 @@ const UserAccessKeys = () => {
     [keyToDelete]
   );
   const tableData = useMemo(() => accessKeys, [accessKeys]);
+
+  const tableProps = useTable(
+    {
+      columns,
+      data: tableData,
+    },
+    useSortBy
+  );
 
   const fetchAccessKeys = async () => {
     try {
@@ -123,8 +133,7 @@ const UserAccessKeys = () => {
           </Row>
         </Alert>
         <Table
-          columns={columns}
-          data={tableData}
+          {...tableProps}
           placeholder={
             <Text>
               There are no <strong>Access Keys</strong>.

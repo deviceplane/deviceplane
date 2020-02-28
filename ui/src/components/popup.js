@@ -6,7 +6,7 @@ import { Column, Icon } from './core';
 
 const Overlay = styled(Column)`
   position: fixed;
-  z-index: 99;
+  z-index: 9999;
   top: 0;
   left: 0;
   width: 100%;
@@ -23,7 +23,7 @@ const Container = styled(Column)`
 `;
 
 const Content = styled(Column)`
-  max-height: 80vh;
+  max-height: 90vh;
   & > div {
     flex-shrink: 1;
     width: 100vw;

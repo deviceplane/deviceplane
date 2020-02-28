@@ -41,6 +41,7 @@ const Card = ({
   subtitle,
   top = null,
   left = null,
+  right = null,
   center = null,
   border = false,
   logo,
@@ -56,7 +57,7 @@ const Card = ({
       color="white"
       variant={size}
       borderRadius={2}
-      padding={[4, 4, 6]}
+      padding={[4, 4, 7]}
       border={border ? 0 : undefined}
       borderColor="white"
       disabled={disabled}
@@ -91,7 +92,8 @@ const Card = ({
             <Row justifyContent="center" marginTop={4} marginLeft={4}>
               {center}
             </Row>
-            <Row marginLeft={4} marginTop={4}>
+            <Row marginLeft={4} marginTop={4} alignItems="center">
+              {right}
               {actions.map(
                 (
                   {
@@ -100,6 +102,7 @@ const Card = ({
                     title,
                     onClick,
                     disabled,
+                    icon,
                     show = true,
                   },
                   index
@@ -108,11 +111,12 @@ const Card = ({
                     <Button
                       key={title}
                       title={title}
+                      icon={icon}
                       href={href}
                       variant={variant}
                       onClick={onClick}
                       disabled={disabled}
-                      marginLeft={index === 0 ? 0 : 4}
+                      marginLeft={right || index > 0 ? 5 : 0}
                     />
                   )
               )}

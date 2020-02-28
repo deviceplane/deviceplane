@@ -13,6 +13,8 @@ var (
 	DefaultClient = &Client{
 		Client: http.DefaultClient,
 	}
+
+	ErrNonSuccessResponse = errors.New("non-2xx status code")
 )
 
 type Request struct {
@@ -43,20 +45,15 @@ func (c *Client) Do(req *Request) (*Response, error) {
 		return nil, err
 	}
 
-	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		return &Response{
-			Response: resp,
-		}, nil
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		body, _ := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		return nil, errors.WithMessagef(ErrNonSuccessResponse, "code: %d, body: %s", resp.StatusCode, string(body))
 	}
 
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err == nil {
-		err = errors.New(string(body))
-	}
-
-	return nil, errors.Wrapf(err, "status code %d", resp.StatusCode)
+	return &Response{
+		Response: resp,
+	}, nil
 }
 
 func (c *Client) Get(ctx *dpcontext.Context, url string) (*Response, error) {

@@ -222,6 +222,7 @@ type DeviceApplicationStatuses interface {
 	SetDeviceApplicationStatus(ctx context.Context, projectID, deviceID, applicationID, currentReleaseID string) error
 	GetDeviceApplicationStatus(ctx context.Context, projectID, deviceID, applicationID string) (*models.DeviceApplicationStatus, error)
 	ListDeviceApplicationStatuses(ctx context.Context, projectID, deviceID string) ([]models.DeviceApplicationStatus, error)
+	ListAllDeviceApplicationStatuses(ctx context.Context, projectID string) ([]models.DeviceApplicationStatus, error)
 	DeleteDeviceApplicationStatus(ctx context.Context, projectID, deviceID, applicationID string) error
 }
 
@@ -243,6 +244,7 @@ type DeviceServiceStates interface {
 	GetDeviceServiceStates(ctx context.Context, projectID, deviceID, applicationID string) ([]models.DeviceServiceState, error)
 	ListApplicationServiceStateCounts(ctx context.Context, projectID, applicationID string) ([]models.ServiceStateCount, error)
 	ListDeviceServiceStates(ctx context.Context, projectID, deviceID string) ([]models.DeviceServiceState, error)
+	ListAllDeviceServiceStates(ctx context.Context, projectID string) ([]models.DeviceServiceState, error)
 	DeleteDeviceServiceState(ctx context.Context, projectID, deviceID, applicationID, service string) error
 }
 

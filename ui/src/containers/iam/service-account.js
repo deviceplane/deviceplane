@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigation } from 'react-navi';
+import { useTable, useSortBy } from 'react-table';
 import * as yup from 'yup';
 import moment from 'moment';
 
@@ -221,24 +222,26 @@ const ServiceAccountAccessKeys = ({ projectId, serviceAccount }) => {
           keyToDelete === row.original.id ? (
             <>
               <Button
-                title={<Icon icon="tick-circle" size={16} color="primary" />}
-                variant="icon"
+                title={<Icon icon="tick" size={16} color="red" />}
+                variant="iconDanger"
                 marginRight={4}
                 onClick={() => deleteAccessKey(keyToDelete)}
               />
               <Button
-                title={<Icon icon="cross" size={16} color="white" />}
-                variant="icon"
+                title={<Icon icon="cross" size={16} color="pureWhite" />}
+                variant="iconSecondary"
                 onClick={() => setKeyToDelete(null)}
               />
             </>
           ) : (
             <Button
-              title={<Icon icon="trash" size={16} color="red" />}
-              variant="icon"
+              title={<Icon icon="trash" size={14} color="red" />}
+              variant="iconDanger"
               onClick={() => setKeyToDelete(row.original.id)}
             />
           ),
+        minWidth: '100px',
+        maxWidth: '100px',
         cellStyle: {
           justifyContent: 'flex-end',
         },
@@ -247,6 +250,14 @@ const ServiceAccountAccessKeys = ({ projectId, serviceAccount }) => {
     [keyToDelete]
   );
   const tableData = useMemo(() => accessKeys, [accessKeys]);
+
+  const tableProps = useTable(
+    {
+      columns,
+      data: tableData,
+    },
+    useSortBy
+  );
 
   const fetchAccessKeys = async () => {
     try {
@@ -316,8 +327,7 @@ const ServiceAccountAccessKeys = ({ projectId, serviceAccount }) => {
         </Row>
       </Alert>
       <Table
-        columns={columns}
-        data={tableData}
+        {...tableProps}
         placeholder={
           <Text>
             There are no <strong>Access Keys</strong>.

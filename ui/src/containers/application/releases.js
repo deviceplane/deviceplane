@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import moment from 'moment';
+import { useTable, useSortBy } from 'react-table';
 
 import Card from '../../components/card';
 import Table from '../../components/table';
@@ -45,6 +46,14 @@ const Releases = ({
   );
   const tableData = useMemo(() => releases, [releases]);
 
+  const tableProps = useTable(
+    {
+      columns,
+      data: tableData,
+    },
+    useSortBy
+  );
+
   return (
     <Card
       title="Releases"
@@ -58,8 +67,7 @@ const Releases = ({
       maxHeight="100%"
     >
       <Table
-        columns={columns}
-        data={tableData}
+        {...tableProps}
         rowHref={({ id }) =>
           `/${params.project}/applications/${application.name}/releases/${id}`
         }

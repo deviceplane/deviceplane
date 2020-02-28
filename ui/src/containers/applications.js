@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import moment from 'moment';
+import { useTable, useSortBy } from 'react-table';
 
 import Layout from '../components/layout';
 import Card from '../components/card';
@@ -21,7 +22,7 @@ const Applications = ({
           config ? (
             <Column>
               {Object.keys(config).map(name => (
-                <Text>{name}</Text>
+                <Text key={name}>{name}</Text>
               ))}
             </Column>
           ) : (
@@ -54,6 +55,15 @@ const Applications = ({
     []
   );
   const tableData = useMemo(() => applications, [applications]);
+
+  const tableProps = useTable(
+    {
+      columns,
+      data: tableData,
+    },
+    useSortBy
+  );
+
   return (
     <Layout alignItems="center">
       <Card
@@ -63,8 +73,7 @@ const Applications = ({
         maxHeight="100%"
       >
         <Table
-          columns={columns}
-          data={tableData}
+          {...tableProps}
           rowHref={({ name }) => `/${params.project}/applications/${name}`}
           placeholder={
             <Text>

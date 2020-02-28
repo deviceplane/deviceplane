@@ -220,6 +220,17 @@ const (
 	ServiceStateExited                    ServiceState = "exited"
 )
 
+var AllServiceStates = map[ServiceState]bool{
+	ServiceStateUnknown:                   true,
+	ServiceStatePullingImage:              true,
+	ServiceStateCreatingContainer:         true,
+	ServiceStateStoppingPreviousContainer: true,
+	ServiceStateRemovingPreviousContainer: true,
+	ServiceStateStartingContainer:         true,
+	ServiceStateRunning:                   true,
+	ServiceStateExited:                    true,
+}
+
 type ServiceStateCount struct {
 	Count         int          `json:"count" yaml:"count"`
 	CountErroring int          `json:"countErroring" yaml:"countErroring"`

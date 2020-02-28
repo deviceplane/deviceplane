@@ -34,7 +34,7 @@ const colors = {
 
   overlay: 'rgba(24, 24, 24, .8)',
 
-  pageBackground: '#181818',
+  pageBackground: '#101010',
 
   grays: [
     '#121212',
@@ -75,7 +75,7 @@ export default {
 
   breakpoints,
 
-  borders: [`1px solid ${colors.primary}`, `3px solid ${colors.primary}`],
+  borders: [`1px solid ${colors.primary}`, `4px solid ${colors.primary}`],
 
   mediaQueries: {
     small: `@media screen and (min-width: ${breakpoints[0]})`,

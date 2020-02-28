@@ -104,7 +104,7 @@ export const Toast = ({ content, type = ToastTypes.INFO, close }) => {
         </Row>
 
         <Button
-          variant="icon"
+          variant="text"
           title={<Icon marginLeft={4} size={12} icon="cross" color="black" />}
           onClick={close}
         />

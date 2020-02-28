@@ -60,9 +60,8 @@ const styles = {
   }),
   multiValueLabel: () => ({
     padding: '4px 6px',
-    backgroundColor: theme.colors.white,
-    borderTopLeftRadius: '3px',
-    borderBottomLeftRadius: '3px',
+    backgroundColor: 'white',
+    borderRadius: '2px',
     color: theme.colors.black,
     fontSize: theme.fontSizes[1],
     fontWeight: theme.fontWeights[1],
@@ -72,10 +71,8 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
-    backgroundColor: theme.colors.black,
+    backgroundColor: 'transparent',
     color: theme.colors.red,
-    borderTopRightRadius: '3px',
-    borderBottomRightRadius: '3px',
     padding: '4px',
     fontSize: '18px',
     ':hover': {
@@ -144,7 +141,7 @@ const Select = ({ searchable, multi, disabled, creatable, ...props }) => {
       isDisabled={disabled}
       isMulti={multi}
       components={{ Option, MultiValueLabel, SingleValue }}
-      closeMenuOnSelect={multi ? false : true}
+      closeMenuOnSelect={true}
       menuPosition="fixed"
       {...props}
       isClearable={false}

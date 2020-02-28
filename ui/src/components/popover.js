@@ -21,10 +21,10 @@ const Button = styled.button`
   border: none;
   outline: none;
 
-  cursor: pointer;
+  cursor: ${props => (props.disabled ? 'not-allowed' : 'pointer')};
 `;
 
-const Popover = ({ button, content = null, width, top, right }) => {
+const Popover = ({ button, content = null, width, top, right, disabled }) => {
   const node = useRef();
   const [show, setShow] = useState();
 
@@ -51,6 +51,7 @@ const Popover = ({ button, content = null, width, top, right }) => {
   return (
     <Container ref={node}>
       <Button
+        disabled={disabled}
         onClick={() => {
           setShow(!show);
         }}

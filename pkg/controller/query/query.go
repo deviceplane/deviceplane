@@ -1,20 +1,31 @@
 package query
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 
+	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/deviceplane/deviceplane/pkg/utils"
+	"github.com/pkg/errors"
 )
 
 var (
-	ErrConditionNotSupported = errors.New("condition not supported")
-	ErrOperatorNotSupported  = errors.New("operator not supported")
-	ErrPropertyNotSupported  = errors.New("device property not supported")
-	ErrNoEmptyFields         = errors.New("fields should not be empty")
+	ErrConditionInvalid    = errors.New("invalid condition")
+	ErrOperatorInvalid     = errors.New("invalid operator")
+	ErrPropertyInvalid     = errors.New("invalid device property")
+	ErrServiceStateInvalid = errors.New("invalid service state")
+
+	ErrNoEmptyFields = errors.New("fields should not be empty")
 )
+
+type QueryDependencies struct {
+	DeviceApplicationStatuses map[string]map[string]*models.DeviceApplicationStatus
+	DeviceServiceStates       map[string]map[string]map[string]*models.DeviceServiceState
+	Releases                  store.Releases
+	Context                   context.Context
+}
 
 func ValidateQuery(query models.Query) error {
 	for _, filter := range query {
@@ -28,12 +39,12 @@ func ValidateQuery(query models.Query) error {
 	return nil
 }
 
-func QueryDevices(devices []models.Device, query models.Query) (selectedDevices []models.Device, unselectedDevices []models.Device, err error) {
+func QueryDevices(deps QueryDependencies, devices []models.Device, query models.Query) (selectedDevices []models.Device, unselectedDevices []models.Device, err error) {
 	selectedDevices = make([]models.Device, 0)
 	unselectedDevices = make([]models.Device, 0)
 
 	for _, device := range devices {
-		match, err := DeviceMatchesQuery(device, query)
+		match, err := DeviceMatchesQuery(deps, device, query)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -47,9 +58,9 @@ func QueryDevices(devices []models.Device, query models.Query) (selectedDevices 
 	return selectedDevices, unselectedDevices, nil
 }
 
-func DeviceMatchesQuery(device models.Device, query models.Query) (bool, error) {
+func DeviceMatchesQuery(deps QueryDependencies, device models.Device, query models.Query) (bool, error) {
 	for _, filter := range query {
-		match, err := deviceMatchesFilter(device, filter)
+		match, err := deviceMatchesFilter(deps, device, filter)
 		if err != nil {
 			return false, err
 		}
@@ -60,9 +71,9 @@ func DeviceMatchesQuery(device models.Device, query models.Query) (bool, error) 
 	return true, nil
 }
 
-func deviceMatchesFilter(device models.Device, filter models.Filter) (bool, error) {
+func deviceMatchesFilter(deps QueryDependencies, device models.Device, filter models.Filter) (bool, error) {
 	for _, condition := range filter {
-		match, err := deviceMatchesCondition(device, condition)
+		match, err := deviceMatchesCondition(deps, device, condition)
 		if err != nil {
 			return false, err
 		}
@@ -96,7 +107,7 @@ func validateCondition(condition models.Condition) error {
 		case models.OperatorIsNot:
 			return nil
 		}
-		return ErrOperatorNotSupported
+		return ErrOperatorInvalid
 
 	case models.LabelValueCondition:
 		var params models.LabelValueConditionParams
@@ -118,7 +129,7 @@ func validateCondition(condition models.Condition) error {
 		case models.OperatorIsNot:
 			return nil
 		}
-		return ErrOperatorNotSupported
+		return ErrOperatorInvalid
 
 	case models.LabelExistenceCondition:
 		var params models.LabelExistenceConditionParams
@@ -137,12 +148,73 @@ func validateCondition(condition models.Condition) error {
 		case models.OperatorNotExists:
 			return nil
 		}
-		return ErrOperatorNotSupported
+		return ErrOperatorInvalid
+
+	case models.ApplicationReleaseCondition:
+		var params models.ApplicationReleaseConditionParams
+		err := utils.JSONConvert(condition.Params, &params)
+		if err != nil {
+			return err
+		}
+
+		if params.ApplicationID == "" || params.Release == "" {
+			return ErrNoEmptyFields
+		}
+
+		switch params.Operator {
+		case models.OperatorIs:
+			return nil
+		case models.OperatorIsNot:
+			return nil
+		}
+		return ErrOperatorInvalid
+
+	case models.ApplicationExistenceCondition:
+		var params models.ApplicationExistenceConditionParams
+		err := utils.JSONConvert(condition.Params, &params)
+		if err != nil {
+			return err
+		}
+
+		if params.ApplicationID == "" {
+			return ErrNoEmptyFields
+		}
+
+		switch params.Operator {
+		case models.OperatorExists:
+			return nil
+		case models.OperatorNotExists:
+			return nil
+		}
+		return ErrOperatorInvalid
+
+	case models.ServiceStateCondition:
+		var params models.ServiceStateConditionParams
+		err := utils.JSONConvert(condition.Params, &params)
+		if err != nil {
+			return err
+		}
+
+		if params.ApplicationID == "" || params.Service == "" {
+			return ErrNoEmptyFields
+		}
+
+		switch params.Operator {
+		case models.OperatorIs:
+		case models.OperatorIsNot:
+		default:
+			return ErrOperatorInvalid
+		}
+
+		if !models.AllServiceStates[params.ServiceState] {
+			return ErrServiceStateInvalid
+		}
+		return nil
 	}
-	return ErrConditionNotSupported
+	return ErrConditionInvalid
 }
 
-func deviceMatchesCondition(device models.Device, condition models.Condition) (bool, error) {
+func deviceMatchesCondition(deps QueryDependencies, device models.Device, condition models.Condition) (bool, error) {
 	switch condition.Type {
 	case models.DevicePropertyCondition:
 		var params models.DevicePropertyConditionParams
@@ -151,9 +223,6 @@ func deviceMatchesCondition(device models.Device, condition models.Condition) (b
 			return false, err
 		}
 
-		// We can either turn device into a map[string]interface, or make
-		// a switch statement with cases for each property.
-		// I'm going with the former just because it's easier.
 		var deviceMap map[string]interface{}
 		err = utils.JSONConvert(device, &deviceMap)
 		if err != nil {
@@ -162,7 +231,7 @@ func deviceMatchesCondition(device models.Device, condition models.Condition) (b
 
 		value, exists := deviceMap[params.Property]
 		if !exists {
-			return false, ErrPropertyNotSupported
+			return false, ErrPropertyInvalid
 		}
 
 		match := value == params.Value
@@ -172,7 +241,7 @@ func deviceMatchesCondition(device models.Device, condition models.Condition) (b
 		case models.OperatorIsNot:
 			return !match, nil
 		}
-		return false, ErrOperatorNotSupported
+		return false, ErrOperatorInvalid
 
 	case models.LabelValueCondition:
 		var params models.LabelValueConditionParams
@@ -190,7 +259,7 @@ func deviceMatchesCondition(device models.Device, condition models.Condition) (b
 		case models.OperatorIsNot:
 			return !valueMatches, nil
 		}
-		return false, ErrOperatorNotSupported
+		return false, ErrOperatorInvalid
 
 	case models.LabelExistenceCondition:
 		var params models.LabelExistenceConditionParams
@@ -206,9 +275,101 @@ func deviceMatchesCondition(device models.Device, condition models.Condition) (b
 		case models.OperatorNotExists:
 			return !ok, nil
 		}
-		return false, ErrOperatorNotSupported
+		return false, ErrOperatorInvalid
+
+	case models.ApplicationExistenceCondition:
+		var params models.ApplicationExistenceConditionParams
+		err := utils.JSONConvert(condition.Params, &params)
+		if err != nil {
+			return false, err
+		}
+
+		if params.ApplicationID == "" {
+			return false, ErrNoEmptyFields
+		}
+
+		_, exists := deps.DeviceApplicationStatuses[device.ID][params.ApplicationID]
+
+		switch params.Operator {
+		case models.OperatorExists:
+			return exists, nil
+		case models.OperatorNotExists:
+			return !exists, nil
+		}
+		return false, ErrOperatorInvalid
+
+	case models.ApplicationReleaseCondition:
+		var params models.ApplicationReleaseConditionParams
+		err := utils.JSONConvert(condition.Params, &params)
+		if err != nil {
+			return false, err
+		}
+
+		if params.ApplicationID == "" || params.Release == "" {
+			return false, ErrNoEmptyFields
+		}
+
+		applicationStatus, exists := deps.DeviceApplicationStatuses[device.ID][params.ApplicationID]
+		existsFunc := func() (bool, error) {
+			if !exists {
+				return false, nil
+			}
+			if params.Release == models.LatestRelease {
+				latestRelease, err := deps.Releases.GetLatestRelease(
+					deps.Context,
+					device.ProjectID,
+					params.ApplicationID,
+				)
+				if err != nil {
+					return false, err
+				}
+				params.Release = latestRelease.ID
+			}
+			if params.Release == models.AnyApplicationRelease {
+				return true, nil
+			}
+			return params.Release == applicationStatus.CurrentReleaseID, nil
+		}
+
+		switch params.Operator {
+		case models.OperatorIs:
+			exists, err := existsFunc()
+			return exists, err
+		case models.OperatorIsNot:
+			exists, err := existsFunc()
+			return !exists, err
+		}
+		return false, ErrOperatorInvalid
+
+	case models.ServiceStateCondition:
+		var params models.ServiceStateConditionParams
+		err := utils.JSONConvert(condition.Params, &params)
+		if err != nil {
+			return false, err
+		}
+
+		if params.ApplicationID == "" || params.Service == "" {
+			return false, ErrNoEmptyFields
+		}
+
+		exists := true
+		deviceServiceState, exists := deps.DeviceServiceStates[device.ID][params.ApplicationID][params.Service]
+
+		switch params.Operator {
+		case models.OperatorIs:
+			if !exists {
+				return false, nil
+			}
+			return deviceServiceState.State == params.ServiceState, nil
+		case models.OperatorIsNot:
+			if !exists {
+				return true, nil
+			}
+			return deviceServiceState.State != params.ServiceState, nil
+		}
+		return false, ErrOperatorInvalid
 	}
-	return false, ErrConditionNotSupported
+	return false, ErrConditionInvalid
 }
 
 func FiltersFromQuery(query map[string][]string) ([]models.Filter, error) {

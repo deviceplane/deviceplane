@@ -57,7 +57,7 @@ const Login = ({
         logo
         title="Log in"
         size="medium"
-        actions={[{ href: '/signup', title: 'Sign up', variant: 'secondary' }]}
+        actions={[{ href: '/signup', title: 'Sign up', variant: 'tertiary' }]}
       >
         <Alert show={backendError} variant="error" description={backendError} />
         <Form
