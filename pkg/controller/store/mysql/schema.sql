@@ -450,7 +450,7 @@ create table if not exists device_service_states (
   application_id varchar(32) not null,
   service varchar(100) not null,
 
-  state longtext not null,
+  state varchar(100) not null,
   error_message longtext not null,
 
   primary key (project_id, device_id, application_id, service),
@@ -463,8 +463,8 @@ create table if not exists device_service_states (
   foreign key device_service_states_application_id(application_id)
   references applications(id)
   on delete cascade,
-  index project_id_device_id_application_id (project_id, device_id, application_id)
-  index project_id_application_id (project_id, application_id)
+  index project_id_device_id_application_id (project_id, device_id, application_id),
+  index project_id_application_id_service_state (project_id, application_id, service, state)
 );
 
 --
