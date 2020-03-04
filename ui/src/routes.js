@@ -147,10 +147,6 @@ export default mount({
                   title: 'Overview - Device',
                   getView: () => import('./containers/device/overview'),
                 }),
-                '/ssh': route({
-                  title: 'SSH - Device',
-                  getView: () => import('./containers/device/ssh'),
-                }),
                 '/settings': route({
                   title: 'Settings - Device',
                   getView: () => import('./containers/device/settings'),
@@ -506,6 +502,20 @@ export default mount({
               };
             },
             getView: () => import('./containers/project-settings'),
+          }),
+          '/ssh': route({
+            title: 'SSH',
+            getData: async request => {
+              const response = await api.devices({
+                projectId: request.params.project,
+              });
+
+              return {
+                devices: response.data,
+                params: request.params,
+              };
+            },
+            getView: () => import('./containers/ssh'),
           }),
         });
       }),

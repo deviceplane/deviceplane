@@ -46,7 +46,6 @@ const MetricOverview = ({
         : [],
     },
   });
-  console.log(metric.properties);
   const whitelistedTags = watch('whitelistedTags');
   const navigation = useNavigation();
   const [backendError, setBackendError] = useState();

@@ -252,8 +252,8 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
           }}
         />
       ),
-      maxWidth: '40px',
-      minWidth: '40px',
+      maxWidth: '50px',
+      minWidth: '50px',
       cellStyle: {
         justifyContent: 'flex-end',
       },
@@ -373,6 +373,13 @@ const DeviceOverview = ({
                 console.error(error);
               }
             },
+          },
+          {
+            title: 'SSH',
+            variant: 'secondary',
+            disabled: device.status === 'offline',
+            newTab: true,
+            href: `/${params.project}/ssh?devices=${device.name}`,
           },
         ]}
       >

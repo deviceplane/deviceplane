@@ -1,11 +1,12 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTable, useSortBy, useRowSelect } from 'react-table';
+import { useNavigation } from 'react-navi';
 
 import api from '../api';
 import Layout from '../components/layout';
 import Card from '../components/card';
 import Table, { SelectColumn } from '../components/table';
-import { Row, Text, Input, Icon } from '../components/core';
+import { Row, Text, Input, Icon, Button } from '../components/core';
 import {
   DevicesFilter,
   OperatorIs,
@@ -36,6 +37,7 @@ const Devices = ({ route }) => {
   const [filterToEdit, setFilterToEdit] = useState(null);
   const [searchInput, setSearchInput] = useState('');
   const [searchFocused, setSearchFocused] = useState();
+  const navigation = useNavigation();
 
   useEffect(() => {
     parseQueryString();
@@ -70,6 +72,7 @@ const Devices = ({ route }) => {
 
   const columns = useMemo(
     () => [
+      SelectColumn,
       {
         Header: 'Status',
         accessor: 'status',
@@ -242,7 +245,7 @@ const Devices = ({ route }) => {
         size="full"
         left={
           deviceTotal && (
-            <Text color="grays.8" fontWeight={2} fontSize={2}>
+            <Text color="grays.8" fontWeight={2} fontSize={2} marginTop={1}>
               (
               <Text color="white" fontWeight={1} fontSize={1} paddingX={1}>
                 {filterQuery.length
@@ -254,18 +257,18 @@ const Devices = ({ route }) => {
           )
         }
         center={
-          <Row position="relative" alignItems="center">
+          <Row position="relative" alignItems="center" flex={1} maxWidth={13}>
             <Icon
               icon="search"
               size={16}
               color={searchFocused ? 'primary' : 'white'}
-              style={{ position: 'absolute', left: 16 }}
+              style={{ position: 'absolute', left: 8 }}
             />
             <Input
-              width="280px"
+              flex={1}
               bg="black"
               placeholder="Search by name or labels"
-              paddingLeft={7}
+              paddingLeft={6}
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               onFocus={() => setSearchFocused(true)}
@@ -308,6 +311,19 @@ const Devices = ({ route }) => {
             />
           </Row>
         )}
+        <Row marginBottom={3}>
+          <Button
+            title="SSH"
+            variant="tertiary"
+            disabled={selectedFlatRows.length === 0}
+            newTab
+            href={`/${
+              route.data.params.project
+            }/ssh?devices=${selectedFlatRows
+              .map(({ original: { name } }) => name)
+              .join(',')}`}
+          />
+        </Row>
         <Table
           {...tableProps}
           rowHref={({ name }) =>

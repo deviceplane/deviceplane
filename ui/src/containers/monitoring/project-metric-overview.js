@@ -64,7 +64,6 @@ const ProjectMetricOverview = ({
   );
 
   const submit = async data => {
-    console.log(data, metrics);
     try {
       await api.updateProjectMetricsConfig({
         projectId,

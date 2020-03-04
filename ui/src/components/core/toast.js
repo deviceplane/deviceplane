@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 
+import utils from '../../utils';
 import { Box, Row, Column } from './box';
 import Button from './button';
 import Text from './text';
@@ -146,13 +147,8 @@ export const ToastManager = () => {
   );
 };
 
-const getId = () =>
-  Math.random()
-    .toString(36)
-    .substr(2, 9);
-
 export const toaster = {
-  success: (content, id = getId()) => {
+  success: (content, id = utils.id()) => {
     window.dispatchEvent(
       new CustomEvent(ToastEvent, {
         bubbles: true,
@@ -161,7 +157,7 @@ export const toaster = {
     );
   },
 
-  danger: (content, id = getId()) => {
+  danger: (content, id = utils.id()) => {
     window.dispatchEvent(
       new CustomEvent(ToastEvent, {
         bubbles: true,
@@ -170,7 +166,7 @@ export const toaster = {
     );
   },
 
-  info: (content, id = getId()) => {
+  info: (content, id = utils.id()) => {
     window.dispatchEvent(
       new CustomEvent(ToastEvent, {
         bubbles: true,

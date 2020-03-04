@@ -118,7 +118,6 @@ module.exports = () => {
       open: true,
       publicPath: '/',
       hot: true,
-      transportMode: 'ws',
       clientLogLevel: 'none',
       noInfo: true,
       quiet: true,
@@ -127,6 +126,9 @@ module.exports = () => {
         '/api': {
           target: 'http://localhost:8080',
           ws: true,
+          onError(err) {
+            console.log('Suppressing WDS proxy upgrade error:', err);
+          },
         },
       },
     };
