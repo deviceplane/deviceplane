@@ -221,6 +221,7 @@ const Session = ({ project, device, privateKey, show }) => {
       window.onresize = () => {
         fitAddon.fit();
       };
+      fitAddon.fit();
       term.focus();
     }
   }, [show]);
