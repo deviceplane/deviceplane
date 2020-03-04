@@ -130,7 +130,7 @@ const Tab = styled(Row).attrs({ as: 'button' })`
   }
 `;
 
-const Session = ({ index, project, device, privateKey, show, onTitle }) => {
+const Session = ({ project, device, privateKey, show }) => {
   const terminalNode = useRef();
   const client = useRef(new Client()).current;
   const term = useRef(
@@ -195,7 +195,6 @@ const Session = ({ index, project, device, privateKey, show, onTitle }) => {
 
     term.open(terminalNode.current);
     term.loadAddon(fitAddon);
-    term.onTitleChange(title => onTitle(device, index, title));
     window.onresize = () => {
       fitAddon.fit();
     };
@@ -229,9 +228,9 @@ const SessionTabs = ({ device, setActiveSession, deleteSession }) => {
   if (device && device.sessions) {
     return (
       <Tabs>
-        {device.sessions.map(({ active, title }, i) => (
+        {device.sessions.map(({ active }, i) => (
           <Tab key={i} active={active} onClick={() => setActiveSession(i)}>
-            <Text color="inherit">{title || i + 1}</Text>
+            <Text color="inherit">{i + 1}</Text>
             <CloseButton
               marginLeft={2}
               onClick={e => {
@@ -292,7 +291,7 @@ const SSH = ({
 
   const fetchDevices = async () => {
     try {
-      const { data, headers } = await api.devices({
+      const { data } = await api.devices({
         projectId: params.project,
         queryString: `?search=${searchInput}`,
       });
@@ -458,23 +457,6 @@ const SSH = ({
       return newDevices;
     });
 
-  const setSessionTitle = (device, sessionIndex, title) => {
-    if (title) {
-      setDevices(devices =>
-        devices.map(d =>
-          d.name === device
-            ? {
-                ...d,
-                sessions: d.sessions.map((session, i) =>
-                  i === sessionIndex ? { ...session, title } : session
-                ),
-              }
-            : d
-        )
-      );
-    }
-  };
-
   const addSelectedDevices = () => {
     setDevices(devices => [
       ...devices.map(device => ({ ...device, active: false })),
@@ -550,11 +532,10 @@ const SSH = ({
               {sessions.map((session, i) => (
                 <Session
                   key={i}
-                  index={i}
                   show={active && session.active}
                   device={name}
                   project={params.project}
-                  onTitle={setSessionTitle}
+                  privateKey={privateKey}
                 />
               ))}
             </Fragment>
