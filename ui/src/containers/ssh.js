@@ -195,10 +195,12 @@ const Session = ({ project, device, privateKey, show }) => {
 
     term.open(terminalNode.current);
     term.loadAddon(fitAddon);
-    window.onresize = () => {
+    if (show) {
+      window.onresize = () => {
+        fitAddon.fit();
+      };
       fitAddon.fit();
-    };
-    fitAddon.fit();
+    }
     term.focus();
 
     client.connect(options);
