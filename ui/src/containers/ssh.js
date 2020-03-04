@@ -212,11 +212,15 @@ const Session = ({ project, device, privateKey, show }) => {
       client.end();
       fitAddon.dispose();
       term.dispose();
+      window.onresize = null;
     };
   }, []);
 
   useEffect(() => {
     if (show) {
+      window.onresize = () => {
+        fitAddon.fit();
+      };
       term.focus();
     }
   }, [show]);
