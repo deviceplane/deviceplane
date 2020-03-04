@@ -47,7 +47,7 @@ const Terminal = styled(Column)`
   overflow: hidden;
   flex: 1;
   width: 100%;
-  height: 100%;
+  height: calc(100% - 8px);
   visibility: ${props => (props.show ? 'visible' : 'hidden')};
 `;
 
@@ -170,7 +170,7 @@ const Session = ({ index, project, device, privateKey, show, onTitle }) => {
               width,
               height,
             } = terminalNode.current.getBoundingClientRect();
-            stream.setWindow(rows - 1, cols, width, height - 32);
+            stream.setWindow(rows, cols, width, height);
           });
         });
       })
@@ -304,7 +304,7 @@ const SSH = ({
 
   useEffect(() => {
     if (devices.length === 0) {
-      //window.close();
+      window.close();
     } else {
       window.history.replaceState(
         null,
@@ -541,7 +541,7 @@ const SSH = ({
           width="100%"
           height="100%"
           padding={2}
-          paddingBottom={3}
+          paddingBottom={0}
           position="relative"
           overflow="hidden"
         >
