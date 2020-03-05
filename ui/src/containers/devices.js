@@ -120,7 +120,7 @@ const Devices = ({ route }) => {
     ],
     [filterQuery]
   );
-  const tableData = useMemo(() => devices, [devices]);
+  const tableData = useMemo(() => devices || [], [devices]);
 
   const { selectedFlatRows, ...tableProps } = useTable(
     {
@@ -130,19 +130,6 @@ const Devices = ({ route }) => {
     useSortBy,
     useRowSelect
   );
-
-  const fetchDevices = async queryString => {
-    try {
-      const { data, headers } = await api.devices({
-        projectId: route.data.params.project,
-        queryString,
-      });
-      setDeviceTotal(headers['total-device-count']);
-      setDevices(data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
   const updateQueryString = () => {
     const query = [];
@@ -335,6 +322,7 @@ const Devices = ({ route }) => {
         </Row>
         <Table
           {...tableProps}
+          loading={!devices}
           rowHref={({ name }) =>
             `/${route.data.params.project}/devices/${name}`
           }

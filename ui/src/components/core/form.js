@@ -7,6 +7,7 @@ import { useNavigation } from 'react-navi';
 import { useMutation } from '../../api';
 import Button from './button';
 import Alert from '../alert';
+import { Row } from './box';
 
 export const StyledForm = styled.form`
   display: flex;
@@ -97,13 +98,23 @@ export const Form = ({
       {Array.isArray(children)
         ? children.map(modifyChild)
         : modifyChild(children)}
-      <Button
-        ref={submitButtonRef}
-        variant={submitVariant}
-        type="submit"
-        title={submitLabel}
-        disabled={submitDisabled || formState.isSubmitting || !formState.dirty}
-      />
+      <Row>
+        <Button
+          ref={submitButtonRef}
+          variant={submitVariant}
+          type="submit"
+          title={submitLabel}
+          disabled={submitDisabled || formState.isSubmitting}
+        />
+        {onCancel && (
+          <Button
+            variant="text"
+            title="Cancel"
+            href={onCancel}
+            marginLeft={5}
+          />
+        )}
+      </Row>
     </StyledForm>
   );
 };

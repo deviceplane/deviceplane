@@ -16,7 +16,7 @@ const Members = ({
       projectId: params.project,
     })
   );
-  const tableData = useMemo(() => members, [members]);
+  const tableData = useMemo(() => members || [], [members]);
   const columns = useMemo(
     () => [
       { Header: 'Email', accessor: 'user.email' },
@@ -52,6 +52,7 @@ const Members = ({
     >
       <Table
         {...tableProps}
+        loading={!members}
         rowHref={({ user: { id } }) => `/${params.project}/iam/members/${id}`}
         placeholder={
           <Text>

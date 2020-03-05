@@ -18,7 +18,9 @@ const Provisioning = ({
     endpoints.registrationTokens({ projectId: params.project })
   );
 
-  const tableData = useMemo(() => registrationTokens, [registrationTokens]);
+  const tableData = useMemo(() => registrationTokens || [], [
+    registrationTokens,
+  ]);
 
   const columns = useMemo(
     () => [
@@ -84,6 +86,7 @@ const Provisioning = ({
       >
         <Table
           {...tableProps}
+          loading={!registrationTokens}
           rowHref={({ name }) =>
             `/${params.project}/provisioning/registration-tokens/${name}`
           }

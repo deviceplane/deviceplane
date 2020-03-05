@@ -86,11 +86,16 @@ const Release = ({
 
   return (
     <>
-      <Card size="xlarge">
-        <Text fontWeight={2} fontSize={5} marginBottom={6}>
-          Release {release.number}
-        </Text>
-
+      <Card
+        size="xlarge"
+        title={`Release ${release.number}`}
+        actions={[
+          {
+            title: 'Revert to this Release',
+            onClick: () => setShowConfirmPopup(true),
+          },
+        ]}
+      >
         <Alert show={backendError} variant="error" description={backendError} />
 
         <Group>
@@ -105,13 +110,10 @@ const Release = ({
           <Value>{moment(release.createdAt).fromNow()}</Value>
         </Group>
 
-        <Label>Config</Label>
-        <Editor readOnly width="100%" value={release.rawConfig} />
-        <Button
-          marginTop={6}
-          title="Revert to this Release"
-          onClick={() => setShowConfirmPopup(true)}
-        />
+        <Group>
+          <Label>Config</Label>
+          <Editor readOnly width="100%" value={release.rawConfig} />
+        </Group>
       </Card>
 
       <Popup show={showConfirmPopup} onClose={() => setShowConfirmPopup(false)}>

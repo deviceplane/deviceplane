@@ -220,8 +220,9 @@ const Table = ({
           })}
         </TableBody>
       </StyledTable>
-      {loading && <Spinner />}
-      {!loading && rows.length === 0 && (
+      {loading ? (
+        <Spinner />
+      ) : rows.length === 0 ? (
         <Row
           flex={1}
           justifyContent="center"
@@ -231,7 +232,7 @@ const Table = ({
         >
           {placeholder}
         </Row>
-      )}
+      ) : null}
     </>
   );
 };

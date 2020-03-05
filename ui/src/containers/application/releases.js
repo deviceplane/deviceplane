@@ -25,7 +25,7 @@ const Releases = ({
       applicationId: params.application,
     })
   );
-  const tableData = useMemo(() => releases, [releases]);
+  const tableData = useMemo(() => releases || [], [releases]);
   const columns = useMemo(
     () => [
       {
@@ -81,6 +81,7 @@ const Releases = ({
     >
       <Table
         {...tableProps}
+        loading={!releases}
         rowHref={({ id }) =>
           `/${params.project}/applications/${application.name}/releases/${id}`
         }

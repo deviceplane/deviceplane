@@ -14,7 +14,7 @@ const ServiceAccounts = ({
   const { data: serviceAccounts } = useRequest(
     endpoints.serviceAccounts({ projectId: params.project })
   );
-  const tableData = useMemo(() => serviceAccounts, [serviceAccounts]);
+  const tableData = useMemo(() => serviceAccounts || [], [serviceAccounts]);
   const columns = useMemo(
     () => [
       { Header: 'Name', accessor: 'name' },
@@ -51,6 +51,7 @@ const ServiceAccounts = ({
     >
       <Table
         {...tableProps}
+        loading={!serviceAccounts}
         rowHref={({ name }) =>
           `/${params.project}/iam/service-accounts/${name}`
         }

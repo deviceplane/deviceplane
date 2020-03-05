@@ -11,7 +11,7 @@ const Projects = () => {
   const { data } = useRequest(endpoints.projects());
 
   const tableData = useMemo(
-    () => (data ? data.map(({ project }) => project) : data),
+    () => (data ? data.map(({ project }) => project) : []),
     [data]
   );
 
@@ -59,6 +59,7 @@ const Projects = () => {
       >
         <Table
           {...tableProps}
+          loading={!data}
           rowHref={({ name }) => `/${name}`}
           placeholder={
             <Text>

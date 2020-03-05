@@ -33,6 +33,7 @@ const CreateServiceAccount = ({
         onCancel={`/${params.project}/iam/service-accounts/`}
         validationSchema={validationSchema}
         errorMessages={{ default: 'Service Account creation failed.' }}
+        submitLabel="Create"
       >
         <Field required autoFocus label="Name" name="name" />
         <Field type="textarea" label="Description" name="description" />

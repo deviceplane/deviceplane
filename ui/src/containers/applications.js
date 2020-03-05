@@ -59,7 +59,7 @@ const Applications = ({
     ],
     []
   );
-  const tableData = useMemo(() => applications, [applications]);
+  const tableData = useMemo(() => applications || [], [applications]);
 
   const tableProps = useTable(
     {
@@ -78,6 +78,7 @@ const Applications = ({
       >
         <Table
           {...tableProps}
+          loading={!applications}
           rowHref={({ name }) => `/${params.project}/applications/${name}`}
           placeholder={
             <Text>

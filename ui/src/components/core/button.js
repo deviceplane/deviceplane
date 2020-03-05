@@ -186,7 +186,7 @@ export const LinkButton = styled(Btn).attrs({
   text-decoration: none;
 `;
 
-const Button = forwardRef(({ href, title, onClick, ...rest }, ref) => {
+const Button = forwardRef(({ newTab, href, title, onClick, ...rest }, ref) => {
   if (href) {
     return (
       <LinkButton

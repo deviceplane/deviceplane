@@ -14,7 +14,7 @@ const Roles = ({
   const { data: roles } = useRequest(
     endpoints.roles({ projectId: params.project })
   );
-  const tableData = useMemo(() => roles, [roles]);
+  const tableData = useMemo(() => roles || [], [roles]);
   const columns = useMemo(
     () => [
       { Header: 'Name', accessor: 'name' },
@@ -43,6 +43,7 @@ const Roles = ({
     >
       <Table
         {...tableProps}
+        loading={!roles}
         rowHref={({ name }) => `/${params.project}/iam/roles/${name}`}
         placeholder={
           <Text>

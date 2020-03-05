@@ -5,13 +5,6 @@ import styled, { keyframes } from 'styled-components';
 import { Column } from './core';
 
 const show = keyframes`
-0% {
-  display: none;
-  opacity: 0;
-}
-50% {
-  display: flex;
-}
 100% {
   opacity: 1;
 }
@@ -23,8 +16,10 @@ const Container = styled(Column)`
   width: 100%;
   height: 100%;
   padding: 16px;
-  display: none;
-  animation: ${show} 500ms 500ms forward-fill;
+  opacity: 0;
+  animation: ${show};
+  animation-delay: 500ms;
+  animation-fill-mode: forwards;
 
   & > div {
     border-radius: 3px;

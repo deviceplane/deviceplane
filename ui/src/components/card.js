@@ -47,7 +47,6 @@ const Card = ({
   border = false,
   logo,
   actions = [],
-  header,
   children,
   disabled,
   ...props
@@ -142,7 +141,6 @@ const Card = ({
                     />
                   )
               )}
-              {header}
             </Row>
           </Row>
           {subtitle && (
