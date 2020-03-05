@@ -145,7 +145,10 @@ const Session = ({ project, device, privateKey, show }) => {
       .on('ready', function() {
         client.shell(wndopts, function(err, stream) {
           if (err) {
-            stream.end();
+            console.error(err);
+            if (stream && stream.end) {
+              stream.end();
+            }
           }
           const {
             width,
