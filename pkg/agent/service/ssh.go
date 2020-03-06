@@ -63,6 +63,12 @@ func (s *Service) ssh(w http.ResponseWriter, r *http.Request) {
 		RequestHandlers: ssh.DefaultRequestHandlers,
 		ChannelHandlers: ssh.DefaultChannelHandlers,
 		HostSigners:     []ssh.Signer{signer},
+		LocalPortForwardingCallback: func(ctx ssh.Context, destinationHost string, destinationPort uint32) bool {
+			return true
+		},
+		ReversePortForwardingCallback: func(ctx ssh.Context, bindHost string, bindPort uint32) bool {
+			return true
+		},
 	}
 
 	var options []ssh.Option
