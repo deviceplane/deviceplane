@@ -64,9 +64,11 @@ func (s *Service) ssh(w http.ResponseWriter, r *http.Request) {
 		ChannelHandlers: ssh.DefaultChannelHandlers,
 		HostSigners:     []ssh.Signer{signer},
 		LocalPortForwardingCallback: func(ctx ssh.Context, destinationHost string, destinationPort uint32) bool {
+			fmt.Println("TRYING LOCAL PORT FORWARDING")
 			return true
 		},
 		ReversePortForwardingCallback: func(ctx ssh.Context, bindHost string, bindPort uint32) bool {
+			fmt.Println("TRYING REVERSE PORT FORWARDING")
 			return true
 		},
 	}
@@ -96,6 +98,7 @@ func (s *Service) ssh(w http.ResponseWriter, r *http.Request) {
 
 func sshServerHandler(ctx context.Context) func(s ssh.Session) {
 	return func(s ssh.Session) {
+		fmt.Println("NEW SSH SESSION")
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
