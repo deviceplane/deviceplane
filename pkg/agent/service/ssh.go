@@ -58,11 +58,24 @@ func (s *Service) ssh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	forwardHandler := &ssh.ForwardedTCPHandler{}
 	sshServer := &ssh.Server{
-		Handler:         sshServerHandler(ctx),
-		RequestHandlers: ssh.DefaultRequestHandlers,
-		ChannelHandlers: ssh.DefaultChannelHandlers,
-		HostSigners:     []ssh.Signer{signer},
+		Handler: sshServerHandler(ctx),
+		RequestHandlers: map[string]ssh.RequestHandler{
+			"tcpip-forward":        forwardHandler.HandleSSHRequest,
+			"cancel-tcpip-forward": forwardHandler.HandleSSHRequest,
+		},
+		ChannelHandlers: map[string]ssh.ChannelHandler{
+			"session":      ssh.DefaultSessionHandler,
+			"direct-tcpip": ssh.DirectTCPIPHandler,
+		},
+		HostSigners: []ssh.Signer{signer},
+		LocalPortForwardingCallback: func(ctx ssh.Context, destinationHost string, destinationPort uint32) bool {
+			return true
+		},
+		ReversePortForwardingCallback: func(ctx ssh.Context, bindHost string, bindPort uint32) bool {
+			return true
+		},
 	}
 
 	var options []ssh.Option
