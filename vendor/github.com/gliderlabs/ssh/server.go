@@ -270,7 +270,7 @@ func (srv *Server) HandleConn(newConn net.Conn) {
 			handler = srv.ChannelHandlers["default"]
 		}
 		if handler == nil {
-			ch.Reject(gossh.UnknownChannelType, "unsupported channel type")
+			ch.Reject(gossh.UnknownChannelType, "unsupported channel type: "+ch.ChannelType())
 			continue
 		}
 		go handler(srv, sshConn, ch, ctx)
