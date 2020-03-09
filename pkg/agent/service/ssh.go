@@ -71,12 +71,9 @@ func (s *Service) ssh(w http.ResponseWriter, r *http.Request) {
 		},
 		HostSigners: []ssh.Signer{signer},
 		LocalPortForwardingCallback: func(ctx ssh.Context, destinationHost string, destinationPort uint32) bool {
-			fmt.Println("attempt to bind", destinationHost, destinationPort, "granted")
-			fmt.Println("TRYING LOCAL PORT FORWARDING")
 			return true
 		},
 		ReversePortForwardingCallback: func(ctx ssh.Context, bindHost string, bindPort uint32) bool {
-			fmt.Println("TRYING REVERSE PORT FORWARDING")
 			return true
 		},
 	}
