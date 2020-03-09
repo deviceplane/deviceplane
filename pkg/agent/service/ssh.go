@@ -103,7 +103,6 @@ func (s *Service) ssh(w http.ResponseWriter, r *http.Request) {
 
 func sshServerHandler(ctx context.Context) func(s ssh.Session) {
 	return func(s ssh.Session) {
-		fmt.Println("NEW SSH SESSION")
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
