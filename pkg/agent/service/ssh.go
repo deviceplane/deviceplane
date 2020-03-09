@@ -58,15 +58,17 @@ func (s *Service) ssh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	forwardHandler := &ssh.ForwardedTCPHandler{}
 	sshServer := &ssh.Server{
-		Handler:         sshServerHandler(ctx),
-		RequestHandlers: ssh.DefaultRequestHandlers,
-		ChannelHandlers: map[string]ssh.ChannelHandler{
-			"session":      ssh.DefaultSessionHandler,
-			"direct-tcpip": ssh.DirectTCPIPHandler,
+		Handler: sshServerHandler(ctx),
+		RequestHandlers: map[string]ssh.RequestHandler{
+			"tcpip-forward":        forwardHandler.HandleSSHRequest,
+			"cancel-tcpip-forward": forwardHandler.HandleSSHRequest,
 		},
-		HostSigners: []ssh.Signer{signer},
+		ChannelHandlers: ssh.DefaultChannelHandlers,
+		HostSigners:     []ssh.Signer{signer},
 		LocalPortForwardingCallback: func(ctx ssh.Context, destinationHost string, destinationPort uint32) bool {
+			fmt.Println("attempt to bind", destinationHost, destinationPort, "granted")
 			fmt.Println("TRYING LOCAL PORT FORWARDING")
 			return true
 		},
