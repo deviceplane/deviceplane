@@ -1,4 +1,11 @@
-import React, { useEffect, useState, useRef, useMemo, Fragment } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+  Fragment,
+  useCallback,
+} from 'react';
 import styled from 'styled-components';
 import { useTable, useSortBy, useRowSelect } from 'react-table';
 import { Terminal as XTerm } from 'xterm';
@@ -287,84 +294,6 @@ const SSH = ({
   const [searchFocused, setSearchFocused] = useState();
   const [privateKey, setPrivateKey] = useState();
 
-  useEffect(() => {
-    setTimeout(() => {
-      const intercomNode = document.querySelector('#intercom-container');
-      if (intercomNode) {
-        intercomNode.style.display = 'none';
-        return () => {
-          intercomNode.style.display = 'block';
-        };
-      }
-    }, 500);
-  }, []);
-
-  const fetchDevices = async () => {
-    try {
-      const { data } = await api.devices({
-        projectId: params.project,
-        queryString: `?search=${searchInput}`,
-      });
-      setAllDevices(data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  useEffect(() => {
-    if (devices.length === 0) {
-      window.close();
-    } else {
-      window.history.replaceState(
-        null,
-        null,
-        `?devices=${devices.map(({ name }) => name).join(',')}`
-      );
-    }
-  }, [devices]);
-
-  useEffect(() => {
-    fetchDevices();
-  }, [searchInput]);
-
-  const columns = useMemo(
-    () => [
-      SelectColumn,
-      {
-        Header: 'Name',
-        accessor: 'name',
-        minWidth: '200px',
-      },
-      {
-        Header: 'Labels',
-        accessor: 'labels',
-        Cell: ({ cell: { value } }) =>
-          value ? <Row marginBottom={-2}>{renderLabels(value)}</Row> : null,
-        minWidth: '300px',
-        maxWidth: '2fr',
-      },
-    ],
-    []
-  );
-
-  const tableData = useMemo(
-    () =>
-      allDevices.filter(
-        ({ status, name }) =>
-          status === 'online' && !devices.find(device => device.name === name)
-      ),
-    [allDevices, devices]
-  );
-
-  const { selectedFlatRows, ...tableProps } = useTable(
-    {
-      columns,
-      data: tableData,
-    },
-    useSortBy,
-    useRowSelect
-  );
-
   const deleteDevice = name =>
     setDevices(devices => {
       let wasDeviceActive = false;
@@ -477,6 +406,107 @@ const SSH = ({
       })),
     ]);
   };
+
+  useEffect(() => {
+    setTimeout(() => {
+      const intercomNode = document.querySelector('#intercom-container');
+      if (intercomNode) {
+        intercomNode.style.display = 'none';
+        return () => {
+          intercomNode.style.display = 'block';
+        };
+      }
+    }, 500);
+  }, []);
+
+  const fetchDevices = async () => {
+    try {
+      const { data } = await api.devices({
+        projectId: params.project,
+        queryString: `?search=${searchInput}`,
+      });
+      setAllDevices(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    const handleKeydown = event => {
+      if (
+        event.key >= 1 &&
+        event.key <= 9 &&
+        (event.metaKey || event.ctrlKey)
+      ) {
+        if (
+          devices.find(d => {
+            return d.active && d.sessions.length >= event.key;
+          })
+        ) {
+          setActiveSession(event.key - 1);
+        }
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, [devices]);
+
+  useEffect(() => {
+    if (devices.length === 0) {
+      window.close();
+    } else {
+      window.history.replaceState(
+        null,
+        null,
+        `?devices=${devices.map(({ name }) => name).join(',')}`
+      );
+    }
+  }, [devices]);
+
+  useEffect(() => {
+    fetchDevices();
+  }, [searchInput]);
+
+  const columns = useMemo(
+    () => [
+      SelectColumn,
+      {
+        Header: 'Name',
+        accessor: 'name',
+        minWidth: '200px',
+      },
+      {
+        Header: 'Labels',
+        accessor: 'labels',
+        Cell: ({ cell: { value } }) =>
+          value ? <Row marginBottom={-2}>{renderLabels(value)}</Row> : null,
+        minWidth: '300px',
+        maxWidth: '2fr',
+      },
+    ],
+    []
+  );
+
+  const tableData = useMemo(
+    () =>
+      allDevices.filter(
+        ({ status, name }) =>
+          status === 'online' && !devices.find(device => device.name === name)
+      ),
+    [allDevices, devices]
+  );
+
+  const { selectedFlatRows, ...tableProps } = useTable(
+    {
+      columns,
+      data: tableData,
+    },
+    useSortBy,
+    useRowSelect
+  );
 
   return (
     <>
