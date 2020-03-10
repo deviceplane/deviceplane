@@ -7,7 +7,6 @@ import (
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/agent"
 	agent_client "github.com/deviceplane/deviceplane/pkg/agent/client"
-	"github.com/deviceplane/deviceplane/pkg/engine/docker"
 	dphttp "github.com/deviceplane/deviceplane/pkg/http"
 	"github.com/segmentio/conf"
 )
@@ -42,18 +41,13 @@ func main() {
 	}
 	log.SetLevel(lvl)
 
-	engine, err := docker.NewEngine()
-	if err != nil {
-		log.WithError(err).Fatal("create docker client")
-	}
-
 	controllerURL, err := url.Parse(config.Controller)
 	if err != nil {
 		log.WithError(err).Fatal("parse controller URL")
 	}
 
 	client := agent_client.NewClient(controllerURL, config.Project, dphttp.DefaultClient)
-	agent, err := agent.NewAgent(client, engine, config.Project, config.RegistrationToken,
+	agent, err := agent.NewAgent(client, config.Project, config.RegistrationToken,
 		config.ConfDir, config.StateDir, version, os.Args[0], config.ServerPort)
 	if err != nil {
 		log.WithError(err).Fatal("failure creating agent")

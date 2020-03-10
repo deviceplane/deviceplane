@@ -10,7 +10,7 @@ require (
 	github.com/cobaugh/osrelease v0.0.0-20181218015638-a93a0a55a249
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v1.13.1
-	github.com/docker/go-connections v0.4.0
+	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.3.3
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568
 	github.com/fsnotify/fsnotify v1.4.7
@@ -23,6 +23,7 @@ require (
 	github.com/gorilla/mux v1.7.1
 	github.com/gorilla/websocket v1.4.0
 	github.com/hako/durafmt v0.0.0-20191009132224-3f39dc1ed9f4
+	github.com/jondot/goweight v1.0.5 // indirect
 	github.com/kr/pty v1.1.3
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/mattn/go-runewidth v0.0.8 // indirect
@@ -37,7 +38,7 @@ require (
 	github.com/segmentio/conf v1.1.0
 	github.com/segmentio/ksuid v1.0.2
 	github.com/stretchr/testify v1.3.0
-	github.com/vishvananda/netns v0.0.0-20190625233234-7109fa855b0f
+	github.com/vishvananda/netns v0.0.0-20190625233234-7109fa855b0f // indirect
 	golang.org/x/crypto v0.0.0-20200210222208-86ce3cb69678
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e

@@ -2,7 +2,6 @@ package agent
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -13,23 +12,14 @@ import (
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/agent/client"
 	"github.com/deviceplane/deviceplane/pkg/agent/info"
-	"github.com/deviceplane/deviceplane/pkg/agent/metrics"
-	"github.com/deviceplane/deviceplane/pkg/agent/netns"
 	"github.com/deviceplane/deviceplane/pkg/agent/server/local"
 	"github.com/deviceplane/deviceplane/pkg/agent/server/remote"
 	"github.com/deviceplane/deviceplane/pkg/agent/service"
-	"github.com/deviceplane/deviceplane/pkg/agent/status"
-	"github.com/deviceplane/deviceplane/pkg/agent/supervisor"
 	"github.com/deviceplane/deviceplane/pkg/agent/updater"
-	"github.com/deviceplane/deviceplane/pkg/agent/validator"
-	"github.com/deviceplane/deviceplane/pkg/agent/validator/customcommands"
-	"github.com/deviceplane/deviceplane/pkg/agent/validator/image"
 	"github.com/deviceplane/deviceplane/pkg/agent/variables"
 	"github.com/deviceplane/deviceplane/pkg/agent/variables/fsnotify"
 	dpcontext "github.com/deviceplane/deviceplane/pkg/context"
-	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/deviceplane/deviceplane/pkg/file"
-	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/pkg/errors"
 )
 
@@ -44,24 +34,21 @@ var (
 )
 
 type Agent struct {
-	client                 *client.Client // TODO: interface
-	variables              variables.Interface
-	projectID              string
-	registrationToken      string
-	confDir                string
-	stateDir               string
-	serverPort             int
-	supervisor             *supervisor.Supervisor
-	statusGarbageCollector *status.GarbageCollector
-	metricsPusher          *metrics.MetricsPusher
-	infoReporter           *info.Reporter
-	localServer            *local.Server
-	remoteServer           *remote.Server
-	updater                *updater.Updater
+	client            *client.Client // TODO: interface
+	variables         variables.Interface
+	projectID         string
+	registrationToken string
+	confDir           string
+	stateDir          string
+	serverPort        int
+	infoReporter      *info.Reporter
+	localServer       *local.Server
+	remoteServer      *remote.Server
+	updater           *updater.Updater
 }
 
 func NewAgent(
-	client *client.Client, engine engine.Engine,
+	client *client.Client,
 	projectID, registrationToken, confDir, stateDir, version, binaryPath string, serverPort int,
 ) (*Agent, error) {
 	if version == "" {
@@ -77,31 +64,7 @@ func NewAgent(
 		return nil, errors.Wrap(err, "start fsnotify variables")
 	}
 
-	supervisor := supervisor.NewSupervisor(
-		engine,
-		variables,
-		func(ctx *dpcontext.Context, applicationID, currentReleaseID string) error {
-			return client.SetDeviceApplicationStatus(ctx, applicationID, models.SetDeviceApplicationStatusRequest{
-				CurrentReleaseID: currentReleaseID,
-			})
-		},
-		client.SetDeviceServiceStatus,
-		client.SetDeviceServiceState,
-		[]validator.Validator{
-			image.NewValidator(variables),
-			customcommands.NewValidator(variables),
-		},
-	)
-
-	netnsManager := netns.NewManager(engine)
-	netnsManager.Start()
-
-	serviceMetricsFetcher := metrics.NewServiceMetricsFetcher(
-		supervisor,
-		netnsManager,
-	)
-
-	service := service.NewService(variables, supervisor, engine, confDir, serviceMetricsFetcher)
+	service := service.NewService(variables, confDir)
 
 	return &Agent{
 		client:            client,
@@ -111,17 +74,10 @@ func NewAgent(
 		confDir:           confDir,
 		stateDir:          stateDir,
 		serverPort:        serverPort,
-		supervisor:        supervisor,
-		statusGarbageCollector: status.NewGarbageCollector(
-			client.DeleteDeviceApplicationStatus,
-			client.DeleteDeviceServiceStatus,
-			client.DeleteDeviceServiceState,
-		),
-		metricsPusher: metrics.NewMetricsPusher(client, serviceMetricsFetcher),
-		infoReporter:  info.NewReporter(client, version),
-		localServer:   local.NewServer(service),
-		remoteServer:  remote.NewServer(client, service),
-		updater:       updater.NewUpdater(projectID, version, binaryPath),
+		infoReporter:      info.NewReporter(client, version),
+		localServer:       local.NewServer(service),
+		remoteServer:      remote.NewServer(client, service),
+		updater:           updater.NewUpdater(projectID, version, binaryPath),
 	}, nil
 }
 
@@ -201,120 +157,10 @@ func (a *Agent) register() error {
 }
 
 func (a *Agent) Run() {
-	go a.runBundleApplier()
 	go a.runInfoReporter()
 	go a.runRemoteServer()
 	go a.runLocalServer()
 	select {}
-}
-
-func (a *Agent) runBundleApplier() {
-	bundle := a.loadSavedBundle()
-	if bundle != nil {
-		a.supervisor.Set(*bundle, bundle.Applications)
-	}
-
-	ticker := time.NewTicker(5 * time.Second)
-	defer ticker.Stop()
-
-	for {
-		bundle = a.downloadLatestBundle(bundle)
-		if bundle != nil {
-			a.supervisor.Set(*bundle, bundle.Applications)
-			a.statusGarbageCollector.SetBundle(*bundle)
-			a.updater.SetDesiredVersion(bundle.DesiredAgentVersion)
-			a.metricsPusher.SetBundle(*bundle)
-		}
-
-		select {
-		case <-ticker.C:
-			continue
-		}
-	}
-}
-
-func (a *Agent) loadSavedBundle() *models.Bundle {
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-
-	for {
-		if _, err := os.Stat(a.fileLocation(bundleFilename)); err == nil {
-			savedBundleBytes, err := ioutil.ReadFile(a.fileLocation(bundleFilename))
-			if err != nil {
-				log.WithError(err).Error("read saved bundle")
-				goto cont
-			}
-
-			var savedBundle models.Bundle
-			if err = json.Unmarshal(savedBundleBytes, &savedBundle); err != nil {
-				log.WithError(err).Error("discarding invalid saved bundle")
-				return nil
-			}
-
-			return &savedBundle
-		} else if os.IsNotExist(err) {
-			return nil
-		} else {
-			log.WithError(err).Error("check if saved bundle exists")
-			goto cont
-		}
-
-	cont:
-		select {
-		case <-ticker.C:
-			continue
-		}
-	}
-}
-
-func (a *Agent) downloadLatestBundle(oldBundle *models.Bundle) *models.Bundle {
-	ctx, cancel := dpcontext.New(context.Background(), time.Minute)
-	defer cancel()
-
-	bundleBytes, err := a.client.GetBundleBytes(ctx)
-	if err != nil {
-		log.WithError(err).Error("get bundle")
-		return nil
-	}
-
-	bundle := mergeBundle(oldBundle, bundleBytes)
-
-	bundleBytes, err = json.Marshal(bundle)
-	if err != nil {
-		log.WithError(err).Error("marshal bundle")
-		return nil
-	}
-
-	if err = a.writeFile(bundleBytes, bundleFilename); err != nil {
-		log.WithError(err).Error("save bundle")
-		return nil
-	}
-
-	return bundle
-}
-
-func mergeBundle(oldBundle *models.Bundle, bundleBytes []byte) *models.Bundle {
-	var bundle models.Bundle
-	err := json.Unmarshal(bundleBytes, &bundle)
-	if err != nil {
-		log.WithError(err).Error("unmarshaling full bundle")
-
-		var minimalBundle struct {
-			DesiredAgentVersion string `json:"desiredAgentVersion" yaml:"desiredAgentVersion"`
-		}
-		err := json.Unmarshal(bundleBytes, &minimalBundle)
-		if err != nil {
-			log.WithError(err).Error("unmarshaling minimal bundle")
-			return nil
-		}
-
-		if oldBundle != nil {
-			bundle = *oldBundle
-		}
-		bundle.DesiredAgentVersion = minimalBundle.DesiredAgentVersion
-	}
-
-	return &bundle
 }
 
 func (a *Agent) runInfoReporter() {

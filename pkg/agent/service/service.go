@@ -8,50 +8,35 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/deviceplane/deviceplane/pkg/agent/metrics"
-	"github.com/deviceplane/deviceplane/pkg/agent/supervisor"
 	"github.com/deviceplane/deviceplane/pkg/agent/variables"
-	"github.com/deviceplane/deviceplane/pkg/engine"
 	"github.com/gliderlabs/ssh"
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	gossh "golang.org/x/crypto/ssh"
 
 	"net/http/pprof"
 )
 
 type Service struct {
-	variables        variables.Interface
-	supervisorLookup supervisor.Lookup
-	confDir          string
-	router           *mux.Router
-
-	serviceMetricsFetcher *metrics.ServiceMetricsFetcher
+	variables variables.Interface
+	confDir   string
+	router    *mux.Router
 
 	signer     ssh.Signer
 	signerLock sync.Mutex
 }
 
 func NewService(
-	variables variables.Interface, supervisorLookup supervisor.Lookup,
-	engine engine.Engine, confDir string, serviceMetricsFetcher *metrics.ServiceMetricsFetcher,
+	variables variables.Interface, confDir string,
 ) *Service {
 	s := &Service{
 		variables: variables,
 		confDir:   confDir,
 		router:    mux.NewRouter(),
-
-		supervisorLookup:      supervisorLookup,
-		serviceMetricsFetcher: serviceMetricsFetcher,
 	}
-	go s.getSigner()
+	//go s.getSigner()
 
 	s.router.HandleFunc("/ssh", s.ssh).Methods("POST")
 	s.router.HandleFunc("/reboot", s.reboot).Methods("POST")
-	s.router.HandleFunc("/applications/{application}/services/{service}/imagepullprogress", s.imagePullProgress).Methods("GET")
-	s.router.HandleFunc("/applications/{application}/services/{service}/metrics", s.metrics).Methods("GET")
-	s.router.Handle("/metrics/host", metrics.FilteredHostMetricsHandler())
-	s.router.Handle("/metrics/agent", promhttp.Handler())
 
 	s.router.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
 	s.router.HandleFunc("/debug/pprof/profile", pprof.Profile)
