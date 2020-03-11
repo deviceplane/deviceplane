@@ -9,13 +9,18 @@ import validators from '../validators';
 import Card from '../components/card';
 import Field from '../components/field';
 import Alert from '../components/alert';
-import { Column, Button, Form, Text, Link, toaster } from '../components/core';
+import {
+  Column,
+  Button,
+  Form,
+  Text,
+  Link,
+  Row,
+  toaster,
+} from '../components/core';
+import * as auth0 from '../lib/auth0';
 
 const validationSchema = yup.object().shape({
-  fullName: yup
-    .string()
-    .required()
-    .max(128),
   email: validators.email.required(),
   password: validators.password.required(),
 });
@@ -28,18 +33,6 @@ const Signup = () => {
   const [backendError, setBackendError] = useState();
 
   const submit = async data => {
-    const firstSpace = data.fullName.indexOf(' ');
-
-    if (firstSpace === -1) {
-      data.firstName = data.fullName;
-      data.lastName = ' ';
-    } else {
-      data.firstName = data.fullName.substr(0, firstSpace);
-      data.lastName = data.fullName.substr(firstSpace + 1);
-    }
-
-    delete data.fullName;
-
     try {
       const response = await api.signup(data);
       navigation.navigate('/login');
@@ -82,17 +75,6 @@ const Signup = () => {
         >
           <Field
             required
-            autoFocus
-            autoComplete="on"
-            autoCapitalize="on"
-            label="Full Name"
-            name="fullName"
-            ref={register}
-            errors={errors.fullName}
-            maxLength={128}
-          />
-          <Field
-            required
             autoComplete="on"
             type="email"
             label="Email"
@@ -123,6 +105,24 @@ const Signup = () => {
             Privacy Policy
           </Link>
         </Text>
+        <Row marginTop={5}>
+          <Button
+            justifyContent="center"
+            title="Sign up with Google"
+            onClick={() => {
+              auth0.api.signup.google();
+            }}
+          />
+        </Row>
+        <Row marginTop={5}>
+          <Button
+            justifyContent="center"
+            title="Sign up with Github"
+            onClick={() => {
+              auth0.api.signup.github();
+            }}
+          />
+        </Row>
       </Card>
     </Column>
   );

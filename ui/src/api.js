@@ -15,18 +15,20 @@ const patch = (path, ...rest) => axios.patch(url(path), ...rest);
 const api = {
   login: ({ email, password }) => post('login', { email, password }),
 
+  loginSSO: data => post('loginsso', data),
+
   logout: () =>
     post('logout').then(() => {
       segment.reset();
     }),
 
-  signup: ({ email, password, firstName, lastName }) =>
+  signup: ({ email, password }) =>
     post(`register`, {
       email,
       password,
-      firstName,
-      lastName,
     }),
+
+  signupSSO: data => post('registersso', data),
 
   completeRegistration: ({ registrationTokenValue }) =>
     post('completeregistration', { registrationTokenValue }),

@@ -95,6 +95,12 @@ const TableRow = styled.tr`
   }
 `;
 
+const Cell = styled.td`
+  display: flex;
+  padding: 8px 12px;
+  border-bottom: 1px solid ${props => props.theme.colors.grays[3]};
+`;
+
 const HeaderCell = styled.th`
   position: sticky;
   top: 0;
@@ -114,12 +120,6 @@ const HeaderCell = styled.th`
   & ${Cell}:hover svg {
     fill: ${props => props.theme.colors.white};
   }
-`;
-
-const Cell = styled.td`
-  display: flex;
-  padding: 8px 12px;
-  border-bottom: 1px solid ${props => props.theme.colors.grays[3]};
 `;
 
 const Table = ({

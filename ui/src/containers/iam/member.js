@@ -93,7 +93,7 @@ const Member = ({
   return (
     <>
       <Card
-        title={`${member.user.firstName} ${member.user.lastName}`}
+        title={member.user.name}
         subtitle={member.user.email}
         size="large"
         actions={[
@@ -133,10 +133,7 @@ const Member = ({
         <Card title="Remove Member" border size="large">
           <Text>
             You are about to remove the member (
-            <strong>
-              {member.user.firstName} {member.user.lastName}
-            </strong>
-            ) from the project.
+            <strong>{member.user.name}</strong>) from the project.
           </Text>
           <Button
             marginTop={5}

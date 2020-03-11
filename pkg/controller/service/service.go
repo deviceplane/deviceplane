@@ -18,6 +18,8 @@ import (
 
 type Service struct {
 	users                      store.Users
+	internalUsers              store.InternalUsers
+	externalUsers              store.ExternalUsers
 	passwordRecoveryTokens     store.PasswordRecoveryTokens
 	registrationTokens         store.RegistrationTokens
 	userAccessKeys             store.UserAccessKeys
@@ -47,15 +49,18 @@ type Service struct {
 	emailFromName              string
 	emailFromAddress           string
 	allowedEmailDomains        []string
+	auth0Domain                *url.URL
+	auth0Audience              string
 	st                         *statsd.Client
 	connman                    *connman.ConnectionManager
-
-	router   *mux.Router
-	upgrader websocket.Upgrader
+	router                     *mux.Router
+	upgrader                   websocket.Upgrader
 }
 
 func NewService(
 	users store.Users,
+	internalUsers store.InternalUsers,
+	externalUsers store.ExternalUsers,
 	registrationTokens store.RegistrationTokens,
 	passwordRecoveryTokens store.PasswordRecoveryTokens,
 	sessions store.Sessions,
@@ -85,6 +90,8 @@ func NewService(
 	emailFromName string,
 	emailFromAddress string,
 	allowedEmailDomains []string,
+	auth0Domain *url.URL,
+	auth0Audience string,
 	fileSystem http.FileSystem,
 	st *statsd.Client,
 	connman *connman.ConnectionManager,
@@ -92,6 +99,8 @@ func NewService(
 ) *Service {
 	s := &Service{
 		users:                      users,
+		internalUsers:              internalUsers,
+		externalUsers:              externalUsers,
 		registrationTokens:         registrationTokens,
 		passwordRecoveryTokens:     passwordRecoveryTokens,
 		sessions:                   sessions,
@@ -121,6 +130,8 @@ func NewService(
 		emailFromName:              emailFromName,
 		emailFromAddress:           emailFromAddress,
 		allowedEmailDomains:        allowedEmailDomains,
+		auth0Domain:                auth0Domain,
+		auth0Audience:              auth0Audience,
 		st:                         st,
 		connman:                    connman,
 
@@ -137,14 +148,16 @@ func NewService(
 
 	apiRouter := s.router.PathPrefix("/api").Subrouter()
 
-	apiRouter.HandleFunc("/register", s.register).Methods("POST")
+	apiRouter.HandleFunc("/register", s.registerInternalUser).Methods("POST")
+	apiRouter.HandleFunc("/registersso", s.registerExternalUser).Methods("POST")
 	apiRouter.HandleFunc("/completeregistration", s.confirmRegistration).Methods("POST")
 
-	apiRouter.HandleFunc("/changepassword", s.changePassword).Methods("POST")
+	apiRouter.HandleFunc("/changepassword", s.changeInternalUserPassword).Methods("POST")
 	apiRouter.HandleFunc("/recoverpassword", s.recoverPassword).Methods("POST")
 	apiRouter.HandleFunc("/passwordrecoverytokens/{passwordrecoverytokenvalue}", s.getPasswordRecoveryToken).Methods("GET")
 
-	apiRouter.HandleFunc("/login", s.login).Methods("POST")
+	apiRouter.HandleFunc("/login", s.loginInternalUser).Methods("POST")
+	apiRouter.HandleFunc("/loginsso", s.loginExternalUser).Methods("POST")
 	apiRouter.HandleFunc("/logout", s.logout).Methods("POST")
 
 	apiRouter.HandleFunc("/me", s.getMe).Methods("GET")

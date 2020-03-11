@@ -52,13 +52,11 @@ func (s *Service) intentional500(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (s *Service) register(w http.ResponseWriter, r *http.Request) {
+func (s *Service) registerInternalUser(w http.ResponseWriter, r *http.Request) {
 	utils.WithReferrer(w, r, func(referrer *url.URL) {
 		var registerRequest struct {
-			Email     string `json:"email" validate:"email"`
-			Password  string `json:"password" validate:"password"`
-			FirstName string `json:"firstName" validate:"required,min=1,max=100"`
-			LastName  string `json:"lastName" validate:"required,min=1,max=100"`
+			Email    string `json:"email" validate:"email"`
+			Password string `json:"password" validate:"password"`
 		}
 		if err := read(r, &registerRequest); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -88,59 +86,120 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if _, err := s.users.LookupUser(r.Context(), registerRequest.Email); err == nil {
+		if _, err := s.internalUsers.LookupInternalUser(r.Context(), registerRequest.Email); err == nil {
 			http.Error(w, errEmailAlreadyTaken.Error(), http.StatusBadRequest)
 			return
 		} else if err != store.ErrUserNotFound {
-			log.WithError(err).Error("lookup user")
+			log.WithError(err).Error("lookup internal user")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		user, err := s.users.CreateUser(r.Context(), registerRequest.Email, hash.Hash(registerRequest.Password),
-			registerRequest.FirstName, registerRequest.LastName)
+		internalUser, err := s.internalUsers.CreateInternalUser(r.Context(), registerRequest.Email, hash.Hash(registerRequest.Password))
 		if err != nil {
-			log.WithError(err).Error("create user")
+			log.WithError(err).Error("create internal user")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		if s.email == nil {
 			// If email provider is nil then skip the registration workflow
-			if _, err := s.users.MarkRegistrationCompleted(r.Context(), user.ID); err != nil {
-				log.WithError(err).Error("mark registration completed")
+			user, err := s.users.InitializeUser(r.Context(), &internalUser.ID, nil)
+			if err != nil {
+				log.WithError(err).Error("mark internal user registration completed")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+
+			utils.Respond(w, user)
+			return
+		}
+
+		registrationTokenValue := ksuid.New().String()
+
+		if _, err := s.registrationTokens.CreateRegistrationToken(r.Context(), internalUser.ID, hash.Hash(registrationTokenValue)); err != nil {
+			log.WithError(err).Error("create registration token")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if err := s.email.Send(email.Request{
+			FromName:    s.emailFromName,
+			FromAddress: s.emailFromAddress,
+			ToName:      internalUser.Email,
+			ToAddress:   internalUser.Email,
+			Subject:     "Deviceplane Email Confirmation",
+			Content: email.Content{
+				Title:       "Email Confirmation",
+				Body:        "Thank you for using Deviceplane! Please click the button below to confirm your email.",
+				ActionTitle: "Confirm Email",
+				ActionLink:  fmt.Sprintf("%s://%s/confirm/%s", referrer.Scheme, referrer.Host, registrationTokenValue),
+			},
+		}); err != nil {
+			log.WithError(err).Error("send registration email")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(200)
+	})
+}
+
+func (s *Service) registerExternalUser(w http.ResponseWriter, r *http.Request) {
+	s.withValidatedSsoJWT(w, r, func(ssoJWT models.SsoJWT) {
+		emailDomain, err := utils.GetDomainFromEmail(ssoJWT.Email)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		emailDomainAllowed := false
+		if len(s.allowedEmailDomains) == 0 {
+			emailDomainAllowed = true
 		} else {
-			registrationTokenValue := ksuid.New().String()
-
-			if _, err := s.registrationTokens.CreateRegistrationToken(r.Context(), user.ID, hash.Hash(registrationTokenValue)); err != nil {
-				log.WithError(err).Error("create registration token")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			if err := s.email.Send(email.Request{
-				FromName:    s.emailFromName,
-				FromAddress: s.emailFromAddress,
-				ToName:      user.FirstName + " " + user.LastName,
-				ToAddress:   user.Email,
-				Subject:     "Deviceplane Email Confirmation",
-				Content: email.Content{
-					Title:       "Email Confirmation",
-					Body:        "Thank you for using Deviceplane! Please click the button below to confirm your email.",
-					ActionTitle: "Confirm Email",
-					ActionLink:  fmt.Sprintf("%s://%s/confirm/%s", referrer.Scheme, referrer.Host, registrationTokenValue),
-				},
-			}); err != nil {
-				log.WithError(err).Error("send registration email")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
+			for _, allowedEmailDomain := range s.allowedEmailDomains {
+				if allowedEmailDomain == emailDomain {
+					emailDomainAllowed = true
+					break
+				}
 			}
 		}
 
-		utils.Respond(w, user)
+		if !emailDomainAllowed {
+			http.Error(w, errEmailDomainNotAllowed.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if _, err := s.externalUsers.GetExternalUserByProviderID(r.Context(), ssoJWT.Provider, ssoJWT.Subject); err == nil {
+			http.Error(w, "user already registered", http.StatusBadRequest)
+			return
+		} else if err != store.ErrUserNotFound {
+			log.WithError(err).Error("get external user by provider")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		externalUser, err := s.externalUsers.CreateExternalUser(r.Context(), ssoJWT.Provider, ssoJWT.Subject, ssoJWT.Email, ssoJWT.Claims)
+		if err != nil {
+			log.WithError(err).Error("create external user")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		user, err := s.users.InitializeUser(r.Context(), nil, &externalUser.ID)
+		if err != nil {
+			log.WithError(err).Error("initialize external user")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		user, err = s.users.UpdateUserName(r.Context(), user.ID, ssoJWT.Name)
+		if err != nil {
+			log.WithError(err).Error("update user name")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		s.newSession(w, r, user.ID)
 	})
 }
 
@@ -161,13 +220,14 @@ func (s *Service) confirmRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := s.users.MarkRegistrationCompleted(r.Context(), registrationToken.UserID); err != nil {
-		log.WithError(err).Error("mark registration completed")
+	user, err := s.users.InitializeUser(r.Context(), &registrationToken.InternalUserID, nil)
+	if err != nil {
+		log.WithError(err).Error("mark internal user registration completed")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	s.newSession(w, r, registrationToken.UserID)
+	s.newSession(w, r, user.ID)
 }
 
 func (s *Service) recoverPassword(w http.ResponseWriter, r *http.Request) {
@@ -180,7 +240,7 @@ func (s *Service) recoverPassword(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		user, err := s.users.LookupUser(r.Context(), recoverPasswordRequest.Email)
+		internalUser, err := s.internalUsers.LookupInternalUser(r.Context(), recoverPasswordRequest.Email)
 		if err == store.ErrUserNotFound {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
@@ -193,7 +253,7 @@ func (s *Service) recoverPassword(w http.ResponseWriter, r *http.Request) {
 		passwordRecoveryTokenValue := ksuid.New().String()
 
 		if _, err := s.passwordRecoveryTokens.CreatePasswordRecoveryToken(r.Context(),
-			user.ID, hash.Hash(passwordRecoveryTokenValue)); err != nil {
+			internalUser.ID, hash.Hash(passwordRecoveryTokenValue)); err != nil {
 			log.WithError(err).Error("create password recovery token")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -202,8 +262,8 @@ func (s *Service) recoverPassword(w http.ResponseWriter, r *http.Request) {
 		if err := s.email.Send(email.Request{
 			FromName:    s.emailFromName,
 			FromAddress: s.emailFromAddress,
-			ToName:      user.FirstName + " " + user.LastName,
-			ToAddress:   user.Email,
+			ToName:      internalUser.Email,
+			ToAddress:   internalUser.Email,
 			Subject:     "Deviceplane Password Reset",
 			Content: email.Content{
 				Title:       "Password Reset",
@@ -236,7 +296,7 @@ func (s *Service) getPasswordRecoveryToken(w http.ResponseWriter, r *http.Reques
 	utils.Respond(w, passwordRecoveryToken)
 }
 
-func (s *Service) changePassword(w http.ResponseWriter, r *http.Request) {
+func (s *Service) changeInternalUserPassword(w http.ResponseWriter, r *http.Request) {
 	var changePasswordRequest struct {
 		PasswordRecoveryTokenValue string `json:"passwordRecoveryTokenValue" validate:"required,min=1,max=1000"`
 		Password                   string `json:"password" validate:"password"`
@@ -262,24 +322,17 @@ func (s *Service) changePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := s.users.UpdatePasswordHash(r.Context(),
-		passwordRecoveryToken.UserID, hash.Hash(changePasswordRequest.Password)); err != nil {
+	if _, err := s.internalUsers.UpdateInternalUserPasswordHash(r.Context(),
+		passwordRecoveryToken.InternalUserID, hash.Hash(changePasswordRequest.Password)); err != nil {
 		log.WithError(err).Error("update password hash")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	user, err := s.users.GetUser(r.Context(), passwordRecoveryToken.UserID)
-	if err != nil {
-		log.WithError(err).Error("get user")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	utils.Respond(w, user)
+	w.WriteHeader(200)
 }
 
-func (s *Service) login(w http.ResponseWriter, r *http.Request) {
+func (s *Service) loginInternalUser(w http.ResponseWriter, r *http.Request) {
 	var loginRequest struct {
 		Email    string `json:"email" validate:"email"`
 		Password string `json:"password" validate:"password"`
@@ -289,22 +342,53 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := s.users.ValidateUserWithEmail(r.Context(), loginRequest.Email, hash.Hash(loginRequest.Password))
+	internalUser, err := s.internalUsers.ValidateInternalUserWithEmail(r.Context(), loginRequest.Email, hash.Hash(loginRequest.Password))
 	if err == store.ErrUserNotFound {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
-		log.WithError(err).Error("validate user with email")
+		log.WithError(err).Error("validate internal user with email")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if !user.RegistrationCompleted {
+	user, err := s.users.GetUserByInternalID(r.Context(), internalUser.ID)
+	if err == store.ErrUserNotFound {
 		w.WriteHeader(http.StatusForbidden)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("get user by internal user id")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	s.newSession(w, r, user.ID)
+}
+
+func (s *Service) loginExternalUser(w http.ResponseWriter, r *http.Request) {
+	s.withValidatedSsoJWT(w, r, func(ssoJWT models.SsoJWT) {
+		externalUser, err := s.externalUsers.GetExternalUserByProviderID(r.Context(), ssoJWT.Provider, ssoJWT.Subject)
+		if err == store.ErrUserNotFound {
+			http.Error(w, "external user not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			log.WithError(err).Error("get external user by provider ID")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		user, err := s.users.GetUserByExternalID(r.Context(), externalUser.ID)
+		if err == store.ErrUserNotFound {
+			http.Error(w, "user not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			log.WithError(err).Error("get user by external ID")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		s.newSession(w, r, user.ID)
+	})
 }
 
 func (s *Service) newSession(w http.ResponseWriter, r *http.Request, userID string) {
@@ -388,12 +472,10 @@ func (s *Service) getMe(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) updateMe(w http.ResponseWriter, r *http.Request) {
 	s.withUserAuth(w, r, func(user *models.User) {
-		// TODO: validation
 		var updateUserRequest struct {
 			Password        *string `json:"password"`
 			CurrentPassword *string `json:"currentPassword"`
-			FirstName       *string `json:"firstName"`
-			LastName        *string `json:"lastName"`
+			Name            *string `json:"name"`
 		}
 		if err := read(r, &updateUserRequest); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -401,12 +483,17 @@ func (s *Service) updateMe(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if updateUserRequest.Password != nil {
+			if user.InternalUserID == nil {
+				http.Error(w, "cannot update password for externally authenticated users", http.StatusBadRequest)
+				return
+			}
+
 			if updateUserRequest.CurrentPassword == nil {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
 
-			if _, err := s.users.ValidateUser(r.Context(), user.ID, hash.Hash(*updateUserRequest.CurrentPassword)); err == store.ErrUserNotFound {
+			if _, err := s.internalUsers.ValidateInternalUser(r.Context(), *user.InternalUserID, hash.Hash(*updateUserRequest.CurrentPassword)); err == store.ErrUserNotFound {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			} else if err != nil {
@@ -415,22 +502,15 @@ func (s *Service) updateMe(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if _, err := s.users.UpdatePasswordHash(r.Context(), user.ID, hash.Hash(*updateUserRequest.Password)); err != nil {
+			if _, err := s.internalUsers.UpdateInternalUserPasswordHash(r.Context(), *user.InternalUserID, hash.Hash(*updateUserRequest.Password)); err != nil {
 				log.WithError(err).Error("update password hash")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 		}
-		if updateUserRequest.FirstName != nil {
-			if _, err := s.users.UpdateFirstName(r.Context(), user.ID, *updateUserRequest.FirstName); err != nil {
-				log.WithError(err).Error("update first name")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-		}
-		if updateUserRequest.LastName != nil {
-			if _, err := s.users.UpdateLastName(r.Context(), user.ID, *updateUserRequest.LastName); err != nil {
-				log.WithError(err).Error("update last name")
+		if updateUserRequest.Name != nil {
+			if _, err := s.users.UpdateUserName(r.Context(), user.ID, *updateUserRequest.Name); err != nil {
+				log.WithError(err).Error("update user name")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -725,7 +805,7 @@ func (s *Service) updateProject(w http.ResponseWriter, r *http.Request) {
 			func(project *models.Project) {
 				var updateProjectRequest struct {
 					Name          string `json:"name" validate:"name"`
-					DatadogApiKey string `json:"datadogApiKey"`
+					DatadogAPIKey string `json:"datadogApiKey"`
 				}
 				if err := read(r, &updateProjectRequest); err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
@@ -742,7 +822,7 @@ func (s *Service) updateProject(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
-				p, err := s.projects.UpdateProject(r.Context(), project.ID, updateProjectRequest.Name, updateProjectRequest.DatadogApiKey)
+				p, err := s.projects.UpdateProject(r.Context(), project.ID, updateProjectRequest.Name, updateProjectRequest.DatadogAPIKey)
 				if err != nil {
 					log.WithError(err).Error("update project")
 					w.WriteHeader(http.StatusInternalServerError)
@@ -1325,20 +1405,47 @@ func (s *Service) createMembership(w http.ResponseWriter, r *http.Request) {
 			user, serviceAccount,
 			func(project *models.Project) {
 				var createMembershipRequest struct {
-					Email string `json:"email" validate:"email"`
+					Email  *string `json:"email" validate:"email"`
+					UserID *string `json:"userId" validate:"id"`
 				}
 				if err := read(r, &createMembershipRequest); err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
 					return
 				}
 
-				user, err := s.users.LookupUser(r.Context(), createMembershipRequest.Email)
-				if err == store.ErrUserNotFound {
-					http.Error(w, err.Error(), http.StatusNotFound)
-					return
-				} else if err != nil {
-					log.WithError(err).Error("lookup user")
-					w.WriteHeader(http.StatusInternalServerError)
+				var user *models.User
+				if createMembershipRequest.UserID != nil {
+					var err error
+					user, err = s.users.GetUser(r.Context(), *createMembershipRequest.UserID)
+					if err == store.ErrUserNotFound {
+						http.Error(w, err.Error(), http.StatusNotFound)
+						return
+					} else if err != nil {
+						log.WithError(err).Error("get user")
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+				} else if createMembershipRequest.Email != nil {
+					internalUser, err := s.internalUsers.LookupInternalUser(r.Context(), *createMembershipRequest.Email)
+					if err == store.ErrUserNotFound {
+						http.Error(w, err.Error(), http.StatusNotFound)
+						return
+					} else if err != nil {
+						log.WithError(err).Error("lookup internal user")
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+					user, err = s.users.GetUserByInternalID(r.Context(), internalUser.ID)
+					if err == store.ErrUserNotFound {
+						http.Error(w, err.Error(), http.StatusNotFound)
+						return
+					} else if err != nil {
+						log.WithError(err).Error("get user by internal user id")
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+				} else {
+					w.WriteHeader(400)
 					return
 				}
 
@@ -1377,36 +1484,14 @@ func (s *Service) getMembership(w http.ResponseWriter, r *http.Request) {
 
 				var ret interface{} = membership
 				if _, ok := r.URL.Query()["full"]; ok {
-					user, err := s.users.GetUser(r.Context(), membership.UserID)
+					membershipFull2, err := s.getMembershipFull2(r.Context(), membership)
 					if err != nil {
-						log.WithError(err).Error("get user")
+						log.WithError(err).Error("get full membership")
 						w.WriteHeader(http.StatusInternalServerError)
 						return
 					}
 
-					membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), userID, project.ID)
-					if err != nil {
-						log.WithError(err).Error("list membership role bindings")
-						w.WriteHeader(http.StatusInternalServerError)
-						return
-					}
-
-					roles := make([]models.Role, 0)
-					for _, membershipRoleBinding := range membershipRoleBindings {
-						role, err := s.roles.GetRole(r.Context(), membershipRoleBinding.RoleID, project.ID)
-						if err != nil {
-							log.WithError(err).Error("get role")
-							w.WriteHeader(http.StatusInternalServerError)
-							return
-						}
-						roles = append(roles, *role)
-					}
-
-					ret = models.MembershipFull2{
-						Membership: *membership,
-						User:       *user,
-						Roles:      roles,
-					}
+					ret = *membershipFull2
 				}
 
 				utils.Respond(w, ret)
@@ -1434,36 +1519,14 @@ func (s *Service) listMembershipsByProject(w http.ResponseWriter, r *http.Reques
 					membershipsFull := make([]models.MembershipFull2, 0)
 
 					for _, membership := range memberships {
-						user, err := s.users.GetUser(r.Context(), membership.UserID)
+						membershipFull2, err := s.getMembershipFull2(r.Context(), &membership)
 						if err != nil {
-							log.WithError(err).Error("get user")
+							log.WithError(err).Error("get full membership")
 							w.WriteHeader(http.StatusInternalServerError)
 							return
 						}
 
-						membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), membership.UserID, project.ID)
-						if err != nil {
-							log.WithError(err).Error("list membership role bindings")
-							w.WriteHeader(http.StatusInternalServerError)
-							return
-						}
-
-						roles := make([]models.Role, 0)
-						for _, membershipRoleBinding := range membershipRoleBindings {
-							role, err := s.roles.GetRole(r.Context(), membershipRoleBinding.RoleID, project.ID)
-							if err != nil {
-								log.WithError(err).Error("get role")
-								w.WriteHeader(http.StatusInternalServerError)
-								return
-							}
-							roles = append(roles, *role)
-						}
-
-						membershipsFull = append(membershipsFull, models.MembershipFull2{
-							Membership: membership,
-							User:       *user,
-							Roles:      roles,
-						})
+						membershipsFull = append(membershipsFull, *membershipFull2)
 					}
 
 					ret = membershipsFull
