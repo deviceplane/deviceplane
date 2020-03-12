@@ -422,7 +422,7 @@ func (s *Service) updateMe(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if updateUserRequest.Name != nil {
-			if _, err := s.users.UpdateUserName(r.Context(), *user.InternalUserID, *updateUserRequest.Name); err != nil {
+			if _, err := s.users.UpdateUserName(r.Context(), user.ID, *updateUserRequest.Name); err != nil {
 				log.WithError(err).Error("update user name")
 				w.WriteHeader(http.StatusInternalServerError)
 				return

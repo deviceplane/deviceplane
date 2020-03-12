@@ -11,6 +11,7 @@ import Field from '../components/field';
 import Alert from '../components/alert';
 import { Column, Button, Form, Text, Link, toaster } from '../components/core';
 
+// TODO: remove name from this
 const validationSchema = yup.object().shape({
   fullName: yup
     .string()

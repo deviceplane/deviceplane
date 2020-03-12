@@ -24,7 +24,7 @@ const ReleasedBy = ({ project, release }) => {
     if (release.createdByUser) {
       return (
         <Link href={`/${project}/iam/members/${release.createdByUser.id}`}>
-          {release.createdByUser.firstName} {release.createdByUser.lastName}
+          {release.createdByUser.name}
         </Link>
       );
     } else if (release.createdByServiceAccount) {
