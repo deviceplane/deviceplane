@@ -11,11 +11,11 @@ create table if not exists external_users (
   provider_name varchar(100) not null,
   provider_id varchar(100) not null,
 
+  screen_name varchar(255) not null,
   email varchar(100) not null,
 
   primary key (id),
-  unique (provider_name, provider_id)
-  index provider_name_provider_id (provider_name, provider_id),
+  unique provider_name_provider_id_unique (provider_name, provider_id)
 );
 
 --
@@ -45,11 +45,10 @@ create table if not exists internal_users (
 
 create table if not exists users (
   id varchar(32) not null,
+  created_at timestamp not null default current_timestamp,
   internal_user_id varchar(32),
   external_user_id varchar(32),
 
-  screen_name varchar(255) not null,
-  created_at timestamp not null default current_timestamp,
   super_admin boolean not null default false,
 
   primary key (id),
@@ -65,6 +64,7 @@ create table if not exists users (
   index id_external_user_id (id, external_user_id)
 );
 
+delimiter //
 create trigger insert_user_trigger before insert on users
 for each row begin
   if (((new.internal_user_id is null) XOR (new.external_user_id is null)) != 1) then
