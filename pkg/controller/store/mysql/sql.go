@@ -57,25 +57,25 @@ const createInternalUser = `
 
 // Index: primary key
 const getInternalUser = `
-  select id, created_at, email from internal_users
+  select id, email from internal_users
   where id = ?
 `
 
 // Index: email
 const lookupInternalUser = `
-  select id, created_at, email from internal_users
+  select id, email from internal_users
   where email = ?
 `
 
 // Index: id_password_hash
 const validateInternalUser = `
-  select id, created_at, email from internal_users
+  select id, email from internal_users
   where id = ? and password_hash = ?
 `
 
 // Index: email_password_hash
 const validateInternalUserWithEmail = `
-  select id, created_at, email from internal_users
+  select id, email from internal_users
   where email = ? and password_hash = ?
 `
 
