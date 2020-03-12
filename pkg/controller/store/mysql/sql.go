@@ -34,15 +34,15 @@ const createExternalUser = `
     id,
     provider_name,
     provider_id,
-    screen_name,
-    email
+    email,
+    info
   )
   values (?, ?, ?, ?, ?)
 `
 
 // Index: primary key
 const getExternalUser = `
-  select id, provider_name, provider_id, screen_name, email from external_users
+  select id, provider_name, provider_id, email, info from external_users
   where id = ?
 `
 

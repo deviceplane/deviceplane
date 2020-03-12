@@ -193,8 +193,13 @@ func (s *Store) UpdateUserName(ctx context.Context, id, name string) (*models.Us
 	return s.GetUser(ctx, id)
 }
 
-func (s *Store) CreateExternalUser(ctx context.Context, providerName, providerID, screenName, email string) (*models.ExternalUser, error) {
+func (s *Store) CreateExternalUser(ctx context.Context, providerName, providerID, email string, info map[string]interface{}) (*models.ExternalUser, error) {
 	id := newExternalUserID()
+
+	serializedInfo, err := json.Marshal(info)
+	if err != nil {
+		return nil, err
+	}
 
 	if _, err := s.db.ExecContext(
 		ctx,
@@ -202,8 +207,8 @@ func (s *Store) CreateExternalUser(ctx context.Context, providerName, providerID
 		id,
 		providerName,
 		providerID,
-		screenName,
 		email,
+		string(serializedInfo),
 	); err != nil {
 		return nil, err
 	}
@@ -333,15 +338,23 @@ func (s *Store) scanInternalUser(scanner scanner) (*models.InternalUser, error) 
 
 func (s *Store) scanExternalUser(scanner scanner) (*models.ExternalUser, error) {
 	var user models.ExternalUser
+	var infoString string
 	if err := scanner.Scan(
 		&user.ID,
 		&user.ProviderName,
 		&user.ProviderID,
-		&user.ScreenName,
 		&user.Email,
+		&infoString,
 	); err != nil {
 		return nil, err
 	}
+
+	if infoString != "" {
+		if err := json.Unmarshal([]byte(infoString), &user.Info); err != nil {
+			return nil, err
+		}
+	}
+
 	return &user, nil
 }
 

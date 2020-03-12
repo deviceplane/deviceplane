@@ -11,8 +11,8 @@ create table if not exists external_users (
   provider_name varchar(100) not null,
   provider_id varchar(100) not null,
 
-  screen_name varchar(255) not null,
   email varchar(100) not null,
+  info longtext not null,
 
   primary key (id),
   unique provider_name_provider_id_unique (provider_name, provider_id)

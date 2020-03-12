@@ -17,8 +17,8 @@ type ExternalUser struct {
 	ID           string
 	ProviderName string
 	ProviderID   string
-	ScreenName   string
 	Email        string
+	Info         map[string]interface{}
 }
 
 type InternalUser struct {

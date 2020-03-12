@@ -24,7 +24,7 @@ type InternalUsers interface {
 }
 
 type ExternalUsers interface {
-	CreateExternalUser(ctx context.Context, providerName, providerID, screenName, email string) (*models.ExternalUser, error)
+	CreateExternalUser(ctx context.Context, providerName, providerID, email string, info map[string]interface{}) (*models.ExternalUser, error)
 	GetExternalUser(ctx context.Context, id string) (*models.ExternalUser, error)
 }
 
