@@ -8,24 +8,20 @@ use deviceplane;
 insert into internal_users (
   id,
   email,
-  password_hash,
-  first_name,
-  last_name,
-  registration_completed
+  password_hash
 ) values (
   'internal_usr_xxx',
   'email@example.com',
-  '5E884898DA28047151D0E56F8DC6292773603D0D6AABBDD62A11EF721D1542D8',
-  'Elon',
-  'Musk',
-  1
+  '5E884898DA28047151D0E56F8DC6292773603D0D6AABBDD62A11EF721D1542D8'
 );
 insert into users (
   id,
-  internal_user_id
+  internal_user_id,
+  name
 ) values (
   'usr_xxx',
-  'internal_usr_xxx'
+  'internal_usr_xxx',
+  'Elon Musk'
 );
 "
 

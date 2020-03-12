@@ -90,7 +90,7 @@ create table if not exists registration_tokens (
   hash varchar(255) not null,
 
   primary key (id),
-  unique user_id_unique (user_id),
+  unique internal_user_id_unique (internal_user_id),
   unique hash_unique (hash),
   foreign key registration_tokens_internal_user_id(internal_user_id)
   references internal_users(id)
