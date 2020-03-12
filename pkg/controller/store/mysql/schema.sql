@@ -28,9 +28,6 @@ create table if not exists internal_users (
   email varchar(255) not null,
   -- SENSITIVE FIELD
   password_hash varchar(255) not null,
-  first_name varchar(100) not null,
-  last_name varchar(100) not null,
-  registration_completed boolean not null default false,
 
   primary key (id),
   unique email_unique (email),
@@ -49,6 +46,7 @@ create table if not exists users (
   internal_user_id varchar(32),
   external_user_id varchar(32),
 
+  name varchar(100) not null,
   super_admin boolean not null default false,
 
   primary key (id),
@@ -59,9 +57,7 @@ create table if not exists users (
   on delete cascade,
   foreign key external_users_external_user_id(external_user_id)
   references external_users(id)
-  on delete cascade,
-  index id_internal_user_id (id, internal_user_id),
-  index id_external_user_id (id, external_user_id)
+  on delete cascade
 );
 
 delimiter //

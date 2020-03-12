@@ -10,18 +10,17 @@ import (
 type Users interface {
 	InitializeUser(ctx context.Context, internalUserID, externalUserID *string) (*models.User, error)
 	GetUser(ctx context.Context, id string) (*models.User, error)
+	GetUserByInternalID(ctx context.Context, internalUserID string) (*models.User, error)
+	UpdateUserName(ctx context.Context, id, name string) (*models.User, error)
 }
 
 type InternalUsers interface {
-	CreateInternalUser(ctx context.Context, email, passwordHash, firstName, lastName string) (*models.InternalUser, error)
+	CreateInternalUser(ctx context.Context, email, passwordHash string) (*models.InternalUser, error)
 	GetInternalUser(ctx context.Context, id string) (*models.InternalUser, error)
 	LookupInternalUser(ctx context.Context, email string) (*models.InternalUser, error)
 	ValidateInternalUser(ctx context.Context, id, passwordHash string) (*models.InternalUser, error)
 	ValidateInternalUserWithEmail(ctx context.Context, email, passwordHash string) (*models.InternalUser, error)
-	MarkInternalUserRegistrationCompleted(ctx context.Context, id string) (*models.InternalUser, error)
 	UpdateInternalUserPasswordHash(ctx context.Context, id, passwordHash string) (*models.InternalUser, error)
-	UpdateInternalUserFirstName(ctx context.Context, id, firstName string) (*models.InternalUser, error)
-	UpdateInternalUserLastName(ctx context.Context, id, lastName string) (*models.InternalUser, error)
 }
 
 type ExternalUsers interface {

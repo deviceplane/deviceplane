@@ -18,6 +18,8 @@ import (
 
 type Service struct {
 	users                      store.Users
+	internalUsers              store.InternalUsers
+	externalUsers              store.ExternalUsers
 	passwordRecoveryTokens     store.PasswordRecoveryTokens
 	registrationTokens         store.RegistrationTokens
 	userAccessKeys             store.UserAccessKeys
@@ -56,6 +58,8 @@ type Service struct {
 
 func NewService(
 	users store.Users,
+	internalUsers store.InternalUsers,
+	externalUsers store.ExternalUsers,
 	registrationTokens store.RegistrationTokens,
 	passwordRecoveryTokens store.PasswordRecoveryTokens,
 	sessions store.Sessions,
@@ -92,6 +96,8 @@ func NewService(
 ) *Service {
 	s := &Service{
 		users:                      users,
+		internalUsers:              internalUsers,
+		externalUsers:              externalUsers,
 		registrationTokens:         registrationTokens,
 		passwordRecoveryTokens:     passwordRecoveryTokens,
 		sessions:                   sessions,
@@ -137,14 +143,14 @@ func NewService(
 
 	apiRouter := s.router.PathPrefix("/api").Subrouter()
 
-	apiRouter.HandleFunc("/register", s.register).Methods("POST")
+	apiRouter.HandleFunc("/register", s.registerInternalUser).Methods("POST")
 	apiRouter.HandleFunc("/completeregistration", s.confirmRegistration).Methods("POST")
 
-	apiRouter.HandleFunc("/changepassword", s.changePassword).Methods("POST")
+	apiRouter.HandleFunc("/changepassword", s.changeInternalUserPassword).Methods("POST")
 	apiRouter.HandleFunc("/recoverpassword", s.recoverPassword).Methods("POST")
 	apiRouter.HandleFunc("/passwordrecoverytokens/{passwordrecoverytokenvalue}", s.getPasswordRecoveryToken).Methods("GET")
 
-	apiRouter.HandleFunc("/login", s.login).Methods("POST")
+	apiRouter.HandleFunc("/login", s.loginInternalUser).Methods("POST")
 	apiRouter.HandleFunc("/logout", s.logout).Methods("POST")
 
 	apiRouter.HandleFunc("/me", s.getMe).Methods("GET")

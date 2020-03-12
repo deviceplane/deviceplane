@@ -328,11 +328,6 @@ func (s *Service) withUserOrServiceAccountAuth(w http.ResponseWriter, r *http.Re
 			return
 		}
 
-		if !user.RegistrationCompleted {
-			w.WriteHeader(http.StatusForbidden)
-			return
-		}
-
 		f(user, nil)
 		return
 	}

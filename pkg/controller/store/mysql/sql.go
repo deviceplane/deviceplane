@@ -4,14 +4,28 @@ const initializeUser = `
   insert into users (
     id,
     internal_user_id,
-    external_user_id
+    external_user_id,
+    name
   )
   values (?, ?, ?)
 `
 
 // Index: primary key
 const getUser = `
-  select id, created_at, internal_user_id, external_user_id, super_admin from users
+  select id, created_at, internal_user_id, external_user_id, name, super_admin from users
+  where id = ?
+`
+
+// Index: internal_user_id_unique
+const getUserByInternalID = `
+  select id, created_at, internal_user_id, external_user_id, name, super_admin from users
+  where internal_user_id = ?
+`
+
+// Index: primary key
+const updateUserName = `
+  update users
+  set name = ?
   where id = ?
 `
 
@@ -36,62 +50,39 @@ const createInternalUser = `
   insert into internal_users (
     id,
     email,
-    password_hash,
-    first_name,
-    last_name
+    password_hash
   )
   values (?, ?, ?, ?, ?)
 `
 
 // Index: primary key
 const getInternalUser = `
-  select id, created_at, email, first_name, last_name, registration_completed from internal_users
+  select id, created_at, email from internal_users
   where id = ?
 `
 
 // Index: email
 const lookupInternalUser = `
-  select id, created_at, email, first_name, last_name, registration_completed from internal_users
+  select id, created_at, email from internal_users
   where email = ?
 `
 
 // Index: id_password_hash
 const validateInternalUser = `
-  select id, created_at, email, first_name, last_name, registration_completed from internal_users
+  select id, created_at, email from internal_users
   where id = ? and password_hash = ?
 `
 
 // Index: email_password_hash
 const validateInternalUserWithEmail = `
-  select id, created_at, email, first_name, last_name, registration_completed from internal_users
+  select id, created_at, email from internal_users
   where email = ? and password_hash = ?
-`
-
-// Index: primary key
-const markInternalUserRegistrationComplete = `
-  update internal_users
-  set registration_completed = true
-  where id = ?
 `
 
 // Index: primary key
 const updateInternalUserPasswordHash = `
   update internal_users
   set password_hash = ?
-  where id = ?
-`
-
-// Index: primary key
-const updateInternalUserFirstName = `
-  update internal_users
-  set first_name = ?
-  where id = ?
-`
-
-// Index: primary key
-const updateInternalUserLastName = `
-  update internal_users
-  set last_name = ?
   where id = ?
 `
 

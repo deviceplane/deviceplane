@@ -167,6 +167,32 @@ func (s *Store) GetUser(ctx context.Context, id string) (*models.User, error) {
 	return user, nil
 }
 
+func (s *Store) GetUserByInternalID(ctx context.Context, internalUserID string) (*models.User, error) {
+	userRow := s.db.QueryRowContext(ctx, getUserByInternalID, internalUserID)
+
+	user, err := s.scanUser(userRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrUserNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *Store) UpdateUserName(ctx context.Context, id, name string) (*models.User, error) {
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateUserName,
+		name,
+		id,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetUser(ctx, id)
+}
+
 func (s *Store) CreateExternalUser(ctx context.Context, providerName, providerID, screenName, email string) (*models.ExternalUser, error) {
 	id := newExternalUserID()
 
@@ -198,7 +224,7 @@ func (s *Store) GetExternalUser(ctx context.Context, id string) (*models.Externa
 	return user, nil
 }
 
-func (s *Store) CreateInternalUser(ctx context.Context, email, passwordHash, firstName, lastName string) (*models.InternalUser, error) {
+func (s *Store) CreateInternalUser(ctx context.Context, email, passwordHash string) (*models.InternalUser, error) {
 	id := newInternalUserID()
 
 	if _, err := s.db.ExecContext(
@@ -207,8 +233,6 @@ func (s *Store) CreateInternalUser(ctx context.Context, email, passwordHash, fir
 		id,
 		email,
 		passwordHash,
-		firstName,
-		lastName,
 	); err != nil {
 		return nil, err
 	}
@@ -268,51 +292,11 @@ func (s *Store) ValidateInternalUserWithEmail(ctx context.Context, email, passwo
 	return user, nil
 }
 
-// TODO: make this just create the actual user
-func (s *Store) MarkInternalUserRegistrationCompleted(ctx context.Context, id string) (*models.InternalUser, error) {
-	if _, err := s.db.ExecContext(
-		ctx,
-		markInternalUserRegistrationComplete,
-		id,
-	); err != nil {
-		return nil, err
-	}
-
-	return s.GetInternalUser(ctx, id)
-}
-
 func (s *Store) UpdateInternalUserPasswordHash(ctx context.Context, id, passwordHash string) (*models.InternalUser, error) {
 	if _, err := s.db.ExecContext(
 		ctx,
 		updateInternalUserPasswordHash,
 		passwordHash,
-		id,
-	); err != nil {
-		return nil, err
-	}
-
-	return s.GetInternalUser(ctx, id)
-}
-
-// TODO: combine this with last name
-func (s *Store) UpdateInternalUserFirstName(ctx context.Context, id, firstName string) (*models.InternalUser, error) {
-	if _, err := s.db.ExecContext(
-		ctx,
-		updateInternalUserFirstName,
-		firstName,
-		id,
-	); err != nil {
-		return nil, err
-	}
-
-	return s.GetInternalUser(ctx, id)
-}
-
-func (s *Store) UpdateInternalUserLastName(ctx context.Context, id, lastName string) (*models.InternalUser, error) {
-	if _, err := s.db.ExecContext(
-		ctx,
-		updateInternalUserLastName,
-		lastName,
 		id,
 	); err != nil {
 		return nil, err
@@ -328,6 +312,7 @@ func (s *Store) scanUser(scanner scanner) (*models.User, error) {
 		&user.CreatedAt,
 		&user.InternalUserID,
 		&user.ExternalUserID,
+		&user.Name,
 		&user.SuperAdmin,
 	); err != nil {
 		return nil, err
@@ -340,9 +325,6 @@ func (s *Store) scanInternalUser(scanner scanner) (*models.InternalUser, error) 
 	if err := scanner.Scan(
 		&user.ID,
 		&user.Email,
-		&user.FirstName,
-		&user.LastName,
-		&user.RegistrationCompleted,
 	); err != nil {
 		return nil, err
 	}

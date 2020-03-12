@@ -7,8 +7,9 @@ import (
 type User struct {
 	ID             string    `json:"id" yaml:"id"`
 	CreatedAt      time.Time `json:"createdAt" yaml:"createdAt"`
-	InternalUserID string    `json:"-" yaml:"-"`
-	ExternalUserID string    `json:"-" yaml:"-"`
+	Name           string    `json:"name" yaml:"name"`
+	InternalUserID *string   `json:"-" yaml:"-"`
+	ExternalUserID *string   `json:"-" yaml:"-"`
 	SuperAdmin     bool      `json:"superAdmin" yaml:"superAdmin"`
 }
 
@@ -21,11 +22,8 @@ type ExternalUser struct {
 }
 
 type InternalUser struct {
-	ID                    string
-	Email                 string
-	FirstName             string
-	LastName              string
-	RegistrationCompleted bool
+	ID    string
+	Email string
 }
 
 type RegistrationToken struct {

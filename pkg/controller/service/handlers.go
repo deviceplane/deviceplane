@@ -52,13 +52,11 @@ func (s *Service) intentional500(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (s *Service) register(w http.ResponseWriter, r *http.Request) {
+func (s *Service) registerInternalUser(w http.ResponseWriter, r *http.Request) {
 	utils.WithReferrer(w, r, func(referrer *url.URL) {
 		var registerRequest struct {
-			Email     string `json:"email" validate:"email"`
-			Password  string `json:"password" validate:"password"`
-			FirstName string `json:"firstName" validate:"required,min=1,max=100"`
-			LastName  string `json:"lastName" validate:"required,min=1,max=100"`
+			Email    string `json:"email" validate:"email"`
+			Password string `json:"password" validate:"password"`
 		}
 		if err := read(r, &registerRequest); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -88,34 +86,34 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if _, err := s.users.LookupUser(r.Context(), registerRequest.Email); err == nil {
+		if _, err := s.internalUsers.LookupInternalUser(r.Context(), registerRequest.Email); err == nil {
 			http.Error(w, errEmailAlreadyTaken.Error(), http.StatusBadRequest)
 			return
 		} else if err != store.ErrUserNotFound {
-			log.WithError(err).Error("lookup user")
+			log.WithError(err).Error("lookup internal user")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		user, err := s.users.CreateUser(r.Context(), registerRequest.Email, hash.Hash(registerRequest.Password),
-			registerRequest.FirstName, registerRequest.LastName)
+		internalUser, err := s.internalUsers.CreateInternalUser(r.Context(), registerRequest.Email, hash.Hash(registerRequest.Password))
 		if err != nil {
-			log.WithError(err).Error("create user")
+			log.WithError(err).Error("create internal user")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		if s.email == nil {
 			// If email provider is nil then skip the registration workflow
-			if _, err := s.users.MarkRegistrationCompleted(r.Context(), user.ID); err != nil {
-				log.WithError(err).Error("mark registration completed")
+			_, err := s.users.InitializeUser(r.Context(), &internalUser.ID, nil)
+			if err != nil {
+				log.WithError(err).Error("mark internal user registration completed")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 		} else {
 			registrationTokenValue := ksuid.New().String()
 
-			if _, err := s.registrationTokens.CreateRegistrationToken(r.Context(), user.ID, hash.Hash(registrationTokenValue)); err != nil {
+			if _, err := s.registrationTokens.CreateRegistrationToken(r.Context(), internalUser.ID, hash.Hash(registrationTokenValue)); err != nil {
 				log.WithError(err).Error("create registration token")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
@@ -124,8 +122,8 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 			if err := s.email.Send(email.Request{
 				FromName:    s.emailFromName,
 				FromAddress: s.emailFromAddress,
-				ToName:      user.FirstName + " " + user.LastName,
-				ToAddress:   user.Email,
+				ToName:      internalUser.Email,
+				ToAddress:   internalUser.Email,
 				Subject:     "Deviceplane Email Confirmation",
 				Content: email.Content{
 					Title:       "Email Confirmation",
@@ -140,7 +138,7 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		utils.Respond(w, user)
+		w.WriteHeader(200)
 	})
 }
 
@@ -161,13 +159,14 @@ func (s *Service) confirmRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := s.users.MarkRegistrationCompleted(r.Context(), registrationToken.UserID); err != nil {
-		log.WithError(err).Error("mark registration completed")
+	user, err := s.users.InitializeUser(r.Context(), &registrationToken.InternalUserID, nil)
+	if err != nil {
+		log.WithError(err).Error("mark internal user registration completed")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	s.newSession(w, r, registrationToken.UserID)
+	s.newSession(w, r, user.ID)
 }
 
 func (s *Service) recoverPassword(w http.ResponseWriter, r *http.Request) {
@@ -180,7 +179,7 @@ func (s *Service) recoverPassword(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		user, err := s.users.LookupUser(r.Context(), recoverPasswordRequest.Email)
+		internalUser, err := s.internalUsers.LookupInternalUser(r.Context(), recoverPasswordRequest.Email)
 		if err == store.ErrUserNotFound {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
@@ -193,7 +192,7 @@ func (s *Service) recoverPassword(w http.ResponseWriter, r *http.Request) {
 		passwordRecoveryTokenValue := ksuid.New().String()
 
 		if _, err := s.passwordRecoveryTokens.CreatePasswordRecoveryToken(r.Context(),
-			user.ID, hash.Hash(passwordRecoveryTokenValue)); err != nil {
+			internalUser.ID, hash.Hash(passwordRecoveryTokenValue)); err != nil {
 			log.WithError(err).Error("create password recovery token")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -202,8 +201,8 @@ func (s *Service) recoverPassword(w http.ResponseWriter, r *http.Request) {
 		if err := s.email.Send(email.Request{
 			FromName:    s.emailFromName,
 			FromAddress: s.emailFromAddress,
-			ToName:      user.FirstName + " " + user.LastName,
-			ToAddress:   user.Email,
+			ToName:      internalUser.Email,
+			ToAddress:   internalUser.Email,
 			Subject:     "Deviceplane Password Reset",
 			Content: email.Content{
 				Title:       "Password Reset",
@@ -236,7 +235,7 @@ func (s *Service) getPasswordRecoveryToken(w http.ResponseWriter, r *http.Reques
 	utils.Respond(w, passwordRecoveryToken)
 }
 
-func (s *Service) changePassword(w http.ResponseWriter, r *http.Request) {
+func (s *Service) changeInternalUserPassword(w http.ResponseWriter, r *http.Request) {
 	var changePasswordRequest struct {
 		PasswordRecoveryTokenValue string `json:"passwordRecoveryTokenValue" validate:"required,min=1,max=1000"`
 		Password                   string `json:"password" validate:"password"`
@@ -262,24 +261,17 @@ func (s *Service) changePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := s.users.UpdatePasswordHash(r.Context(),
-		passwordRecoveryToken.UserID, hash.Hash(changePasswordRequest.Password)); err != nil {
+	if _, err := s.internalUsers.UpdateInternalUserPasswordHash(r.Context(),
+		passwordRecoveryToken.InternalUserID, hash.Hash(changePasswordRequest.Password)); err != nil {
 		log.WithError(err).Error("update password hash")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	user, err := s.users.GetUser(r.Context(), passwordRecoveryToken.UserID)
-	if err != nil {
-		log.WithError(err).Error("get user")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	utils.Respond(w, user)
+	w.WriteHeader(200)
 }
 
-func (s *Service) login(w http.ResponseWriter, r *http.Request) {
+func (s *Service) loginInternalUser(w http.ResponseWriter, r *http.Request) {
 	var loginRequest struct {
 		Email    string `json:"email" validate:"email"`
 		Password string `json:"password" validate:"password"`
@@ -289,18 +281,23 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := s.users.ValidateUserWithEmail(r.Context(), loginRequest.Email, hash.Hash(loginRequest.Password))
+	internalUser, err := s.internalUsers.ValidateInternalUserWithEmail(r.Context(), loginRequest.Email, hash.Hash(loginRequest.Password))
 	if err == store.ErrUserNotFound {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
-		log.WithError(err).Error("validate user with email")
+		log.WithError(err).Error("validate internal user with email")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if !user.RegistrationCompleted {
+	user, err := s.users.GetUserByInternalID(r.Context(), internalUser.ID)
+	if err == store.ErrUserNotFound {
 		w.WriteHeader(http.StatusForbidden)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("get user by internal user id")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -388,12 +385,10 @@ func (s *Service) getMe(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) updateMe(w http.ResponseWriter, r *http.Request) {
 	s.withUserAuth(w, r, func(user *models.User) {
-		// TODO: validation
 		var updateUserRequest struct {
 			Password        *string `json:"password"`
 			CurrentPassword *string `json:"currentPassword"`
-			FirstName       *string `json:"firstName"`
-			LastName        *string `json:"lastName"`
+			Name            *string `json:"name"`
 		}
 		if err := read(r, &updateUserRequest); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -401,12 +396,17 @@ func (s *Service) updateMe(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if updateUserRequest.Password != nil {
+			if user.InternalUserID == nil {
+				http.Error(w, "cannot update password for externally authenticated users", http.StatusBadRequest)
+				return
+			}
+
 			if updateUserRequest.CurrentPassword == nil {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
 
-			if _, err := s.users.ValidateUser(r.Context(), user.ID, hash.Hash(*updateUserRequest.CurrentPassword)); err == store.ErrUserNotFound {
+			if _, err := s.internalUsers.ValidateInternalUser(r.Context(), *user.InternalUserID, hash.Hash(*updateUserRequest.CurrentPassword)); err == store.ErrUserNotFound {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			} else if err != nil {
@@ -415,22 +415,15 @@ func (s *Service) updateMe(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if _, err := s.users.UpdatePasswordHash(r.Context(), user.ID, hash.Hash(*updateUserRequest.Password)); err != nil {
+			if _, err := s.internalUsers.UpdateInternalUserPasswordHash(r.Context(), *user.InternalUserID, hash.Hash(*updateUserRequest.Password)); err != nil {
 				log.WithError(err).Error("update password hash")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 		}
-		if updateUserRequest.FirstName != nil {
-			if _, err := s.users.UpdateFirstName(r.Context(), user.ID, *updateUserRequest.FirstName); err != nil {
-				log.WithError(err).Error("update first name")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-		}
-		if updateUserRequest.LastName != nil {
-			if _, err := s.users.UpdateLastName(r.Context(), user.ID, *updateUserRequest.LastName); err != nil {
-				log.WithError(err).Error("update last name")
+		if updateUserRequest.Name != nil {
+			if _, err := s.users.UpdateUserName(r.Context(), *user.InternalUserID, *updateUserRequest.Name); err != nil {
+				log.WithError(err).Error("update user name")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -1325,20 +1318,47 @@ func (s *Service) createMembership(w http.ResponseWriter, r *http.Request) {
 			user, serviceAccount,
 			func(project *models.Project) {
 				var createMembershipRequest struct {
-					Email string `json:"email" validate:"email"`
+					Email  *string `json:"email" validate:"email"`
+					UserID *string `json:"userId" validate:"id"`
 				}
 				if err := read(r, &createMembershipRequest); err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
 					return
 				}
 
-				user, err := s.users.LookupUser(r.Context(), createMembershipRequest.Email)
-				if err == store.ErrUserNotFound {
-					http.Error(w, err.Error(), http.StatusNotFound)
-					return
-				} else if err != nil {
-					log.WithError(err).Error("lookup user")
-					w.WriteHeader(http.StatusInternalServerError)
+				var user *models.User
+				if createMembershipRequest.UserID != nil {
+					var err error
+					user, err = s.users.GetUser(r.Context(), *createMembershipRequest.UserID)
+					if err == store.ErrUserNotFound {
+						http.Error(w, err.Error(), http.StatusNotFound)
+						return
+					} else if err != nil {
+						log.WithError(err).Error("get user")
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+				} else if createMembershipRequest.Email != nil {
+					internalUser, err := s.internalUsers.LookupInternalUser(r.Context(), *createMembershipRequest.Email)
+					if err == store.ErrUserNotFound {
+						http.Error(w, err.Error(), http.StatusNotFound)
+						return
+					} else if err != nil {
+						log.WithError(err).Error("lookup internal user")
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+					user, err = s.users.GetUserByInternalID(r.Context(), internalUser.ID)
+					if err == store.ErrUserNotFound {
+						http.Error(w, err.Error(), http.StatusNotFound)
+						return
+					} else if err != nil {
+						log.WithError(err).Error("get user by internal user id")
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+				} else {
+					w.WriteHeader(400)
 					return
 				}
 
