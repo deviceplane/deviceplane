@@ -88,7 +88,7 @@ delimiter ;
 create table if not exists registration_tokens (
   id varchar(32) not null,
   created_at timestamp not null default current_timestamp,
-  user_id varchar(32) not null,
+  internal_user_id varchar(32) not null,
 
   -- SENSITIVE FIELD
   hash varchar(255) not null,
@@ -96,8 +96,8 @@ create table if not exists registration_tokens (
   primary key (id),
   unique user_id_unique (user_id),
   unique hash_unique (hash),
-  foreign key registration_tokens_user_id(user_id)
-  references users(id)
+  foreign key registration_tokens_internal_user_id(internal_user_id)
+  references internal_users(id)
   on delete cascade,
   index hash (hash)
 );
@@ -110,15 +110,15 @@ create table if not exists password_recovery_tokens (
   id varchar(32) not null,
   created_at timestamp not null default current_timestamp,
   expires_at timestamp not null,
-  user_id varchar(32) not null,
+  internal_user_id varchar(32) not null,
 
   -- SENSITIVE FIELD
   hash varchar(255) not null,
 
   primary key (id),
   unique hash_unique(hash),
-  foreign key password_recovery_tokens_user_id(user_id)
-  references users(id)
+  foreign key password_recovery_tokens_internal_user_id(internal_user_id)
+  references internal_users(id)
   on delete cascade,
   index hash (hash)
 );
