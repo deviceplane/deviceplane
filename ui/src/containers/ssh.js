@@ -242,12 +242,13 @@ const Session = ({ project, device, privateKey, show }) => {
 };
 
 const SessionTabs = ({ device, setActiveSession, deleteSession }) => {
+  const hotkey = window.navigator.userAgent.includes('Mac OS') ? '⌘' : '^';
   if (device && device.sessions) {
     return (
       <Tabs>
         {device.sessions.map(({ active }, i) => (
           <Tab key={i} active={active} onClick={() => setActiveSession(i)}>
-            <Text color="inherit">{i + 1}</Text>
+            <Text color="inherit">{i < 9 ? `${hotkey} ${i + 1}` : i + 1}</Text>
             <CloseButton
               marginLeft={2}
               onClick={e => {
