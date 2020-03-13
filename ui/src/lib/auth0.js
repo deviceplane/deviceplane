@@ -1,91 +1,88 @@
 // Modified from https://auth0.com/docs/quickstart/spa/react?framed=1&sq=1#configure-auth0
 
-import React, { useState, useEffect, useContext } from 'react';
-import createAuth0Client from '@auth0/auth0-spa-js';
+import auth0 from 'auth0-js';
 
-const DEFAULT_REDIRECT_CALLBACK = () =>
-  window.history.replaceState({}, document.title, window.location.pathname);
+const AUTH0_DOMAIN = 'deviceplane-dev.auth0.com'; // TODO: prod vs dev vs local
+const AUTH0_CLIENT_ID = 'uvYKum4oRaWM4gDxgcGHZ73PDC1ZRcJf';
+const AUTH0_CALLBACK_URL = 'http://localhost:3000' + '/login/sso-callback';
 
-export const Auth0Context = React.createContext();
-export const useAuth0 = () => useContext(Auth0Context);
-export const Auth0Provider = ({
-  children,
-  onRedirectCallback = DEFAULT_REDIRECT_CALLBACK,
-  ...initOptions
-}) => {
-  const [isAuthenticated, setIsAuthenticated] = useState();
-  const [user, setUser] = useState();
-  const [auth0Client, setAuth0] = useState();
-  const [loading, setLoading] = useState(true);
-  const [popupOpen, setPopupOpen] = useState(false);
+var webAuth = new auth0.WebAuth({
+  domain: AUTH0_DOMAIN,
+  clientID: AUTH0_CLIENT_ID,
+  redirectUri: AUTH0_CALLBACK_URL, // TODO: current url + "/login/sso-callback";
+  responseType: 'token id_token',
+  scope: 'openid profile email',
+  leeway: 60,
+});
 
-  useEffect(() => {
-    const initAuth0 = async () => {
-      const auth0FromHook = await createAuth0Client(initOptions);
-      setAuth0(auth0FromHook);
+const PREFIX = 'auth0.';
+function get(key) {
+  return localStorage.getItem(PREFIX + key);
+}
+function set(key, value) {
+  return localStorage.setItem(PREFIX + key, value);
+}
+function remove(key) {
+  return localStorage.removeItem(PREFIX + key);
+}
 
-      if (
-        window.location.search.includes('code=') &&
-        window.location.search.includes('state=')
-      ) {
-        const { appState } = await auth0FromHook.handleRedirectCallback();
-        onRedirectCallback(appState);
-      }
-
-      const isAuthenticated = await auth0FromHook.isAuthenticated();
-
-      setIsAuthenticated(isAuthenticated);
-
-      if (isAuthenticated) {
-        const user = await auth0FromHook.getUser();
-        setUser(user);
-      }
-
-      setLoading(false);
-    };
-    initAuth0();
-    // eslint-disable-next-line
-  }, []);
-
-  const loginWithPopup = async (params = {}) => {
-    setPopupOpen(true);
-    try {
-      await auth0Client.loginWithPopup(params);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setPopupOpen(false);
-    }
-    const user = await auth0Client.getUser();
-    setUser(user);
-    setIsAuthenticated(true);
-  };
-
-  const handleRedirectCallback = async () => {
-    setLoading(true);
-    await auth0Client.handleRedirectCallback();
-    const user = await auth0Client.getUser();
-    setLoading(false);
-    setIsAuthenticated(true);
-    setUser(user);
-  };
-  return (
-    <Auth0Context.Provider
-      value={{
-        isAuthenticated,
-        user,
-        loading,
-        popupOpen,
-        loginWithPopup,
-        handleRedirectCallback,
-        getIdTokenClaims: (...p) => auth0Client.getIdTokenClaims(...p),
-        loginWithRedirect: (...p) => auth0Client.loginWithRedirect(...p),
-        getTokenSilently: (...p) => auth0Client.getTokenSilently(...p),
-        getTokenWithPopup: (...p) => auth0Client.getTokenWithPopup(...p),
-        logout: (...p) => auth0Client.logout(...p),
-      }}
-    >
-      {children}
-    </Auth0Context.Provider>
+// Set the time that the access token will expire at
+function setSession(authResult) {
+  var expiresAt = JSON.stringify(
+    authResult.expiresIn * 1000 + new Date().getTime()
   );
-};
+  set('raw_session', JSON.stringify(authResult));
+  set('access_token', authResult.accessToken);
+  set('id_token', authResult.idToken);
+  set('expires_at', expiresAt);
+}
+
+function login() {
+  webAuth.authorize();
+}
+
+// Remove tokens and expiry time from localStorage
+function logout() {
+  remove('raw_session');
+  remove('access_token');
+  remove('id_token');
+  remove('expires_at');
+}
+
+// Check whether the current time is past the
+// access token's expiry time
+function isAuthenticated() {
+  try {
+    var expiresAt = JSON.parse(get('expires_at'));
+    return new Date().getTime() < expiresAt;
+  } catch (e) {
+    remove('expires_at');
+    return false;
+  }
+}
+
+function rawSession() {
+  if (!isAuthenticated()) {
+    return false;
+  }
+
+  try {
+    return JSON.parse(get('raw_session'));
+  } catch (e) {
+    remove('raw_session');
+    return undefined;
+  }
+}
+
+function handleAuthentication(callback) {
+  webAuth.parseHash(function(err, authResult) {
+    if (authResult && authResult.accessToken && authResult.idToken) {
+      setSession(authResult);
+      callback(authResult);
+    } else if (err) {
+      callback(undefined, err.error);
+    }
+  });
+}
+
+export { login, logout, isAuthenticated, handleAuthentication, rawSession };

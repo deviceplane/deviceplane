@@ -4,6 +4,7 @@
   "private": true,
   "homepage": "https://deviceplane.com",
   "dependencies": {
+    "@auth0/auth0-spa-js": "^1.6.4",
     "@babel/runtime": "^7.8.3",
     "@blueprintjs/icons": "^3.13.0",
     "@bugsnag/js": "^6.5.0",
@@ -20,6 +21,7 @@
     "react-helmet-async": "^1.0.4",
     "react-hook-form": "^4.8.2",
     "react-navi": "^0.13.6",
+    "react-router-dom": "^5.1.2",
     "react-select": "3.0.6",
     "react-spinners": "^0.6.1",
     "react-spring": "^8.0.27",

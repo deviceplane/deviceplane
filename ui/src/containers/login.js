@@ -9,6 +9,7 @@ import Card from '../components/card';
 import Field from '../components/field';
 import Alert from '../components/alert';
 import { Column, Row, Form, Button } from '../components/core';
+import * as auth0 from '../lib/auth0';
 
 const validationSchema = yup.object().shape({
   email: validators.email.required(),
@@ -90,6 +91,16 @@ const Login = ({
         </Form>
         <Row marginTop={5}>
           <Button variant="text" href="/forgot" title="Forgot your password?" />
+        </Row>
+
+        <Row marginTop={5}>
+          <Button
+            justifyContent="center"
+            title="Login with SSO?"
+            onClick={() => {
+              auth0.login();
+            }}
+          />
         </Row>
       </Card>
     </Column>

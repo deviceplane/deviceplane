@@ -18,13 +18,23 @@ export default mount({
             ? decodeURIComponent(request.params.redirectTo)
             : '/projects'
         )
-      : route({
-          title: 'Log In',
-          getData: (request, context) => ({
-            params: request.params,
-            context,
+      : mount({
+          '/': route({
+            title: 'Log In',
+            getData: (request, context) => ({
+              params: request.params,
+              context,
+            }),
+            getView: () => import('./containers/login'),
           }),
-          getView: () => import('./containers/login'),
+          '/sso-callback': route({
+            title: 'SSO callback',
+            getData: (request, context) => ({
+              params: request.params,
+              context,
+            }),
+            getView: () => import('./containers/sso-callback'),
+          }),
         })
   ),
   '/forgot': route({
