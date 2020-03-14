@@ -67,6 +67,15 @@ var (
 	smtpPassword = kingpin.
 			Flag("smtp-password", "").
 			String()
+	dbMaxOpenConns = kingpin.
+			Flag("db-max-open-conns", "50").
+			Int()
+	dbMaxIdleConns = kingpin.
+			Flag("db-max-idle-conns", "25").
+			Int()
+	dbMaxConnLifetime = kingpin.
+				Flag("db-max-conn-lifetime", "60s").
+				Duration()
 )
 
 func main() {
@@ -151,6 +160,10 @@ func tryConnect(uri string) (*sql.DB, error) {
 		log.Info("connected to db")
 		break
 	}
+
+	db.SetMaxOpenConns(*dbMaxOpenConns)
+	db.SetMaxIdleConns(*dbMaxIdleConns)
+	db.SetConnMaxLifetime(*dbMaxConnLifetime)
 
 	return db, err
 }
