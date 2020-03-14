@@ -310,6 +310,7 @@ type Bundle struct {
 	ServiceStates       []DeviceServiceState      `json:"serviceStates" yaml:"serviceStates"`
 
 	DeviceID             string            `json:"deviceId" yaml:"deviceId"`
+	DeviceName           string            `json:"deviceName" yaml:"deviceName"`
 	EnvironmentVariables map[string]string `json:"environmentVariables" yaml:"environmentVariables"`
 	DesiredAgentVersion  string            `json:"desiredAgentVersion" yaml:"desiredAgentVersion"`
 
