@@ -74,7 +74,7 @@ var (
 			Flag("db-max-idle-conns", "25").
 			Int()
 	dbMaxConnLifetime = kingpin.
-				Flag("db-max-conn-lifetime", "60s").
+				Flag("db-max-conn-lifetime", "60m").
 				Duration()
 )
 
