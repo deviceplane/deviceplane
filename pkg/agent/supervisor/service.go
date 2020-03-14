@@ -20,7 +20,8 @@ import (
 )
 
 const (
-	deviceIDEnvironmentVariableKey = "DEVICEPLANE_DEVICE_ID"
+	deviceIDEnvironmentVariableKey   = "DEVICEPLANE_DEVICE_ID"
+	deviceNameEnvironmentVariableKey = "DEVICEPLANE_DEVICE_NAME"
 )
 
 type ServiceSupervisor struct {
@@ -255,6 +256,7 @@ func (s *ServiceSupervisor) transformService(service models.Service) models.Serv
 	service.Environment = append(
 		service.Environment,
 		fmt.Sprintf("%s=%s", deviceIDEnvironmentVariableKey, s.bundle.DeviceID),
+		fmt.Sprintf("%s=%s", deviceNameEnvironmentVariableKey, s.bundle.DeviceName),
 	)
 	for key, val := range s.bundle.EnvironmentVariables {
 		service.Environment = append(

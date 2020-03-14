@@ -2917,6 +2917,7 @@ func (s *Service) getBundle(w http.ResponseWriter, r *http.Request) {
 
 		bundle := models.Bundle{
 			DeviceID:             device.ID,
+			DeviceName:           device.Name,
 			EnvironmentVariables: device.EnvironmentVariables,
 			DesiredAgentVersion:  device.DesiredAgentVersion,
 
