@@ -144,6 +144,7 @@ func NewService(
 	apiRouter := s.router.PathPrefix("/api").Subrouter()
 
 	apiRouter.HandleFunc("/register", s.registerInternalUser).Methods("POST")
+	apiRouter.HandleFunc("/registersso", s.registerExternalUser).Methods("POST")
 	apiRouter.HandleFunc("/completeregistration", s.confirmRegistration).Methods("POST")
 
 	apiRouter.HandleFunc("/changepassword", s.changeInternalUserPassword).Methods("POST")
@@ -151,6 +152,7 @@ func NewService(
 	apiRouter.HandleFunc("/passwordrecoverytokens/{passwordrecoverytokenvalue}", s.getPasswordRecoveryToken).Methods("GET")
 
 	apiRouter.HandleFunc("/login", s.loginInternalUser).Methods("POST")
+	apiRouter.HandleFunc("/loginsso", s.registerExternalUser).Methods("POST")
 	apiRouter.HandleFunc("/logout", s.logout).Methods("POST")
 
 	apiRouter.HandleFunc("/me", s.getMe).Methods("GET")

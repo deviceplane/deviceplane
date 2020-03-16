@@ -145,6 +145,7 @@ func (s *Store) InitializeUser(ctx context.Context, internalUserID, externalUser
 	if _, err := s.db.ExecContext(
 		ctx,
 		initializeUser,
+		id,
 		internalUserID,
 		externalUserID,
 	); err != nil {
@@ -218,6 +219,19 @@ func (s *Store) CreateExternalUser(ctx context.Context, providerName, providerID
 
 func (s *Store) GetExternalUser(ctx context.Context, id string) (*models.ExternalUser, error) {
 	userRow := s.db.QueryRowContext(ctx, getExternalUser, id)
+
+	user, err := s.scanExternalUser(userRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrUserNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *Store) GetExternalUserByProviderID(ctx context.Context, providerName, providerID string) (*models.ExternalUser, error) {
+	userRow := s.db.QueryRowContext(ctx, getExternalUserByProvider, providerName, providerID)
 
 	user, err := s.scanExternalUser(userRow)
 	if err == sql.ErrNoRows {

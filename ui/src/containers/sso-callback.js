@@ -30,7 +30,7 @@ const SsoCallback = ({
 
   const submit = async data => {
     try {
-      await api.login(data);
+      await api.loginSSO(data);
       const response = await api.user();
       context.setCurrentUser(response.data);
       navigation.navigate(
@@ -45,24 +45,19 @@ const SsoCallback = ({
 
   if (firstRender) {
     if (window.location.hash) {
-      auth0.handleAuthentication(async (authResult, err) => {
-        if (err) {
-          var msg = 'Error using SSO: ' + JSON.stringify(err);
-          setStatus(msg);
-          toaster.danger(msg);
-          return;
-        }
-
-        if (authResult) {
-          submit(authResult);
-        }
-      });
+      var vars = window.location.hash
+        .substring(1)
+        .split('&')
+        .map(x => x.split('='))
+        .reduce((map, x) => {
+          map[x[0]] = decodeURIComponent(x[1]);
+          return map;
+        }, {});
+      navigation.navigate('#');
+      submit(vars);
     } else {
-      navigation.navigate(
-        params.redirectTo ? decodeURIComponent(params.redirectTo) : '/login'
-      );
+      setStatus('Error: SSO data not returned.');
     }
-
     setFirstRender(false);
   }
 

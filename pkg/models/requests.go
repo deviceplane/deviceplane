@@ -33,3 +33,12 @@ type SetDeviceServiceStateRequest struct {
 	State        ServiceState `json:"state"`
 	ErrorMessage string       `json:"errorMessage"`
 }
+
+type Auth0SsoRequest struct {
+	AccessToken string `json:"access_token"`
+	ExpiresIn   string `json:"expires_in"`
+	IdToken     string `json:"id_token"`
+	Scope       string `json:"scope"`
+	State       string `json:"state"`
+	TokenType   string `json:"token_type"`
+}

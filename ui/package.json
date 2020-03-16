@@ -10,6 +10,7 @@
     "@bugsnag/js": "^6.5.0",
     "@bugsnag/plugin-react": "^6.5.0",
     "@types/react": "^16.9.11",
+    "auth0-js": "^9.12.2",
     "axios": "^0.18.0",
     "framer-motion": "^1.6.17",
     "moment": "^2.22.2",

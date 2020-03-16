@@ -4,8 +4,7 @@ const initializeUser = `
   insert into users (
     id,
     internal_user_id,
-    external_user_id,
-    name
+    external_user_id
   )
   values (?, ?, ?)
 `
@@ -44,6 +43,12 @@ const createExternalUser = `
 const getExternalUser = `
   select id, provider_name, provider_id, email, info from external_users
   where id = ?
+`
+
+// Index: provider_name_provider_id_unique
+const getExternalUserByProvider = `
+  select id, provider_name, provider_id, email, info from external_users
+  where provider_name = ? and provider_id = ?
 `
 
 const createInternalUser = `

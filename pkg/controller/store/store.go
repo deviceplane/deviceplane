@@ -26,6 +26,7 @@ type InternalUsers interface {
 type ExternalUsers interface {
 	CreateExternalUser(ctx context.Context, providerName, providerID, email string, info map[string]interface{}) (*models.ExternalUser, error)
 	GetExternalUser(ctx context.Context, id string) (*models.ExternalUser, error)
+	GetExternalUserByProviderID(ctx context.Context, providerName, providerID string) (*models.ExternalUser, error)
 }
 
 var ErrUserNotFound = errors.New("user not found")
