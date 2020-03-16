@@ -181,6 +181,19 @@ func (s *Store) GetUserByInternalID(ctx context.Context, internalUserID string) 
 	return user, nil
 }
 
+func (s *Store) GetUserByExternalID(ctx context.Context, externalUserID string) (*models.User, error) {
+	userRow := s.db.QueryRowContext(ctx, getUserByExternalID, externalUserID)
+
+	user, err := s.scanUser(userRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrUserNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
 func (s *Store) UpdateUserName(ctx context.Context, id, name string) (*models.User, error) {
 	if _, err := s.db.ExecContext(
 		ctx,

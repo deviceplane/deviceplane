@@ -7,9 +7,19 @@ import { useNavigation } from 'react-navi';
 export default mount({
   '/': redirect('/projects'),
 
-  '/signup': route({
-    title: 'Sign Up',
-    getView: () => import('./containers/signup'),
+  '/signup': mount({
+    '/': route({
+      title: 'Sign Up',
+      getView: () => import('./containers/signup'),
+    }),
+    '/sso-callback': route({
+      title: 'SSO signup',
+      getData: (request, context) => ({
+        params: Object.assign({ redirectType: 'signup' }, request.params),
+        context,
+      }),
+      getView: () => import('./containers/sso-callback'),
+    }),
   }),
   '/login': map(async (request, context) =>
     context.currentUser
@@ -28,9 +38,9 @@ export default mount({
             getView: () => import('./containers/login'),
           }),
           '/sso-callback': route({
-            title: 'SSO callback',
+            title: 'SSO login',
             getData: (request, context) => ({
-              params: request.params,
+              params: Object.assign({ redirectType: 'login' }, request.params),
               context,
             }),
             getView: () => import('./containers/sso-callback'),

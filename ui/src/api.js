@@ -30,6 +30,8 @@ const api = {
       lastName,
     }),
 
+  signupSSO: data => post('registersso', data),
+
   completeRegistration: ({ registrationTokenValue }) =>
     post('completeregistration', { registrationTokenValue }),
 

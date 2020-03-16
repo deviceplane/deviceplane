@@ -152,7 +152,7 @@ func NewService(
 	apiRouter.HandleFunc("/passwordrecoverytokens/{passwordrecoverytokenvalue}", s.getPasswordRecoveryToken).Methods("GET")
 
 	apiRouter.HandleFunc("/login", s.loginInternalUser).Methods("POST")
-	apiRouter.HandleFunc("/loginsso", s.registerExternalUser).Methods("POST")
+	apiRouter.HandleFunc("/loginsso", s.loginExternalUser).Methods("POST")
 	apiRouter.HandleFunc("/logout", s.logout).Methods("POST")
 
 	apiRouter.HandleFunc("/me", s.getMe).Methods("GET")

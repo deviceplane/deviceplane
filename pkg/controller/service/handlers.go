@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/apex/log"
@@ -14,7 +13,6 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/controller/middleware"
 	"github.com/deviceplane/deviceplane/pkg/controller/query"
 	"github.com/deviceplane/deviceplane/pkg/controller/scheduling"
-	serviceutils "github.com/deviceplane/deviceplane/pkg/controller/service/utils"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/email"
 	"github.com/deviceplane/deviceplane/pkg/hash"
@@ -145,125 +143,61 @@ func (s *Service) registerInternalUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) registerExternalUser(w http.ResponseWriter, r *http.Request) {
-	var ssoRequest models.Auth0SsoRequest
-	if err := read(r, &ssoRequest); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// TODO: get this from environment variables
-	domain := "https://deviceplane-dev.auth0.com/"
-	audience := "uvYKum4oRaWM4gDxgcGHZ73PDC1ZRcJf" // audience := os.Getenv("AUTH0_CLIENT_ID")
-	// Get domain, audience
-
-	if audience == "" || domain == "" {
-		http.Error(w, "SSO is not enabled", http.StatusNotImplemented)
-		return
-	}
-	_, claims, err := serviceutils.ParseAndValidateSignedJWT(domain, audience, ssoRequest.IdToken)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	get := func(key string) (string, error) {
-		v, ok := claims[key]
-		if !ok {
-			return "", errors.New("expected JWT claim not found")
+	s.withValidatedSsoJWT(w, r, func(ssoJWT models.SsoJWT) {
+		emailDomain, err := utils.GetDomainFromEmail(ssoJWT.Email)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
-		value, ok := v.(string)
-		if !ok {
-			return "", errors.New("expected JWT claim to be string")
-		}
-		return value, nil
-	}
 
-	email, err := get("email")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	name, err := get("name")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// TODO: validate nonce
-	_, err = get("nonce")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	sub, err := get("sub")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	subParts := strings.Split(sub, "|")
-	if len(subParts) != 2 {
-		http.Error(w, "invalid number of subject parts", http.StatusBadRequest)
-		return
-	}
-	subProvider := subParts[0]
-	subID := subParts[1]
-
-	emailDomain, err := utils.GetDomainFromEmail(email)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	emailDomainAllowed := false
-	if len(s.allowedEmailDomains) == 0 {
-		emailDomainAllowed = true
-	} else {
-		for _, allowedEmailDomain := range s.allowedEmailDomains {
-			if allowedEmailDomain == emailDomain {
-				emailDomainAllowed = true
-				break
+		emailDomainAllowed := false
+		if len(s.allowedEmailDomains) == 0 {
+			emailDomainAllowed = true
+		} else {
+			for _, allowedEmailDomain := range s.allowedEmailDomains {
+				if allowedEmailDomain == emailDomain {
+					emailDomainAllowed = true
+					break
+				}
 			}
 		}
-	}
 
-	if !emailDomainAllowed {
-		http.Error(w, errEmailDomainNotAllowed.Error(), http.StatusBadRequest)
-		return
-	}
+		if !emailDomainAllowed {
+			http.Error(w, errEmailDomainNotAllowed.Error(), http.StatusBadRequest)
+			return
+		}
 
-	if _, err := s.externalUsers.GetExternalUserByProviderID(r.Context(), subProvider, subID); err == nil {
-		http.Error(w, "user already registered", http.StatusBadRequest)
-		return
-	} else if err != store.ErrUserNotFound {
-		log.WithError(err).Error("get external user by provider")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+		if _, err := s.externalUsers.GetExternalUserByProviderID(r.Context(), ssoJWT.Provider, ssoJWT.Subject); err == nil {
+			http.Error(w, "user already registered", http.StatusBadRequest)
+			return
+		} else if err != store.ErrUserNotFound {
+			log.WithError(err).Error("get external user by provider")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	externalUser, err := s.externalUsers.CreateExternalUser(r.Context(), subProvider, subID, email, claims)
-	if err != nil {
-		log.WithError(err).Error("create external user")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+		externalUser, err := s.externalUsers.CreateExternalUser(r.Context(), ssoJWT.Provider, ssoJWT.Subject, ssoJWT.Email, ssoJWT.Claims)
+		if err != nil {
+			log.WithError(err).Error("create external user")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	user, err := s.users.InitializeUser(r.Context(), nil, &externalUser.ID)
-	if err != nil {
-		log.WithError(err).Error("initialize external user")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	user, err = s.users.UpdateUserName(r.Context(), user.ID, name)
-	if err != nil {
-		log.WithError(err).Error("update user name")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+		user, err := s.users.InitializeUser(r.Context(), nil, &externalUser.ID)
+		if err != nil {
+			log.WithError(err).Error("initialize external user")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		user, err = s.users.UpdateUserName(r.Context(), user.ID, ssoJWT.Name)
+		if err != nil {
+			log.WithError(err).Error("update user name")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	s.newSession(w, r, user.ID)
+		s.newSession(w, r, user.ID)
+	})
 }
 
 func (s *Service) confirmRegistration(w http.ResponseWriter, r *http.Request) {
@@ -429,7 +363,29 @@ func (s *Service) loginInternalUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) loginExternalUser(w http.ResponseWriter, r *http.Request) {
+	s.withValidatedSsoJWT(w, r, func(ssoJWT models.SsoJWT) {
+		externalUser, err := s.externalUsers.GetExternalUserByProviderID(r.Context(), ssoJWT.Provider, ssoJWT.Subject)
+		if err == store.ErrUserNotFound {
+			http.Error(w, "external user not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			log.WithError(err).Error("get external user by provider ID")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
+		user, err := s.users.GetUserByExternalID(r.Context(), externalUser.ID)
+		if err == store.ErrUserNotFound {
+			http.Error(w, "user not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			log.WithError(err).Error("get user by external ID")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		s.newSession(w, r, user.ID)
+	})
 }
 
 func (s *Service) newSession(w http.ResponseWriter, r *http.Request, userID string) {

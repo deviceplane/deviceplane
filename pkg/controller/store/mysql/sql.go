@@ -21,6 +21,12 @@ const getUserByInternalID = `
   where internal_user_id = ?
 `
 
+// Index: external_user_id_unique
+const getUserByExternalID = `
+  select id, created_at, internal_user_id, external_user_id, name, super_admin from users
+  where external_user_id = ?
+`
+
 // Index: primary key
 const updateUserName = `
   update users

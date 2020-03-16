@@ -96,9 +96,18 @@ const Login = ({
         <Row marginTop={5}>
           <Button
             justifyContent="center"
-            title="Login with SSO?"
+            title="Log in with Google"
             onClick={() => {
-              auth0.login();
+              auth0.api.login.google();
+            }}
+          />
+        </Row>
+        <Row marginTop={5}>
+          <Button
+            justifyContent="center"
+            title="Log in with Github"
+            onClick={() => {
+              auth0.api.login.github();
             }}
           />
         </Row>

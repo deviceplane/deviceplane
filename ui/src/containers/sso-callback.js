@@ -30,14 +30,28 @@ const SsoCallback = ({
 
   const submit = async data => {
     try {
-      await api.loginSSO(data);
+      var resp;
+      switch (params.redirectType) {
+        case 'login':
+          resp = await api.loginSSO(data);
+          break;
+        case 'signup':
+          resp = await api.signupSSO(data);
+          break;
+        default:
+          var msg = 'Error, invalid redirect type';
+          setStatus(msg);
+          toaster.danger(msg);
+          return;
+      }
+
       const response = await api.user();
       context.setCurrentUser(response.data);
       navigation.navigate(
         params.redirectTo ? decodeURIComponent(params.redirectTo) : '/projects'
       );
     } catch (error) {
-      var msg = 'Error authenticating: ' + JSON.stringify(error);
+      var msg = `Error code ${error.response.status}: ${error.response.statusText}`;
       setStatus(msg);
       toaster.danger(msg);
     }
@@ -71,12 +85,27 @@ const SsoCallback = ({
       overflow="auto"
       bg={['black', 'black', 'pageBackground']}
     >
+      <Text
+        color={'white'}
+        fontSize={6}
+        fontWeight={2}
+        marginLeft={2}
+        marginBottom={2}
+      >
+        {params.redirectType.toUpperCase()}
+      </Text>
       <Text color={'white'} fontSize={4} fontWeight={2} marginLeft={2}>
         {status}
       </Text>
 
-      <Row marginTop={5}>
-        <Button justifyContent="center" title="Go back" href="/login" />
+      <Row marginTop={8}>
+        <Button
+          justifyContent="center"
+          title="Go back"
+          onClick={() => {
+            navigation.go(-2); // TODO: decide, -1 (SSO oauth page) or -2 (login/signup page)
+          }}
+        />
       </Row>
     </Column>
   );
