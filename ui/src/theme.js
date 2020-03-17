@@ -34,7 +34,7 @@ const colors = {
 
   overlay: 'rgba(24, 24, 24, .8)',
 
-  pageBackground: '#101010',
+  pageBackground: '#0b1419',
 
   grays: [
     '#121212',

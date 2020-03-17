@@ -609,7 +609,6 @@ const SSH = ({
               />
               <Input
                 flex={1}
-                bg="black"
                 placeholder="Search devices by name or labels"
                 paddingLeft={7}
                 value={searchInput}

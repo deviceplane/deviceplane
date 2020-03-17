@@ -374,7 +374,6 @@ const Scheduling = ({
               style={{ position: 'absolute', left: 16 }}
             />
             <Input
-              bg="black"
               placeholder="Search devices by name or labels"
               paddingLeft={7}
               value={searchInput}

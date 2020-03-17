@@ -266,7 +266,6 @@ const Devices = ({ route }) => {
             />
             <Input
               flex={1}
-              bg="black"
               placeholder="Search by name or labels"
               paddingLeft={6}
               value={searchInput}
