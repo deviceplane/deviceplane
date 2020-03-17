@@ -173,7 +173,9 @@ const Session = ({ project, device, privateKey, show }) => {
               term.write(data.toString());
             });
           term.onData(data => {
-            stream.write(data);
+            if (stream.writable) {
+              stream.write(data);
+            }
           });
           term.onResize(({ rows, cols }) => {
             const {
