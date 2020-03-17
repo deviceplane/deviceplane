@@ -93,6 +93,17 @@ const variants = {
         color: 'pureWhite',
       },
     },
+    textPrimary: {
+      color: 'primary',
+      bg: 'transparent',
+      padding: 0,
+      '&:disabled, &[disabled]': {
+        color: 'pureWhite',
+      },
+      '&:not(:disabled):not([disabled]):hover, &:not(:disabled):not([disabled]):focus': {
+        color: 'pureWhite',
+      },
+    },
     icon: {
       bg: 'grays.3',
       width: '32px',
