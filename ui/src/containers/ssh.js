@@ -140,9 +140,8 @@ const Tab = styled(Row).attrs({ as: 'button' })`
 const Session = ({ project, device, privateKey, show }) => {
   const terminalNode = useRef();
   const client = useRef(new Client()).current;
-  const term = useRef(
-    new XTerm({ cursorStyle: 'bar', cursorWidth: '3', cursorBlink: true })
-  ).current;
+  const term = useRef(new XTerm({ cursorStyle: 'block', cursorBlink: true }))
+    .current;
   const fitAddon = useRef(new FitAddon()).current;
 
   const startSSH = () => {
