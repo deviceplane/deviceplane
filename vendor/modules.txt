@@ -12,6 +12,8 @@ github.com/alecthomas/units
 github.com/anmitsu/go-shlex
 # github.com/apex/log v1.1.0
 github.com/apex/log
+# github.com/auth0-community/go-auth0 v1.0.1-0.20191119091237-b9b0f95be568
+github.com/auth0-community/go-auth0
 # github.com/beevik/ntp v0.2.0
 github.com/beevik/ntp
 # github.com/beorn7/perks v1.0.1
@@ -157,7 +159,7 @@ github.com/siebenmann/go-kstat
 github.com/sirupsen/logrus
 # github.com/soundcloud/go-runit v0.0.0-20150630195641-06ad41a06c4a
 github.com/soundcloud/go-runit/runit
-# github.com/stretchr/testify v1.3.0
+# github.com/stretchr/testify v1.4.0
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/vishvananda/netns v0.0.0-20190625233234-7109fa855b0f
@@ -166,13 +168,14 @@ github.com/vishvananda/netns
 go.uber.org/atomic
 # go.uber.org/multierr v1.1.0
 go.uber.org/multierr
-# golang.org/x/crypto v0.0.0-20200210222208-86ce3cb69678
+# golang.org/x/crypto v0.0.0-20200311171314-f7b00557c8c4
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/internal/subtle
+golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
@@ -202,6 +205,11 @@ gopkg.in/go-playground/mold.v2
 gopkg.in/go-playground/mold.v2/modifiers
 # gopkg.in/go-playground/validator.v9 v9.29.1
 gopkg.in/go-playground/validator.v9
+# gopkg.in/square/go-jose.v2 v2.4.1
+gopkg.in/square/go-jose.v2
+gopkg.in/square/go-jose.v2/cipher
+gopkg.in/square/go-jose.v2/json
+gopkg.in/square/go-jose.v2/jwt
 # gopkg.in/validator.v2 v2.0.0-20180514200540-135c24b11c19
 gopkg.in/validator.v2
 # gopkg.in/yaml.v2 v2.2.2
