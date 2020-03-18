@@ -51,7 +51,16 @@ const SsoCallback = ({
         params.redirectTo ? decodeURIComponent(params.redirectTo) : '/projects'
       );
     } catch (error) {
-      var msg = `Error code ${error.response.status}: ${error.response.statusText}`;
+      var statusCode = error.response.status;
+      var statusText = error.response.statusText;
+      if (statusCode == 404) {
+        statusText = 'User not found. Have you already signed up?';
+      }
+
+      // TODO: just set the toast and navigate back to the page, instead of
+      // showing the message and allowing the user to manually use the back button
+
+      var msg = `Error code ${statusCode}: ${statusText}`;
       setStatus(msg);
       toaster.danger(msg);
     }
@@ -103,7 +112,7 @@ const SsoCallback = ({
           justifyContent="center"
           title="Go back"
           onClick={() => {
-            navigation.go(-2); // TODO: decide, -1 (SSO oauth page) or -2 (login/signup page)
+            navigation.navigate('/' + params.redirectType);
           }}
         />
       </Row>

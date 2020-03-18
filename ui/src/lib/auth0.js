@@ -1,25 +1,21 @@
 import auth0 from 'auth0-js';
+import config from '../config';
 
-const AUTH0_DOMAIN = 'deviceplane-dev.auth0.com'; // TODO: prod vs dev vs local
-const AUTH0_CLIENT_ID = 'uvYKum4oRaWM4gDxgcGHZ73PDC1ZRcJf';
-const AUTH0_LOGIN_CALLBACK_URL =
-  'http://localhost:3000' + '/login/sso-callback';
-const AUTH0_SIGNUP_CALLBACK_URL =
-  'http://localhost:3000' + '/signup/sso-callback';
+console.log(config.auth0_login_callback_url);
 
 var login = new auth0.WebAuth({
-  domain: AUTH0_DOMAIN,
-  clientID: AUTH0_CLIENT_ID,
-  redirectUri: AUTH0_LOGIN_CALLBACK_URL, // TODO: current url + "/login/sso-callback";
+  domain: config.auth0_domain,
+  clientID: config.auth0_client_id,
+  redirectUri: config.auth0_login_callback_url,
   responseType: 'token id_token',
   scope: 'openid profile email',
   leeway: 60,
 });
 
 var signup = new auth0.WebAuth({
-  domain: AUTH0_DOMAIN,
-  clientID: AUTH0_CLIENT_ID,
-  redirectUri: AUTH0_SIGNUP_CALLBACK_URL, // TODO: current url + x
+  domain: config.auth0_domain,
+  clientID: config.auth0_client_id,
+  redirectUri: config.auth0_signup_callback_url,
   responseType: 'token id_token',
   scope: 'openid profile email',
   leeway: 60,

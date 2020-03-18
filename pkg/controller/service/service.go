@@ -49,11 +49,12 @@ type Service struct {
 	emailFromName              string
 	emailFromAddress           string
 	allowedEmailDomains        []string
+	auth0Domain                *url.URL
+	auth0Audience              string
 	st                         *statsd.Client
 	connman                    *connman.ConnectionManager
-
-	router   *mux.Router
-	upgrader websocket.Upgrader
+	router                     *mux.Router
+	upgrader                   websocket.Upgrader
 }
 
 func NewService(
@@ -89,6 +90,8 @@ func NewService(
 	emailFromName string,
 	emailFromAddress string,
 	allowedEmailDomains []string,
+	auth0Domain *url.URL,
+	auth0Audience string,
 	fileSystem http.FileSystem,
 	st *statsd.Client,
 	connman *connman.ConnectionManager,
@@ -127,6 +130,8 @@ func NewService(
 		emailFromName:              emailFromName,
 		emailFromAddress:           emailFromAddress,
 		allowedEmailDomains:        allowedEmailDomains,
+		auth0Domain:                auth0Domain,
+		auth0Audience:              auth0Audience,
 		st:                         st,
 		connman:                    connman,
 

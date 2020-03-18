@@ -356,16 +356,11 @@ func (s *Service) withValidatedSsoJWT(w http.ResponseWriter, r *http.Request, f 
 		return
 	}
 
-	// TODO: get this from environment variables
-	domain := "https://deviceplane-dev.auth0.com/"
-	audience := "uvYKum4oRaWM4gDxgcGHZ73PDC1ZRcJf" // audience := os.Getenv("AUTH0_CLIENT_ID")
-	// Get domain, audience
-
-	if audience == "" || domain == "" {
+	if s.auth0Audience == "" || s.auth0Domain == nil {
 		http.Error(w, "SSO is not enabled", http.StatusNotImplemented)
 		return
 	}
-	_, claims, err := serviceutils.ParseAndValidateSignedJWT(domain, audience, ssoRequest.IdToken)
+	_, claims, err := serviceutils.ParseAndValidateSignedJWT(s.auth0Domain, s.auth0Audience, ssoRequest.IdToken)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

@@ -3,9 +3,11 @@ const development = {
   wsEndpoint: 'ws://localhost:8080/api',
 };
 
-const endpointBase = window.location.port
-  ? `${window.location.hostname}:${window.location.port}/api`
-  : `${window.location.hostname}/api`;
+const baseURL = window.location.port
+  ? `${window.location.hostname}:${window.location.port}`
+  : `${window.location.hostname}`;
+
+const endpointBase = baseURL + '/api';
 
 const production = {
   endpoint: `${window.location.protocol}//${endpointBase}`,
@@ -14,6 +16,8 @@ const production = {
       ? `ws://${endpointBase}`
       : `wss://${endpointBase}`,
 };
+
+const frontendURL = `${window.location.protocol}//${baseURL}`;
 
 const metricProperties = {
   device: {
@@ -113,11 +117,25 @@ const supportedDeviceMetrics = [
 const config =
   process.env.NODE_ENV === 'development' ? development : production;
 
+// TODO: properly use environment variables
+const auth0_domain = new URL(
+  process.env.AUTH0_DOMAIN || 'https://deviceplane-dev.auth0.com/'
+).host;
+const auth0_client_id =
+  process.env.AUTH0_AUDIENCE || 'uvYKum4oRaWM4gDxgcGHZ73PDC1ZRcJf';
+
+const auth0_login_callback_url = frontendURL + '/login/sso-callback';
+const auth0_signup_callback_url = frontendURL + '/signup/sso-callback';
+
 export default {
   agentVersion: '1.15.0',
   cliEndpoint: 'https://downloads.deviceplane.com/cli',
   supportedDeviceMetrics,
   supportedDeviceMetricProperties,
   supportedServiceMetricProperties,
+  auth0_domain,
+  auth0_client_id,
+  auth0_login_callback_url,
+  auth0_signup_callback_url,
   ...config,
 };

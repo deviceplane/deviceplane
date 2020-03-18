@@ -67,6 +67,12 @@ var (
 	smtpPassword = kingpin.
 			Flag("smtp-password", "").
 			String()
+	auth0Domain = kingpin.
+			Flag("auth0-domain", "").
+			URL()
+	auth0Audience = kingpin.
+			Flag("auth0-audience", "").
+			String()
 )
 
 func main() {
@@ -112,7 +118,9 @@ func main() {
 
 	svc := service.NewService(sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
 		sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore, sqlStore,
-		emailProvider, *emailFromName, *emailFromAddress, *allowedEmailDomains, statikFS, st, connman, allowedOriginURLs)
+		emailProvider, *emailFromName, *emailFromAddress, *allowedEmailDomains,
+		*auth0Domain, *auth0Audience,
+		statikFS, st, connman, allowedOriginURLs)
 
 	server := &http.Server{
 		Addr: *addr,
