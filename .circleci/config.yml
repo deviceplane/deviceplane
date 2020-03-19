@@ -176,7 +176,7 @@ workflows:
             - test
           filters:
             branches:
-              only: /^staging$/
+              only: master
       - deploy-ui-production:
           requires:
             - build-ui
@@ -191,7 +191,7 @@ workflows:
               only: playground
       - deploy-ui-staging:
           requires:
-            - build-ui
+            - build-ui-staging
           filters:
             branches:
               only: master
