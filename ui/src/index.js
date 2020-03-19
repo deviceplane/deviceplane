@@ -23,8 +23,7 @@ const App = () => {
     try {
       const { data: user } = await api.user();
       segment.identify(user.id, {
-        firstName: user.firstName,
-        lastName: user.lastName,
+        name: user.name,
         email: user.email,
       });
       setCurrentUser(user);

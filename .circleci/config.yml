@@ -34,7 +34,21 @@ jobs:
       - *attach_workspace
       - checkout
       - run: cd ui && npm i
-      - run: cd ui && NODE_ENV=production SEGMENT_WRITE_KEY=$SEGMENT_WRITE_KEY BUGSNAG_KEY=$BUGSNAG_KEY INTERCOM_ID=$INTERCOM_ID npm run-script build
+      - run: cd ui && NODE_ENV=production SEGMENT_WRITE_KEY=$SEGMENT_WRITE_KEY BUGSNAG_KEY=$BUGSNAG_KEY INTERCOM_ID=$INTERCOM_ID AUTH0_DOMAIN=$AUTH0_DOMAIN AUTH0_AUDIENCE=$AUTH0_AUDIENCE npm run-script build
+      - run: cd ui && mv dist /tmp/workspace
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - dist
+
+  build-ui-stage:
+    docker:
+      - image: circleci/node:13.6
+    steps:
+      - *attach_workspace
+      - checkout
+      - run: cd ui && npm i
+      - run: cd ui && NODE_ENV=production SEGMENT_WRITE_KEY=$STAGE_SEGMENT_WRITE_KEY BUGSNAG_KEY=$STAGE_BUGSNAG_KEY INTERCOM_ID=$STAGE_INTERCOM_ID AUTH0_DOMAIN=$STAGING_AUTH0_DOMAIN AUTH0_AUDIENCE=$STAGING_AUTH0_AUDIENCE npm run-script build
       - run: cd ui && mv dist /tmp/workspace
       - persist_to_workspace:
           root: /tmp/workspace
@@ -56,6 +70,14 @@ jobs:
       - *attach_workspace
       - run: sudo pip install awscli
       - run: aws s3 sync /tmp/workspace/dist s3://playground.deviceplane.com/
+
+  deploy-ui-staging:
+    docker:
+      - image: circleci/python:2.7-jessie
+    steps:
+      - *attach_workspace
+      - run: sudo pip install awscli
+      - run: aws s3 sync /tmp/workspace/dist s3://staging.deviceplane.com/
 
   release-controller:
     machine: true
@@ -161,7 +183,7 @@ workflows:
             - test
           filters:
             branches:
-              only: /^ui|playground$/
+              only: /^ui|playground|staging$/
       - deploy-ui-production:
           requires:
             - build-ui
@@ -174,6 +196,12 @@ workflows:
           filters:
             branches:
               only: playground
+      - deploy-ui-staging:
+          requires:
+            - build-ui
+          filters:
+            branches:
+              only: staging
 
       - release-controller:
           requires:

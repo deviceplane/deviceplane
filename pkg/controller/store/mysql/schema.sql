@@ -3,20 +3,31 @@ use deviceplane;
 begin;
 
 --
--- Users
+-- ExternalUsers
 --
 
-create table if not exists users (
+create table if not exists external_users (
   id varchar(32) not null,
-  created_at timestamp not null default current_timestamp,
+  provider_name varchar(100) not null,
+  provider_id varchar(100) not null,
+
+  email varchar(100) not null,
+  info longtext not null,
+
+  primary key (id),
+  unique provider_name_provider_id_unique (provider_name, provider_id)
+);
+
+--
+-- InternalUsers
+--
+
+create table if not exists internal_users (
+  id varchar(32) not null,
 
   email varchar(255) not null,
   -- SENSITIVE FIELD
   password_hash varchar(255) not null,
-  first_name varchar(100) not null,
-  last_name varchar(100) not null,
-  registration_completed boolean not null default false,
-  super_admin boolean not null default false,
 
   primary key (id),
   unique email_unique (email),
@@ -26,22 +37,63 @@ create table if not exists users (
 );
 
 --
+-- Users
+--
+
+create table if not exists users (
+  id varchar(32) not null,
+  created_at timestamp not null default current_timestamp,
+  internal_user_id varchar(32),
+  external_user_id varchar(32),
+
+  name varchar(100) not null,
+  super_admin boolean not null default false,
+
+  primary key (id),
+  unique internal_user_id_unique (internal_user_id),
+  unique external_user_id_unique (external_user_id),
+  foreign key internal_users_internal_user_id(internal_user_id)
+  references internal_users(id)
+  on delete cascade,
+  foreign key external_users_external_user_id(external_user_id)
+  references external_users(id)
+  on delete cascade
+);
+
+delimiter //
+create trigger insert_user_trigger before insert on users
+for each row begin
+  if (((new.internal_user_id is null) XOR (new.external_user_id is null)) != 1) then
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'user must have exactly one internal_user_id OR external_user_id';
+  end if;
+end//
+create trigger update_user_trigger before insert on users
+for each row begin
+  if (((new.internal_user_id is null) XOR (new.external_user_id is null)) != 1) then
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'user must have exactly one internal_user_id OR external_user_id';
+  end if;
+end//
+delimiter ;
+
+--
 -- RegistrationTokens
 --
 
 create table if not exists registration_tokens (
   id varchar(32) not null,
   created_at timestamp not null default current_timestamp,
-  user_id varchar(32) not null,
+  internal_user_id varchar(32) not null,
 
   -- SENSITIVE FIELD
   hash varchar(255) not null,
 
   primary key (id),
-  unique user_id_unique (user_id),
+  unique internal_user_id_unique (internal_user_id),
   unique hash_unique (hash),
-  foreign key registration_tokens_user_id(user_id)
-  references users(id)
+  foreign key registration_tokens_internal_user_id(internal_user_id)
+  references internal_users(id)
   on delete cascade,
   index hash (hash)
 );
@@ -54,15 +106,15 @@ create table if not exists password_recovery_tokens (
   id varchar(32) not null,
   created_at timestamp not null default current_timestamp,
   expires_at timestamp not null,
-  user_id varchar(32) not null,
+  internal_user_id varchar(32) not null,
 
   -- SENSITIVE FIELD
   hash varchar(255) not null,
 
   primary key (id),
   unique hash_unique(hash),
-  foreign key password_recovery_tokens_user_id(user_id)
-  references users(id)
+  foreign key password_recovery_tokens_internal_user_id(internal_user_id)
+  references internal_users(id)
   on delete cascade,
   index hash (hash)
 );

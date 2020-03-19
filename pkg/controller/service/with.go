@@ -8,6 +8,7 @@ import (
 	"github.com/apex/log"
 	"github.com/deviceplane/deviceplane/pkg/codes"
 	"github.com/deviceplane/deviceplane/pkg/controller/authz"
+	serviceutils "github.com/deviceplane/deviceplane/pkg/controller/service/utils"
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/hash"
 	"github.com/deviceplane/deviceplane/pkg/models"
@@ -328,11 +329,6 @@ func (s *Service) withUserOrServiceAccountAuth(w http.ResponseWriter, r *http.Re
 			return
 		}
 
-		if !user.RegistrationCompleted {
-			w.WriteHeader(http.StatusForbidden)
-			return
-		}
-
 		f(user, nil)
 		return
 	}
@@ -351,6 +347,77 @@ func (s *Service) withUserOrServiceAccountAuth(w http.ResponseWriter, r *http.Re
 
 	w.WriteHeader(http.StatusUnauthorized)
 	return
+}
+
+func (s *Service) withValidatedSsoJWT(w http.ResponseWriter, r *http.Request, f func(ssoJWT models.SsoJWT)) {
+	var ssoRequest models.Auth0SsoRequest
+	if err := read(r, &ssoRequest); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if s.auth0Audience == "" || s.auth0Domain == nil {
+		http.Error(w, "SSO is not enabled", http.StatusNotImplemented)
+		return
+	}
+	_, claims, err := serviceutils.ParseAndValidateSignedJWT(s.auth0Domain, s.auth0Audience, ssoRequest.IdToken)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	get := func(key string) (string, error) {
+		v, ok := claims[key]
+		if !ok {
+			return "", errors.New("expected JWT claim not found")
+		}
+		value, ok := v.(string)
+		if !ok {
+			return "", errors.New("expected JWT claim to be string")
+		}
+		return value, nil
+	}
+
+	email, err := get("email")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	name, err := get("name")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// TODO: validate nonce
+	_, err = get("nonce")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	sub, err := get("sub")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	subParts := strings.Split(sub, "|")
+	if len(subParts) != 2 {
+		http.Error(w, "invalid number of subject parts", http.StatusBadRequest)
+		return
+	}
+	subProvider := subParts[0]
+	subID := subParts[1]
+
+	f(models.SsoJWT{
+		Email:    email,
+		Name:     name,
+		Provider: subProvider,
+		Subject:  subID,
+		Claims:   claims,
+	})
 }
 
 func (s *Service) withUserAuth(w http.ResponseWriter, r *http.Request, f func(user *models.User)) {
