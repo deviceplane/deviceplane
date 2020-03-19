@@ -20,13 +20,6 @@ jobs:
       - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
       - run: CONTROLLER_VERSION=$CIRCLE_SHA1 make push-controller
 
-  release-controller-staging:
-    machine: true
-    steps:
-      - checkout
-      - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
-      - run: CONTROLLER_VERSION=staging-$CIRCLE_SHA1 make push-controller
-
   build-ui:
     docker:
       - image: circleci/node:13.6
@@ -41,14 +34,14 @@ jobs:
           paths:
             - dist
 
-  build-ui-stage:
+  build-ui-staging:
     docker:
       - image: circleci/node:13.6
     steps:
       - *attach_workspace
       - checkout
       - run: cd ui && npm i
-      - run: cd ui && NODE_ENV=production SEGMENT_WRITE_KEY=$STAGE_SEGMENT_WRITE_KEY BUGSNAG_KEY=$STAGE_BUGSNAG_KEY INTERCOM_ID=$STAGE_INTERCOM_ID AUTH0_DOMAIN=$STAGING_AUTH0_DOMAIN AUTH0_AUDIENCE=$STAGING_AUTH0_AUDIENCE npm run-script build
+      - run: cd ui && NODE_ENV=production SEGMENT_WRITE_KEY=$STAGING_SEGMENT_WRITE_KEY BUGSNAG_KEY=$STAGING_BUGSNAG_KEY INTERCOM_ID=$STAGING_INTERCOM_ID AUTH0_DOMAIN=$STAGING_AUTH0_DOMAIN AUTH0_AUDIENCE=$STAGING_AUTH0_AUDIENCE npm run-script build
       - run: cd ui && mv dist /tmp/workspace
       - persist_to_workspace:
           root: /tmp/workspace
@@ -172,18 +165,18 @@ workflows:
           filters:
             branches:
               only: master
-      - release-controller-staging:
-          requires:
-            - test
-          filters:
-            branches:
-              only: staging
       - build-ui:
           requires:
             - test
           filters:
             branches:
-              only: /^ui|playground|staging$/
+              only: /^ui|playground$/
+      - build-ui-staging:
+          requires:
+            - test
+          filters:
+            branches:
+              only: /^staging$/
       - deploy-ui-production:
           requires:
             - build-ui
@@ -201,7 +194,7 @@ workflows:
             - build-ui
           filters:
             branches:
-              only: staging
+              only: master
 
       - release-controller:
           requires:
