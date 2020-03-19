@@ -28,6 +28,8 @@ const config = {
       'BUGSNAG_KEY',
       'INTERCOM_ID',
       'SEGMENT_WRITE_KEY',
+      'AUTH0_AUDIENCE',
+      'AUTH0_DOMAIN',
     ]),
   ],
   module: {

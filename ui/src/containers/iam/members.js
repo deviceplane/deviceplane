@@ -12,11 +12,14 @@ const Members = ({
 }) => {
   const columns = useMemo(
     () => [
-      { Header: 'Email', accessor: 'user.email' },
+      {
+        Header: 'Email',
+        accessor: ({ user: { email, providerName } }) =>
+          `${email}${providerName ? ` (via ${providerName})` : ''}`,
+      },
       {
         Header: 'Name',
-        accessor: ({ user: { firstName, lastName } }) =>
-          `${firstName} ${lastName}`,
+        accessor: 'user.name',
       },
       {
         Header: 'Roles',
