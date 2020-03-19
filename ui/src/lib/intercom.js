@@ -50,7 +50,7 @@ export const bootIntercom = user => {
   if (window.Intercom) {
     window.Intercom('boot', {
       app_id: process.env.INTERCOM_ID,
-      name: `${user.firstName} ${user.lastName}`,
+      name: user.name,
       email: user.email,
     });
   }

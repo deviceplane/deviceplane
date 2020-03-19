@@ -1,0 +1,61 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "beardaway",
+      "name": "Conrad Sopala",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/11062800?v=4",
+      "profile": "https://twitter.com/beardaway",
+      "contributions": [
+        "maintenance",
+        "review"
+      ]
+    },
+    {
+      "login": "yageek",
+      "name": "Yannick Heinrich",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/170917?v=4",
+      "profile": "http://blog.yageek.net",
+      "contributions": [
+        "maintenance",
+        "code"
+      ]
+    },
+    {
+      "login": "Tuanhao",
+      "name": "Hao Chau",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/18233972?v=4",
+      "profile": "http://tuanhao.github.io",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "maxekman",
+      "name": "Max Ekman",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/821518?v=4",
+      "profile": "http://www.looplab.se",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ttjiaa",
+      "name": "Tony Jia",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/9013477?v=4",
+      "profile": "https://www.linkedin.com/in/tong-tony-jia-a248227b/",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "auth0-go",
+  "projectOwner": "auth0-community",
+  "repoType": "github",
+  "repoHost": "https://github.com"
+}

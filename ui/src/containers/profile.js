@@ -10,10 +10,10 @@ import Alert from '../components/alert';
 import { Form, Button, toaster } from '../components/core';
 
 const validationSchema = yup.object().shape({
-  fullName: yup
+  name: yup
     .string()
     .required()
-    .max(128),
+    .max(100),
 });
 
 const Profile = ({ close }) => {
@@ -25,22 +25,12 @@ const Profile = ({ close }) => {
   const { register, handleSubmit, formState, errors } = useForm({
     validationSchema,
     defaultValues: {
-      fullName: `${currentUser.firstName} ${currentUser.lastName}`,
+      name: currentUser.name,
     },
   });
   const [backendError, setBackendError] = useState();
 
   const submit = async data => {
-    const firstSpace = data.fullName.indexOf(' ');
-    if (firstSpace === -1) {
-      data.firstName = data.fullName;
-      data.lastName = ' ';
-    } else {
-      data.firstName = data.fullName.substr(0, firstSpace);
-      data.lastName = data.fullName.substr(firstSpace + 1);
-    }
-    delete data.fullName;
-
     try {
       await api.updateUser(data);
       setCurrentUser({ ...currentUser, ...data });
@@ -64,10 +54,10 @@ const Profile = ({ close }) => {
         <Field
           required
           autoCapitalize="words"
-          label="Full Name"
-          name="fullName"
+          label="Name"
+          name="name"
           ref={register}
-          errors={errors.fullName}
+          errors={errors.name}
         />
         <Button
           marginTop={3}

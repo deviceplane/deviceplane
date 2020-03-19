@@ -30,7 +30,7 @@ const AvatarMenu = () => {
   const [showSSHKeys, setShowSSHKeys] = useState();
   const navigation = useNavigation();
   const isProjectsRoute = useActive('/projects');
-  const name = `${context.currentUser.firstName} ${context.currentUser.lastName}`;
+  const name = context.currentUser.name;
 
   return (
     <>

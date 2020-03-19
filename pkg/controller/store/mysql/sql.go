@@ -1,72 +1,106 @@
 package mysql
 
-const createUser = `
+const initializeUser = `
   insert into users (
     id,
+    internal_user_id,
+    external_user_id
+  )
+  values (?, ?, ?)
+`
+
+// Index: primary key
+const getUser = `
+  select id, created_at, internal_user_id, external_user_id, name, super_admin from users
+  where id = ?
+`
+
+// Index: internal_user_id_unique
+const getUserByInternalID = `
+  select id, created_at, internal_user_id, external_user_id, name, super_admin from users
+  where internal_user_id = ?
+`
+
+// Index: external_user_id_unique
+const getUserByExternalID = `
+  select id, created_at, internal_user_id, external_user_id, name, super_admin from users
+  where external_user_id = ?
+`
+
+// Index: primary key
+const updateUserName = `
+  update users
+  set name = ?
+  where id = ?
+`
+
+const createExternalUser = `
+  insert into external_users (
+    id,
+    provider_name,
+    provider_id,
     email,
-    password_hash,
-    first_name,
-    last_name
+    info
   )
   values (?, ?, ?, ?, ?)
 `
 
 // Index: primary key
-const getUser = `
-  select id, created_at, email, first_name, last_name, registration_completed, super_admin from users
+const getExternalUser = `
+  select id, provider_name, provider_id, email, info from external_users
+  where id = ?
+`
+
+// Index: provider_name_provider_id_unique
+const getExternalUserByProvider = `
+  select id, provider_name, provider_id, email, info from external_users
+  where provider_name = ? and provider_id = ?
+`
+
+const createInternalUser = `
+  insert into internal_users (
+    id,
+    email,
+    password_hash
+  )
+  values (?, ?, ?, ?, ?)
+`
+
+// Index: primary key
+const getInternalUser = `
+  select id, email from internal_users
   where id = ?
 `
 
 // Index: email
-const lookupUser = `
-  select id, created_at, email, first_name, last_name, registration_completed, super_admin from users
+const lookupInternalUser = `
+  select id, email from internal_users
   where email = ?
 `
 
 // Index: id_password_hash
-const validateUser = `
-  select id, created_at, email, first_name, last_name, registration_completed, super_admin from users
+const validateInternalUser = `
+  select id, email from internal_users
   where id = ? and password_hash = ?
 `
 
 // Index: email_password_hash
-const validateUserWithEmail = `
-  select id, created_at, email, first_name, last_name, registration_completed, super_admin from users
+const validateInternalUserWithEmail = `
+  select id, email from internal_users
   where email = ? and password_hash = ?
 `
 
 // Index: primary key
-const markRegistrationComplete = `
-  update users
-  set registration_completed = true
-  where id = ?
-`
-
-// Index: primary key
-const updatePasswordHash = `
-  update users
+const updateInternalUserPasswordHash = `
+  update internal_users
   set password_hash = ?
-  where id = ?
-`
-
-// Index: primary key
-const updateFirstName = `
-  update users
-  set first_name = ?
-  where id = ?
-`
-
-// Index: primary key
-const updateLastName = `
-  update users
-  set last_name = ?
   where id = ?
 `
 
 const createRegistrationToken = `
   insert into registration_tokens (
     id,
-    user_id,
+    internal_user_id,
     hash
   )
   values (?, ?, ?)
@@ -74,13 +108,13 @@ const createRegistrationToken = `
 
 // Index: primary key
 const getRegistrationToken = `
-  select id, created_at, user_id from registration_tokens
+  select id, created_at, internal_user_id from registration_tokens
   where id = ?
 `
 
 // Index: hash
 const validateRegistrationToken = `
-  select id, created_at, user_id from registration_tokens
+  select id, created_at, internal_user_id from registration_tokens
   where hash = ?
 `
 
@@ -88,7 +122,7 @@ const createPasswordRecoveryToken = `
   insert into password_recovery_tokens (
     id,
     expires_at,
-    user_id,
+    internal_user_id,
     hash
   )
   values (?, now() + interval 1 hour, ?, ?)
@@ -96,13 +130,13 @@ const createPasswordRecoveryToken = `
 
 // Index: primary key
 const getPasswordRecoveryToken = `
-  select id, created_at, expires_at, user_id from password_recovery_tokens
+  select id, created_at, expires_at, internal_user_id from password_recovery_tokens
   where id = ?
 `
 
 // Index: hash
 const validatePasswordRecoveryToken = `
-  select id, created_at, expires_at, user_id from password_recovery_tokens
+  select id, created_at, expires_at, internal_user_id from password_recovery_tokens
   where hash = ?
 `
 

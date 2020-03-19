@@ -21,6 +21,8 @@ type scanner interface {
 
 const (
 	userPrefix                    = "usr"
+	internalUserPrefix            = "inu"
+	externalUserPrefix            = "exu"
 	registrationTokenPrefix       = "reg"
 	passwordRecoveryTokenPrefix   = "pwr"
 	sessionPrefix                 = "ses"
@@ -38,6 +40,14 @@ const (
 
 func newUserID() string {
 	return fmt.Sprintf("%s_%s", userPrefix, ksuid.New().String())
+}
+
+func newInternalUserID() string {
+	return fmt.Sprintf("%s_%s", internalUserPrefix, ksuid.New().String())
+}
+
+func newExternalUserID() string {
+	return fmt.Sprintf("%s_%s", externalUserPrefix, ksuid.New().String())
 }
 
 func newRegistrationTokenID() string {
@@ -94,6 +104,8 @@ func newReleaseID() string {
 
 var (
 	_ store.Users                      = &Store{}
+	_ store.InternalUsers              = &Store{}
+	_ store.ExternalUsers              = &Store{}
 	_ store.RegistrationTokens         = &Store{}
 	_ store.PasswordRecoveryTokens     = &Store{}
 	_ store.Sessions                   = &Store{}
@@ -127,17 +139,15 @@ func NewStore(db *sql.DB) *Store {
 	}
 }
 
-func (s *Store) CreateUser(ctx context.Context, email, passwordHash, firstName, lastName string) (*models.User, error) {
+func (s *Store) InitializeUser(ctx context.Context, internalUserID, externalUserID *string) (*models.User, error) {
 	id := newUserID()
 
 	if _, err := s.db.ExecContext(
 		ctx,
-		createUser,
+		initializeUser,
 		id,
-		email,
-		passwordHash,
-		firstName,
-		lastName,
+		internalUserID,
+		externalUserID,
 	); err != nil {
 		return nil, err
 	}
@@ -158,8 +168,8 @@ func (s *Store) GetUser(ctx context.Context, id string) (*models.User, error) {
 	return user, nil
 }
 
-func (s *Store) LookupUser(ctx context.Context, email string) (*models.User, error) {
-	userRow := s.db.QueryRowContext(ctx, lookupUser, email)
+func (s *Store) GetUserByInternalID(ctx context.Context, internalUserID string) (*models.User, error) {
+	userRow := s.db.QueryRowContext(ctx, getUserByInternalID, internalUserID)
 
 	user, err := s.scanUser(userRow)
 	if err == sql.ErrNoRows {
@@ -171,8 +181,8 @@ func (s *Store) LookupUser(ctx context.Context, email string) (*models.User, err
 	return user, nil
 }
 
-func (s *Store) ValidateUser(ctx context.Context, id, passwordHash string) (*models.User, error) {
-	userRow := s.db.QueryRowContext(ctx, validateUser, id, passwordHash)
+func (s *Store) GetUserByExternalID(ctx context.Context, externalUserID string) (*models.User, error) {
+	userRow := s.db.QueryRowContext(ctx, getUserByExternalID, externalUserID)
 
 	user, err := s.scanUser(userRow)
 	if err == sql.ErrNoRows {
@@ -184,23 +194,11 @@ func (s *Store) ValidateUser(ctx context.Context, id, passwordHash string) (*mod
 	return user, nil
 }
 
-func (s *Store) ValidateUserWithEmail(ctx context.Context, email, passwordHash string) (*models.User, error) {
-	userRow := s.db.QueryRowContext(ctx, validateUserWithEmail, email, passwordHash)
-
-	user, err := s.scanUser(userRow)
-	if err == sql.ErrNoRows {
-		return nil, store.ErrUserNotFound
-	} else if err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
-func (s *Store) MarkRegistrationCompleted(ctx context.Context, id string) (*models.User, error) {
+func (s *Store) UpdateUserName(ctx context.Context, id, name string) (*models.User, error) {
 	if _, err := s.db.ExecContext(
 		ctx,
-		markRegistrationComplete,
+		updateUserName,
+		name,
 		id,
 	); err != nil {
 		return nil, err
@@ -209,43 +207,134 @@ func (s *Store) MarkRegistrationCompleted(ctx context.Context, id string) (*mode
 	return s.GetUser(ctx, id)
 }
 
-func (s *Store) UpdatePasswordHash(ctx context.Context, id, passwordHash string) (*models.User, error) {
+func (s *Store) CreateExternalUser(ctx context.Context, providerName, providerID, email string, info map[string]interface{}) (*models.ExternalUser, error) {
+	id := newExternalUserID()
+
+	serializedInfo, err := json.Marshal(info)
+	if err != nil {
+		return nil, err
+	}
+
 	if _, err := s.db.ExecContext(
 		ctx,
-		updatePasswordHash,
+		createExternalUser,
+		id,
+		providerName,
+		providerID,
+		email,
+		string(serializedInfo),
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetExternalUser(ctx, id)
+}
+
+func (s *Store) GetExternalUser(ctx context.Context, id string) (*models.ExternalUser, error) {
+	userRow := s.db.QueryRowContext(ctx, getExternalUser, id)
+
+	user, err := s.scanExternalUser(userRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrUserNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *Store) GetExternalUserByProviderID(ctx context.Context, providerName, providerID string) (*models.ExternalUser, error) {
+	userRow := s.db.QueryRowContext(ctx, getExternalUserByProvider, providerName, providerID)
+
+	user, err := s.scanExternalUser(userRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrUserNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *Store) CreateInternalUser(ctx context.Context, email, passwordHash string) (*models.InternalUser, error) {
+	id := newInternalUserID()
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		createInternalUser,
+		id,
+		email,
+		passwordHash,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetInternalUser(ctx, id)
+}
+
+func (s *Store) GetInternalUser(ctx context.Context, id string) (*models.InternalUser, error) {
+	userRow := s.db.QueryRowContext(ctx, getInternalUser, id)
+
+	user, err := s.scanInternalUser(userRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrUserNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *Store) LookupInternalUser(ctx context.Context, email string) (*models.InternalUser, error) {
+	userRow := s.db.QueryRowContext(ctx, lookupInternalUser, email)
+
+	user, err := s.scanInternalUser(userRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrUserNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *Store) ValidateInternalUser(ctx context.Context, id, passwordHash string) (*models.InternalUser, error) {
+	userRow := s.db.QueryRowContext(ctx, validateInternalUser, id, passwordHash)
+
+	user, err := s.scanInternalUser(userRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrUserNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *Store) ValidateInternalUserWithEmail(ctx context.Context, email, passwordHash string) (*models.InternalUser, error) {
+	userRow := s.db.QueryRowContext(ctx, validateInternalUserWithEmail, email, passwordHash)
+
+	user, err := s.scanInternalUser(userRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrUserNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *Store) UpdateInternalUserPasswordHash(ctx context.Context, id, passwordHash string) (*models.InternalUser, error) {
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateInternalUserPasswordHash,
 		passwordHash,
 		id,
 	); err != nil {
 		return nil, err
 	}
 
-	return s.GetUser(ctx, id)
-}
-
-func (s *Store) UpdateFirstName(ctx context.Context, id, firstName string) (*models.User, error) {
-	if _, err := s.db.ExecContext(
-		ctx,
-		updateFirstName,
-		firstName,
-		id,
-	); err != nil {
-		return nil, err
-	}
-
-	return s.GetUser(ctx, id)
-}
-
-func (s *Store) UpdateLastName(ctx context.Context, id, lastName string) (*models.User, error) {
-	if _, err := s.db.ExecContext(
-		ctx,
-		updateLastName,
-		lastName,
-		id,
-	); err != nil {
-		return nil, err
-	}
-
-	return s.GetUser(ctx, id)
+	return s.GetInternalUser(ctx, id)
 }
 
 func (s *Store) scanUser(scanner scanner) (*models.User, error) {
@@ -253,10 +342,9 @@ func (s *Store) scanUser(scanner scanner) (*models.User, error) {
 	if err := scanner.Scan(
 		&user.ID,
 		&user.CreatedAt,
-		&user.Email,
-		&user.FirstName,
-		&user.LastName,
-		&user.RegistrationCompleted,
+		&user.InternalUserID,
+		&user.ExternalUserID,
+		&user.Name,
 		&user.SuperAdmin,
 	); err != nil {
 		return nil, err
@@ -264,14 +352,47 @@ func (s *Store) scanUser(scanner scanner) (*models.User, error) {
 	return &user, nil
 }
 
-func (s *Store) CreateRegistrationToken(ctx context.Context, userID, hash string) (*models.RegistrationToken, error) {
+func (s *Store) scanInternalUser(scanner scanner) (*models.InternalUser, error) {
+	var user models.InternalUser
+	if err := scanner.Scan(
+		&user.ID,
+		&user.Email,
+	); err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (s *Store) scanExternalUser(scanner scanner) (*models.ExternalUser, error) {
+	var user models.ExternalUser
+	var infoString string
+	if err := scanner.Scan(
+		&user.ID,
+		&user.ProviderName,
+		&user.ProviderID,
+		&user.Email,
+		&infoString,
+	); err != nil {
+		return nil, err
+	}
+
+	if infoString != "" {
+		if err := json.Unmarshal([]byte(infoString), &user.Info); err != nil {
+			return nil, err
+		}
+	}
+
+	return &user, nil
+}
+
+func (s *Store) CreateRegistrationToken(ctx context.Context, internalUserID, hash string) (*models.RegistrationToken, error) {
 	id := newRegistrationTokenID()
 
 	if _, err := s.db.ExecContext(
 		ctx,
 		createRegistrationToken,
 		id,
-		userID,
+		internalUserID,
 		hash,
 	); err != nil {
 		return nil, err
@@ -311,7 +432,7 @@ func (s *Store) scanRegistrationToken(scanner scanner) (*models.RegistrationToke
 	if err := scanner.Scan(
 		&registrationToken.ID,
 		&registrationToken.CreatedAt,
-		&registrationToken.UserID,
+		&registrationToken.InternalUserID,
 	); err != nil {
 		return nil, err
 	}
@@ -366,7 +487,7 @@ func (s *Store) scanPasswordRecoveryToken(scanner scanner) (*models.PasswordReco
 		&passwordRecoveryToken.ID,
 		&passwordRecoveryToken.CreatedAt,
 		&passwordRecoveryToken.ExpiresAt,
-		&passwordRecoveryToken.UserID,
+		&passwordRecoveryToken.InternalUserID,
 	); err != nil {
 		return nil, err
 	}
