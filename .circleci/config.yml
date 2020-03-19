@@ -20,6 +20,13 @@ jobs:
       - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
       - run: CONTROLLER_VERSION=$CIRCLE_SHA1 make push-controller
 
+  release-controller-staging:
+    machine: true
+    steps:
+      - checkout
+      - run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
+      - run: CONTROLLER_VERSION=staging-$CIRCLE_SHA1 make push-controller
+
   build-ui:
     docker:
       - image: circleci/node:13.6
@@ -143,6 +150,12 @@ workflows:
           filters:
             branches:
               only: master
+      - release-controller-staging:
+          requires:
+            - test
+          filters:
+            branches:
+              only: staging
       - build-ui:
           requires:
             - test
