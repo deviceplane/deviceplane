@@ -13,6 +13,13 @@ type User struct {
 	SuperAdmin     bool      `json:"superAdmin" yaml:"superAdmin"`
 }
 
+type UserFull struct {
+	User
+	ProviderName string `json:"providerName,omitempty"`
+	ProviderID   string `json:"providerId,omitempty"`
+	Email        string `json:"email"`
+}
+
 type ExternalUser struct {
 	ID           string
 	ProviderName string
@@ -265,8 +272,8 @@ type ProjectFull struct {
 
 type MembershipFull2 struct {
 	Membership
-	User  User   `json:"user" yaml:"user"`
-	Roles []Role `json:"roles" yaml:"roles"`
+	User  UserFull `json:"user" yaml:"user"`
+	Roles []Role   `json:"roles" yaml:"roles"`
 }
 
 type ServiceAccountFull struct {

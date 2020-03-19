@@ -22,12 +22,10 @@ const api = {
       segment.reset();
     }),
 
-  signup: ({ email, password, firstName, lastName }) =>
+  signup: ({ email, password }) =>
     post(`register`, {
       email,
       password,
-      firstName,
-      lastName,
     }),
 
   signupSSO: data => post('registersso', data),

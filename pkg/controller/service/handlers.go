@@ -104,38 +104,41 @@ func (s *Service) registerInternalUser(w http.ResponseWriter, r *http.Request) {
 
 		if s.email == nil {
 			// If email provider is nil then skip the registration workflow
-			_, err := s.users.InitializeUser(r.Context(), &internalUser.ID, nil)
+			user, err := s.users.InitializeUser(r.Context(), &internalUser.ID, nil)
 			if err != nil {
 				log.WithError(err).Error("mark internal user registration completed")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-		} else {
-			registrationTokenValue := ksuid.New().String()
 
-			if _, err := s.registrationTokens.CreateRegistrationToken(r.Context(), internalUser.ID, hash.Hash(registrationTokenValue)); err != nil {
-				log.WithError(err).Error("create registration token")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			utils.Respond(w, user)
+			return
+		}
 
-			if err := s.email.Send(email.Request{
-				FromName:    s.emailFromName,
-				FromAddress: s.emailFromAddress,
-				ToName:      internalUser.Email,
-				ToAddress:   internalUser.Email,
-				Subject:     "Deviceplane Email Confirmation",
-				Content: email.Content{
-					Title:       "Email Confirmation",
-					Body:        "Thank you for using Deviceplane! Please click the button below to confirm your email.",
-					ActionTitle: "Confirm Email",
-					ActionLink:  fmt.Sprintf("%s://%s/confirm/%s", referrer.Scheme, referrer.Host, registrationTokenValue),
-				},
-			}); err != nil {
-				log.WithError(err).Error("send registration email")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+		registrationTokenValue := ksuid.New().String()
+
+		if _, err := s.registrationTokens.CreateRegistrationToken(r.Context(), internalUser.ID, hash.Hash(registrationTokenValue)); err != nil {
+			log.WithError(err).Error("create registration token")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if err := s.email.Send(email.Request{
+			FromName:    s.emailFromName,
+			FromAddress: s.emailFromAddress,
+			ToName:      internalUser.Email,
+			ToAddress:   internalUser.Email,
+			Subject:     "Deviceplane Email Confirmation",
+			Content: email.Content{
+				Title:       "Email Confirmation",
+				Body:        "Thank you for using Deviceplane! Please click the button below to confirm your email.",
+				ActionTitle: "Confirm Email",
+				ActionLink:  fmt.Sprintf("%s://%s/confirm/%s", referrer.Scheme, referrer.Host, registrationTokenValue),
+			},
+		}); err != nil {
+			log.WithError(err).Error("send registration email")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 
 		w.WriteHeader(200)
@@ -802,7 +805,7 @@ func (s *Service) updateProject(w http.ResponseWriter, r *http.Request) {
 			func(project *models.Project) {
 				var updateProjectRequest struct {
 					Name          string `json:"name" validate:"name"`
-					DatadogApiKey string `json:"datadogApiKey"`
+					DatadogAPIKey string `json:"datadogApiKey"`
 				}
 				if err := read(r, &updateProjectRequest); err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
@@ -819,7 +822,7 @@ func (s *Service) updateProject(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
-				p, err := s.projects.UpdateProject(r.Context(), project.ID, updateProjectRequest.Name, updateProjectRequest.DatadogApiKey)
+				p, err := s.projects.UpdateProject(r.Context(), project.ID, updateProjectRequest.Name, updateProjectRequest.DatadogAPIKey)
 				if err != nil {
 					log.WithError(err).Error("update project")
 					w.WriteHeader(http.StatusInternalServerError)
@@ -1481,36 +1484,14 @@ func (s *Service) getMembership(w http.ResponseWriter, r *http.Request) {
 
 				var ret interface{} = membership
 				if _, ok := r.URL.Query()["full"]; ok {
-					user, err := s.users.GetUser(r.Context(), membership.UserID)
+					membershipFull2, err := s.getMembershipFull2(r.Context(), membership)
 					if err != nil {
-						log.WithError(err).Error("get user")
+						log.WithError(err).Error("get full membership")
 						w.WriteHeader(http.StatusInternalServerError)
 						return
 					}
 
-					membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), userID, project.ID)
-					if err != nil {
-						log.WithError(err).Error("list membership role bindings")
-						w.WriteHeader(http.StatusInternalServerError)
-						return
-					}
-
-					roles := make([]models.Role, 0)
-					for _, membershipRoleBinding := range membershipRoleBindings {
-						role, err := s.roles.GetRole(r.Context(), membershipRoleBinding.RoleID, project.ID)
-						if err != nil {
-							log.WithError(err).Error("get role")
-							w.WriteHeader(http.StatusInternalServerError)
-							return
-						}
-						roles = append(roles, *role)
-					}
-
-					ret = models.MembershipFull2{
-						Membership: *membership,
-						User:       *user,
-						Roles:      roles,
-					}
+					ret = *membershipFull2
 				}
 
 				utils.Respond(w, ret)
@@ -1538,36 +1519,14 @@ func (s *Service) listMembershipsByProject(w http.ResponseWriter, r *http.Reques
 					membershipsFull := make([]models.MembershipFull2, 0)
 
 					for _, membership := range memberships {
-						user, err := s.users.GetUser(r.Context(), membership.UserID)
+						membershipFull2, err := s.getMembershipFull2(r.Context(), &membership)
 						if err != nil {
-							log.WithError(err).Error("get user")
+							log.WithError(err).Error("get full membership")
 							w.WriteHeader(http.StatusInternalServerError)
 							return
 						}
 
-						membershipRoleBindings, err := s.membershipRoleBindings.ListMembershipRoleBindings(r.Context(), membership.UserID, project.ID)
-						if err != nil {
-							log.WithError(err).Error("list membership role bindings")
-							w.WriteHeader(http.StatusInternalServerError)
-							return
-						}
-
-						roles := make([]models.Role, 0)
-						for _, membershipRoleBinding := range membershipRoleBindings {
-							role, err := s.roles.GetRole(r.Context(), membershipRoleBinding.RoleID, project.ID)
-							if err != nil {
-								log.WithError(err).Error("get role")
-								w.WriteHeader(http.StatusInternalServerError)
-								return
-							}
-							roles = append(roles, *role)
-						}
-
-						membershipsFull = append(membershipsFull, models.MembershipFull2{
-							Membership: membership,
-							User:       *user,
-							Roles:      roles,
-						})
+						membershipsFull = append(membershipsFull, *membershipFull2)
 					}
 
 					ret = membershipsFull
