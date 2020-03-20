@@ -3,7 +3,8 @@ import styled from 'styled-components';
 import { useNavigation, useActive, useCurrentRoute } from 'react-navi';
 
 import api from '../api';
-import { Row, Text, Icon, MenuItem } from './core';
+import useToggle from '../hooks/useToggle';
+import { Text, MenuItem } from './core';
 import Popup from './popup';
 import Popover from './popover';
 import Avatar from './avatar';
@@ -23,42 +24,33 @@ const AvatarMenu = () => {
   const {
     data: { context },
   } = useCurrentRoute();
-  const [showCLI, setShowCLI] = useState();
-  const [showUserProfile, setShowUserProfile] = useState();
-  const [showUserAccessKeys, setShowUserAccessKeys] = useState();
-  const [showChangePassword, setShowChangePassword] = useState();
-  const [showSSHKeys, setShowSSHKeys] = useState();
+  const [isCLI, toggleCLI] = useToggle();
+  const [isUserProfile, toggleUserProfile] = useToggle();
+  const [isUserAccessKeys, toggleUserAccessKeys] = useToggle();
+  const [isChangePassword, toggleChangePassword] = useToggle();
+  const [isSSHKeys, toggleSSHKeys] = useToggle();
   const navigation = useNavigation();
   const isProjectsRoute = useActive('/projects');
   const name = context.currentUser.name;
 
   return (
     <>
-      <Popup show={showCLI} onClose={() => setShowCLI(false)}>
+      <Popup show={isCLI} onClose={toggleCLI}>
         <CliDownload />
       </Popup>
-      <Popup show={showUserProfile} onClose={() => setShowUserProfile(false)}>
-        <Profile
-          user={context.currentUser}
-          close={() => setShowUserProfile(false)}
-        />
+      <Popup show={isUserProfile} onClose={toggleUserProfile}>
+        <Profile user={context.currentUser} close={toggleUserProfile} />
       </Popup>
-      <Popup
-        show={showUserAccessKeys}
-        onClose={() => setShowUserAccessKeys(false)}
-      >
+      <Popup show={isUserAccessKeys} onClose={toggleUserAccessKeys}>
         <UserAccessKeys user={context.currentUser} />
       </Popup>
-      <Popup show={showSSHKeys} onClose={() => setShowSSHKeys(false)}>
+      <Popup show={isSSHKeys} onClose={toggleSSHKeys}>
         <SSHKeys user={context.currentUser} />
       </Popup>
-      <Popup
-        show={showChangePassword}
-        onClose={() => setShowChangePassword(false)}
-      >
+      <Popup show={isChangePassword} onClose={toggleChangePassword}>
         <ChangePassword
           user={context.currentUser}
-          close={() => setShowChangePassword(false)}
+          close={toggleChangePassword}
         />
       </Popup>
       <Popover
@@ -104,7 +96,7 @@ const AvatarMenu = () => {
             <MenuItem
               onClick={() => {
                 close();
-                setShowUserProfile(true);
+                toggleUserProfile();
               }}
             >
               Profile
@@ -112,7 +104,7 @@ const AvatarMenu = () => {
             <MenuItem
               onClick={() => {
                 close();
-                setShowChangePassword(true);
+                toggleChangePassword();
               }}
             >
               Change Password
@@ -121,7 +113,7 @@ const AvatarMenu = () => {
             <MenuItem
               onClick={() => {
                 close();
-                setShowUserAccessKeys(true);
+                toggleUserAccessKeys();
               }}
             >
               Access Keys
@@ -129,7 +121,7 @@ const AvatarMenu = () => {
             <MenuItem
               onClick={() => {
                 close();
-                setShowSSHKeys(true);
+                toggleSSHKeys();
               }}
             >
               SSH Keys
@@ -138,7 +130,7 @@ const AvatarMenu = () => {
             <MenuItem
               onClick={() => {
                 close();
-                setShowCLI(true);
+                toggleCLI();
               }}
             >
               Download CLI

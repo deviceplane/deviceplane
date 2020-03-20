@@ -6,6 +6,7 @@ import * as yup from 'yup';
 import api from '../../api';
 import utils from '../../utils';
 import validators from '../../validators';
+import useToggle from '../../hooks/useToggle';
 import Card from '../../components/card';
 import Field from '../../components/field';
 import Popup from '../../components/popup';
@@ -38,7 +39,7 @@ const DeviceSettings = ({
   });
   const navigation = useNavigation();
   const [backendError, setBackendError] = useState();
-  const [showPopup, setShowPopup] = useState();
+  const [isPopup, togglePopup] = useToggle();
 
   const submit = async data => {
     try {
@@ -68,7 +69,7 @@ const DeviceSettings = ({
       setBackendError(utils.parseError(error, 'Device removal failed.'));
       console.error(error);
     }
-    setShowPopup(false);
+    togglePopup();
   };
 
   return (
@@ -79,7 +80,7 @@ const DeviceSettings = ({
         actions={[
           {
             title: 'Remove',
-            onClick: () => setShowPopup(true),
+            onClick: togglePopup,
             variant: 'danger',
           },
         ]}
@@ -113,7 +114,7 @@ const DeviceSettings = ({
           />
         </Form>
       </Card>
-      <Popup show={showPopup} onClose={() => setShowPopup(false)}>
+      <Popup show={isPopup} onClose={togglePopup}>
         <Card title="Remove Device" border size="large">
           <Text>
             You are about to remove the <strong>{device.name}</strong> device.

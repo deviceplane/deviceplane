@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useTable, useSortBy, useRowSelect } from 'react-table';
 
+import useToggle from '../../hooks/useToggle';
 import Card from '../../components/card';
 import Table, {
   SelectColumn,
@@ -24,9 +25,7 @@ const Project = ({
     data: { params, metrics, devices },
   },
 }) => {
-  const [showMetricOverview, setShowMetricOverview] = useState();
-
-  const hideMetricOverview = () => setShowMetricOverview(false);
+  const [isMetricOverview, toggleMetricOverview] = useToggle();
 
   const tableData = useMemo(
     () =>
@@ -122,18 +121,18 @@ const Project = ({
             title="Edit"
             variant="tertiary"
             disabled={selectedFlatRows.length !== 1}
-            onClick={() => setShowMetricOverview(true)}
+            onClick={toggleMetricOverview}
           />
         </Row>
         <Table {...tableProps} />
       </Card>
-      <Popup show={showMetricOverview} onClose={hideMetricOverview}>
+      <Popup show={isMetricOverview} onClose={toggleMetricOverview}>
         <ProjectMetricOverview
           projectId={params.project}
           devices={devices}
           metrics={supportedMetrics}
           metric={selectedFlatRows[0] && selectedFlatRows[0].original}
-          close={hideMetricOverview}
+          close={toggleMetricOverview}
         />
       </Popup>
     </>

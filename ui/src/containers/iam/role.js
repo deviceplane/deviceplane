@@ -6,6 +6,7 @@ import { useNavigation } from 'react-navi';
 import api from '../../api';
 import utils from '../../utils';
 import validators from '../../validators';
+import useToggle from '../../hooks/useToggle';
 import Card from '../../components/card';
 import Field from '../../components/field';
 import Popup from '../../components/popup';
@@ -33,7 +34,7 @@ const Role = ({
   });
   const navigation = useNavigation();
   const [backendError, setBackendError] = useState();
-  const [showDeletePopup, setShowDeletePopup] = useState();
+  const [isDeletePopup, toggleDeletePopup] = useToggle();
 
   const submit = async data => {
     try {
@@ -60,7 +61,7 @@ const Role = ({
       setBackendError(utils.parseError(error, 'Role deletion failed.'));
       console.error(error);
     }
-    setShowDeletePopup(false);
+    toggleDeletePopup();
   };
 
   return (
@@ -71,7 +72,7 @@ const Role = ({
         actions={[
           {
             title: 'Delete',
-            onClick: () => setShowDeletePopup(true),
+            onClick: toggleDeletePopup,
             variant: 'danger',
           },
         ]}
@@ -114,9 +115,9 @@ const Role = ({
         </Form>
       </Card>
       <Popup
-        show={showDeletePopup}
+        show={isDeletePopup}
         title="Delete Role"
-        onClose={() => setShowDeletePopup(false)}
+        onClose={toggleDeletePopup}
       >
         <Card title="Delete Role" border size="large">
           <Text>

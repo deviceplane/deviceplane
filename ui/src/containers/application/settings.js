@@ -6,6 +6,7 @@ import * as yup from 'yup';
 import api from '../../api';
 import utils from '../../utils';
 import validators from '../../validators';
+import useToggle from '../../hooks/useToggle';
 import Card from '../../components/card';
 import Popup from '../../components/popup';
 import Field from '../../components/field';
@@ -30,7 +31,7 @@ const ApplicationSettings = ({
     },
   });
   const [backendError, setBackendError] = useState();
-  const [showDeletePopup, setShowDeletePopup] = useState();
+  const [isDeletePopup, toggleDeletePopup] = useToggle();
   const navigation = useNavigation();
 
   const submit = async data => {
@@ -61,7 +62,7 @@ const ApplicationSettings = ({
       setBackendError(utils.parseError(error, 'Application deletion failed.'));
       console.error(error);
     }
-    setShowDeletePopup(false);
+    toggleDeletePopup();
   };
 
   return (
@@ -73,7 +74,7 @@ const ApplicationSettings = ({
         actions={[
           {
             title: 'Delete',
-            onClick: () => setShowDeletePopup(true),
+            onClick: toggleDeletePopup,
             variant: 'danger',
           },
         ]}
@@ -107,7 +108,7 @@ const ApplicationSettings = ({
           />
         </Form>
       </Card>
-      <Popup show={showDeletePopup} onClose={() => setShowDeletePopup(false)}>
+      <Popup show={isDeletePopup} onClose={toggleDeletePopup}>
         <Card title="Delete Application" border size="large">
           <Text>
             You are about to delete the <strong>{application.name}</strong>{' '}
