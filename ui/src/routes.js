@@ -37,14 +37,23 @@ export default mount({
             }),
             getView: () => import('./containers/login'),
           }),
-          '/sso-callback': route({
-            title: 'SSO login',
-            getData: (request, context) => ({
-              params: Object.assign({ redirectType: 'login' }, request.params),
-              context,
-            }),
-            getView: () => import('./containers/sso-callback'),
-          }),
+          '/sso-callback': context.currentUser
+            ? redirect(
+                request.params.redirectTo
+                  ? decodeURIComponent(request.params.redirectTo)
+                  : '/projects'
+              )
+            : route({
+                title: 'SSO login',
+                getData: (request, context) => ({
+                  params: Object.assign(
+                    { redirectType: 'login' },
+                    request.params
+                  ),
+                  context,
+                }),
+                getView: () => import('./containers/sso-callback'),
+              }),
         })
   ),
   '/forgot': route({
