@@ -85,15 +85,20 @@ const Login = ({
             type="password"
             label="Password"
             errors={errors.password}
+            marginBottom={2}
           />
+          <Row marginBottom={5}>
+            <Button
+              variant="text"
+              href="/forgot"
+              title="Forgot your password?"
+            />
+          </Row>
 
           <Button justifyContent="center" title="Log in" />
         </Form>
-        <Row marginTop={5}>
-          <Button variant="text" href="/forgot" title="Forgot your password?" />
-        </Row>
 
-        <Row marginTop={5}>
+        <Row marginTop={5} justifyContent="space-between">
           <Button
             justifyContent="center"
             title="Log in with Google"
@@ -101,8 +106,6 @@ const Login = ({
               auth0.api.login.google();
             }}
           />
-        </Row>
-        <Row marginTop={5}>
           <Button
             justifyContent="center"
             title="Log in with Github"

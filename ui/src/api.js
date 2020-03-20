@@ -222,11 +222,13 @@ const api = {
   membership: ({ projectId, userId }) =>
     get(`projects/${projectId}/memberships/${userId}?full`),
 
-  addMember: ({ projectId, data: { email } }) =>
-    post(`projects/${projectId}/memberships`, { email }).then(response => {
-      segment.track('Member Added');
-      return response;
-    }),
+  addMember: ({ projectId, data: { email, userId } }) =>
+    post(`projects/${projectId}/memberships`, { email, userId }).then(
+      response => {
+        segment.track('Member Added');
+        return response;
+      }
+    ),
 
   removeMember: ({ projectId, userId }) =>
     del(`projects/${projectId}/memberships/${userId}`),

@@ -25,23 +25,27 @@ const SsoCallback = ({
     validationSchema,
   });
   const navigation = useNavigation();
-  const [status, setStatus] = useState('Loading...');
   const [firstRender, setFirstRender] = useState(true);
+  const pathComponents = window.location.pathname
+    .split('/')
+    .filter(x => Boolean(x));
+  const pathComponentsUntilSSO = pathComponents.slice(
+    0,
+    pathComponents.length - 1
+  );
 
   const submit = async data => {
     try {
-      var resp;
-      switch (params.redirectType) {
+      switch (pathComponentsUntilSSO[pathComponentsUntilSSO.length - 1]) {
         case 'login':
-          resp = await api.loginSSO(data);
+          await api.loginSSO(data);
           break;
         case 'signup':
-          resp = await api.signupSSO(data);
+          await api.signupSSO(data);
           break;
         default:
-          var msg = 'Error, invalid redirect type';
-          setStatus(msg);
-          toaster.danger(msg);
+          toaster.danger('Internal error, invalid redirect type');
+          navigation.navigate('..');
           return;
       }
 
@@ -57,12 +61,9 @@ const SsoCallback = ({
         statusText = 'User not found. Have you already signed up?';
       }
 
-      // TODO: just set the toast and navigate back to the page, instead of
-      // showing the message and allowing the user to manually use the back button
-
       var msg = `Error code ${statusCode}: ${statusText}`;
-      setStatus(msg);
       toaster.danger(msg);
+      navigation.navigate('..');
     }
   };
 
@@ -104,7 +105,7 @@ const SsoCallback = ({
         {params.redirectType.toUpperCase()}
       </Text>
       <Text color={'white'} fontSize={4} fontWeight={2} marginLeft={2}>
-        {status}
+        Loading...
       </Text>
 
       <Row marginTop={8}>
@@ -112,7 +113,7 @@ const SsoCallback = ({
           justifyContent="center"
           title="Go back"
           onClick={() => {
-            navigation.navigate('/' + params.redirectType);
+            navigation.navigate('..');
           }}
         />
       </Row>

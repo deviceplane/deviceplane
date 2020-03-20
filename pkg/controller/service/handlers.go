@@ -1405,8 +1405,8 @@ func (s *Service) createMembership(w http.ResponseWriter, r *http.Request) {
 			user, serviceAccount,
 			func(project *models.Project) {
 				var createMembershipRequest struct {
-					Email  *string `json:"email" validate:"email"`
-					UserID *string `json:"userId" validate:"id"`
+					Email  *string `json:"email" validate:"omitempty,email"`
+					UserID *string `json:"userId" validate:"omitempty,id"`
 				}
 				if err := read(r, &createMembershipRequest); err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
@@ -1445,7 +1445,7 @@ func (s *Service) createMembership(w http.ResponseWriter, r *http.Request) {
 						return
 					}
 				} else {
-					w.WriteHeader(400)
+					http.Error(w, "either email or user ID must exist", http.StatusBadRequest)
 					return
 				}
 

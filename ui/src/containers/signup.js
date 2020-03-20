@@ -95,6 +95,22 @@ const Signup = () => {
           />
           <Button title="Sign up" justifyContent="center" />
         </Form>
+        <Row marginTop={5} justifyContent="space-between">
+          <Button
+            justifyContent="center"
+            title="Sign up with Google"
+            onClick={() => {
+              auth0.api.signup.google();
+            }}
+          />
+          <Button
+            justifyContent="center"
+            title="Sign up with Github"
+            onClick={() => {
+              auth0.api.signup.github();
+            }}
+          />
+        </Row>
         <Text marginTop={5} fontSize={1} fontWeight={0}>
           By signing up you agree to the{' '}
           <Link href="https://deviceplane.com/legal/terms">
@@ -105,24 +121,6 @@ const Signup = () => {
             Privacy Policy
           </Link>
         </Text>
-        <Row marginTop={5}>
-          <Button
-            justifyContent="center"
-            title="Sign up with Google"
-            onClick={() => {
-              auth0.api.signup.google();
-            }}
-          />
-        </Row>
-        <Row marginTop={5}>
-          <Button
-            justifyContent="center"
-            title="Sign up with Github"
-            onClick={() => {
-              auth0.api.signup.github();
-            }}
-          />
-        </Row>
       </Card>
     </Column>
   );
