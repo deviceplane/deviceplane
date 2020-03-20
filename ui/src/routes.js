@@ -15,7 +15,7 @@ export default mount({
     '/sso-callback': route({
       title: 'SSO signup',
       getData: (request, context) => ({
-        params: Object.assign({ redirectType: 'signup' }, request.params),
+        params: request.params,
         context,
       }),
       getView: () => import('./containers/sso-callback'),
@@ -40,7 +40,7 @@ export default mount({
           '/sso-callback': route({
             title: 'SSO login',
             getData: (request, context) => ({
-              params: Object.assign({ redirectType: 'login' }, request.params),
+              params: request.params,
               context,
             }),
             getView: () => import('./containers/sso-callback'),

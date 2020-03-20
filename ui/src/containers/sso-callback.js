@@ -1,29 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigation } from 'react-navi';
-import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 
 import api from '../api';
 import validators from '../validators';
-import Card from '../components/card';
-import Field from '../components/field';
-import Alert from '../components/alert';
-import { Text, Column, Row, Form, Button, toaster } from '../components/core';
-import * as auth0 from '../lib/auth0';
-
-const validationSchema = yup.object().shape({
-  email: validators.email.required(),
-  password: yup.string().required(),
-});
+import { Text, Column, Row, Button, toaster } from '../components/core';
 
 const SsoCallback = ({
   route: {
     data: { params, context },
   },
 }) => {
-  const { register, handleSubmit, errors } = useForm({
-    validationSchema,
-  });
   const navigation = useNavigation();
   const [firstRender, setFirstRender] = useState(true);
   const pathComponents = window.location.pathname
@@ -55,14 +42,13 @@ const SsoCallback = ({
         params.redirectTo ? decodeURIComponent(params.redirectTo) : '/projects'
       );
     } catch (error) {
-      var statusCode = error.response.status;
-      var statusText = error.response.statusText;
-      if (statusCode == 404) {
-        statusText = 'User not found. Have you already signed up?';
+      var respCode = error.response.status;
+      var respMessage = error.response.data;
+      if (respCode == 404) {
+        respMessage = 'User not found. Have you already signed up?';
       }
 
-      var msg = `Error code ${statusCode}: ${statusText}`;
-      toaster.danger(msg);
+      toaster.danger(`Error code ${respCode}: ${respMessage}`);
       navigation.navigate('..');
     }
   };
@@ -80,7 +66,8 @@ const SsoCallback = ({
       navigation.navigate('#');
       submit(vars);
     } else {
-      setStatus('Error: SSO data not returned.');
+      toaster.danger(`SSO data not returned.`);
+      navigation.navigate('..');
     }
     setFirstRender(false);
   }
@@ -95,16 +82,7 @@ const SsoCallback = ({
       overflow="auto"
       bg={['black', 'black', 'pageBackground']}
     >
-      <Text
-        color={'white'}
-        fontSize={6}
-        fontWeight={2}
-        marginLeft={2}
-        marginBottom={2}
-      >
-        {params.redirectType.toUpperCase()}
-      </Text>
-      <Text color={'white'} fontSize={4} fontWeight={2} marginLeft={2}>
+      <Text color={'white'} fontSize={6} fontWeight={2} marginLeft={2}>
         Loading...
       </Text>
 
