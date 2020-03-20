@@ -52,10 +52,10 @@ create table if not exists users (
   primary key (id),
   unique internal_user_id_unique (internal_user_id),
   unique external_user_id_unique (external_user_id),
-  foreign key internal_users_internal_user_id(internal_user_id)
+  constraint internal_users_internal_user_id foreign key (internal_user_id)
   references internal_users(id)
   on delete cascade,
-  foreign key external_users_external_user_id(external_user_id)
+  constraint external_users_external_user_id foreign key (external_user_id)
   references external_users(id)
   on delete cascade
 );
@@ -92,7 +92,7 @@ create table if not exists registration_tokens (
   primary key (id),
   unique internal_user_id_unique (internal_user_id),
   unique hash_unique (hash),
-  foreign key registration_tokens_internal_user_id(internal_user_id)
+  constraint registration_tokens_internal_user_id foreign key (internal_user_id)
   references internal_users(id)
   on delete cascade,
   index hash (hash)
@@ -113,7 +113,7 @@ create table if not exists password_recovery_tokens (
 
   primary key (id),
   unique hash_unique(hash),
-  foreign key password_recovery_tokens_internal_user_id(internal_user_id)
+  constraint password_recovery_tokens_internal_user_id foreign key (internal_user_id)
   references internal_users(id)
   on delete cascade,
   index hash (hash)
