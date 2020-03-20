@@ -117,8 +117,10 @@ const supportedDeviceMetrics = [
 const config =
   process.env.NODE_ENV === 'development' ? development : production;
 
-const auth0_domain = new URL(process.env.AUTH0_DOMAIN).host;
-const auth0_client_id = process.env.AUTH0_AUDIENCE;
+const auth0_domain = process.env.AUTH0_DOMAIN
+  ? new URL(process.env.AUTH0_DOMAIN).host
+  : '';
+const auth0_client_id = process.env.AUTH0_AUDIENCE || '';
 
 const auth0_login_callback_url = frontendURL + '/login/sso-callback';
 const auth0_signup_callback_url = frontendURL + '/signup/sso-callback';
