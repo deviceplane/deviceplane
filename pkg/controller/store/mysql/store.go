@@ -34,6 +34,7 @@ const (
 	devicePrefix                  = "dev"
 	deviceRegistrationTokenPrefix = "drt"
 	deviceAccessKeyPrefix         = "dak"
+	connectionPrefix              = "ctn"
 	applicationPrefix             = "app"
 	releasePrefix                 = "rel"
 )
@@ -94,6 +95,10 @@ func newDeviceAccessKeyID() string {
 	return fmt.Sprintf("%s_%s", deviceAccessKeyPrefix, ksuid.New().String())
 }
 
+func newConnectionID() string {
+	return fmt.Sprintf("%s_%s", connectionPrefix, ksuid.New().String())
+}
+
 func newApplicationID() string {
 	return fmt.Sprintf("%s_%s", applicationPrefix, ksuid.New().String())
 }
@@ -121,6 +126,7 @@ var (
 	_ store.Devices                    = &Store{}
 	_ store.DeviceAccessKeys           = &Store{}
 	_ store.DeviceRegistrationTokens   = &Store{}
+	_ store.Connections                = &Store{}
 	_ store.Applications               = &Store{}
 	_ store.Releases                   = &Store{}
 	_ store.ReleaseDeviceCounts        = &Store{}
@@ -1998,6 +2004,115 @@ func (s *Store) scanDeviceAccessKey(scanner scanner) (*models.DeviceAccessKey, e
 		return nil, err
 	}
 	return &deviceAccessKey, nil
+}
+
+func (s *Store) CreateConnection(ctx context.Context, projectID, name string, protocol models.Protocol, port uint) (*models.Connection, error) {
+	id := newConnectionID()
+
+	if _, err := s.db.ExecContext(
+		ctx,
+		createConnection,
+		id,
+		projectID,
+		name,
+		protocol,
+		port,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetConnection(ctx, id, projectID)
+}
+
+func (s *Store) GetConnection(ctx context.Context, id, projectID string) (*models.Connection, error) {
+	connectionRow := s.db.QueryRowContext(ctx, getConnection, id, projectID)
+
+	connection, err := s.scanConnection(connectionRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrConnectionNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return connection, nil
+}
+
+func (s *Store) LookupConnection(ctx context.Context, name, projectID string) (*models.Connection, error) {
+	connectionRow := s.db.QueryRowContext(ctx, lookupConnection, name, projectID)
+
+	connection, err := s.scanConnection(connectionRow)
+	if err == sql.ErrNoRows {
+		return nil, store.ErrConnectionNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return connection, nil
+}
+
+func (s *Store) ListConnections(ctx context.Context, projectID string) ([]models.Connection, error) {
+	connectionRows, err := s.db.QueryContext(ctx, listConnections, projectID)
+	if err != nil {
+		return nil, errors.Wrap(err, "query connections")
+	}
+	defer connectionRows.Close()
+
+	connections := make([]models.Connection, 0)
+	for connectionRows.Next() {
+		connection, err := s.scanConnection(connectionRows)
+		if err != nil {
+			return nil, err
+		}
+		connections = append(connections, *connection)
+	}
+
+	if err := connectionRows.Err(); err != nil {
+		return nil, err
+	}
+
+	return connections, nil
+}
+
+func (s *Store) UpdateConnection(ctx context.Context, id, projectID, name string, protocol models.Protocol, port uint) (*models.Connection, error) {
+	if _, err := s.db.ExecContext(
+		ctx,
+		updateConnection,
+		name,
+		protocol,
+		port,
+		id,
+		projectID,
+	); err != nil {
+		return nil, err
+	}
+
+	return s.GetConnection(ctx, id, projectID)
+}
+
+func (s *Store) DeleteConnection(ctx context.Context, id, projectID string) error {
+	_, err := s.db.ExecContext(
+		ctx,
+		deleteConnection,
+		id,
+		projectID,
+	)
+	return err
+}
+
+func (s *Store) scanConnection(scanner scanner) (*models.Connection, error) {
+	var connection models.Connection
+	if err := scanner.Scan(
+		&connection.ID,
+		&connection.CreatedAt,
+		&connection.ProjectID,
+		&connection.Name,
+		&connection.Protocol,
+		&connection.Port,
+	); err != nil {
+		return nil, err
+	}
+
+	return &connection, nil
 }
 
 func (s *Store) CreateApplication(ctx context.Context, projectID, name, description string) (*models.Application, error) {

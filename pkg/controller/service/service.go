@@ -37,6 +37,7 @@ type Service struct {
 	deviceRegistrationTokens   store.DeviceRegistrationTokens
 	devicesRegisteredWithToken store.DevicesRegisteredWithToken
 	deviceAccessKeys           store.DeviceAccessKeys
+	connections                store.Connections
 	applications               store.Applications
 	applicationDeviceCounts    store.ApplicationDeviceCounts
 	releases                   store.Releases
@@ -78,6 +79,7 @@ func NewService(
 	deviceRegistrationTokens store.DeviceRegistrationTokens,
 	devicesRegisteredWithToken store.DevicesRegisteredWithToken,
 	deviceAccessKeys store.DeviceAccessKeys,
+	connections store.Connections,
 	applications store.Applications,
 	applicationDeviceCounts store.ApplicationDeviceCounts,
 	releases store.Releases,
@@ -118,6 +120,7 @@ func NewService(
 		deviceRegistrationTokens:   deviceRegistrationTokens,
 		devicesRegisteredWithToken: devicesRegisteredWithToken,
 		deviceAccessKeys:           deviceAccessKeys,
+		connections:                connections,
 		applications:               applications,
 		applicationDeviceCounts:    applicationDeviceCounts,
 		releases:                   releases,
@@ -206,6 +209,12 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.createServiceAccountRoleBinding).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.getServiceAccountRoleBinding).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.deleteServiceAccountRoleBinding).Methods("DELETE")
+
+	apiRouter.HandleFunc("/projects/{project}/connections", s.listConnections).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/connections", s.createConnection).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/connections/{connection}", s.getConnection).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/connections/{connection}", s.updateConnection).Methods("PUT")
+	apiRouter.HandleFunc("/projects/{project}/connections/{connection}", s.deleteConnection).Methods("DELETE")
 
 	apiRouter.HandleFunc("/projects/{project}/applications", s.listApplications).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/applications", s.createApplication).Methods("POST")

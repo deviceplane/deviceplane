@@ -12,6 +12,7 @@ const (
 	ResourceServiceAccounts                             = Resource("serviceaccounts")
 	ResourceServiceAccountAccessKeys                    = Resource("serviceaccountaccesskeys")
 	ResourceServiceAccountRoleBindings                  = Resource("serviceaccountrolebindings")
+	ResourceConnections                                 = Resource("connection")
 	ResourceApplications                                = Resource("applications")
 	ResourceReleases                                    = Resource("releases")
 	ResourceDevices                                     = Resource("devices")

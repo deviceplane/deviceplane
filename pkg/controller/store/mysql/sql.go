@@ -633,6 +633,49 @@ const validateDeviceAccessKey = `
   where project_id = ? and hash = ?
 `
 
+const createConnection = `
+  insert into connections (
+    id,
+    project_id,
+    name,
+    protocol,
+    port
+  )
+  values (?, ?, ?, ?, ?)
+`
+
+// Index: project_id_id
+const getConnection = `
+  select id, created_at, project_id, name, protocol, port from connections
+  where id = ? and project_id = ?
+`
+
+// Index: project_id_name
+const lookupConnection = `
+  select id, created_at, project_id, name, protocol, port from connections
+  where name = ? and project_id = ?
+`
+
+// Index: project_id_id
+const listConnections = `
+  select id, created_at, project_id, name, protocol, port from connections
+  where project_id = ?
+`
+
+// Index: project_id_id
+const updateConnection = `
+  update connections
+  set name = ?, protocol = ?, port = ?
+  where id = ? and project_id = ?
+`
+
+// Index: project_id_id
+const deleteConnection = `
+  delete from connections
+  where id = ? and project_id = ?
+  limit 1
+`
+
 const createApplication = `
   insert into applications (
     id,

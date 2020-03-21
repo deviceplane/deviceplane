@@ -479,6 +479,39 @@ func (s *Service) withServiceAccount(w http.ResponseWriter, r *http.Request, pro
 	f(serviceAccount)
 }
 
+func (s *Service) withConnection(w http.ResponseWriter, r *http.Request, project *models.Project, f func(connection *models.Connection)) {
+	if project == nil {
+		log.WithError(ErrDependencyNotSupplied).Error("getting connection")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	vars := mux.Vars(r)
+	connectionIdentifier := vars["connection"]
+	if connectionIdentifier == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var connection *models.Connection
+	var err error
+	if strings.Contains(connectionIdentifier, "_") {
+		connection, err = s.connections.GetConnection(r.Context(), connectionIdentifier, project.ID)
+	} else {
+		connection, err = s.connections.LookupConnection(r.Context(), connectionIdentifier, project.ID)
+	}
+	if err == store.ErrConnectionNotFound {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.WithError(err).Error("lookup connection")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	f(connection)
+}
+
 func (s *Service) withApplication(w http.ResponseWriter, r *http.Request, project *models.Project, f func(application *models.Application)) {
 	if project == nil {
 		log.WithError(ErrDependencyNotSupplied).Error("getting application")

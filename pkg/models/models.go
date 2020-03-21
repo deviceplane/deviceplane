@@ -172,6 +172,22 @@ type DeviceAccessKey struct {
 	DeviceID  string    `json:"deviceId" yaml:"deviceId"`
 }
 
+type Connection struct {
+	ID        string    `json:"id" yaml:"id"`
+	CreatedAt time.Time `json:"createdAt" yaml:"createdAt"`
+	ProjectID string    `json:"projectId" yaml:"projectId"`
+	Name      string    `json:"name" yaml:"name"`
+	Protocol  Protocol  `json:"protocol" yaml:"protocol"`
+	Port      uint      `json:"port" yaml:"port"`
+}
+
+type Protocol string
+
+const (
+	ProtocolTCP  = Protocol("tcp")
+	ProtocolHTTP = Protocol("http")
+)
+
 type Application struct {
 	ID                    string                          `json:"id" yaml:"id"`
 	CreatedAt             time.Time                       `json:"createdAt" yaml:"createdAt"`
