@@ -12,7 +12,8 @@ import (
 var (
 	sshTimeoutFlag *int = &[]int{0}[0]
 
-	deviceArg *string = &[]string{""}[0]
+	deviceArg     *string = &[]string{""}[0]
+	connectionArg *string = &[]string{""}[0]
 
 	deviceFilterListFlag *[]string = &[][]string{[]string{}}[0]
 
@@ -41,6 +42,13 @@ func Initialize(c *global.Config) {
 		addDeviceArg(deviceSSHCmd)
 		deviceSSHCmd.Flag("timeout", "Maximum length to attempt establishing a connection.").Default("60").IntVar(sshTimeoutFlag)
 		deviceSSHCmd.Action(deviceSSHAction)
+	})
+
+	cliutils.GlobalAndCategorizedCmd(config.App, deviceCmd, func(attachmentPoint cliutils.HasCommand) {
+		deviceNetcatCmd := attachmentPoint.Command("nc", "Open a TCP connection to a device.")
+		addDeviceArg(deviceNetcatCmd)
+		addConnectionArg(deviceNetcatCmd)
+		deviceNetcatCmd.Action(deviceNetcatAction)
 	})
 
 	deviceInspectCmd := deviceCmd.Command("inspect", "Inspect a device's properties and labels.")
@@ -76,5 +84,11 @@ func addDeviceArg(cmd *kingpin.CmdClause) *kingpin.ArgClause {
 		}
 		return names
 	})
+	return arg
+}
+
+func addConnectionArg(cmd *kingpin.CmdClause) *kingpin.ArgClause {
+	arg := cmd.Arg("connection", "Connection name.").Required()
+	arg.StringVar(connectionArg)
 	return arg
 }

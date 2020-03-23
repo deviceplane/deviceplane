@@ -187,8 +187,6 @@ func (c *Client) ConnectTCP(ctx context.Context, project, deviceID, connection s
 
 	req.SetBasicAuth(c.accessKey, "")
 
-	fmt.Println(getWebsocketURL(c.url, projectsURL, project, devicesURL, deviceID, connectTCPURL, connection))
-
 	wsConn, _, err := websocket.DefaultDialer.Dial(getWebsocketURL(c.url, projectsURL, project, devicesURL, deviceID, connectTCPURL, connection), req.Header)
 	if err != nil {
 		fmt.Println("here")
