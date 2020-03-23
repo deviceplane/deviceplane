@@ -9,6 +9,7 @@ import (
 	"net/url"
 
 	"github.com/deviceplane/deviceplane/pkg/agent/server/conncontext"
+	"github.com/deviceplane/deviceplane/pkg/codes"
 	"github.com/deviceplane/deviceplane/pkg/utils"
 )
 
@@ -18,7 +19,8 @@ func (s *Service) connectTCP(w http.ResponseWriter, r *http.Request) {
 
 		localConn, err := net.Dial("tcp", fmt.Sprintf(":%d", port))
 		if err != nil {
-			panic(err)
+			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
+			return
 		}
 
 		go io.Copy(localConn, conn)
@@ -34,12 +36,14 @@ func (s *Service) connectHTTP(w http.ResponseWriter, r *http.Request) {
 
 		req, err := serverConn.Read()
 		if err != nil {
-			panic(err)
+			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
+			return
 		}
 
 		url, err := url.Parse(fmt.Sprintf("http://localhost:%d", port))
 		if err != nil {
-			panic(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
 		req.RequestURI = ""
@@ -47,7 +51,8 @@ func (s *Service) connectHTTP(w http.ResponseWriter, r *http.Request) {
 
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
-			panic(err)
+			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
+			return
 		}
 
 		utils.ProxyResponse(w, resp)
