@@ -55,43 +55,45 @@ const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
       return [];
     }
 
-    return appStatusInfo.reduce(async (arr, info) => {
+    const services = [];
+
+    for (let i = 0; i < appStatusInfo.length; i++) {
+      const info = appStatusInfo[i];
       if (info.serviceStates && info.serviceStates.length) {
-        const services = await Promise.all(
-          info.serviceStates.map(async s => {
-            let imagePullProgress = null;
-            if (s.state === ServiceStatePullingImage) {
-              imagePullProgress = await getImagePullProgress({
-                applicationId: info.application.id,
-                serviceId: s.service,
-              });
-            }
-            return {
-              ...s,
-              currentRelease: {
-                number:
-                  info.serviceStatuses && info.serviceStatuses.length
-                    ? info.serviceStatuses[0].currentRelease.number
-                    : null,
-              },
-              imagePullProgress,
-              application: info.application,
-            };
-          })
-        );
-        return [...arr, ...services];
+        for (let j = 0; j < info.serviceStates.length; j++) {
+          const s = info.serviceStates[j];
+          let imagePullProgress = null;
+
+          if (s.state === ServiceStatePullingImage) {
+            imagePullProgress = await getImagePullProgress({
+              applicationId: info.application.id,
+              serviceId: s.service,
+            });
+          }
+
+          services.push({
+            ...s,
+            currentRelease: {
+              number:
+                info.serviceStatuses && info.serviceStatuses.length
+                  ? info.serviceStatuses[0].currentRelease.number
+                  : null,
+            },
+            imagePullProgress,
+            application: info.application,
+          });
+        }
       } else if (info.serviceStatuses && info.serviceStatuses.length) {
-        return [
-          ...arr,
-          ...info.serviceStatuses.map(s => ({
+        services.push(
+          info.serviceStatuses.map(s => ({
             ...s,
             application: info.application,
-          })),
-        ];
-      } else {
-        return [];
+          }))
+        );
       }
-    }, []);
+    }
+
+    return services;
   };
 
   const [services, setServices] = useState([]);
