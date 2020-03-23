@@ -21,8 +21,6 @@ func (s *Service) connectTCP(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 
-		fmt.Println(port)
-
 		go io.Copy(localConn, conn)
 		io.Copy(conn, localConn)
 	})

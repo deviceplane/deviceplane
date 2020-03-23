@@ -135,19 +135,22 @@ func (s *Service) connectHTTP(w http.ResponseWriter, r *http.Request) {
 							}
 
 							httpRequest, err := http.NewRequestWithContext(
-								r.Context(), "GET", "/TODO", nil,
+								r.Context(), "GET", "/", nil,
 							)
 							if err != nil {
-								panic(err)
+								http.Error(w, err.Error(), http.StatusBadRequest)
+								return
 							}
 
 							if err := httpRequest.Write(deviceConn); err != nil {
-								panic(err)
+								http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
+								return
 							}
 
 							resp, err := http.ReadResponse(bufio.NewReader(deviceConn), httpRequest)
 							if err != nil {
-								panic(err)
+								http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
+								return
 							}
 
 							utils.ProxyResponse(w, resp)
