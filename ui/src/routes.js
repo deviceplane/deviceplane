@@ -511,6 +511,39 @@ export default mount({
               ),
             })
           ),
+          '/connections': mount({
+            '/': route({
+              title: 'Connections',
+              getData: async request => {
+                const { data: connections } = await api.connections({
+                  projectId: request.params.project,
+                });
+                return {
+                  connections,
+                  params: request.params,
+                };
+              },
+              getView: () => import('./containers/connections'),
+            }),
+            '/:connection': route({
+              title: 'Connection',
+              getData: async request => {
+                const { data: connection } = await api.connection({
+                  projectId: request.params.project,
+                  connectionId: request.params.connection,
+                });
+                return {
+                  connection,
+                  params: request.params,
+                };
+              },
+              getView: () => import('./containers/connection'),
+            }),
+            '/create': route({
+              title: 'Create Connection',
+              getView: () => import('./containers/create-connection'),
+            }),
+          }),
           '/settings': route({
             title: 'Settings - Project',
             getData: async request => {
