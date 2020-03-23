@@ -46,8 +46,10 @@ func NewService(
 	}
 	go s.getSigner()
 
-	s.router.HandleFunc("/ssh", s.ssh).Methods("POST")
-	s.router.HandleFunc("/reboot", s.reboot).Methods("POST")
+	s.router.HandleFunc("/ssh", s.ssh)
+	s.router.HandleFunc("/connecttcp", s.connectTCP)
+	s.router.HandleFunc("/connecthttp", s.connectHTTP)
+	s.router.HandleFunc("/reboot", s.reboot)
 	s.router.HandleFunc("/applications/{application}/services/{service}/imagepullprogress", s.imagePullProgress).Methods("GET")
 	s.router.HandleFunc("/applications/{application}/services/{service}/metrics", s.metrics).Methods("GET")
 	s.router.Handle("/metrics/host", metrics.FilteredHostMetricsHandler())

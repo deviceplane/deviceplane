@@ -43,6 +43,7 @@ const (
 	ActionUpdateDevice                                     = Action("UpdateDevice")
 	ActionDeleteDevice                                     = Action("DeleteDevice")
 	ActionSSH                                              = Action("SSH")
+	ActionConnect                                          = Action("Connect")
 	ActionReboot                                           = Action("Reboot")
 	ActionListAllDeviceLabels                              = Action("ListAllDeviceLabels")
 	ActionSetDeviceLabel                                   = Action("SetDeviceLabel")
@@ -119,6 +120,7 @@ var (
 		ActionUpdateDevice,
 		ActionDeleteDevice,
 		ActionSSH,
+		ActionConnect,
 		ActionReboot,
 		ActionSetDeviceLabel,
 		ActionDeleteDeviceLabel,

@@ -24,6 +24,8 @@ const (
 	releasesURL     = "releases"
 	devicesURL      = "devices"
 	sshURL          = "ssh"
+	connectTCPURL   = "connecttcp"
+	connectHTTPURL  = "connecthttp"
 	executeURL      = "execute"
 	rebootURL       = "reboot"
 	bundleURL       = "bundle"
@@ -161,22 +163,7 @@ func (c *Client) CreateRelease(ctx context.Context, project, application, yamlCo
 	return &release, nil
 }
 
-func (c *Client) RebootDevice(ctx context.Context, project, device string) error {
-	if err := c.post(ctx, []byte{}, nil, projectsURL, project, devicesURL, device, rebootURL); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *Client) Execute(ctx context.Context, project, deviceID, command string) (*models.ExecuteResponse, error) {
-	var executeResponse models.ExecuteResponse
-	if err := c.post(ctx, command, &executeResponse, projectsURL, project, devicesURL, deviceID, executeURL); err != nil {
-		return nil, err
-	}
-	return &executeResponse, nil
-}
-
-func (c *Client) InitiateSSH(ctx context.Context, project, deviceID string) (net.Conn, error) {
+func (c *Client) SSH(ctx context.Context, project, deviceID string) (net.Conn, error) {
 	req, err := http.NewRequestWithContext(ctx, "", "", nil)
 	if err != nil {
 		return nil, err
@@ -190,6 +177,32 @@ func (c *Client) InitiateSSH(ctx context.Context, project, deviceID string) (net
 	}
 
 	return wsconnadapter.New(wsConn), nil
+}
+
+func (c *Client) ConnectTCP(ctx context.Context, project, deviceID, connection string) (net.Conn, error) {
+	req, err := http.NewRequestWithContext(ctx, "", "", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.SetBasicAuth(c.accessKey, "")
+
+	fmt.Println(getWebsocketURL(c.url, projectsURL, project, devicesURL, deviceID, connectTCPURL, connection))
+
+	wsConn, _, err := websocket.DefaultDialer.Dial(getWebsocketURL(c.url, projectsURL, project, devicesURL, deviceID, connectTCPURL, connection), req.Header)
+	if err != nil {
+		fmt.Println("here")
+		return nil, err
+	}
+
+	return wsconnadapter.New(wsConn), nil
+}
+
+func (c *Client) Reboot(ctx context.Context, project, device string) error {
+	if err := c.post(ctx, []byte{}, nil, projectsURL, project, devicesURL, device, rebootURL); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Client) get(ctx context.Context, out interface{}, s ...string) error {
