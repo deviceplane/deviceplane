@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigation } from 'react-navi';
 import { useTable, useSortBy, useRowSelect } from 'react-table';
 
 import api from '../../api';
+import useToggle from '../../hooks/useToggle';
 import Card from '../../components/card';
 import Table, {
   SelectColumn,
@@ -26,14 +27,10 @@ const Device = ({
     data: { params, devices, metrics },
   },
 }) => {
-  const [showDeleteForm, setShowDeleteForm] = useState();
-  const [showMetricsForm, setShowMetricsForm] = useState();
-  const [showMetricOverview, setShowMetricOverview] = useState();
+  const [isDeleteForm, toggleDeleteForm] = useToggle();
+  const [isMetricsForm, toggleMetricsForm] = useToggle();
+  const [isMetricOverview, toggleMetricOverview] = useToggle();
   const navigation = useNavigation();
-
-  const hideMetricsForm = () => setShowMetricsForm(false);
-  const hideMetricOverview = () => setShowMetricOverview(false);
-  const hideDeleteForm = () => setShowDeleteForm(false);
 
   const submitDelete = async () => {
     try {
@@ -44,7 +41,7 @@ const Device = ({
             !selectedFlatRows.find(({ original }) => original.name === name)
         ),
       });
-      setShowDeleteForm(false);
+      toggleDeleteForm();
       toaster.success('Metrics deleted.');
       navigation.refresh();
     } catch (error) {
@@ -110,7 +107,7 @@ const Device = ({
         actions={[
           {
             title: 'Add Device Metrics',
-            onClick: () => setShowMetricsForm(true),
+            onClick: toggleMetricsForm,
           },
         ]}
         maxHeight="100%"
@@ -121,13 +118,13 @@ const Device = ({
             title="Edit"
             variant="tertiary"
             disabled={selectedFlatRows.length !== 1}
-            onClick={() => setShowMetricOverview(true)}
+            onClick={toggleMetricOverview}
           />
           <Button
             title="Delete"
             variant="tertiaryDanger"
             disabled={selectedFlatRows.length === 0}
-            onClick={() => setShowDeleteForm(true)}
+            onClick={toggleDeleteForm}
           />
         </Row>
         <Table
@@ -138,24 +135,24 @@ const Device = ({
             </Text>
           }
         />
-        <Popup show={showMetricsForm} onClose={hideMetricsForm}>
+        <Popup show={isMetricsForm} onClose={toggleMetricsForm}>
           <DeviceMetricsForm
             params={params}
             metrics={metrics}
             devices={devices}
-            close={hideMetricsForm}
+            close={toggleMetricsForm}
           />
         </Popup>
-        <Popup show={showMetricOverview} onClose={hideMetricOverview}>
+        <Popup show={isMetricOverview} onClose={toggleMetricOverview}>
           <MetricOverview
             projectId={params.project}
             devices={devices}
             metrics={metrics}
             metric={selectedFlatRows[0] && selectedFlatRows[0].original}
-            close={hideMetricOverview}
+            close={toggleMetricOverview}
           />
         </Popup>
-        <Popup show={showDeleteForm} onClose={hideDeleteForm}>
+        <Popup show={isDeleteForm} onClose={toggleDeleteForm}>
           <Card
             border
             title={`Delete Device Metric${

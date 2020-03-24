@@ -4,6 +4,7 @@ import { useTable, useSortBy } from 'react-table';
 
 import api from '../../api';
 import utils from '../../utils';
+import useToggle from '../../hooks/useToggle';
 import { renderLabels } from '../../helpers/labels';
 import {
   OperatorIs,
@@ -64,7 +65,7 @@ const ReleasePinning = ({
       releaseSelectors,
     },
   });
-  const [showPreview, setShowPreview] = useState();
+  const [isPreview, togglePreview] = useToggle();
   const [scheduledDevices, setScheduledDevices] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [searchFocused, setSearchFocused] = useState();
@@ -174,7 +175,7 @@ const ReleasePinning = ({
   };
 
   useEffect(() => {
-    if (showPreview) {
+    if (isPreview) {
       getScheduledDevices();
     }
   }, [searchInput]);
@@ -194,7 +195,7 @@ const ReleasePinning = ({
             disabled: isSubmitDisabled,
             onClick: () => {
               getScheduledDevices();
-              setShowPreview(true);
+              togglePreview();
             },
           },
         ]}
@@ -458,7 +459,7 @@ const ReleasePinning = ({
         </Form>
       </Card>
 
-      <Popup show={showPreview} onClose={() => setShowPreview(false)}>
+      <Popup show={isPreview} onClose={togglePreview}>
         <Card border size="xxlarge" title="Preview">
           <Row position="relative" alignItems="center" marginBottom={4}>
             <Icon

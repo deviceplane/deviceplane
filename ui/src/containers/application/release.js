@@ -4,6 +4,7 @@ import { useNavigation } from 'react-navi';
 
 import api from '../../api';
 import utils from '../../utils';
+import useToggle from '../../hooks/useToggle';
 import Editor from '../../components/editor';
 import Card from '../../components/card';
 import Popup from '../../components/popup';
@@ -46,7 +47,7 @@ const Release = ({
   },
 }) => {
   const [backendError, setBackendError] = useState();
-  const [showConfirmPopup, setShowConfirmPopup] = useState();
+  const [isConfirmPopup, toggleConfirmPopup] = useToggle();
   const navigation = useNavigation();
 
   const revertRelease = async () => {
@@ -63,7 +64,7 @@ const Release = ({
       setBackendError(utils.parseError(error, 'Release reversion failed.'));
       console.error(error);
     }
-    setShowConfirmPopup(false);
+    toggleConfirmPopup();
   };
 
   return (
@@ -92,11 +93,11 @@ const Release = ({
         <Button
           marginTop={6}
           title="Revert to this Release"
-          onClick={() => setShowConfirmPopup(true)}
+          onClick={toggleConfirmPopup}
         />
       </Card>
 
-      <Popup show={showConfirmPopup} onClose={() => setShowConfirmPopup(false)}>
+      <Popup show={isConfirmPopup} onClose={toggleConfirmPopup}>
         <Card title="Revert Release" border size="large">
           <Text>
             This will create a new release to application{' '}

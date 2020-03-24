@@ -4,6 +4,7 @@ import { useTable, useSortBy, useRowSelect } from 'react-table';
 
 import storage from '../../storage';
 import api from '../../api';
+import useToggle from '../../hooks/useToggle';
 import Card from '../../components/card';
 import Table, {
   SelectColumn,
@@ -35,16 +36,11 @@ const Service = ({
       return null;
     }
   });
-  const [showMetricsForm, setShowMetricsForm] = useState();
-  const [showSettings, setShowSettings] = useState();
-  const [showDeleteForm, setShowDeleteForm] = useState();
-  const [showMetricOverview, setShowMetricOverview] = useState();
+  const [isMetricsForm, toggleMetricsForm] = useToggle();
+  const [isSettings, toggleSettings] = useToggle();
+  const [isDeleteForm, toggleDeleteForm] = useToggle();
+  const [isMetricOverview, toggleMetricOverview] = useToggle();
   const navigation = useNavigation();
-
-  const hideMetricsForm = () => setShowMetricsForm(false);
-  const hideSettings = () => setShowSettings(false);
-  const hideMetricOverview = () => setShowMetricOverview(false);
-  const hideDeleteForm = () => setShowDeleteForm(false);
 
   const selection = useMemo(() => selectValue && JSON.parse(selectValue), [
     selectValue,
@@ -72,7 +68,7 @@ const Service = ({
           return m;
         }),
       });
-      hideDeleteForm();
+      toggleDeleteForm();
       toaster.success('Metric deleted.');
       navigation.refresh();
     } catch (error) {
@@ -186,11 +182,11 @@ const Service = ({
           {
             title: 'Settings',
             variant: 'secondary',
-            onClick: () => setShowSettings(true),
+            onClick: toggleSettings,
           },
           {
             title: 'Add Service Metrics',
-            onClick: () => setShowMetricsForm(true),
+            onClick: toggleMetricsForm,
           },
         ]}
         disabled={!(selection && selection.service)}
@@ -202,13 +198,13 @@ const Service = ({
             title="Edit"
             variant="tertiary"
             disabled={selectedFlatRows.length !== 1}
-            onClick={() => setShowMetricOverview(true)}
+            onClick={toggleMetricOverview}
           />
           <Button
             title="Delete"
             variant="tertiaryDanger"
             disabled={selectedFlatRows.length === 0}
-            onClick={() => setShowDeleteForm(true)}
+            onClick={toggleDeleteForm}
           />
         </Row>
         <Table
@@ -220,7 +216,7 @@ const Service = ({
           }
         />
       </Card>
-      <Popup show={showMetricOverview} onClose={hideMetricOverview}>
+      <Popup show={isMetricOverview} onClose={toggleMetricOverview}>
         <MetricOverview
           service={selection && selection.service}
           application={selection && selection.application}
@@ -228,10 +224,10 @@ const Service = ({
           devices={devices}
           metrics={selectedMetrics}
           metric={selectedFlatRows[0] && selectedFlatRows[0].original}
-          close={hideMetricOverview}
+          close={toggleMetricOverview}
         />
       </Popup>
-      <Popup show={!!showSettings} onClose={hideSettings} overflow="visible">
+      <Popup show={isSettings} onClose={toggleSettings} overflow="visible">
         <ServiceMetricsSettings
           projectId={params.project}
           applicationId={
@@ -239,12 +235,12 @@ const Service = ({
           }
           service={selection && selection.service}
           metricEndpointConfigs={metricEndpointConfigs}
-          close={hideSettings}
+          close={toggleSettings}
         />
       </Popup>
       <Popup
-        show={!!showMetricsForm}
-        onClose={hideMetricsForm}
+        show={isMetricsForm}
+        onClose={toggleMetricsForm}
         overflow="visible"
       >
         <ServiceMetricsForm
@@ -254,10 +250,10 @@ const Service = ({
           devices={devices}
           application={selection && selection.application}
           service={selection && selection.service}
-          close={hideMetricsForm}
+          close={toggleMetricsForm}
         />
       </Popup>
-      <Popup show={showDeleteForm} onClose={hideDeleteForm}>
+      <Popup show={isDeleteForm} onClose={toggleDeleteForm}>
         <Card
           border
           title={`Delete Service Metric${

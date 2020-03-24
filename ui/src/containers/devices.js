@@ -3,6 +3,7 @@ import { useTable, useSortBy, useRowSelect } from 'react-table';
 import { useNavigation } from 'react-navi';
 
 import api from '../api';
+import useToggle from '../hooks/useToggle';
 import Layout from '../components/layout';
 import Card from '../components/card';
 import Table, { SelectColumn } from '../components/table';
@@ -26,7 +27,7 @@ const Params = {
 };
 
 const Devices = ({ route }) => {
-  const [showFilterDialog, setShowFilterDialog] = useState();
+  const [isFilterPopup, toggleFilterPopup] = useToggle();
   const [devices, setDevices] = useState(route.data.devices);
   const [deviceTotal, setDeviceTotal] = useState();
   const [filterQuery, setFilterQuery] = useState(
@@ -163,7 +164,7 @@ const Devices = ({ route }) => {
   };
 
   const addFilter = filter => {
-    setShowFilterDialog(false);
+    toggleFilterPopup();
     if (filterToEdit !== null) {
       setFilterQuery(filterQuery =>
         filterQuery.map((f, index) => (index === filterToEdit ? filter : f))
@@ -288,7 +289,7 @@ const Devices = ({ route }) => {
           {
             title: 'Add Filter',
             variant: 'secondary',
-            onClick: () => setShowFilterDialog(true),
+            onClick: toggleFilterPopup,
           },
           {
             title: 'Register Device',
@@ -305,7 +306,7 @@ const Devices = ({ route }) => {
               removeFilter={removeFilter}
               onEdit={index => {
                 setFilterToEdit(index);
-                setShowFilterDialog(true);
+                toggleFilterPopup();
               }}
             />
           </Row>
@@ -336,11 +337,11 @@ const Devices = ({ route }) => {
         />
       </Card>
 
-      {showFilterDialog && (
+      {isFilterPopup && (
         <DevicesFilter
           filter={filterToEdit !== null && filterQuery[filterToEdit]}
           onClose={() => {
-            setShowFilterDialog(false);
+            toggleFilterPopup();
             setFilterToEdit(null);
           }}
           onSubmit={addFilter}

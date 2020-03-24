@@ -8,6 +8,7 @@ import moment from 'moment';
 import api from '../../api';
 import utils from '../../utils';
 import validators from '../../validators';
+import useToggle from '../../hooks/useToggle';
 import Card from '../../components/card';
 import Field from '../../components/field';
 import Popup from '../../components/popup';
@@ -52,7 +53,7 @@ const ServiceAccount = ({
     },
   });
   const navigation = useNavigation();
-  const [showDeletePopup, setShowDeletePopup] = useState();
+  const [isDeletePopup, toggleDeletePopup] = useToggle();
   const [backendError, setBackendError] = useState();
 
   const submit = async data => {
@@ -123,7 +124,7 @@ const ServiceAccount = ({
       );
       console.error(error);
     }
-    setShowDeletePopup(false);
+    toggleDeletePopup();
   };
 
   return (
@@ -135,7 +136,7 @@ const ServiceAccount = ({
         actions={[
           {
             title: 'Delete',
-            onClick: () => setShowDeletePopup(true),
+            onClick: toggleDeletePopup,
             variant: 'danger',
           },
         ]}
@@ -182,7 +183,7 @@ const ServiceAccount = ({
         serviceAccount={serviceAccount}
       />
 
-      <Popup show={showDeletePopup} onClose={() => setShowDeletePopup(false)}>
+      <Popup show={isDeletePopup} onClose={toggleDeletePopup}>
         <Card title="Delete Service Account" border size="large">
           <Text>
             You are about to delete the <strong>{serviceAccount.name}</strong>{' '}

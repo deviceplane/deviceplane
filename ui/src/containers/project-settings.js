@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigation } from 'react-navi';
 import * as yup from 'yup';
@@ -7,6 +7,7 @@ import api from '../api';
 import utils from '../utils';
 import storage from '../storage';
 import validators from '../validators';
+import useToggle from '../hooks/useToggle';
 import Layout from '../components/layout';
 import Card from '../components/card';
 import Field from '../components/field';
@@ -39,9 +40,9 @@ const ProjectSettings = ({
     },
   });
   const navigation = useNavigation();
-  const [showDeletePopup, setShowDeletePopup] = React.useState();
-  const [confirmation, setConfirmation] = React.useState();
-  const [backendError, setBackendError] = React.useState();
+  const [isDeletePopup, toggleDeletePopup] = useToggle();
+  const [confirmation, setConfirmation] = useState();
+  const [backendError, setBackendError] = useState();
 
   const submit = async data => {
     data.datadogApiKey = project.datadogApiKey;
@@ -67,7 +68,7 @@ const ProjectSettings = ({
       setBackendError(utils.parseError(error, 'Project deletion failed.'));
       console.error(error);
     }
-    setShowDeletePopup(false);
+    toggleDeletePopup();
   };
 
   return (
@@ -80,7 +81,7 @@ const ProjectSettings = ({
             {
               title: 'Delete',
               variant: 'danger',
-              onClick: () => setShowDeletePopup(true),
+              onClick: toggleDeletePopup,
             },
           ]}
         >
@@ -118,7 +119,7 @@ const ProjectSettings = ({
           </Form>
         </Card>
 
-        <Popup show={showDeletePopup} onClose={() => setShowDeletePopup(false)}>
+        <Popup show={isDeletePopup} onClose={toggleDeletePopup}>
           <Card title="Delete Project" border size="large">
             <Text marginBottom={4}>
               This action <strong>cannot</strong> be undone. This will

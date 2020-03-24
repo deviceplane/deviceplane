@@ -5,6 +5,7 @@ import { useTable, useSortBy } from 'react-table';
 
 import api from '../../api';
 import utils from '../../utils';
+import useToggle from '../../hooks/useToggle';
 import { renderLabels } from '../../helpers/labels';
 import {
   OperatorIs,
@@ -58,7 +59,7 @@ const Scheduling = ({
   const [backendError, setBackendError] = useState();
   const [searchInput, setSearchInput] = useState('');
   const [searchFocused, setSearchFocused] = useState();
-  const [showPreview, setShowPreview] = useState();
+  const [isPreview, togglePreview] = useToggle();
   const { register, watch, control, handleSubmit, getValues } = useForm({
     defaultValues: {
       scheduleType: application.schedulingRule.scheduleType || 'NoDevices',
@@ -175,7 +176,7 @@ const Scheduling = ({
                   variant: 'secondary',
                   onClick: () => {
                     getScheduledDevices();
-                    setShowPreview(true);
+                    togglePreview();
                   },
                 },
               ]
@@ -359,7 +360,7 @@ const Scheduling = ({
           </Column>
         </Row>
       </Card>
-      <Popup show={showPreview} onClose={() => setShowPreview(false)}>
+      <Popup show={isPreview} onClose={togglePreview}>
         <Card
           border
           size="xxlarge"
