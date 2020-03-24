@@ -22,10 +22,6 @@ controller-with-db:
 push-controller-with-db: controller-with-db
 	docker push deviceplane/deviceplane:${CONTROLLER_WITH_DB_VERSION}
 
-push-controller-with-db-latest: push-controller-with-db
-	docker tag deviceplane/deviceplane:${CONTROLLER_WITH_DB_VERSION} deviceplane/deviceplane:latest
-	docker push deviceplane/deviceplane:latest
-
 agent-binaries:
 	./scripts/build-agent-binaries
 
