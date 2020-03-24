@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
-	"net/url"
 
 	"github.com/deviceplane/deviceplane/pkg/agent/server/conncontext"
 	"github.com/deviceplane/deviceplane/pkg/codes"
@@ -40,14 +39,9 @@ func (s *Service) connectHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		url, err := url.Parse(fmt.Sprintf("http://localhost:%d", port))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
 		req.RequestURI = ""
-		req.URL = url
+		req.URL.Scheme = "http"
+		req.URL.Host = fmt.Sprintf("localhost:%d", port)
 
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {

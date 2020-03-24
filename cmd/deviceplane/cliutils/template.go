@@ -18,6 +18,7 @@ func init() {
 		"help",
 		"deploy",
 		"edit",
+		"proxy",
 		"nc",
 	})
 

@@ -113,55 +113,6 @@ func (s *Service) connectTCP(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (s *Service) connectHTTP(w http.ResponseWriter, r *http.Request) {
-	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
-		s.validateAuthorization(
-			authz.ResourceDevices, authz.ActionConnect,
-			w, r,
-			user, serviceAccount,
-			func(project *models.Project) {
-				s.withDevice(w, r, project, func(device *models.Device) {
-					s.withConnection(w, r, project, func(connection *models.Connection) {
-						if connection.Protocol != models.ProtocolHTTP {
-							http.Error(w, errProtocolMismatch.Error(), http.StatusBadRequest)
-							return
-						}
-
-						s.withDeviceConnection(w, r, project, device, func(deviceConn net.Conn) {
-							err := client.ConnectHTTP(r.Context(), deviceConn, connection.Port)
-							if err != nil {
-								http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
-								return
-							}
-
-							httpRequest, err := http.NewRequestWithContext(
-								r.Context(), "GET", "/", nil,
-							)
-							if err != nil {
-								http.Error(w, err.Error(), http.StatusBadRequest)
-								return
-							}
-
-							if err := httpRequest.Write(deviceConn); err != nil {
-								http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
-								return
-							}
-
-							resp, err := http.ReadResponse(bufio.NewReader(deviceConn), httpRequest)
-							if err != nil {
-								http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
-								return
-							}
-
-							utils.ProxyResponse(w, resp)
-						})
-					})
-				})
-			},
-		)
-	})
-}
-
 func (s *Service) reboot(w http.ResponseWriter, r *http.Request) {
 	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
 		s.validateAuthorization(

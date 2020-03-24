@@ -24,8 +24,7 @@ const (
 	releasesURL     = "releases"
 	devicesURL      = "devices"
 	sshURL          = "ssh"
-	connectTCPURL   = "connecttcp"
-	connectHTTPURL  = "connecthttp"
+	connectURL      = "connect"
 	executeURL      = "execute"
 	rebootURL       = "reboot"
 	bundleURL       = "bundle"
@@ -187,9 +186,8 @@ func (c *Client) ConnectTCP(ctx context.Context, project, deviceID, connection s
 
 	req.SetBasicAuth(c.accessKey, "")
 
-	wsConn, _, err := websocket.DefaultDialer.Dial(getWebsocketURL(c.url, projectsURL, project, devicesURL, deviceID, connectTCPURL, connection), req.Header)
+	wsConn, _, err := websocket.DefaultDialer.Dial(getWebsocketURL(c.url, projectsURL, project, devicesURL, deviceID, connectURL, connection), req.Header)
 	if err != nil {
-		fmt.Println("here")
 		return nil, err
 	}
 
