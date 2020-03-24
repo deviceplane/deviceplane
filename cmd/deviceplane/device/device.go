@@ -161,7 +161,7 @@ func deviceProxyAction(c *kingpin.ParseContext) error {
 			return err
 		}
 
-		deviceConn, err := config.APIClient.ConnectTCP(context.TODO(), *config.Flags.Project, *deviceArg, *connectionArg)
+		deviceConn, err := config.APIClient.Connect(context.TODO(), *config.Flags.Project, *deviceArg, *connectionArg)
 		if err != nil {
 			return err
 		}
@@ -172,7 +172,7 @@ func deviceProxyAction(c *kingpin.ParseContext) error {
 }
 
 func deviceNetcatAction(c *kingpin.ParseContext) error {
-	conn, err := config.APIClient.ConnectTCP(context.TODO(), *config.Flags.Project, *deviceArg, *connectionArg)
+	conn, err := config.APIClient.Connect(context.TODO(), *config.Flags.Project, *deviceArg, *connectionArg)
 	if err != nil {
 		return err
 	}

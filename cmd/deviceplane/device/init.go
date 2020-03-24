@@ -54,7 +54,7 @@ func Initialize(c *global.Config) {
 	})
 
 	cliutils.GlobalAndCategorizedCmd(config.App, deviceCmd, func(attachmentPoint cliutils.HasCommand) {
-		deviceNetcatCmd := attachmentPoint.Command("nc", "Open a TCP connection to a device.")
+		deviceNetcatCmd := attachmentPoint.Command("nc", "Read and write to a connection from stdin and stdout.")
 		addDeviceArg(deviceNetcatCmd)
 		addConnectionArg(deviceNetcatCmd)
 		deviceNetcatCmd.Action(deviceNetcatAction)
@@ -103,7 +103,7 @@ func addConnectionArg(cmd *kingpin.CmdClause) *kingpin.ArgClause {
 }
 
 func addPortArg(cmd *kingpin.CmdClause) *kingpin.ArgClause {
-	arg := cmd.Arg("port", "Port to open locally.").Required()
+	arg := cmd.Arg("port", "Local port.").Required()
 	arg.UintVar(portArg)
 	return arg
 }

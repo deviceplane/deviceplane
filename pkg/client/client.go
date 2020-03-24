@@ -178,7 +178,7 @@ func (c *Client) SSH(ctx context.Context, project, deviceID string) (net.Conn, e
 	return wsconnadapter.New(wsConn), nil
 }
 
-func (c *Client) ConnectTCP(ctx context.Context, project, deviceID, connection string) (net.Conn, error) {
+func (c *Client) Connect(ctx context.Context, project, deviceID, connection string) (net.Conn, error) {
 	req, err := http.NewRequestWithContext(ctx, "", "", nil)
 	if err != nil {
 		return nil, err
