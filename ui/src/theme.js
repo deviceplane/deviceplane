@@ -25,8 +25,10 @@ const colors = {
 
   black: '#000',
   white: '#E6E6E6',
-  green: '#A2FAA3',
+  purple: '#6f84ff',
+  green: '#46e7b1',
   red: '#F93943',
+  orange: '#ffa26f',
 
   pureWhite: '#fff',
 

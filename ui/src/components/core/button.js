@@ -22,6 +22,21 @@ const variants = {
         opacity: 1,
       },
     },
+    primaryGray: {
+      color: 'black',
+      bg: 'grays.3',
+      border: 0,
+      borderColor: 'grays.3',
+      opacity: 0.9,
+      '&:disabled, &[disabled]': {
+        color: 'pureWhite',
+        bg: 'transparent',
+        borderColor: 'pureWhite',
+      },
+      '&:not(:disabled):not([disabled]):hover, &:not(:disabled):not([disabled]):focus': {
+        opacity: 1,
+      },
+    },
     secondary: {
       color: 'primary',
       bg: 'transparent',
@@ -43,6 +58,22 @@ const variants = {
       opacity: 0.9,
       border: 0,
 
+      height: 'min-content',
+      '&:disabled, &[disabled]': {
+        color: 'pureWhite',
+        borderColor: 'pureWhite',
+      },
+      '&:not(:disabled):not([disabled]):hover, &:not(:disabled):not([disabled]):focus': {
+        opacity: 1,
+      },
+    },
+    tertiaryGreen: {
+      color: 'green',
+      bg: 'transparent',
+      padding: '5px 6px',
+      opacity: 0.9,
+      border: 0,
+      borderColor: 'green',
       height: 'min-content',
       '&:disabled, &[disabled]': {
         color: 'pureWhite',

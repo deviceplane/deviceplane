@@ -8,7 +8,9 @@ import validators from '../validators';
 import Card from '../components/card';
 import Field from '../components/field';
 import Alert from '../components/alert';
-import { Column, Row, Form, Button } from '../components/core';
+import Google from '../components/icons/google';
+import Github from '../components/icons/github';
+import { Box, Column, Row, Form, Button, Text } from '../components/core';
 import * as auth0 from '../lib/auth0';
 
 const validationSchema = yup.object().shape({
@@ -58,7 +60,9 @@ const Login = ({
         logo
         title="Log in"
         size="medium"
-        actions={[{ href: '/signup', title: 'Sign up', variant: 'tertiary' }]}
+        actions={[
+          { href: '/signup', title: 'Sign up', variant: 'tertiaryGreen' },
+        ]}
       >
         <Alert show={backendError} variant="error" description={backendError} />
         <Form
@@ -97,21 +101,58 @@ const Login = ({
 
           <Button justifyContent="center" title="Log in" />
         </Form>
-
-        <Row marginTop={5} justifyContent="space-between">
+        <Text
+          textAlign="center"
+          marginTop={5}
+          marginBottom={3}
+          paddingTop={3}
+          borderTop={0}
+          borderColor="grays.5"
+        >
+          Log in with
+        </Text>
+        <Row justifyContent="space-between">
           <Button
-            justifyContent="center"
-            title="Log in with Google"
-            onClick={() => {
-              auth0.api.login.google();
-            }}
+            variant="primaryGray"
+            flex={1}
+            marginRight={5}
+            title={
+              <Row
+                alignItems="center"
+                position="relative"
+                flex={1}
+                justifyContent="center"
+              >
+                <Box position="absolute" left={0}>
+                  <Google />
+                </Box>
+
+                <Text marginLeft={3} color="white" textAlign="center">
+                  Google
+                </Text>
+              </Row>
+            }
+            onClick={auth0.api.login.google}
           />
           <Button
-            justifyContent="center"
-            title="Log in with Github"
-            onClick={() => {
-              auth0.api.login.github();
-            }}
+            variant="primaryGray"
+            flex={1}
+            title={
+              <Row
+                alignItems="center"
+                position="relative"
+                flex={1}
+                justifyContent="center"
+              >
+                <Box position="absolute" left={0}>
+                  <Github />
+                </Box>
+                <Text marginLeft={3} color="white" textAlign="center">
+                  Github
+                </Text>
+              </Row>
+            }
+            onClick={auth0.api.login.github}
           />
         </Row>
       </Card>
