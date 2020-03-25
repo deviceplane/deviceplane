@@ -26,7 +26,7 @@ import ServiceState, {
 } from '../../components/service-state';
 import { getMetricLabel } from '../../helpers/metrics';
 
-const DeviceServices = ({ projectId, device, applicationStatusInfo }) => {
+const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
   const getImagePullProgress = async ({ applicationId, serviceId }) => {
     try {
       const { data } = await api.imagePullProgress({
@@ -340,7 +340,6 @@ const DeviceOverview = ({
             lastSeenAt={device.lastSeenAt}
           />
         }
-        marginBottom={5}
         actions={[
           {
             title: <Icon icon="pulse" size={18} color="primary" />,
@@ -384,6 +383,7 @@ const DeviceOverview = ({
             href: `/${params.project}/ssh?devices=${device.name}`,
           },
         ]}
+        marginBottom={5}
       >
         <Group>
           <Label>Agent Version</Label>
@@ -413,6 +413,15 @@ const DeviceOverview = ({
           </Value>
         </Group>
       </Card>
+
+      <Card title="Application Services" size="xlarge" marginBottom={5}>
+        <ApplicationServices
+          projectId={params.project}
+          device={device}
+          applicationStatusInfo={device.applicationStatusInfo}
+        />
+      </Card>
+
       <EditableLabelTable
         data={device.labels}
         onAdd={label =>
@@ -431,6 +440,7 @@ const DeviceOverview = ({
         }
         marginBottom={5}
       />
+
       <EditableLabelTable
         title="Environment Variables"
         dataName="Environment Variable"
@@ -449,15 +459,8 @@ const DeviceOverview = ({
             key,
           })
         }
-        marginBottom={5}
       />
-      <Card title="Services" size="xlarge">
-        <DeviceServices
-          projectId={params.project}
-          device={device}
-          applicationStatusInfo={device.applicationStatusInfo}
-        />
-      </Card>
+
       <Popup show={!!hostMetrics} onClose={() => setHostMetrics(null)}>
         <Card
           border
