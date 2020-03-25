@@ -12,7 +12,9 @@ import (
 var (
 	sshTimeoutFlag *int = &[]int{0}[0]
 
-	deviceArg *string = &[]string{""}[0]
+	deviceArg     *string = &[]string{""}[0]
+	connectionArg *string = &[]string{""}[0]
+	portArg               = &[]uint{0}[0]
 
 	deviceFilterListFlag *[]string = &[][]string{[]string{}}[0]
 
@@ -41,6 +43,21 @@ func Initialize(c *global.Config) {
 		addDeviceArg(deviceSSHCmd)
 		deviceSSHCmd.Flag("timeout", "Maximum length to attempt establishing a connection.").Default("60").IntVar(sshTimeoutFlag)
 		deviceSSHCmd.Action(deviceSSHAction)
+	})
+
+	cliutils.GlobalAndCategorizedCmd(config.App, deviceCmd, func(attachmentPoint cliutils.HasCommand) {
+		deviceProxyCmd := attachmentPoint.Command("proxy", "Forward traffic from a local port to a connection.")
+		addDeviceArg(deviceProxyCmd)
+		addConnectionArg(deviceProxyCmd)
+		addPortArg(deviceProxyCmd)
+		deviceProxyCmd.Action(deviceProxyAction)
+	})
+
+	cliutils.GlobalAndCategorizedCmd(config.App, deviceCmd, func(attachmentPoint cliutils.HasCommand) {
+		deviceNetcatCmd := attachmentPoint.Command("nc", "Read and write to a connection from stdin and stdout.")
+		addDeviceArg(deviceNetcatCmd)
+		addConnectionArg(deviceNetcatCmd)
+		deviceNetcatCmd.Action(deviceNetcatAction)
 	})
 
 	deviceInspectCmd := deviceCmd.Command("inspect", "Inspect a device's properties and labels.")
@@ -76,5 +93,17 @@ func addDeviceArg(cmd *kingpin.CmdClause) *kingpin.ArgClause {
 		}
 		return names
 	})
+	return arg
+}
+
+func addConnectionArg(cmd *kingpin.CmdClause) *kingpin.ArgClause {
+	arg := cmd.Arg("connection", "Connection name.").Required()
+	arg.StringVar(connectionArg)
+	return arg
+}
+
+func addPortArg(cmd *kingpin.CmdClause) *kingpin.ArgClause {
+	arg := cmd.Arg("port", "Local port.").Required()
+	arg.UintVar(portArg)
 	return arg
 }

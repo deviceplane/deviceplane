@@ -388,6 +388,28 @@ create table if not exists device_access_keys (
 );
 
 --
+-- Connections
+--
+
+create table if not exists connections (
+  id varchar(32) not null,
+  created_at timestamp not null default current_timestamp,
+  project_id varchar(32) not null,
+
+  name varchar(100) not null,
+  protocol varchar(100) not null,
+  port int unsigned not null,
+
+  primary key (id),
+  unique name_project_id_unique (name, project_id),
+  foreign key connections_project_id(project_id)
+  references projects(id)
+  on delete cascade,
+  index project_id_id (project_id, id),
+  index project_id_name (project_id, name)
+);
+
+--
 -- Applications
 --
 

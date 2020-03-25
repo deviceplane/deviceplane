@@ -98,15 +98,64 @@ func GetImagePullProgress(ctx context.Context, deviceConn net.Conn, applicationI
 	return http.ReadResponse(bufio.NewReader(deviceConn), req)
 }
 
-func InitiateSSH(ctx context.Context, deviceConn net.Conn) error {
-	req, err := http.NewRequestWithContext(ctx, "POST", "/ssh", nil)
+func SSH(ctx context.Context, deviceConn net.Conn) error {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		"POST",
+		"/ssh",
+		nil,
+	)
 	if err != nil {
 		return err
 	}
 	return req.Write(deviceConn)
 }
 
-func InitiateReboot(ctx context.Context, deviceConn net.Conn) (*http.Response, error) {
+func ConnectTCP(ctx context.Context, deviceConn net.Conn, port uint) error {
+	url := url.URL{
+		Path: "/connecttcp",
+	}
+
+	query := url.Query()
+	query.Set("port", strconv.Itoa(int(port)))
+	url.RawQuery = query.Encode()
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		"GET",
+		url.RequestURI(),
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	return req.Write(deviceConn)
+}
+
+func ConnectHTTP(ctx context.Context, deviceConn net.Conn, port uint) error {
+	url := url.URL{
+		Path: "/connecthttp",
+	}
+
+	query := url.Query()
+	query.Set("port", strconv.Itoa(int(port)))
+	url.RawQuery = query.Encode()
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		"POST",
+		url.RequestURI(),
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	return req.Write(deviceConn)
+}
+
+func Reboot(ctx context.Context, deviceConn net.Conn) (*http.Response, error) {
 	req, err := http.NewRequestWithContext(
 		ctx,
 		"POST",

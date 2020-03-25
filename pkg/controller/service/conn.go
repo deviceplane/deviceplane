@@ -14,6 +14,11 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/models"
 	"github.com/deviceplane/deviceplane/pkg/utils"
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
+)
+
+var (
+	errProtocolMismatch = errors.New("protocol mismatch")
 )
 
 func (s *Service) initiateDeviceConnection(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +33,7 @@ var currentSSHCount int64
 
 const currentSSHCountName = "internal.current_ssh_connection_count"
 
-func (s *Service) initiateSSH(w http.ResponseWriter, r *http.Request) {
+func (s *Service) ssh(w http.ResponseWriter, r *http.Request) {
 	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
 		s.validateAuthorization(
 			authz.ResourceDevices, authz.ActionSSH,
@@ -38,7 +43,7 @@ func (s *Service) initiateSSH(w http.ResponseWriter, r *http.Request) {
 				s.withDevice(w, r, project, func(device *models.Device) {
 					s.withHijackedWebSocketConnection(w, r, func(clientConn net.Conn) {
 						s.withDeviceConnection(w, r, project, device, func(deviceConn net.Conn) {
-							err := client.InitiateSSH(r.Context(), deviceConn)
+							err := client.SSH(r.Context(), deviceConn)
 							if err != nil {
 								http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 								return
@@ -75,7 +80,40 @@ func (s *Service) initiateSSH(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (s *Service) initiateReboot(w http.ResponseWriter, r *http.Request) {
+func (s *Service) connectTCP(w http.ResponseWriter, r *http.Request) {
+	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
+		s.validateAuthorization(
+			authz.ResourceDevices, authz.ActionConnect,
+			w, r,
+			user, serviceAccount,
+			func(project *models.Project) {
+				s.withDevice(w, r, project, func(device *models.Device) {
+					s.withConnection(w, r, project, func(connection *models.Connection) {
+						if connection.Protocol != models.ProtocolTCP {
+							http.Error(w, errProtocolMismatch.Error(), http.StatusBadRequest)
+							return
+						}
+
+						s.withHijackedWebSocketConnection(w, r, func(clientConn net.Conn) {
+							s.withDeviceConnection(w, r, project, device, func(deviceConn net.Conn) {
+								err := client.ConnectTCP(r.Context(), deviceConn, connection.Port)
+								if err != nil {
+									http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
+									return
+								}
+
+								go io.Copy(deviceConn, clientConn)
+								io.Copy(clientConn, deviceConn)
+							})
+						})
+					})
+				})
+			},
+		)
+	})
+}
+
+func (s *Service) reboot(w http.ResponseWriter, r *http.Request) {
 	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
 		s.validateAuthorization(
 			authz.ResourceDevices, authz.ActionReboot,
@@ -84,7 +122,7 @@ func (s *Service) initiateReboot(w http.ResponseWriter, r *http.Request) {
 			func(project *models.Project) {
 				s.withDevice(w, r, project, func(device *models.Device) {
 					s.withDeviceConnection(w, r, project, device, func(deviceConn net.Conn) {
-						resp, err := client.InitiateReboot(r.Context(), deviceConn)
+						resp, err := client.Reboot(r.Context(), deviceConn)
 						if err != nil {
 							http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 							return

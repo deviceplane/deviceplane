@@ -4,10 +4,6 @@ type CreateReleaseRequest struct {
 	RawConfig string `json:"rawConfig" validate:"config"`
 }
 
-type ExecuteResponse struct {
-	ExitCode int `json:"exitCode"`
-}
-
 type RegisterDeviceRequest struct {
 	DeviceRegistrationTokenID string `json:"deviceRegistrationTokenId" validate:"id"`
 }

@@ -192,6 +192,25 @@ const api = {
       }
     ),
 
+  connections: ({ projectId }) => get(`projects/${projectId}/connections`),
+
+  connection: ({ projectId, connectionId }) =>
+    get(`projects/${projectId}/connections/${connectionId}`),
+
+  updateConnection: ({ projectId, connectionId, data }) =>
+    put(`projects/${projectId}/connections/${connectionId}`, data),
+
+  deleteConnection: ({ projectId, connectionId }) =>
+    del(`projects/${projectId}/connections/${connectionId}`),
+
+  createConnection: ({ projectId, data: { name, protocol, port } }) =>
+    post(`projects/${projectId}/connections`, { name, protocol, port }).then(
+      response => {
+        segment.track('Connection Created');
+        return response;
+      }
+    ),
+
   updateApplication: ({ projectId, applicationId, data }) =>
     patch(`projects/${projectId}/applications/${applicationId}`, data),
 

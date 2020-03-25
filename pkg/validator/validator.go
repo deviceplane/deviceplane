@@ -37,6 +37,8 @@ func Validate(s interface{}) error {
 		vldr.RegisterAlias("password", "required,min=8,max=100")
 		vldr.RegisterAlias("config", "required,min=1,max=5000")
 		vldr.RegisterAlias("description", "max=5000")
+		vldr.RegisterAlias("protocol", "eq=tcp|eq=http")
+		vldr.RegisterAlias("port", "required,min=1,max=65535")
 	})
 	return vldr.Struct(s)
 }

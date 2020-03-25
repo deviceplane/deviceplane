@@ -27,6 +27,11 @@ const links = [
     to: '/monitoring',
   },
   {
+    title: 'Connections',
+    icon: 'exchange',
+    to: '/connections',
+  },
+  {
     title: 'IAM',
     icon: 'people',
     to: '/iam',

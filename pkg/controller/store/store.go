@@ -196,6 +196,18 @@ type DeviceAccessKeys interface {
 
 var ErrDeviceAccessKeyNotFound = errors.New("device access key not found")
 
+type Connections interface {
+	CreateConnection(ctx context.Context, projectID, name string, protocol models.Protocol, port uint) (*models.Connection, error)
+	GetConnection(ctx context.Context, id, projectID string) (*models.Connection, error)
+	LookupConnection(ctx context.Context, name, projectID string) (*models.Connection, error)
+	ListConnections(ctx context.Context, projectID string) ([]models.Connection, error)
+	UpdateConnection(ctx context.Context, id, projectID, name string, protocol models.Protocol, port uint) (*models.Connection, error)
+	DeleteConnection(ctx context.Context, id, projectID string) error
+}
+
+var ErrConnectionNotFound = errors.New("connection not found")
+var ErrConnectionNameAlreadyInUse = errors.New("connection name already in use")
+
 type Applications interface {
 	CreateApplication(ctx context.Context, projectID, name, description string) (*models.Application, error)
 	GetApplication(ctx context.Context, id, projectID string) (*models.Application, error)

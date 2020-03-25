@@ -18,6 +18,8 @@ func init() {
 		"help",
 		"deploy",
 		"edit",
+		"proxy",
+		"nc",
 	})
 
 	CustomTemplate = `{{define "FormatCommand"}}\

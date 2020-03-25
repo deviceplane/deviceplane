@@ -16,6 +16,8 @@ const (
 	ActionListMembershipRoleBindings   = Action("ListMembershipRoleBindings")
 	ActionGetServiceAccount            = Action("GetServiceAccount")
 	ActionListServiceAccounts          = Action("ListServiceAccounts")
+	ActionGetConnection                = Action("GetConnection")
+	ActionListConnections              = Action("ListConnections")
 	ActionGetApplication               = Action("GetApplication")
 	ActionListApplications             = Action("ListApplications")
 	ActionGetLatestRelease             = Action("GetLatestRelease")
@@ -31,6 +33,9 @@ const (
 	ActionListDeviceRegistrationTokens = Action("ListDeviceRegistrationTokens")
 	ActionGetProjectConfig             = Action("GetProjectConfig")
 
+	ActionCreateConnection                                 = Action("CreateConnection")
+	ActionUpdateConnection                                 = Action("UpdateConnection")
+	ActionDeleteConnection                                 = Action("DeleteConnection")
 	ActionCreateApplication                                = Action("CreateApplication")
 	ActionUpdateApplication                                = Action("UpdateApplication")
 	ActionDeleteApplication                                = Action("DeleteApplication")
@@ -38,6 +43,7 @@ const (
 	ActionUpdateDevice                                     = Action("UpdateDevice")
 	ActionDeleteDevice                                     = Action("DeleteDevice")
 	ActionSSH                                              = Action("SSH")
+	ActionConnect                                          = Action("Connect")
 	ActionReboot                                           = Action("Reboot")
 	ActionListAllDeviceLabels                              = Action("ListAllDeviceLabels")
 	ActionSetDeviceLabel                                   = Action("SetDeviceLabel")
@@ -86,6 +92,8 @@ var (
 		ActionListMembershipRoleBindings,
 		ActionGetServiceAccount,
 		ActionListServiceAccounts,
+		ActionGetConnection,
+		ActionListConnections,
 		ActionGetApplication,
 		ActionListApplications,
 		ActionGetLatestRelease,
@@ -102,6 +110,9 @@ var (
 		ActionGetProjectConfig,
 	}
 	writeActions = append(readActions, []Action{
+		ActionCreateConnection,
+		ActionUpdateConnection,
+		ActionDeleteConnection,
 		ActionCreateApplication,
 		ActionUpdateApplication,
 		ActionDeleteApplication,
@@ -109,6 +120,7 @@ var (
 		ActionUpdateDevice,
 		ActionDeleteDevice,
 		ActionSSH,
+		ActionConnect,
 		ActionReboot,
 		ActionSetDeviceLabel,
 		ActionDeleteDeviceLabel,

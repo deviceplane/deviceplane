@@ -66,7 +66,7 @@ func deviceListAction(c *kingpin.ParseContext) error {
 }
 
 func deviceRebootAction(c *kingpin.ParseContext) error {
-	err := config.APIClient.RebootDevice(context.TODO(), *config.Flags.Project, *deviceArg)
+	err := config.APIClient.Reboot(context.TODO(), *config.Flags.Project, *deviceArg)
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func deviceInspectAction(c *kingpin.ParseContext) error {
 }
 
 func deviceSSHAction(c *kingpin.ParseContext) error {
-	conn, err := config.APIClient.InitiateSSH(context.TODO(), *config.Flags.Project, *deviceArg)
+	conn, err := config.APIClient.SSH(context.TODO(), *config.Flags.Project, *deviceArg)
 	if err != nil {
 		return err
 	}
@@ -146,4 +146,39 @@ func deviceSSHAction(c *kingpin.ParseContext) error {
 	})
 
 	return g.Wait()
+}
+
+func deviceProxyAction(c *kingpin.ParseContext) error {
+	listener, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", *portArg))
+	if err != nil {
+		return err
+	}
+	defer listener.Close()
+
+	for {
+		localConn, err := listener.Accept()
+		if err != nil {
+			return err
+		}
+
+		deviceConn, err := config.APIClient.Connect(context.TODO(), *config.Flags.Project, *deviceArg, *connectionArg)
+		if err != nil {
+			return err
+		}
+
+		go io.Copy(localConn, deviceConn)
+		io.Copy(deviceConn, localConn)
+	}
+}
+
+func deviceNetcatAction(c *kingpin.ParseContext) error {
+	conn, err := config.APIClient.Connect(context.TODO(), *config.Flags.Project, *deviceArg, *connectionArg)
+	if err != nil {
+		return err
+	}
+
+	go io.Copy(os.Stdout, conn)
+	io.Copy(conn, os.Stdin)
+
+	return nil
 }

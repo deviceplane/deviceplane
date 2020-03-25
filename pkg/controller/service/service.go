@@ -37,6 +37,7 @@ type Service struct {
 	deviceRegistrationTokens   store.DeviceRegistrationTokens
 	devicesRegisteredWithToken store.DevicesRegisteredWithToken
 	deviceAccessKeys           store.DeviceAccessKeys
+	connections                store.Connections
 	applications               store.Applications
 	applicationDeviceCounts    store.ApplicationDeviceCounts
 	releases                   store.Releases
@@ -78,6 +79,7 @@ func NewService(
 	deviceRegistrationTokens store.DeviceRegistrationTokens,
 	devicesRegisteredWithToken store.DevicesRegisteredWithToken,
 	deviceAccessKeys store.DeviceAccessKeys,
+	connections store.Connections,
 	applications store.Applications,
 	applicationDeviceCounts store.ApplicationDeviceCounts,
 	releases store.Releases,
@@ -118,6 +120,7 @@ func NewService(
 		deviceRegistrationTokens:   deviceRegistrationTokens,
 		devicesRegisteredWithToken: devicesRegisteredWithToken,
 		deviceAccessKeys:           deviceAccessKeys,
+		connections:                connections,
 		applications:               applications,
 		applicationDeviceCounts:    applicationDeviceCounts,
 		releases:                   releases,
@@ -207,6 +210,12 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.getServiceAccountRoleBinding).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.deleteServiceAccountRoleBinding).Methods("DELETE")
 
+	apiRouter.HandleFunc("/projects/{project}/connections", s.listConnections).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/connections", s.createConnection).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/connections/{connection}", s.getConnection).Methods("GET")
+	apiRouter.HandleFunc("/projects/{project}/connections/{connection}", s.updateConnection).Methods("PUT")
+	apiRouter.HandleFunc("/projects/{project}/connections/{connection}", s.deleteConnection).Methods("DELETE")
+
 	apiRouter.HandleFunc("/projects/{project}/applications", s.listApplications).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/applications", s.createApplication).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/applications/{application}", s.getApplication).Methods("GET")
@@ -223,8 +232,9 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/devices/previewscheduling/{application}", s.previewScheduledDevices).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.updateDevice).Methods("PATCH")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.deleteDevice).Methods("DELETE")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/ssh", s.initiateSSH).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/reboot", s.initiateReboot).Methods("POST")
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/ssh", s.ssh)
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/connect/{connection}", s.connectTCP)
+	apiRouter.HandleFunc("/projects/{project}/devices/{device}/reboot", s.reboot)
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/imagepullprogress", s.imagePullProgress).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/metrics/host", s.hostMetrics).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/metrics/agent", s.agentMetrics).Methods("GET")

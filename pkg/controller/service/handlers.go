@@ -1656,6 +1656,150 @@ func (s *Service) deleteMembershipRoleBinding(w http.ResponseWriter, r *http.Req
 	})
 }
 
+func (s *Service) createConnection(w http.ResponseWriter, r *http.Request) {
+	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
+		s.validateAuthorization(
+			authz.ResourceConnections, authz.ActionCreateConnection,
+			w, r,
+			user, serviceAccount,
+			func(project *models.Project) {
+				var createConnectionRequest struct {
+					Name     string          `json:"name" validate:"name"`
+					Protocol models.Protocol `json:"protocol" validate:"protocol"`
+					Port     uint            `json:"port" validate:"port"`
+				}
+				if err := read(r, &createConnectionRequest); err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+
+				if _, err := s.connections.LookupConnection(r.Context(), createConnectionRequest.Name, project.ID); err == nil {
+					http.Error(w, store.ErrConnectionNameAlreadyInUse.Error(), http.StatusBadRequest)
+					return
+				} else if err != nil && err != store.ErrConnectionNotFound {
+					log.WithError(err).Error("lookup connection")
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				connection, err := s.connections.CreateConnection(
+					r.Context(),
+					project.ID,
+					createConnectionRequest.Name,
+					createConnectionRequest.Protocol,
+					createConnectionRequest.Port,
+				)
+				if err != nil {
+					log.WithError(err).Error("create connection")
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				utils.Respond(w, connection)
+			},
+		)
+	})
+}
+
+func (s *Service) getConnection(w http.ResponseWriter, r *http.Request) {
+	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
+		s.validateAuthorization(
+			authz.ResourceConnections, authz.ActionGetConnection,
+			w, r,
+			user, serviceAccount,
+			func(project *models.Project) {
+				s.withConnection(w, r, project, func(connection *models.Connection) {
+					utils.Respond(w, connection)
+				})
+			},
+		)
+	})
+}
+
+func (s *Service) listConnections(w http.ResponseWriter, r *http.Request) {
+	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
+		s.validateAuthorization(
+			authz.ResourceConnections, authz.ActionListConnections,
+			w, r,
+			user, serviceAccount,
+			func(project *models.Project) {
+				connections, err := s.connections.ListConnections(r.Context(), project.ID)
+				if err != nil {
+					log.WithError(err).Error("list connections")
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				utils.Respond(w, connections)
+			},
+		)
+	})
+}
+
+func (s *Service) updateConnection(w http.ResponseWriter, r *http.Request) {
+	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
+		s.validateAuthorization(
+			authz.ResourceConnections, authz.ActionUpdateConnection,
+			w, r,
+			user, serviceAccount,
+			func(project *models.Project) {
+				s.withConnection(w, r, project, func(connection *models.Connection) {
+					var updateConnectionRequest struct {
+						Name     string          `json:"name" validate:"name"`
+						Protocol models.Protocol `json:"protocol" validate:"protocol"`
+						Port     uint            `json:"port" validate:"port"`
+					}
+					if err := read(r, &updateConnectionRequest); err != nil {
+						http.Error(w, err.Error(), http.StatusBadRequest)
+						return
+					}
+
+					if c, err := s.connections.LookupConnection(r.Context(),
+						updateConnectionRequest.Name, project.ID); err == nil && c.ID != connection.ID {
+						http.Error(w, store.ErrConnectionNameAlreadyInUse.Error(), http.StatusBadRequest)
+						return
+					} else if err != nil && err != store.ErrConnectionNotFound {
+						log.WithError(err).Error("lookup connection")
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+
+					c, err := s.connections.UpdateConnection(r.Context(), connection.ID, project.ID,
+						updateConnectionRequest.Name, updateConnectionRequest.Protocol,
+						updateConnectionRequest.Port,
+					)
+					if err != nil {
+						log.WithError(err).Error("update connection")
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+
+					utils.Respond(w, c)
+				})
+			},
+		)
+	})
+}
+
+func (s *Service) deleteConnection(w http.ResponseWriter, r *http.Request) {
+	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
+		s.validateAuthorization(
+			authz.ResourceConnections, authz.ActionDeleteConnection,
+			w, r,
+			user, serviceAccount,
+			func(project *models.Project) {
+				s.withConnection(w, r, project, func(connection *models.Connection) {
+					if err := s.connections.DeleteConnection(r.Context(), connection.ID, project.ID); err != nil {
+						log.WithError(err).Error("delete connection")
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+				})
+			},
+		)
+	})
+}
+
 func (s *Service) createApplication(w http.ResponseWriter, r *http.Request) {
 	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
 		s.validateAuthorization(
