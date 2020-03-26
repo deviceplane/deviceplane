@@ -296,6 +296,7 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
           <Editor
             width="100%"
             height="70vh"
+            maxLines={30}
             value={serviceMetrics.metrics}
             readOnly
           />
@@ -475,6 +476,7 @@ const DeviceOverview = ({
             fontSize={12}
             mode="json"
             readOnly
+            maxLines={30}
           />
         </Card>
       </Popup>
