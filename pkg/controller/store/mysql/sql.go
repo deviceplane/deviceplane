@@ -63,7 +63,7 @@ const createInternalUser = `
     email,
     password_hash
   )
-  values (?, ?, ?, ?, ?)
+  values (?, ?, ?)
 `
 
 // Index: primary key
