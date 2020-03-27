@@ -1,13 +1,12 @@
 import React from 'react';
 import { IconSvgPaths20 } from '@blueprintjs/icons';
 import styled from 'styled-components';
-import { space, layout, border, position, size } from 'styled-system';
 
+import { Box } from './box';
 import theme from '../../theme';
 
-const Svg = styled.svg`
-flex-shrink: 0;
-  ${space} ${layout} ${border} ${position} ${size}
+const Svg = styled(Box).attrs({ as: 'svg' })`
+  flex-shrink: 0;
 `;
 
 const Icon = ({ color, icon, alt, size = 16, ...props }) => {
