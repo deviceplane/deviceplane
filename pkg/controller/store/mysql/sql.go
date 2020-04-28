@@ -785,7 +785,7 @@ const listReleases = `
   select id, ` + "`number`" + `, created_at, project_id, application_id, config, raw_config, created_by_user_id, created_by_service_account_id from releases
   where project_id = ? and application_id = ?
   order by created_at desc
-  limit 10
+  limit 50
 `
 
 // Index: project_id_application_id_current_release_id
