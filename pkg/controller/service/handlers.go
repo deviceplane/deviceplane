@@ -2357,6 +2357,16 @@ func (s *Service) getDevice(w http.ResponseWriter, r *http.Request) {
 
 						allApplicationStatusInfo := make([]models.DeviceApplicationStatusInfo, 0)
 						for _, application := range applications {
+							scheduled, _, err := scheduling.IsApplicationScheduled(*device, application.SchedulingRule)
+							if err != nil {
+								log.WithError(err).Error("evaluate application scheduling rule")
+								w.WriteHeader(http.StatusInternalServerError)
+								return
+							}
+							if !scheduled {
+								continue
+							}
+
 							applicationStatusInfo := models.DeviceApplicationStatusInfo{
 								Application:     application,
 								ServiceStatuses: []models.DeviceServiceStatusFull{},
