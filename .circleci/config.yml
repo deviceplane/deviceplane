@@ -177,7 +177,7 @@ workflows:
             - test
           filters:
             branches:
-              only: master
+              only: real
       - build-ui:
           requires:
             - test
