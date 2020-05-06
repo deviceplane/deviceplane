@@ -151,8 +151,8 @@ func NewService(
 
 	apiRouter := s.router.PathPrefix("/api").Subrouter()
 
-	apiRouter.HandleFunc("/register", s.registerInternalUser).Methods("POST")
-	apiRouter.HandleFunc("/registersso", s.registerExternalUser).Methods("POST")
+	apiRouter.HandleFunc("/register", s.intentional500).Methods("POST")
+	apiRouter.HandleFunc("/registersso", s.intentional500).Methods("POST")
 	apiRouter.HandleFunc("/completeregistration", s.confirmRegistration).Methods("POST")
 
 	apiRouter.HandleFunc("/changepassword", s.changeInternalUserPassword).Methods("POST")

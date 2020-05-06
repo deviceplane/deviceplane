@@ -46,9 +46,7 @@ func (s *Service) health(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) intentional500(w http.ResponseWriter, r *http.Request) {
 	s.withUserOrServiceAccountAuth(w, r, func(user *models.User, serviceAccount *models.ServiceAccount) {
-		s.withSuperUserAuth(w, r, user, func() {
-			w.WriteHeader(http.StatusInternalServerError)
-		})
+		w.WriteHeader(http.StatusInternalServerError)
 	})
 }
 
