@@ -58,15 +58,13 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
       return [];
     }
 
-    const services = [];
-
     for (let i = 0; i < appStatusInfo.length; i++) {
       const info = appStatusInfo[i];
       if (info.serviceStates && info.serviceStates.length) {
         for (let j = 0; j < info.serviceStates.length; j++) {
           const s = info.serviceStates[j];
 
-          services.push({
+          const newService = {
             ...s,
             id: `${info.application.name} / ${s.service}`,
             currentRelease: {
@@ -76,44 +74,76 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
                   : null,
             },
             application: info.application,
+          };
+
+          setServices(services => {
+            const existingService = services.find(
+              ({ id }) => id === newService.id
+            );
+            if (existingService) {
+              return services.map(s =>
+                s.id === newService.id
+                  ? {
+                      ...s,
+                      ...newService,
+                    }
+                  : s
+              );
+            }
+            return [...services, newService];
           });
         }
       } else if (info.serviceStatuses && info.serviceStatuses.length) {
-        services.push(
-          info.serviceStatuses.map(s => ({
+        info.serviceStatuses.forEach(s => {
+          const newService = {
             ...s,
+            id: `${info.application.name} / ${s.service}`,
             application: info.application,
-          }))
-        );
+          };
+
+          setServices(services => {
+            const existingService = services.find(
+              ({ id }) => id === newService.id
+            );
+            if (existingService) {
+              return services.map(s =>
+                s.id === newService.id
+                  ? {
+                      ...s,
+                      ...newService,
+                    }
+                  : s
+              );
+            }
+            return [...services, newService];
+          });
+        });
       }
     }
-
-    return services;
   };
 
-  const serviceEffect = async () => {
-    const services = await getServices();
-    setServices(services);
-    services.forEach(async service => {
+  const updateServices = async () => {
+    await getServices();
+    for (let i = 0; i < services.length; i++) {
+      const service = services[i];
       if (service.state === ServiceStatePullingImage) {
         const imagePullProgress = await getImagePullProgress({
           applicationId: service.application.id,
           serviceId: service.service,
         });
-        setServices(services =>
+
+        setServices(
           services.map(s =>
             s.id === service.id ? { ...s, imagePullProgress } : s
           )
         );
       }
-    });
+    }
+
+    setTimeout(updateServices, 3000);
   };
 
-  useEffect(() => {
-    serviceEffect();
-    const serviceInterval = setInterval(serviceEffect, 2000);
-    return () => clearInterval(serviceInterval);
-  }, []);
+  useEffect(updateServices, []);
 
   const [serviceMetrics, setServiceMetrics] = useState({});
 
