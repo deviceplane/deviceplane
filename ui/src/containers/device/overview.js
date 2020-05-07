@@ -91,40 +91,43 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
     return newServices;
   };
 
-  useEffect(() => {
-    getServices().then(newServices => {
-      newServices.forEach(newService => {
-        setServices(services => {
-          const existingService = services.find(
-            ({ id }) => id === newService.id
-          );
-          if (existingService) {
-            return services.map(s =>
-              s.id === newService.id
-                ? {
-                    ...s,
-                    ...newService,
-                  }
-                : s
-            );
-          }
-          return [...services, newService];
-        });
-        if (newService.state === ServiceStatePullingImage) {
-          getImagePullProgress({
-            applicationId: newService.application.id,
-            serviceId: newService.service,
-          }).then(imagePullProgress =>
-            setServices(
-              services.map(s =>
-                s.id === newService.id ? { ...s, imagePullProgress } : s
-              )
-            )
+  const servicesPolling = async () => {
+    const newServices = await getServices();
+    newServices.forEach(newService => {
+      setServices(services => {
+        const existingService = services.find(({ id }) => id === newService.id);
+        if (existingService) {
+          return services.map(s =>
+            s.id === newService.id
+              ? {
+                  ...s,
+                  ...newService,
+                }
+              : s
           );
         }
+        return [...services, newService];
       });
+      if (newService.state === ServiceStatePullingImage) {
+        getImagePullProgress({
+          applicationId: newService.application.id,
+          serviceId: newService.service,
+        }).then(imagePullProgress =>
+          setServices(
+            services.map(s =>
+              s.id === newService.id ? { ...s, imagePullProgress } : s
+            )
+          )
+        );
+      }
     });
-  }, [services]);
+
+    setTimeout(servicesPolling, 5000);
+  };
+
+  useEffect(() => {
+    servicesPolling();
+  }, []);
 
   const [serviceMetrics, setServiceMetrics] = useState({});
 
