@@ -112,12 +112,12 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
         });
         if (newService.state === ServiceStatePullingImage) {
           getImagePullProgress({
-            applicationId: service.application.id,
+            applicationId: newService.application.id,
             serviceId: newService.service,
           }).then(imagePullProgress =>
             setServices(
               services.map(s =>
-                s.id === service.id ? { ...s, imagePullProgress } : s
+                s.id === newService.id ? { ...s, imagePullProgress } : s
               )
             )
           );
