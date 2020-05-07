@@ -108,19 +108,22 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
         }
         return [...services, newService];
       });
+    });
+
+    for (let i = 0; i < newServices.length; i++) {
+      const newService = newService[i];
       if (newService.state === ServiceStatePullingImage) {
-        getImagePullProgress({
+        const imagePullProgress = await getImagePullProgress({
           applicationId: newService.application.id,
           serviceId: newService.service,
-        }).then(imagePullProgress =>
-          setServices(
-            services.map(s =>
-              s.id === newService.id ? { ...s, imagePullProgress } : s
-            )
+        });
+        setServices(
+          services.map(s =>
+            s.id === newService.id ? { ...s, imagePullProgress } : s
           )
         );
       }
-    });
+    }
 
     setTimeout(servicesPolling, 5000);
   };
