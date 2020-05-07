@@ -45,6 +45,24 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
     return null;
   };
 
+  const updateServices = useCallback(async () => {
+    for (let i = 0; i < services.length; i++) {
+      const service = services[i];
+      if (service.state === ServiceStatePullingImage) {
+        const imagePullProgress = await getImagePullProgress({
+          applicationId: service.application.id,
+          serviceId: service.service,
+        });
+
+        setServices(
+          services.map(s =>
+            s.id === service.id ? { ...s, imagePullProgress } : s
+          )
+        );
+      }
+    }
+  }, [services]);
+
   const getServices = async () => {
     let appStatusInfo = [];
     try {
@@ -122,28 +140,16 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
     }
   };
 
-  const updateServices = async () => {
+  const servicePolling = async () => {
     await getServices();
-    for (let i = 0; i < services.length; i++) {
-      const service = services[i];
-      if (service.state === ServiceStatePullingImage) {
-        const imagePullProgress = await getImagePullProgress({
-          applicationId: service.application.id,
-          serviceId: service.service,
-        });
+    await updateServices();
 
-        setServices(
-          services.map(s =>
-            s.id === service.id ? { ...s, imagePullProgress } : s
-          )
-        );
-      }
-    }
-
-    setTimeout(updateServices, 3000);
+    setTimeout(servicePolling, 3000);
   };
 
-  useEffect(updateServices, []);
+  useEffect(() => {
+    servicePolling();
+  }, []);
 
   const [serviceMetrics, setServiceMetrics] = useState({});
 
