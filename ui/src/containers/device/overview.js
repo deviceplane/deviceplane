@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useTable, useSortBy } from 'react-table';
 import parsePrometheusTextFormat from 'parse-prometheus-text-format';
 
