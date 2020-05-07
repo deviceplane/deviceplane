@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useTable, useSortBy } from 'react-table';
 import parsePrometheusTextFormat from 'parse-prometheus-text-format';
 
@@ -27,6 +27,9 @@ import ServiceState, {
 import { getMetricLabel } from '../../helpers/metrics';
 
 const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
+  const [services, setServices] = useState([]);
+  const [showProgress, setShowProgress] = useState({});
+
   const getImagePullProgress = async ({ applicationId, serviceId }) => {
     try {
       const { data } = await api.imagePullProgress({
@@ -55,59 +58,78 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
       return [];
     }
 
-    const services = [];
+    const newServices = [];
 
     for (let i = 0; i < appStatusInfo.length; i++) {
       const info = appStatusInfo[i];
       if (info.serviceStates && info.serviceStates.length) {
         for (let j = 0; j < info.serviceStates.length; j++) {
           const s = info.serviceStates[j];
-          let imagePullProgress = null;
 
-          if (s.state === ServiceStatePullingImage) {
-            imagePullProgress = await getImagePullProgress({
-              applicationId: info.application.id,
-              serviceId: s.service,
-            });
-          }
-
-          services.push({
+          newServices.push({
             ...s,
+            id: `${info.application.name} / ${s.service}`,
             currentRelease: {
               number:
                 info.serviceStatuses && info.serviceStatuses.length
                   ? info.serviceStatuses[0].currentRelease.number
                   : null,
             },
-            imagePullProgress,
             application: info.application,
           });
         }
       } else if (info.serviceStatuses && info.serviceStatuses.length) {
-        services.push(
-          info.serviceStatuses.map(s => ({
+        info.serviceStatuses.forEach(s => {
+          newServices.push({
             ...s,
+            id: `${info.application.name} / ${s.service}`,
             application: info.application,
-          }))
+          });
+        });
+      }
+    }
+    return newServices;
+  };
+
+  const servicesPolling = async () => {
+    const newServices = await getServices();
+    newServices.forEach(newService => {
+      setServices(services => {
+        const existingService = services.find(({ id }) => id === newService.id);
+        if (existingService) {
+          return services.map(s =>
+            s.id === newService.id
+              ? {
+                  ...s,
+                  ...newService,
+                }
+              : s
+          );
+        }
+        return [...services, newService];
+      });
+    });
+
+    for (let i = 0; i < newServices.length; i++) {
+      const newService = newServices[i];
+      if (newService.state === ServiceStatePullingImage) {
+        const imagePullProgress = await getImagePullProgress({
+          applicationId: newService.application.id,
+          serviceId: newService.service,
+        });
+        setServices(services =>
+          services.map(s =>
+            s.id === newService.id ? { ...s, imagePullProgress } : s
+          )
         );
       }
     }
 
-    return services;
-  };
-
-  const [services, setServices] = useState([]);
-  const [showProgress, setShowProgress] = useState({});
-
-  const serviceEffect = async () => {
-    const services = await getServices();
-    setServices(services);
+    setTimeout(servicesPolling, 5000);
   };
 
   useEffect(() => {
-    serviceEffect();
-    const serviceInterval = setInterval(serviceEffect, 2000);
-    return () => clearInterval(serviceInterval);
+    servicesPolling();
   }, []);
 
   const [serviceMetrics, setServiceMetrics] = useState({});
@@ -116,8 +138,7 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
     const cols = [];
     cols.push({
       Header: 'Service',
-      accessor: ({ application, service }) =>
-        `${application.name} / ${service}`,
+      accessor: 'id',
       Cell: ({ cell: { value }, row: { original } }) => (
         <Link href={`/${projectId}/applications/${original.application.name}`}>
           {value}
@@ -135,10 +156,9 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
         Cell: ({
           cell: { value },
           row: {
-            original: { application, service, imagePullProgress, errorMessage },
+            original: { service, imagePullProgress, errorMessage },
           },
         }) => {
-          const serviceId = `${application.name}:${service}`;
           let label = 'Pulling image';
           let layers = [];
           if (imagePullProgress) {
@@ -180,7 +200,7 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
                       title={
                         <Icon
                           icon={
-                            showProgress[serviceId]
+                            showProgress[service.id]
                               ? 'caret-down'
                               : 'caret-right'
                           }
@@ -191,13 +211,13 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
                       onClick={() =>
                         setShowProgress(sp => ({
                           ...sp,
-                          [serviceId]: !sp[serviceId],
+                          [service.id]: !sp[service.id],
                         }))
                       }
                       variant="icon"
                     />
                   </Row>
-                  <Column height={showProgress[serviceId] ? 'auto' : 0}>
+                  <Column height={showProgress[service.id] ? 'auto' : 0}>
                     {layers.map(({ id, status }) => (
                       <Text fontSize={0} marginTop={1}>
                         {id}: {status}

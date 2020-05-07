@@ -84,5 +84,11 @@
     "hooks": {
       "pre-commit": "pretty-quick --staged"
     }
+  },
+  "engines": {
+    "node": "10.x"
+  },
+  "volta": {
+    "node": "10.19.0"
   }
 }
