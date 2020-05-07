@@ -111,7 +111,7 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
     });
 
     for (let i = 0; i < newServices.length; i++) {
-      const newService = newService[i];
+      const newService = newServices[i];
       if (newService.state === ServiceStatePullingImage) {
         const imagePullProgress = await getImagePullProgress({
           applicationId: newService.application.id,
