@@ -27,6 +27,9 @@ import ServiceState, {
 import { getMetricLabel } from '../../helpers/metrics';
 
 const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
+  const [services, setServices] = useState([]);
+  const [showProgress, setShowProgress] = useState({});
+
   const getImagePullProgress = async ({ applicationId, serviceId }) => {
     try {
       const { data } = await api.imagePullProgress({
@@ -62,24 +65,16 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
       if (info.serviceStates && info.serviceStates.length) {
         for (let j = 0; j < info.serviceStates.length; j++) {
           const s = info.serviceStates[j];
-          let imagePullProgress = null;
-
-          if (s.state === ServiceStatePullingImage) {
-            imagePullProgress = await getImagePullProgress({
-              applicationId: info.application.id,
-              serviceId: s.service,
-            });
-          }
 
           services.push({
             ...s,
+            id: `${info.application.name} / ${s.service}`,
             currentRelease: {
               number:
                 info.serviceStatuses && info.serviceStatuses.length
                   ? info.serviceStatuses[0].currentRelease.number
                   : null,
             },
-            imagePullProgress,
             application: info.application,
           });
         }
@@ -96,12 +91,22 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
     return services;
   };
 
-  const [services, setServices] = useState([]);
-  const [showProgress, setShowProgress] = useState({});
-
   const serviceEffect = async () => {
     const services = await getServices();
     setServices(services);
+    services.forEach(async service => {
+      if (service.state === ServiceStatePullingImage) {
+        const imagePullProgress = await getImagePullProgress({
+          applicationId: info.application.id,
+          serviceId: s.service,
+        });
+        setServices(services =>
+          services.map(s =>
+            s.id === service.id ? { ...s, imagePullProgress } : s
+          )
+        );
+      }
+    });
   };
 
   useEffect(() => {
@@ -116,8 +121,7 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
     const cols = [];
     cols.push({
       Header: 'Service',
-      accessor: ({ application, service }) =>
-        `${application.name} / ${service}`,
+      accessor: 'id',
       Cell: ({ cell: { value }, row: { original } }) => (
         <Link href={`/${projectId}/applications/${original.application.name}`}>
           {value}

@@ -28,7 +28,7 @@ const tabs = [
 ];
 
 const Application = ({ route }) => {
-  if (!route) {
+  if (!route || !route.data || !route.data.application) {
     return null;
   }
 
