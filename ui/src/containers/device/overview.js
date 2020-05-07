@@ -117,7 +117,7 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
           applicationId: newService.application.id,
           serviceId: newService.service,
         });
-        setServices(
+        setServices(services =>
           services.map(s =>
             s.id === newService.id ? { ...s, imagePullProgress } : s
           )
