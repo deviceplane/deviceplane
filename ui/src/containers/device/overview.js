@@ -97,8 +97,8 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
     services.forEach(async service => {
       if (service.state === ServiceStatePullingImage) {
         const imagePullProgress = await getImagePullProgress({
-          applicationId: info.application.id,
-          serviceId: s.service,
+          applicationId: service.application.id,
+          serviceId: service.service,
         });
         setServices(services =>
           services.map(s =>
@@ -139,10 +139,9 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
         Cell: ({
           cell: { value },
           row: {
-            original: { application, service, imagePullProgress, errorMessage },
+            original: { service, imagePullProgress, errorMessage },
           },
         }) => {
-          const serviceId = `${application.name}:${service}`;
           let label = 'Pulling image';
           let layers = [];
           if (imagePullProgress) {
@@ -184,7 +183,7 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
                       title={
                         <Icon
                           icon={
-                            showProgress[serviceId]
+                            showProgress[service.id]
                               ? 'caret-down'
                               : 'caret-right'
                           }
@@ -195,13 +194,13 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
                       onClick={() =>
                         setShowProgress(sp => ({
                           ...sp,
-                          [serviceId]: !sp[serviceId],
+                          [service.id]: !sp[service.id],
                         }))
                       }
                       variant="icon"
                     />
                   </Row>
-                  <Column height={showProgress[serviceId] ? 'auto' : 0}>
+                  <Column height={showProgress[service.id] ? 'auto' : 0}>
                     {layers.map(({ id, status }) => (
                       <Text fontSize={0} marginTop={1}>
                         {id}: {status}
