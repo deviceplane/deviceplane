@@ -1,6 +1,6 @@
 const development = {
-  endpoint: 'http://localhost:8080/api',
-  wsEndpoint: 'ws://localhost:8080/api',
+  endpoint: 'http://localhost:9090/api',
+  wsEndpoint: 'ws://localhost:9090/api',
 };
 
 const baseURL = window.location.port
@@ -114,8 +114,7 @@ const supportedDeviceMetrics = [
   'promhttp_metric_handler_requests_total',
 ];
 
-const config =
-  process.env.NODE_ENV === 'development' ? development : production;
+const config = development;
 
 const auth0_domain = process.env.AUTH0_DOMAIN
   ? new URL(process.env.AUTH0_DOMAIN).host

@@ -17,21 +17,6 @@ const links = [
     to: '/provisioning',
   },
   {
-    title: 'Applications',
-    icon: 'applications',
-    to: '/applications',
-  },
-  {
-    title: 'Monitoring',
-    icon: 'pulse',
-    to: '/monitoring',
-  },
-  {
-    title: 'Connections',
-    icon: 'exchange',
-    to: '/connections',
-  },
-  {
     title: 'IAM',
     icon: 'people',
     to: '/iam',

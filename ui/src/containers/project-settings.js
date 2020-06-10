@@ -36,7 +36,6 @@ const ProjectSettings = ({
     validationSchema,
     defaultValues: {
       name: project.name,
-      enableSSHKeys: storage.get('enableSSHKeys', project.name) || false,
     },
   });
   const navigation = useNavigation();
@@ -47,7 +46,6 @@ const ProjectSettings = ({
   const submit = async data => {
     data.datadogApiKey = project.datadogApiKey;
     try {
-      storage.set('enableSSHKeys', data.enableSSHKeys, project.name);
       await api.updateProject({ projectId: project.name, data });
       toaster.success('Project updated.');
       navigation.navigate(`/${data.name}`);
@@ -102,13 +100,6 @@ const ProjectSettings = ({
               name="name"
               ref={register}
               errors={errors.name}
-            />
-
-            <Field
-              type="checkbox"
-              label="Enable SSH Keys"
-              name="enableSSHKeys"
-              control={control}
             />
             <Button
               marginTop={3}

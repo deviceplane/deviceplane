@@ -12,7 +12,6 @@ import CliDownload from '../containers/cli-download';
 import ChangePassword from '../containers/change-password';
 import Profile from '../containers/profile';
 import UserAccessKeys from '../containers/user-access-keys';
-import SSHKeys from '../containers/ssh-keys';
 
 const Divider = styled.div`
   width: 100%;
@@ -28,7 +27,6 @@ const AvatarMenu = () => {
   const [isUserProfile, toggleUserProfile] = useToggle();
   const [isUserAccessKeys, toggleUserAccessKeys] = useToggle();
   const [isChangePassword, toggleChangePassword] = useToggle();
-  const [isSSHKeys, toggleSSHKeys] = useToggle();
   const navigation = useNavigation();
   const isProjectsRoute = useActive('/projects');
   const name = context.currentUser.name;
@@ -43,9 +41,6 @@ const AvatarMenu = () => {
       </Popup>
       <Popup show={isUserAccessKeys} onClose={toggleUserAccessKeys}>
         <UserAccessKeys user={context.currentUser} />
-      </Popup>
-      <Popup show={isSSHKeys} onClose={toggleSSHKeys}>
-        <SSHKeys user={context.currentUser} />
       </Popup>
       <Popup show={isChangePassword} onClose={toggleChangePassword}>
         <ChangePassword
@@ -117,14 +112,6 @@ const AvatarMenu = () => {
               }}
             >
               Access Keys
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                close();
-                toggleSSHKeys();
-              }}
-            >
-              SSH Keys
             </MenuItem>
             <Divider />
             <MenuItem

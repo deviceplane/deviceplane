@@ -23,12 +23,6 @@ const Projects = ({
         maxWidth: '100px',
         minWidth: '100px',
       },
-      {
-        Header: 'Applications',
-        accessor: 'applicationCounts.allCount',
-        maxWidth: '140px',
-        minWidth: '140px',
-      },
     ],
     []
   );

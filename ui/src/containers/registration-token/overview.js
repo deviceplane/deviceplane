@@ -49,25 +49,6 @@ const RegistrationTokenOverview = ({
         }
         marginBottom={5}
       />
-      <EditableLabelTable
-        title="Environment Variables"
-        dataName="Environment Variable"
-        data={registrationToken.environmentVariables}
-        onAdd={environmentVariable =>
-          api.addRegistrationTokenEnvironmentVariable({
-            projectId: params.project,
-            tokenId: registrationToken.id,
-            data: environmentVariable,
-          })
-        }
-        onRemove={key =>
-          api.removeRegistrationTokenEnvironmentVariable({
-            projectId: params.project,
-            tokenId: registrationToken.id,
-            key,
-          })
-        }
-      />
     </>
   );
 };

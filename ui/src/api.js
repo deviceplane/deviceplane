@@ -69,15 +69,6 @@ const api = {
   devices: ({ projectId, queryString = '' }) =>
     get(`projects/${projectId}/devices${queryString}`),
 
-  scheduledDevices: ({ projectId, applicationId, schedulingRule, search }) =>
-    get(
-      `projects/${projectId}/devices/previewscheduling/${applicationId}?search=${encodeURIComponent(
-        search
-      )}&schedulingRule=${encodeURIComponent(
-        btoa(JSON.stringify(schedulingRule))
-      )}`
-    ),
-
   device: ({ projectId, deviceId }) =>
     get(`projects/${projectId}/devices/${deviceId}?full`),
 
@@ -100,20 +91,6 @@ const api = {
 
   removeDeviceLabel: ({ projectId, deviceId, labelId }) =>
     del(`projects/${projectId}/devices/${deviceId}/labels/${labelId}`),
-
-  addEnvironmentVariable: ({ projectId, deviceId, data }) =>
-    put(
-      `projects/${projectId}/devices/${deviceId}/environmentvariables`,
-      data
-    ).then(response => {
-      segment.track('Environment Variable Added');
-      return response;
-    }),
-
-  removeEnvironmentVariable: ({ projectId, deviceId, key }) =>
-    del(
-      `projects/${projectId}/devices/${deviceId}/environmentvariables/${key}`
-    ),
 
   defaultRegistrationToken: ({ projectId }) =>
     get(`projects/${projectId}/deviceregistrationtokens/default`),
@@ -163,59 +140,6 @@ const api = {
     del(
       `projects/${projectId}/deviceregistrationtokens/${tokenId}/labels/${labelId}`
     ),
-
-  addRegistrationTokenEnvironmentVariable: ({ projectId, tokenId, data }) =>
-    put(
-      `projects/${projectId}/deviceregistrationtokens/${tokenId}/environmentvariables`,
-      data
-    ).then(response => {
-      segment.track('Registration Token Environment Variable Added');
-      return response;
-    }),
-
-  removeRegistrationTokenEnvironmentVariable: ({ projectId, tokenId, key }) =>
-    del(
-      `projects/${projectId}/deviceregistrationtokens/${tokenId}/environmentvariables/${key}`
-    ),
-
-  applications: ({ projectId }) =>
-    get(`projects/${projectId}/applications?full`),
-
-  application: ({ projectId, applicationId }) =>
-    get(`projects/${projectId}/applications/${applicationId}?full`),
-
-  createApplication: ({ projectId, data: { name, description } }) =>
-    post(`projects/${projectId}/applications`, { name, description }).then(
-      response => {
-        segment.track('Application Created');
-        return response;
-      }
-    ),
-
-  connections: ({ projectId }) => get(`projects/${projectId}/connections`),
-
-  connection: ({ projectId, connectionId }) =>
-    get(`projects/${projectId}/connections/${connectionId}`),
-
-  updateConnection: ({ projectId, connectionId, data }) =>
-    put(`projects/${projectId}/connections/${connectionId}`, data),
-
-  deleteConnection: ({ projectId, connectionId }) =>
-    del(`projects/${projectId}/connections/${connectionId}`),
-
-  createConnection: ({ projectId, data: { name, protocol, port } }) =>
-    post(`projects/${projectId}/connections`, { name, protocol, port }).then(
-      response => {
-        segment.track('Connection Created');
-        return response;
-      }
-    ),
-
-  updateApplication: ({ projectId, applicationId, data }) =>
-    patch(`projects/${projectId}/applications/${applicationId}`, data),
-
-  deleteApplication: ({ projectId, applicationId }) =>
-    del(`projects/${projectId}/applications/${applicationId}`),
 
   roles: ({ projectId }) => get(`projects/${projectId}/roles`),
 
@@ -315,65 +239,11 @@ const api = {
       `projects/${projectId}/serviceaccounts/${serviceId}/serviceaccountaccesskeys/${accessKeyId}`
     ),
 
-  releases: ({ projectId, applicationId }) =>
-    get(`projects/${projectId}/applications/${applicationId}/releases?full`),
-
-  release: ({ projectId, applicationId, releaseId }) =>
-    get(
-      `projects/${projectId}/applications/${applicationId}/releases/${releaseId}?full`
-    ),
-
-  createRelease: ({ projectId, applicationId, data: { rawConfig } }) =>
-    post(`projects/${projectId}/applications/${applicationId}/releases`, {
-      rawConfig,
-    }).then(response => {
-      segment.track('Release Created');
-      return response;
-    }),
-
-  latestReleases: ({ projectId, applicationId }) =>
-    get(`projects/${projectId}/applications/${applicationId}/releases/latest`),
-
   userAccessKeys: () => get(`useraccesskeys`),
 
   createUserAccessKey: () => post(`useraccesskeys`, {}),
 
   deleteUserAccessKey: ({ id }) => del(`useraccesskeys/${id}`),
-
-  hostMetrics: ({ projectId, deviceId }) =>
-    get(`projects/${projectId}/devices/${deviceId}/metrics/host`),
-
-  serviceMetrics: ({ projectId, deviceId, applicationId, serviceId }) =>
-    get(
-      `projects/${projectId}/devices/${deviceId}/applications/${applicationId}/services/${serviceId}/metrics`
-    ),
-
-  projectMetricsConfig: ({ projectId }) =>
-    get(`projects/${projectId}/configs/project-metrics-config`),
-
-  updateProjectMetricsConfig: ({ projectId, data }) =>
-    put(`projects/${projectId}/configs/project-metrics-config`, {
-      exposedMetrics: data,
-    }),
-
-  deviceMetricsConfig: ({ projectId }) =>
-    get(`projects/${projectId}/configs/device-metrics-config`),
-
-  updateDeviceMetricsConfig: ({ projectId, data }) =>
-    put(`projects/${projectId}/configs/device-metrics-config`, {
-      exposedMetrics: data,
-    }),
-
-  serviceMetricsConfig: ({ projectId }) =>
-    get(`projects/${projectId}/configs/service-metrics-config`),
-
-  updateServiceMetricsConfig: ({ projectId, data }) =>
-    put(`projects/${projectId}/configs/service-metrics-config`, data),
-
-  imagePullProgress: ({ projectId, deviceId, applicationId, serviceId }) =>
-    get(
-      `projects/${projectId}/devices/${deviceId}/applications/${applicationId}/services/${serviceId}/imagepullprogress`
-    ),
 };
 
 export default api;
