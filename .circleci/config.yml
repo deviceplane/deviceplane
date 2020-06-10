@@ -72,6 +72,28 @@ jobs:
       - run: sudo pip install awscli
       - run: aws s3 sync /tmp/workspace/dist s3://staging.deviceplane.com/
 
+  build-new-ui:
+    docker:
+      - image: circleci/node:13.6
+    steps:
+      - *attach_workspace
+      - checkout
+      - run: cd ui && npm i
+      - run: cd ui && NODE_ENV=production SEGMENT_WRITE_KEY=$SEGMENT_WRITE_KEY BUGSNAG_KEY=$BUGSNAG_KEY INTERCOM_ID=$INTERCOM_ID AUTH0_DOMAIN=$AUTH0_DOMAIN AUTH0_AUDIENCE=$AUTH0_AUDIENCE npm run-script build
+      - run: cd ui && mv dist /tmp/workspace
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - dist
+
+  deploy-new-ui-production:
+    docker:
+      - image: circleci/python:2.7-jessie
+    steps:
+      - *attach_workspace
+      - run: sudo pip install awscli
+      - run: aws s3 sync /tmp/workspace/dist s3://app.deviceplane.com/
+
   release-controller:
     machine: true
     steps:
@@ -195,6 +217,19 @@ workflows:
           filters:
             branches:
               only: master
+
+      - build-new-ui:
+          requires:
+            - test
+          filters:
+            branches:
+              only: new
+      - deploy-new-ui-production:
+          requires:
+            - build-new-ui
+          filters:
+            branches:
+              only: new
 
       - release-controller:
           requires:
