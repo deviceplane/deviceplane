@@ -26,8 +26,6 @@ type FetchObject struct {
 	Role                    *models.Role
 	User                    *models.User
 	ServiceAccount          *models.ServiceAccount
-	Application             *models.Application
-	Release                 *models.Release
 	Device                  *models.Device
 	DeviceRegistrationToken *models.DeviceRegistrationToken
 	DeviceConn              net.Conn
@@ -477,101 +475,6 @@ func (s *Service) withServiceAccount(w http.ResponseWriter, r *http.Request, pro
 	}
 
 	f(serviceAccount)
-}
-
-func (s *Service) withConnection(w http.ResponseWriter, r *http.Request, project *models.Project, f func(connection *models.Connection)) {
-	if project == nil {
-		log.WithError(ErrDependencyNotSupplied).Error("getting connection")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	vars := mux.Vars(r)
-	connectionIdentifier := vars["connection"]
-	if connectionIdentifier == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	var connection *models.Connection
-	var err error
-	if strings.Contains(connectionIdentifier, "_") {
-		connection, err = s.connections.GetConnection(r.Context(), connectionIdentifier, project.ID)
-	} else {
-		connection, err = s.connections.LookupConnection(r.Context(), connectionIdentifier, project.ID)
-	}
-	if err == store.ErrConnectionNotFound {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	} else if err != nil {
-		log.WithError(err).Error("lookup connection")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	f(connection)
-}
-
-func (s *Service) withApplication(w http.ResponseWriter, r *http.Request, project *models.Project, f func(application *models.Application)) {
-	if project == nil {
-		log.WithError(ErrDependencyNotSupplied).Error("getting application")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	vars := mux.Vars(r)
-	applicationIdentifier := vars["application"]
-	if applicationIdentifier == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	var application *models.Application
-	var err error
-	if strings.Contains(applicationIdentifier, "_") {
-		application, err = s.applications.GetApplication(r.Context(), applicationIdentifier, project.ID)
-	} else {
-		application, err = s.applications.LookupApplication(r.Context(), applicationIdentifier, project.ID)
-	}
-	if err == store.ErrApplicationNotFound {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	} else if err != nil {
-		log.WithError(err).Error("lookup application")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	f(application)
-}
-
-func (s *Service) withRelease(w http.ResponseWriter, r *http.Request, project *models.Project, application *models.Application, f func(release *models.Release)) {
-	if application == nil || project == nil {
-		log.WithError(ErrDependencyNotSupplied).Error("getting release")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	vars := mux.Vars(r)
-	releaseIdentifier := vars["release"]
-	if releaseIdentifier == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	var release *models.Release
-	var err error
-	release, err = utils.GetReleaseByIdentifier(s.releases, r.Context(), project.ID, application.ID, releaseIdentifier)
-	if err == store.ErrReleaseNotFound {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	} else if err != nil {
-		log.WithError(err).Error("get/lookup release")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	f(release)
 }
 
 func (s *Service) withDevice(w http.ResponseWriter, r *http.Request, project *models.Project, f func(device *models.Device)) {

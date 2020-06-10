@@ -34,9 +34,7 @@ var (
 func main() {
 	configure.Initialize(&config)
 	project.Initialize(&config)
-	application.Initialize(&config)
 	device.Initialize(&config)
-	metrics.Initialize(&config)
 
 	app.PreAction(cliutils.InitializeAPIClient(&config))
 	preSSH, _ := cliutils.GetSSHArgs(os.Args[1:])

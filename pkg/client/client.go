@@ -58,14 +58,6 @@ func (c *Client) CreateProject(ctx context.Context, name string) (*models.Projec
 	return &project, nil
 }
 
-func (c *Client) CreateApplication(ctx context.Context, project string, name string) (*models.Application, error) {
-	var application models.Application
-	if err := c.post(ctx, models.Application{Name: name}, &application, projectsURL, project, applicationsURL); err != nil {
-		return nil, err
-	}
-	return &application, nil
-}
-
 func (c *Client) ListProjects(ctx context.Context, project string) ([]models.ProjectFull, error) {
 	var memberships []models.MembershipFull1
 	if err := c.get(ctx, &memberships, membershipsURL+"?full"); err != nil {
@@ -77,14 +69,6 @@ func (c *Client) ListProjects(ctx context.Context, project string) ([]models.Pro
 		projects = append(projects, m.Project)
 	}
 	return projects, nil
-}
-
-func (c *Client) ListApplications(ctx context.Context, project string) ([]models.Application, error) {
-	var applications []models.Application
-	if err := c.get(ctx, &applications, projectsURL, project, applicationsURL); err != nil {
-		return nil, err
-	}
-	return applications, nil
 }
 
 func (c *Client) ListDevices(ctx context.Context, filters []models.Filter, project string) ([]models.Device, error) {
@@ -112,54 +96,12 @@ func (c *Client) ListDevices(ctx context.Context, filters []models.Filter, proje
 	return devices, nil
 }
 
-func (c *Client) GetApplication(ctx context.Context, project, application string) (*models.Application, error) {
-	var app models.Application
-	if err := c.get(ctx, &app, projectsURL, project, applicationsURL, application+"?full"); err != nil {
-		return nil, err
-	}
-	return &app, nil
-}
-
 func (c *Client) GetDevice(ctx context.Context, project, device string) (*models.Device, error) {
 	var d models.Device
 	if err := c.get(ctx, &d, projectsURL, project, devicesURL, device+"?full"); err != nil {
 		return nil, err
 	}
 	return &d, nil
-}
-
-func (c *Client) GetDeviceMetrics(ctx context.Context, project, device string) (*string, error) {
-	var rawOpenMetrics string
-	if err := c.get(ctx, &rawOpenMetrics, projectsURL, project, devicesURL, device, metricsURL, "host"); err != nil {
-		return nil, err
-	}
-	return &rawOpenMetrics, nil
-}
-
-func (c *Client) GetServiceMetrics(ctx context.Context, project, device, application, service string) (*string, error) {
-	var rawOpenMetrics string
-	if err := c.get(ctx, &rawOpenMetrics, projectsURL, project, devicesURL, device, applicationsURL, application, servicesURL, service, metricsURL); err != nil {
-		return nil, err
-	}
-	return &rawOpenMetrics, nil
-}
-
-func (c *Client) GetLatestRelease(ctx context.Context, project, application string) (*models.Release, error) {
-	var release models.Release
-	if err := c.get(ctx, &release, projectsURL, project, applicationsURL, application, releasesURL, "latest"); err != nil {
-		return nil, err
-	}
-	return &release, nil
-}
-
-func (c *Client) CreateRelease(ctx context.Context, project, application, yamlConfig string) (*models.Release, error) {
-	var release models.Release
-	if err := c.post(ctx, models.CreateReleaseRequest{
-		RawConfig: yamlConfig,
-	}, &release, projectsURL, project, applicationsURL, application, releasesURL); err != nil {
-		return nil, err
-	}
-	return &release, nil
 }
 
 func (c *Client) SSH(ctx context.Context, project, deviceID string) (net.Conn, error) {
@@ -171,22 +113,6 @@ func (c *Client) SSH(ctx context.Context, project, deviceID string) (net.Conn, e
 	req.SetBasicAuth(c.accessKey, "")
 
 	wsConn, _, err := websocket.DefaultDialer.Dial(getWebsocketURL(c.url, projectsURL, project, devicesURL, deviceID, sshURL), req.Header)
-	if err != nil {
-		return nil, err
-	}
-
-	return wsconnadapter.New(wsConn), nil
-}
-
-func (c *Client) Connect(ctx context.Context, project, deviceID, connection string) (net.Conn, error) {
-	req, err := http.NewRequestWithContext(ctx, "", "", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.SetBasicAuth(c.accessKey, "")
-
-	wsConn, _, err := websocket.DefaultDialer.Dial(getWebsocketURL(c.url, projectsURL, project, devicesURL, deviceID, connectURL, connection), req.Header)
 	if err != nil {
 		return nil, err
 	}

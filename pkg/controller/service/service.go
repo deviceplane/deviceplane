@@ -37,15 +37,6 @@ type Service struct {
 	deviceRegistrationTokens   store.DeviceRegistrationTokens
 	devicesRegisteredWithToken store.DevicesRegisteredWithToken
 	deviceAccessKeys           store.DeviceAccessKeys
-	connections                store.Connections
-	applications               store.Applications
-	applicationDeviceCounts    store.ApplicationDeviceCounts
-	releases                   store.Releases
-	releaseDeviceCounts        store.ReleaseDeviceCounts
-	deviceApplicationStatuses  store.DeviceApplicationStatuses
-	deviceServiceStatuses      store.DeviceServiceStatuses
-	deviceServiceStates        store.DeviceServiceStates
-	metricConfigs              store.MetricConfigs
 	email                      email.Interface
 	emailFromName              string
 	emailFromAddress           string
@@ -79,15 +70,6 @@ func NewService(
 	deviceRegistrationTokens store.DeviceRegistrationTokens,
 	devicesRegisteredWithToken store.DevicesRegisteredWithToken,
 	deviceAccessKeys store.DeviceAccessKeys,
-	connections store.Connections,
-	applications store.Applications,
-	applicationDeviceCounts store.ApplicationDeviceCounts,
-	releases store.Releases,
-	releasesDeviceCounts store.ReleaseDeviceCounts,
-	deviceApplicationStatuses store.DeviceApplicationStatuses,
-	deviceServiceStatuses store.DeviceServiceStatuses,
-	deviceServiceStates store.DeviceServiceStates,
-	metricConfigs store.MetricConfigs,
 	email email.Interface,
 	emailFromName string,
 	emailFromAddress string,
@@ -120,15 +102,6 @@ func NewService(
 		deviceRegistrationTokens:   deviceRegistrationTokens,
 		devicesRegisteredWithToken: devicesRegisteredWithToken,
 		deviceAccessKeys:           deviceAccessKeys,
-		connections:                connections,
-		applications:               applications,
-		applicationDeviceCounts:    applicationDeviceCounts,
-		releases:                   releases,
-		releaseDeviceCounts:        releasesDeviceCounts,
-		deviceApplicationStatuses:  deviceApplicationStatuses,
-		deviceServiceStatuses:      deviceServiceStatuses,
-		deviceServiceStates:        deviceServiceStates,
-		metricConfigs:              metricConfigs,
 		email:                      email,
 		emailFromName:              emailFromName,
 		emailFromAddress:           emailFromAddress,
@@ -210,39 +183,13 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.getServiceAccountRoleBinding).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/serviceaccounts/{serviceaccount}/roles/{role}/serviceaccountrolebindings", s.deleteServiceAccountRoleBinding).Methods("DELETE")
 
-	apiRouter.HandleFunc("/projects/{project}/connections", s.listConnections).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/connections", s.createConnection).Methods("POST")
-	apiRouter.HandleFunc("/projects/{project}/connections/{connection}", s.getConnection).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/connections/{connection}", s.updateConnection).Methods("PUT")
-	apiRouter.HandleFunc("/projects/{project}/connections/{connection}", s.deleteConnection).Methods("DELETE")
-
-	apiRouter.HandleFunc("/projects/{project}/applications", s.listApplications).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/applications", s.createApplication).Methods("POST")
-	apiRouter.HandleFunc("/projects/{project}/applications/{application}", s.getApplication).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/applications/{application}", s.updateApplication).Methods("PATCH")
-	apiRouter.HandleFunc("/projects/{project}/applications/{application}", s.deleteApplication).Methods("DELETE")
-
-	apiRouter.HandleFunc("/projects/{project}/applications/{application}/releases", s.createRelease).Methods("POST")
-	apiRouter.HandleFunc("/projects/{project}/applications/{application}/releases/latest", s.getLatestRelease).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/applications/{application}/releases/{release}", s.getRelease).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/applications/{application}/releases", s.listReleases).Methods("GET")
-
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.getDevice).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/devices", s.listDevices).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/devices/previewscheduling/{application}", s.previewScheduledDevices).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.updateDevice).Methods("PATCH")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}", s.deleteDevice).Methods("DELETE")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/ssh", s.ssh)
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/connect/{connection}", s.connectTCP)
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/reboot", s.reboot)
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/imagepullprogress", s.imagePullProgress).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/metrics/host", s.hostMetrics).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/metrics/agent", s.agentMetrics).Methods("GET")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/metrics", s.serviceMetrics).Methods("GET")
-	apiRouter.PathPrefix("/projects/{project}/devices/{device}/debug/").HandlerFunc(s.deviceDebug)
-
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/environmentvariables", s.setDeviceEnvironmentVariable).Methods("PUT")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/environmentvariables/{key}", s.deleteDeviceEnvironmentVariable).Methods("DELETE")
 
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels", s.setDeviceLabel).Methods("PUT")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/labels/{key}", s.deleteDeviceLabel).Methods("DELETE")
@@ -267,15 +214,6 @@ func NewService(
 	apiRouter.HandleFunc("/projects/{project}/devices/register", s.registerDevice).Methods("POST")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/bundle", s.getBundle).Methods("GET")
 	apiRouter.HandleFunc("/projects/{project}/devices/{device}/info", s.setDeviceInfo).Methods("POST")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/deviceapplicationstatuses", s.setDeviceApplicationStatus).Methods("POST")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/deviceapplicationstatuses", s.deleteDeviceApplicationStatus).Methods("DELETE")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.setDeviceServiceStatus).Methods("POST")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestatuses", s.deleteDeviceServiceStatus).Methods("DELETE")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestates", s.setDeviceServiceState).Methods("POST")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/applications/{application}/services/{service}/deviceservicestates", s.deleteDeviceServiceState).Methods("DELETE")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/forwardmetrics/service", s.forwardServiceMetrics).Methods("POST")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/forwardmetrics/device", s.forwardDeviceMetrics).Methods("POST")
-	apiRouter.HandleFunc("/projects/{project}/devices/{device}/connection", s.initiateDeviceConnection).Methods("GET")
 
 	apiRouter.Handle("/revdial", revdial.ConnHandler(s.upgrader)).Methods("GET")
 
