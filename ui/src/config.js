@@ -126,7 +126,7 @@ const auth0_login_callback_url = frontendURL + '/login/sso-callback';
 const auth0_signup_callback_url = frontendURL + '/signup/sso-callback';
 
 export default {
-  agentVersion: '1.15.0',
+  agentVersion: '1.16.0',
   cliEndpoint: 'https://downloads.deviceplane.com/cli',
   supportedDeviceMetrics,
   supportedDeviceMetricProperties,
