@@ -1,6 +1,6 @@
 const development = {
-  endpoint: 'http://localhost:8080/api',
-  wsEndpoint: 'ws://localhost:8080/api',
+  endpoint: 'http://localhost:9090/api',
+  wsEndpoint: 'ws://localhost:9090/api',
 };
 
 const baseURL = window.location.port
