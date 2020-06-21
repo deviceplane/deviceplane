@@ -283,14 +283,6 @@ const SSH = ({
         }))
       : []
   );
-  const sshKeys = storage.get('sshKeys');
-  const enableSSHKeys = storage.get('enableSSHKeys', params.project);
-  const selectOptions = sshKeys
-    ? sshKeys.map(({ name, key }) => ({ label: name, value: key }))
-    : null;
-  const [isKeyPopupVisible, setKeyPopupVisible] = useState(
-    enableSSHKeys && selectOptions
-  );
   const [isDevicesTableVisible, setDevicesTableVisible] = useState();
   const [searchInput, setSearchInput] = useState('');
   const [searchFocused, setSearchFocused] = useState();
@@ -638,26 +630,6 @@ const SSH = ({
                 There are no eligible <strong>Devices</strong>.
               </Text>
             }
-          />
-        </Card>
-      </Popup>
-
-      <Popup
-        show={isKeyPopupVisible}
-        onClose={() => {
-          setKeyPopupVisible(false);
-          startSSH();
-        }}
-      >
-        <Card border size="medium">
-          <Select
-            onChange={e => {
-              setKeyPopupVisible(false);
-              setPrivateKey(e.target.value);
-            }}
-            options={selectOptions}
-            placeholder="Select a SSH key"
-            none="There are no SSH keys"
           />
         </Card>
       </Popup>

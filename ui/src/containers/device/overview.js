@@ -26,6 +26,8 @@ import ServiceState, {
 } from '../../components/service-state';
 import { getMetricLabel } from '../../helpers/metrics';
 
+import storage from '../../storage';
+
 const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
   const [services, setServices] = useState([]);
   const [showProgress, setShowProgress] = useState({});
@@ -363,23 +365,6 @@ const DeviceOverview = ({
         }
         actions={[
           {
-            title: <Icon icon="pulse" size={18} color="primary" />,
-            variant: 'icon',
-            onClick: async () => {
-              try {
-                const { data } = await api.hostMetrics({
-                  projectId: params.project,
-                  deviceId: device.id,
-                });
-                setHostMetrics(parseMetrics(data));
-              } catch (error) {
-                toaster.danger('Current device metrics are unavailable.');
-                console.error(error);
-              }
-            },
-            disabled: device.status === 'offline',
-          },
-          {
             title: 'Reboot',
             variant: 'secondary',
             disabled: device.status === 'offline',
@@ -435,14 +420,6 @@ const DeviceOverview = ({
         </Group>
       </Card>
 
-      <Card title="Application Services" size="xlarge" marginBottom={5}>
-        <ApplicationServices
-          projectId={params.project}
-          device={device}
-          applicationStatusInfo={device.applicationStatusInfo}
-        />
-      </Card>
-
       <EditableLabelTable
         data={device.labels}
         onAdd={label =>
@@ -462,25 +439,39 @@ const DeviceOverview = ({
         marginBottom={5}
       />
 
-      <EditableLabelTable
-        title="Environment Variables"
-        dataName="Environment Variable"
-        data={device.environmentVariables}
-        onAdd={environmentVariable =>
-          api.addEnvironmentVariable({
-            projectId: params.project,
-            deviceId: device.id,
-            data: environmentVariable,
-          })
-        }
-        onRemove={key =>
-          api.removeEnvironmentVariable({
-            projectId: params.project,
-            deviceId: device.id,
-            key,
-          })
-        }
-      />
+      {storage.get('legacy') ||
+        (false && (
+          <Card title="Application Services" size="xlarge" marginBottom={5}>
+            <ApplicationServices
+              projectId={params.project}
+              device={device}
+              applicationStatusInfo={device.applicationStatusInfo}
+            />
+          </Card>
+        ))}
+
+      {storage.get('legacy') ||
+        (false && (
+          <EditableLabelTable
+            title="Environment Variables"
+            dataName="Environment Variable"
+            data={device.environmentVariables}
+            onAdd={environmentVariable =>
+              api.addEnvironmentVariable({
+                projectId: params.project,
+                deviceId: device.id,
+                data: environmentVariable,
+              })
+            }
+            onRemove={key =>
+              api.removeEnvironmentVariable({
+                projectId: params.project,
+                deviceId: device.id,
+                key,
+              })
+            }
+          />
+        ))}
 
       <Popup show={!!hostMetrics} onClose={() => setHostMetrics(null)}>
         <Card

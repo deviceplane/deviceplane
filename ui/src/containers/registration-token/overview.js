@@ -5,6 +5,8 @@ import { Column, Label, Group, Value } from '../../components/core';
 import Card from '../../components/card';
 import EditableLabelTable from '../../components/editable-label-table';
 
+import storage from '../../storage';
+
 const RegistrationTokenOverview = ({
   route: {
     data: { params, registrationToken },
@@ -49,25 +51,28 @@ const RegistrationTokenOverview = ({
         }
         marginBottom={5}
       />
-      <EditableLabelTable
-        title="Environment Variables"
-        dataName="Environment Variable"
-        data={registrationToken.environmentVariables}
-        onAdd={environmentVariable =>
-          api.addRegistrationTokenEnvironmentVariable({
-            projectId: params.project,
-            tokenId: registrationToken.id,
-            data: environmentVariable,
-          })
-        }
-        onRemove={key =>
-          api.removeRegistrationTokenEnvironmentVariable({
-            projectId: params.project,
-            tokenId: registrationToken.id,
-            key,
-          })
-        }
-      />
+      {storage.get('legacy') ||
+        (false && (
+          <EditableLabelTable
+            title="Environment Variables"
+            dataName="Environment Variable"
+            data={registrationToken.environmentVariables}
+            onAdd={environmentVariable =>
+              api.addRegistrationTokenEnvironmentVariable({
+                projectId: params.project,
+                tokenId: registrationToken.id,
+                data: environmentVariable,
+              })
+            }
+            onRemove={key =>
+              api.removeRegistrationTokenEnvironmentVariable({
+                projectId: params.project,
+                tokenId: registrationToken.id,
+                key,
+              })
+            }
+          />
+        ))}
     </>
   );
 };

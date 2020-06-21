@@ -5,43 +5,71 @@ import { useActive, useCurrentRoute } from 'react-navi';
 import Logo from './icons/logo';
 import { Row, Column, Link, Text, Icon } from './core';
 
-const links = [
-  {
-    title: 'Devices',
-    icon: 'multi-select',
-    to: '/devices',
-  },
-  {
-    title: 'Provisioning',
-    icon: 'projects',
-    to: '/provisioning',
-  },
-  {
-    title: 'Applications',
-    icon: 'applications',
-    to: '/applications',
-  },
-  {
-    title: 'Monitoring',
-    icon: 'pulse',
-    to: '/monitoring',
-  },
-  {
-    title: 'Connections',
-    icon: 'exchange',
-    to: '/connections',
-  },
-  {
-    title: 'IAM',
-    icon: 'people',
-    to: '/iam',
-  },
-  {
-    title: 'Settings',
-    icon: 'settings',
-    to: '/settings',
-  },
-];
+import storage from '../storage';
+
+let links;
+if (storage.get('legacy') || false) {
+  links = [
+    {
+      title: 'Devices',
+      icon: 'multi-select',
+      to: '/devices',
+    },
+    {
+      title: 'Provisioning',
+      icon: 'projects',
+      to: '/provisioning',
+    },
+    {
+      title: 'Applications',
+      icon: 'applications',
+      to: '/applications',
+    },
+    {
+      title: 'Monitoring',
+      icon: 'pulse',
+      to: '/monitoring',
+    },
+    {
+      title: 'Connections',
+      icon: 'exchange',
+      to: '/connections',
+    },
+    {
+      title: 'IAM',
+      icon: 'people',
+      to: '/iam',
+    },
+    {
+      title: 'Settings',
+      icon: 'settings',
+      to: '/settings',
+    },
+  ];
+} else {
+  links = [
+    {
+      title: 'Devices',
+      icon: 'multi-select',
+      to: '/devices',
+    },
+    {
+      title: 'Provisioning',
+      icon: 'projects',
+      to: '/provisioning',
+    },
+    {
+      title: 'IAM',
+      icon: 'people',
+      to: '/iam',
+    },
+    {
+      title: 'Settings',
+      icon: 'settings',
+      to: '/settings',
+    },
+  ];
+}
 
 const SidebarLink = styled(Link)`
   display: flex;
