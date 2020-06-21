@@ -147,38 +147,3 @@ func deviceSSHAction(c *kingpin.ParseContext) error {
 
 	return g.Wait()
 }
-
-func deviceProxyAction(c *kingpin.ParseContext) error {
-	listener, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", *portArg))
-	if err != nil {
-		return err
-	}
-	defer listener.Close()
-
-	for {
-		localConn, err := listener.Accept()
-		if err != nil {
-			return err
-		}
-
-		deviceConn, err := config.APIClient.Connect(context.TODO(), *config.Flags.Project, *deviceArg, *connectionArg)
-		if err != nil {
-			return err
-		}
-
-		go io.Copy(localConn, deviceConn)
-		io.Copy(deviceConn, localConn)
-	}
-}
-
-func deviceNetcatAction(c *kingpin.ParseContext) error {
-	conn, err := config.APIClient.Connect(context.TODO(), *config.Flags.Project, *deviceArg, *connectionArg)
-	if err != nil {
-		return err
-	}
-
-	go io.Copy(os.Stdout, conn)
-	io.Copy(conn, os.Stdin)
-
-	return nil
-}

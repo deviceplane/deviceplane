@@ -45,21 +45,6 @@ func Initialize(c *global.Config) {
 		deviceSSHCmd.Action(deviceSSHAction)
 	})
 
-	cliutils.GlobalAndCategorizedCmd(config.App, deviceCmd, func(attachmentPoint cliutils.HasCommand) {
-		deviceProxyCmd := attachmentPoint.Command("proxy", "Forward traffic from a local port to a connection.")
-		addDeviceArg(deviceProxyCmd)
-		addConnectionArg(deviceProxyCmd)
-		addPortArg(deviceProxyCmd)
-		deviceProxyCmd.Action(deviceProxyAction)
-	})
-
-	cliutils.GlobalAndCategorizedCmd(config.App, deviceCmd, func(attachmentPoint cliutils.HasCommand) {
-		deviceNetcatCmd := attachmentPoint.Command("nc", "Read and write to a connection from stdin and stdout.")
-		addDeviceArg(deviceNetcatCmd)
-		addConnectionArg(deviceNetcatCmd)
-		deviceNetcatCmd.Action(deviceNetcatAction)
-	})
-
 	deviceInspectCmd := deviceCmd.Command("inspect", "Inspect a device's properties and labels.")
 	addDeviceArg(deviceInspectCmd)
 	cliutils.AddFormatFlag(deviceOutputFlag, deviceInspectCmd,

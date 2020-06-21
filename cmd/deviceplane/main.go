@@ -3,12 +3,10 @@ package main
 import (
 	"os"
 
-	"github.com/deviceplane/deviceplane/cmd/deviceplane/application"
 	"github.com/deviceplane/deviceplane/cmd/deviceplane/cliutils"
 	"github.com/deviceplane/deviceplane/cmd/deviceplane/configure"
 	"github.com/deviceplane/deviceplane/cmd/deviceplane/device"
 	"github.com/deviceplane/deviceplane/cmd/deviceplane/global"
-	"github.com/deviceplane/deviceplane/cmd/deviceplane/metrics"
 	"github.com/deviceplane/deviceplane/cmd/deviceplane/project"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
@@ -34,9 +32,7 @@ var (
 func main() {
 	configure.Initialize(&config)
 	project.Initialize(&config)
-	application.Initialize(&config)
 	device.Initialize(&config)
-	metrics.Initialize(&config)
 
 	app.PreAction(cliutils.InitializeAPIClient(&config))
 	preSSH, _ := cliutils.GetSSHArgs(os.Args[1:])
