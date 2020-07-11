@@ -349,8 +349,6 @@ const DeviceOverview = ({
     data: { params, device },
   },
 }) => {
-  const [hostMetrics, setHostMetrics] = useState();
-
   return (
     <>
       <Card
@@ -439,58 +437,37 @@ const DeviceOverview = ({
         marginBottom={5}
       />
 
-      {storage.get('legacy') ||
-        (false && (
-          <Card title="Application Services" size="xlarge" marginBottom={5}>
-            <ApplicationServices
-              projectId={params.project}
-              device={device}
-              applicationStatusInfo={device.applicationStatusInfo}
-            />
-          </Card>
-        ))}
-
-      {storage.get('legacy') ||
-        (false && (
-          <EditableLabelTable
-            title="Environment Variables"
-            dataName="Environment Variable"
-            data={device.environmentVariables}
-            onAdd={environmentVariable =>
-              api.addEnvironmentVariable({
-                projectId: params.project,
-                deviceId: device.id,
-                data: environmentVariable,
-              })
-            }
-            onRemove={key =>
-              api.removeEnvironmentVariable({
-                projectId: params.project,
-                deviceId: device.id,
-                key,
-              })
-            }
-          />
-        ))}
-
-      <Popup show={!!hostMetrics} onClose={() => setHostMetrics(null)}>
-        <Card
-          border
-          title="Current Device Metrics"
-          subtitle={device.name}
-          size="xxlarge"
-          overflow="scroll"
-        >
-          <Editor
-            width="100%"
-            value={hostMetrics}
-            fontSize={12}
-            mode="json"
-            readOnly
-            maxLines={30}
+      {(storage.get('legacy') || false) && (
+        <Card title="Application Services" size="xlarge" marginBottom={5}>
+          <ApplicationServices
+            projectId={params.project}
+            device={device}
+            applicationStatusInfo={device.applicationStatusInfo}
           />
         </Card>
-      </Popup>
+      )}
+
+      {(storage.get('legacy') || false) && (
+        <EditableLabelTable
+          title="Environment Variables"
+          dataName="Environment Variable"
+          data={device.environmentVariables}
+          onAdd={environmentVariable =>
+            api.addEnvironmentVariable({
+              projectId: params.project,
+              deviceId: device.id,
+              data: environmentVariable,
+            })
+          }
+          onRemove={key =>
+            api.removeEnvironmentVariable({
+              projectId: params.project,
+              deviceId: device.id,
+              key,
+            })
+          }
+        />
+      )}
     </>
   );
 };
