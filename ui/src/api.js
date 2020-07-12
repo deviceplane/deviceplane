@@ -340,36 +340,6 @@ const api = {
 
   deleteUserAccessKey: ({ id }) => del(`useraccesskeys/${id}`),
 
-  hostMetrics: ({ projectId, deviceId }) =>
-    get(`projects/${projectId}/devices/${deviceId}/metrics/host`),
-
-  serviceMetrics: ({ projectId, deviceId, applicationId, serviceId }) =>
-    get(
-      `projects/${projectId}/devices/${deviceId}/applications/${applicationId}/services/${serviceId}/metrics`
-    ),
-
-  projectMetricsConfig: ({ projectId }) =>
-    get(`projects/${projectId}/configs/project-metrics-config`),
-
-  updateProjectMetricsConfig: ({ projectId, data }) =>
-    put(`projects/${projectId}/configs/project-metrics-config`, {
-      exposedMetrics: data,
-    }),
-
-  deviceMetricsConfig: ({ projectId }) =>
-    get(`projects/${projectId}/configs/device-metrics-config`),
-
-  updateDeviceMetricsConfig: ({ projectId, data }) =>
-    put(`projects/${projectId}/configs/device-metrics-config`, {
-      exposedMetrics: data,
-    }),
-
-  serviceMetricsConfig: ({ projectId }) =>
-    get(`projects/${projectId}/configs/service-metrics-config`),
-
-  updateServiceMetricsConfig: ({ projectId, data }) =>
-    put(`projects/${projectId}/configs/service-metrics-config`, data),
-
   imagePullProgress: ({ projectId, deviceId, applicationId, serviceId }) =>
     get(
       `projects/${projectId}/devices/${deviceId}/applications/${applicationId}/services/${serviceId}/imagepullprogress`

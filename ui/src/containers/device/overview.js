@@ -24,7 +24,6 @@ import DeviceStatus from '../../components/device-status';
 import ServiceState, {
   ServiceStatePullingImage,
 } from '../../components/service-state';
-import { getMetricLabel } from '../../helpers/metrics';
 
 import storage from '../../storage';
 
@@ -133,8 +132,6 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
   useEffect(() => {
     servicesPolling();
   }, []);
-
-  const [serviceMetrics, setServiceMetrics] = useState({});
 
   const columns = useMemo(() => {
     const cols = [];
@@ -250,38 +247,6 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
       minWidth: '100px',
       cellStyle: { justifyContent: 'flex-end' },
     });
-    cols.push({
-      Header: ' ',
-      Cell: ({ row: { original } }) => (
-        <Button
-          disabled={device.status === 'offline'}
-          title={<Icon icon="pulse" size={16} color="primary" />}
-          variant="icon"
-          onClick={async () => {
-            try {
-              const response = await api.serviceMetrics({
-                projectId,
-                deviceId: device.id,
-                applicationId: original.application.name,
-                serviceId: original.service,
-              });
-              setServiceMetrics({
-                service: original.service,
-                metrics: response.data,
-              });
-            } catch (error) {
-              toaster.danger('Service Metrics are currently unavailable.');
-              console.error(error);
-            }
-          }}
-        />
-      ),
-      maxWidth: '50px',
-      minWidth: '50px',
-      cellStyle: {
-        justifyContent: 'flex-end',
-      },
-    });
     return cols;
   }, [showProgress]);
 
@@ -296,53 +261,16 @@ const ApplicationServices = ({ projectId, device, applicationStatusInfo }) => {
   );
 
   return (
-    <>
-      <Table
-        {...tableProps}
-        placeholder={
-          <Text>
-            There are no <strong>Services</strong>.
-          </Text>
-        }
-      />
-      <Popup
-        show={!!serviceMetrics.service}
-        onClose={() => setServiceMetrics({})}
-      >
-        <Card
-          border
-          title="Service Metrics"
-          subtitle={serviceMetrics.service}
-          size="xxlarge"
-        >
-          <Editor
-            width="100%"
-            height="70vh"
-            maxLines={30}
-            value={serviceMetrics.metrics}
-            readOnly
-          />
-        </Card>
-      </Popup>
-    </>
+    <Table
+      {...tableProps}
+      placeholder={
+        <Text>
+          There are no <strong>Services</strong>.
+        </Text>
+      }
+    />
   );
 };
-
-const parseMetrics = data =>
-  JSON.stringify(
-    parsePrometheusTextFormat(data).reduce(
-      (obj, { name, help, metrics }) => ({
-        ...obj,
-        [getMetricLabel(name)]: {
-          description: help,
-          metrics,
-        },
-      }),
-      {}
-    ),
-    null,
-    '\t'
-  );
 
 const DeviceOverview = ({
   route: {
