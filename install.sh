@@ -106,7 +106,7 @@ setup_verify_arch() {
 # --- verify existence of network downloader executable ---
 verify_downloader() {
     # Return failure if it doesn't exist or is no executable
-    [ -x "$(which $1)" ] || return 1
+    [ -x "$(which $1 2>/dev/null)" ] || return 1
 
     # Set verified executable as our downloader program and return success
     DOWNLOADER=$1
