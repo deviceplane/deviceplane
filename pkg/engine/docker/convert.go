@@ -22,6 +22,7 @@ func convert(s models.Service) (*container.Config, *container.HostConfig, error)
 			Cmd:          strslice.StrSlice(s.Command),
 			Domainname:   s.DomainName,
 			Entrypoint:   strslice.StrSlice(s.Entrypoint),
+			Tty:          s.Tty,
 			Env:          s.Environment,
 			ExposedPorts: exposedPorts,
 			Hostname:     s.Hostname,
