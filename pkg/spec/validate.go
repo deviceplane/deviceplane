@@ -43,6 +43,7 @@ var (
 		"security_opt":     []func(interface{}) error{validation.ValidateStringArray},
 		"shm_size":         []func(interface{}) error{validation.ValidateStringOrInteger},
 		"stop_signal":      []func(interface{}) error{validation.ValidateString},
+		"tty":              []func(interface{}) error{validation.ValidateBoolean},
 		"user":             []func(interface{}) error{validation.ValidateString},
 		"uts":              []func(interface{}) error{validation.ValidateString},
 		"volumes":          []func(interface{}) error{validation.ValidateStringArray},

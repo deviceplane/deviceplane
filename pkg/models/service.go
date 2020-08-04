@@ -37,6 +37,7 @@ type Service struct {
 	SecurityOpt    []string                  `yaml:"security_opt,omitempty"`
 	ShmSize        yamltypes.MemStringorInt  `yaml:"shm_size,omitempty"`
 	StopSignal     string                    `yaml:"stop_signal,omitempty"`
+	Tty            bool                      `yaml:"tty,omitempty"`
 	User           string                    `yaml:"user,omitempty"`
 	Uts            string                    `yaml:"uts,omitempty"`
 	Volumes        *yamltypes.Volumes        `yaml:"volumes,omitempty"`

@@ -48,6 +48,7 @@ func fullService() models.Service {
 		SecurityOpt:    []string{"x", "y", "z"},
 		ShmSize:        yamltypes.MemStringorInt(1),
 		StopSignal:     "x",
+		Tty:            true,
 		User:           "x",
 		Uts:            "x",
 		Volumes: &yamltypes.Volumes{

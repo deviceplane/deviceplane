@@ -77,6 +77,7 @@ func applyHash(s models.Service, name string, hash func(string) string) string {
 	parts = append(parts, s.SecurityOpt...)
 	parts = append(parts, fmt.Sprint(s.ShmSize))
 	parts = append(parts, s.StopSignal)
+	parts = append(parts, fmt.Sprint(s.Tty))
 	parts = append(parts, s.User)
 	parts = append(parts, s.Uts)
 	parts = append(parts, s.Volumes.HashString())
