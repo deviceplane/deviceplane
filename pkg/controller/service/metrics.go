@@ -17,6 +17,7 @@ func (s *Service) forwardServiceMetrics(w http.ResponseWriter, r *http.Request) 
 			var metricsRequest models.IntermediateServiceMetricsRequest
 
 			if err := json.NewDecoder(r.Body).Decode(&metricsRequest); err != nil {
+				println(err.Error())
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return false
 			}
@@ -86,6 +87,7 @@ func (s *Service) forwardDeviceMetrics(w http.ResponseWriter, r *http.Request) {
 			var metricsRequest models.DatadogPostMetricsRequest
 
 			if err := read(r, &metricsRequest); err != nil {
+				println(err.Error())
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return false
 			}

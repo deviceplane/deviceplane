@@ -150,6 +150,7 @@ func tryConnect(uri string) (*sql.DB, error) {
 			time.Sleep(time.Second)
 			continue
 		}
+		println(err)
 
 		log.Info("attempting to ping db")
 		if err = db.Ping(); err != nil {
@@ -157,6 +158,7 @@ func tryConnect(uri string) (*sql.DB, error) {
 			time.Sleep(time.Second)
 			continue
 		}
+		println(err)
 
 		log.Info("connected to db")
 		break

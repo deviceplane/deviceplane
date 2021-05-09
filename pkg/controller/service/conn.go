@@ -45,6 +45,7 @@ func (s *Service) ssh(w http.ResponseWriter, r *http.Request) {
 						s.withDeviceConnection(w, r, project, device, func(deviceConn net.Conn) {
 							err := client.SSH(r.Context(), deviceConn)
 							if err != nil {
+								println(err.Error())
 								http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 								return
 							}

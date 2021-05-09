@@ -37,6 +37,7 @@ type FetchObject struct {
 func (s *Service) withHijackedWebSocketConnection(w http.ResponseWriter, r *http.Request, f func(clientConn net.Conn)) {
 	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -49,6 +50,7 @@ func (s *Service) withHijackedWebSocketConnection(w http.ResponseWriter, r *http
 func (s *Service) withDeviceConnection(w http.ResponseWriter, r *http.Request, project *models.Project, device *models.Device, f func(deviceConn net.Conn)) {
 	deviceConn, err := s.connman.Dial(r.Context(), project.ID+device.ID)
 	if err != nil {
+		println(err.Error())
 		http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 		return
 	}
@@ -87,6 +89,7 @@ func (s *Service) validateAuthorization(
 		project, err = s.projects.LookupProject(r.Context(), projectIdentifier)
 	}
 	if err == store.ErrProjectNotFound {
+		println(err.Error())
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -104,6 +107,7 @@ func (s *Service) validateAuthorization(
 			if _, err := s.memberships.GetMembership(r.Context(),
 				user.ID, project.ID,
 			); err == store.ErrMembershipNotFound {
+				println(err.Error())
 				http.Error(w, err.Error(), http.StatusNotFound)
 				return
 			} else if err != nil {
@@ -248,6 +252,7 @@ func (s *Service) withRole(w http.ResponseWriter, r *http.Request, project *mode
 		role, err = s.roles.LookupRole(r.Context(), roleIdentifier, project.ID)
 	}
 	if err == store.ErrRoleNotFound {
+		println(err.Error())
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -267,8 +272,10 @@ func (s *Service) withUserOrServiceAccountAuth(w http.ResponseWriter, r *http.Re
 
 	switch err {
 	case nil:
+		println("> no cookie err " + sessionValue.Value + " " + sessionValue.Name + sessionValue.Path)
 		session, err := s.sessions.ValidateSession(r.Context(), hash.Hash(sessionValue.Value))
 		if err == store.ErrSessionNotFound {
+			println("session not found")
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		} else if err != nil {
@@ -352,6 +359,7 @@ func (s *Service) withUserOrServiceAccountAuth(w http.ResponseWriter, r *http.Re
 func (s *Service) withValidatedSsoJWT(w http.ResponseWriter, r *http.Request, f func(ssoJWT models.SsoJWT)) {
 	var ssoRequest models.Auth0SsoRequest
 	if err := read(r, &ssoRequest); err != nil {
+		println(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -362,6 +370,7 @@ func (s *Service) withValidatedSsoJWT(w http.ResponseWriter, r *http.Request, f 
 	}
 	_, claims, err := serviceutils.ParseAndValidateSignedJWT(s.auth0Domain, s.auth0Audience, ssoRequest.IdToken)
 	if err != nil {
+		println(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -380,12 +389,14 @@ func (s *Service) withValidatedSsoJWT(w http.ResponseWriter, r *http.Request, f 
 
 	email, err := get("email")
 	if err != nil {
+		println(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	name, err := get("name")
 	if err != nil {
+		println(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -393,18 +404,21 @@ func (s *Service) withValidatedSsoJWT(w http.ResponseWriter, r *http.Request, f 
 	// TODO: validate nonce
 	_, err = get("nonce")
 	if err != nil {
+		println(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	sub, err := get("sub")
 	if err != nil {
+		println(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	subParts := strings.Split(sub, "|")
 	if len(subParts) != 2 {
+		println(err.Error())
 		http.Error(w, "invalid number of subject parts", http.StatusBadRequest)
 		return
 	}
@@ -468,6 +482,7 @@ func (s *Service) withServiceAccount(w http.ResponseWriter, r *http.Request, pro
 		serviceAccount, err = s.serviceAccounts.LookupServiceAccount(r.Context(), serviceAccountIdentifier, project.ID)
 	}
 	if err == store.ErrServiceAccountNotFound {
+		println(err.Error())
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -501,6 +516,7 @@ func (s *Service) withConnection(w http.ResponseWriter, r *http.Request, project
 		connection, err = s.connections.LookupConnection(r.Context(), connectionIdentifier, project.ID)
 	}
 	if err == store.ErrConnectionNotFound {
+		println(err.Error())
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -534,6 +550,7 @@ func (s *Service) withApplication(w http.ResponseWriter, r *http.Request, projec
 		application, err = s.applications.LookupApplication(r.Context(), applicationIdentifier, project.ID)
 	}
 	if err == store.ErrApplicationNotFound {
+		println(err.Error())
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -563,6 +580,7 @@ func (s *Service) withRelease(w http.ResponseWriter, r *http.Request, project *m
 	var err error
 	release, err = utils.GetReleaseByIdentifier(s.releases, r.Context(), project.ID, application.ID, releaseIdentifier)
 	if err == store.ErrReleaseNotFound {
+		println(err.Error())
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -590,6 +608,7 @@ func (s *Service) withDevice(w http.ResponseWriter, r *http.Request, project *mo
 		device, err = s.devices.LookupDevice(r.Context(), deviceIdentifier, project.ID)
 	}
 	if err == store.ErrDeviceNotFound {
+		println(err.Error())
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -617,6 +636,7 @@ func (s *Service) withDeviceRegistrationToken(w http.ResponseWriter, r *http.Req
 		token, err = s.deviceRegistrationTokens.LookupDeviceRegistrationToken(r.Context(), tokenIdentifier, project.ID)
 	}
 	if err == store.ErrDeviceRegistrationTokenNotFound {
+		println(err.Error())
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil {

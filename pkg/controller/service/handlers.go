@@ -354,6 +354,7 @@ func (s *Service) loginInternalUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := s.users.GetUserByInternalID(r.Context(), internalUser.ID)
 	if err == store.ErrUserNotFound {
+		println("user not found")
 		w.WriteHeader(http.StatusForbidden)
 		return
 	} else if err != nil {
@@ -395,6 +396,7 @@ func (s *Service) newSession(w http.ResponseWriter, r *http.Request, userID stri
 	utils.WithReferrer(w, r, func(referrer *url.URL) {
 		sessionValue := ksuid.New().String()
 
+		println("> creating session " + sessionValue)
 		if _, err := s.sessions.CreateSession(r.Context(), userID, hash.Hash(sessionValue)); err != nil {
 			log.WithError(err).Error("create session")
 			w.WriteHeader(http.StatusInternalServerError)
@@ -415,7 +417,7 @@ func (s *Service) newSession(w http.ResponseWriter, r *http.Request, userID stri
 
 			Expires: time.Now().AddDate(0, 1, 0),
 
-			Domain:   r.Host,
+			//Domain:   "edgeworx-staging.deviceplane.com",
 			Secure:   secure,
 			HttpOnly: true,
 		}

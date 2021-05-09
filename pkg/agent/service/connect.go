@@ -18,6 +18,7 @@ func (s *Service) connectTCP(w http.ResponseWriter, r *http.Request) {
 
 		localConn, err := net.Dial("tcp", fmt.Sprintf(":%d", port))
 		if err != nil {
+			println(err.Error())
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return
 		}
@@ -35,6 +36,7 @@ func (s *Service) connectHTTP(w http.ResponseWriter, r *http.Request) {
 
 		req, err := serverConn.Read()
 		if err != nil {
+			println(err.Error())
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return
 		}
@@ -45,6 +47,7 @@ func (s *Service) connectHTTP(w http.ResponseWriter, r *http.Request) {
 
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
+			println(err.Error())
 			http.Error(w, err.Error(), codes.StatusDeviceConnectionFailure)
 			return
 		}
