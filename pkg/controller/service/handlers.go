@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"time"
 
@@ -102,7 +103,27 @@ func (s *Service) registerInternalUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if s.email == nil {
+		// Look for auto register request
+		queryParams := r.URL.Query()
+		privsToken := queryParams.Get("autoregister")
+		autoRegister := false
+		if privsToken != "" {
+			autoRegister = true
+			expectedToken := os.Getenv("PRIVS_TOKEN")
+			if expectedToken == "" {
+				println("PRIVS_TOKEN env var not set")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			if privsToken != expectedToken {
+				println("Provided privs token " + privsToken + " does not match " + expectedToken)
+				log.WithError(err).Error("get privs token")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
+
+		if s.email == nil || autoRegister {
 			// If email provider is nil then skip the registration workflow
 			user, err := s.users.InitializeUser(r.Context(), &internalUser.ID, nil)
 			if err != nil {
@@ -354,7 +375,8 @@ func (s *Service) loginInternalUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := s.users.GetUserByInternalID(r.Context(), internalUser.ID)
 	if err == store.ErrUserNotFound {
-		println("user not found")
+		msg := fmt.Sprintf("user not found: %s %s", loginRequest.Email, internalUser.ID)
+		println(msg)
 		w.WriteHeader(http.StatusForbidden)
 		return
 	} else if err != nil {
