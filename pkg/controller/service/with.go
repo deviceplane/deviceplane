@@ -272,7 +272,6 @@ func (s *Service) withUserOrServiceAccountAuth(w http.ResponseWriter, r *http.Re
 
 	switch err {
 	case nil:
-		println("> no cookie err " + sessionValue.Value + " " + sessionValue.Name + sessionValue.Path)
 		session, err := s.sessions.ValidateSession(r.Context(), hash.Hash(sessionValue.Value))
 		if err == store.ErrSessionNotFound {
 			println("session not found")

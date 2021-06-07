@@ -396,7 +396,6 @@ func (s *Service) newSession(w http.ResponseWriter, r *http.Request, userID stri
 	utils.WithReferrer(w, r, func(referrer *url.URL) {
 		sessionValue := ksuid.New().String()
 
-		println("> creating session " + sessionValue)
 		if _, err := s.sessions.CreateSession(r.Context(), userID, hash.Hash(sessionValue)); err != nil {
 			log.WithError(err).Error("create session")
 			w.WriteHeader(http.StatusInternalServerError)

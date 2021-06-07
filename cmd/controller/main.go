@@ -124,20 +124,28 @@ func main() {
 		*auth0Domain, *auth0Audience,
 		statikFS, st, connman, allowedOriginURLs)
 
-	server := &http.Server{
-		Addr: *addr,
-		Handler: handlers.CORS(
+	handles := addLogging(handlers.CORS(
 			handlers.AllowCredentials(),
 			handlers.AllowedHeaders([]string{"Content-Type"}),
 			handlers.AllowedMethods([]string{"GET", "POST", "PUT", "PATCH", "DELETE"}),
 			handlers.AllowedOrigins(*allowedOrigins),
-		)(svc),
+		)(svc))
+	server := &http.Server{
+		Addr: *addr,
+		Handler: handles,
 	}
 
 	log.Info("Server will now listen on " + *addr)
 	if err := server.ListenAndServe(); err != nil {
 		log.WithError(err).Fatal("listen and serve")
 	}
+}
+
+func addLogging(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		println(r.Method, r.URL)
+		next.ServeHTTP(w, r)
+	})
 }
 
 func tryConnect(uri string) (*sql.DB, error) {
