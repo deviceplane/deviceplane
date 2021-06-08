@@ -1,6 +1,6 @@
 module github.com/deviceplane/deviceplane
 
-go 1.12
+go 1.16
 
 require (
 	github.com/DataDog/datadog-go v3.2.0+incompatible
@@ -8,7 +8,7 @@ require (
 	github.com/anmitsu/go-shlex v0.0.0-20161002113705-648efa622239 // indirect
 	github.com/apex/log v1.1.0
 	github.com/auth0-community/go-auth0 v1.0.1-0.20191119091237-b9b0f95be568
-	github.com/cobaugh/osrelease v0.0.0-20181218015638-a93a0a55a249
+	github.com/cobaugh/osrelease v0.0.0-20181218015638-a93a0a55a249 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v1.13.1

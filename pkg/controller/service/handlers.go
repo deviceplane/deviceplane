@@ -110,9 +110,9 @@ func (s *Service) registerInternalUser(w http.ResponseWriter, r *http.Request) {
 		if privsToken != "" {
 			println("Comparing privs tokens")
 			autoRegister = true
-			expectedToken := os.Getenv("PRIVS_TOKEN")
+			expectedToken := os.Getenv("DP_PRIVS_TOKEN")
 			if expectedToken == "" {
-				println("PRIVS_TOKEN env var not set")
+				println("DP_PRIVS_TOKEN env var not set")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}

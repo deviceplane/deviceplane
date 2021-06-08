@@ -143,13 +143,13 @@ func (u *Upgrader) Upgrade(w http.ResponseWriter, r *http.Request, responseHeade
 		return u.returnError(w, r, http.StatusInternalServerError, "websocket: application specific 'Sec-WebSocket-Extensions' headers are unsupported")
 	}
 
-	//checkOrigin := u.CheckOrigin
-	//if checkOrigin == nil {
-	//	checkOrigin = checkSameOrigin
-	//}
-	//if !checkOrigin(r) {
-	//	return u.returnError(w, r, http.StatusForbidden, "websocket: request origin not allowed by Upgrader.CheckOrigin")
-	//}
+	checkOrigin := u.CheckOrigin
+	if checkOrigin == nil {
+		checkOrigin = checkSameOrigin
+	}
+	if !checkOrigin(r) {
+		return u.returnError(w, r, http.StatusForbidden, "websocket: request origin not allowed by Upgrader.CheckOrigin")
+	}
 
 	challengeKey := r.Header.Get("Sec-Websocket-Key")
 	if challengeKey == "" {

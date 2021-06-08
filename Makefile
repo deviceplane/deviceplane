@@ -1,3 +1,13 @@
+OS = $(shell uname -s | tr '[:upper:]' '[:lower:]')
+export CGO_ENABLED ?= 0
+
+# Debug symbols
+ifeq (${DEBUG},)
+else
+GOARGS=-gcflags="all=-N -l"
+endif
+LDFLAGS="-w -s"
+
 test:
 	go test -v ./... -mod vendor
 
@@ -33,3 +43,8 @@ push-cli: cli
 
 cli-binaries:
 	./scripts/build-cli-binaries
+
+.PHONY: build
+build: GOARGS += -mod=vendor -ldflags $(LDFLAGS)
+build: ## Build binary
+	go build $(GOARGS) -o bin/controller cmd/controller/main.go
