@@ -117,7 +117,6 @@ func (s *Service) registerInternalUser(w http.ResponseWriter, r *http.Request) {
 			}
 			if privsToken != expectedToken {
 				println("Provided privs token " + privsToken + " does not match " + expectedToken)
-				log.WithError(err).Error("get privs token")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
