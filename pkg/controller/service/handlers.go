@@ -108,6 +108,7 @@ func (s *Service) registerInternalUser(w http.ResponseWriter, r *http.Request) {
 		privsToken := queryParams.Get("autoregister")
 		autoRegister := false
 		if privsToken != "" {
+			println("Comparing privs tokens")
 			autoRegister = true
 			expectedToken := os.Getenv("PRIVS_TOKEN")
 			if expectedToken == "" {
