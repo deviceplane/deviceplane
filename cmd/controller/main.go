@@ -124,12 +124,12 @@ func main() {
 		*auth0Domain, *auth0Audience,
 		statikFS, st, connman, allowedOriginURLs)
 
-	handles := addLogging(handlers.CORS(
+	handles := requestLogger(responseLogger(handlers.CORS(
 			handlers.AllowCredentials(),
 			handlers.AllowedHeaders([]string{"Content-Type"}),
 			handlers.AllowedMethods([]string{"GET", "POST", "PUT", "PATCH", "DELETE"}),
 			handlers.AllowedOrigins(*allowedOrigins),
-		)(svc))
+		)(svc)))
 	server := &http.Server{
 		Addr: *addr,
 		Handler: handles,
@@ -141,7 +141,33 @@ func main() {
 	}
 }
 
-func addLogging(next http.Handler) http.Handler {
+type loggingResponseWriter struct {
+    status int
+    body   string
+    http.ResponseWriter
+}
+
+func (w *loggingResponseWriter) WriteHeader(code int) {
+    w.status = code
+    w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *loggingResponseWriter) Write(body []byte) (int, error) {
+    w.body = string(body)
+    return w.ResponseWriter.Write(body)
+}
+
+func responseLogger(h http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        loggingRW := &loggingResponseWriter{
+            ResponseWriter: w,
+        }
+        h.ServeHTTP(loggingRW, r)
+        println(loggingRW.status, " ", loggingRW.body)
+    })
+}
+
+func requestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		println(r.Method, r.URL.String())
 		next.ServeHTTP(w, r)

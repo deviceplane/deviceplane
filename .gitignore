@@ -11,3 +11,4 @@ ui/videosFolder
 .DS_Store
 bin/
 .vscode/
+go-debug.env
