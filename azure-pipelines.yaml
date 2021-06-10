@@ -87,5 +87,5 @@ jobs:
           connectionType: Kubernetes Service Connection
           kubernetesServiceEndpoint: EdgeworxDevelopment
           command: set
-          namespace: ewc
+          namespace: deviceplane
           arguments: image deployment/deviceplane controller=gcr.io/focal-freedom-236620/deviceplane-controller:$(version)
