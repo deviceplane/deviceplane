@@ -156,8 +156,9 @@ const Signup = () => {
         </Row>
         <Text marginTop={5} fontSize={1} fontWeight={0}>
           By signing up you agree to the{' '}
-          <Link href="https://deviceplane.com/terms">Terms of Service</Link> and{' '}
-          <Link href="https://deviceplane.com/privacy">Privacy Policy</Link>
+          <Link href="https://deviceplane.com/terms/">Terms of Service</Link>{' '}
+          and{' '}
+          <Link href="https://deviceplane.com/privacy/">Privacy Policy</Link>
         </Text>
       </Card>
     </Column>

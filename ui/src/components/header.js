@@ -54,7 +54,7 @@ const Header = ({ children }) => {
                 <Text color="primary">Docs</Text>
               </>
             }
-            href="https://deviceplane.com/docs"
+            href="https://deviceplane.com/docs/"
             marginRight={5}
           />
           <AvatarMenu />
