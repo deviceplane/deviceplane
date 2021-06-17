@@ -8,7 +8,7 @@ WORKDIR /app/ui
 RUN npm i
 RUN NODE_ENV=production AUTH0_DOMAIN=https://deviceplane.auth0.com/ AUTH0_AUDIENCE=dOQp6i05FmmDBYinpOdJewnNJyh4hgmG npm run-script build
 
-FROM golang:1.13
+FROM golang:1.16
 ARG version
 WORKDIR /app
 COPY ./ ./
