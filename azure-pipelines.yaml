@@ -4,7 +4,7 @@ trigger:
       - v*
   branches:
     include:
-      - master
+      - edgeworx
   paths:
     exclude:
       - README.md
