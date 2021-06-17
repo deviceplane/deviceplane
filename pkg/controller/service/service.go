@@ -11,7 +11,6 @@ import (
 	"github.com/deviceplane/deviceplane/pkg/controller/store"
 	"github.com/deviceplane/deviceplane/pkg/email"
 	"github.com/deviceplane/deviceplane/pkg/revdial"
-	"github.com/deviceplane/deviceplane/pkg/utils"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
