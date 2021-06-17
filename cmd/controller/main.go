@@ -124,12 +124,11 @@ func main() {
 		*auth0Domain, *auth0Audience,
 		statikFS, st, connman, allowedOriginURLs)
 
-	handles := requestLogger(responseLogger(handlers.CORS(
-			handlers.AllowCredentials(),
+	handles := handlers.CORS( handlers.AllowCredentials(),
 			handlers.AllowedHeaders([]string{"Content-Type"}),
 			handlers.AllowedMethods([]string{"GET", "POST", "PUT", "PATCH", "DELETE"}),
 			handlers.AllowedOrigins(*allowedOrigins),
-		)(svc)))
+		)(svc)
 	server := &http.Server{
 		Addr: *addr,
 		Handler: handles,
@@ -155,23 +154,6 @@ func (w *loggingResponseWriter) WriteHeader(code int) {
 func (w *loggingResponseWriter) Write(body []byte) (int, error) {
     w.body = string(body)
     return w.ResponseWriter.Write(body)
-}
-
-func responseLogger(h http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        loggingRW := &loggingResponseWriter{
-            ResponseWriter: w,
-        }
-        h.ServeHTTP(loggingRW, r)
-        println(loggingRW.status, " ", loggingRW.body)
-    })
-}
-
-func requestLogger(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		println(r.Method, r.URL.String())
-		next.ServeHTTP(w, r)
-	})
 }
 
 func tryConnect(uri string) (*sql.DB, error) {
