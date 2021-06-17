@@ -14,7 +14,7 @@ WORKDIR /app
 COPY ./ ./
 RUN mkdir ui/build
 COPY --from=1 /app/ui/dist ui/build
-RUN go get github.com/rakyll/statik
+RUN go get github.com/rakyll/statik@v0.1.6
 RUN statik -src=./ui/build -dest=./pkg
 RUN GOOS=linux CGO_ENABLED=0 go build -mod vendor -ldflags "-X main.version=$version" -o ./controller ./cmd/controller
 
