@@ -124,9 +124,9 @@ func main() {
 		*auth0Domain, *auth0Audience,
 		statikFS, st, connman, allowedOriginURLs)
 
-	handles := handlers.CORS( handlers.AllowCredentials(),
-			handlers.AllowedHeaders([]string{"Content-Type"}),
-			handlers.AllowedMethods([]string{"GET", "POST", "PUT", "PATCH", "DELETE"}),
+	handles := handlers.CORS(handlers.AllowCredentials(),
+			handlers.AllowedHeaders([]string{"Content-Type", "Cookie", "Set-Cookie", "Keep-Alive"}),
+			handlers.AllowedMethods([]string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}),
 			handlers.AllowedOrigins(*allowedOrigins),
 		)(svc)
 	server := &http.Server{

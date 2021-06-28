@@ -12,3 +12,4 @@ ui/videosFolder
 bin/
 .vscode/
 go-debug.env
+__debug_bin
