@@ -441,6 +441,7 @@ func (s *Service) newSession(w http.ResponseWriter, r *http.Request, userID stri
 			//Domain:   "edgeworx-staging.deviceplane.com",
 			Secure:   secure,
 			HttpOnly: true,
+			SameSite: http.SameSiteNoneMode,
 		}
 
 		http.SetCookie(w, cookie)
