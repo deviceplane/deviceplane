@@ -1,3 +1,6 @@
+
+> :warning: This repository has been deprecated. The new repositories can be found here:
+> [Agent](https://github.com/deviceplane/agent) | [CLI](https://github.com/deviceplane/cli) | [Controller](https://github.com/deviceplane/controller).
 <p align="center">
     <img src="./logo/name-black.png" alt="Build Status" width="500">
 </p>
